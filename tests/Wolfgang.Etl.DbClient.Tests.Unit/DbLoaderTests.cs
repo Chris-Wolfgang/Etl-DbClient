@@ -6,23 +6,23 @@ using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
-namespace Wolfgang.Etl.Ado.Tests.Unit;
+namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
-public class AdoLoaderTests
+public class DbLoaderTests
     : LoaderBaseContractTests<
-        AdoLoader<ContractRecord, AdoReport>,
+        DbLoader<ContractRecord, DbReport>,
         ContractRecord,
-        AdoReport>
+        DbReport>
 {
     // ------------------------------------------------------------------
     // Contract test factory methods
     // ------------------------------------------------------------------
 
     /// <inheritdoc/>
-    protected override AdoLoader<ContractRecord, AdoReport> CreateSut(int itemCount)
+    protected override DbLoader<ContractRecord, DbReport> CreateSut(int itemCount)
     {
         var conn = TestDb.CreateContractLoaderConnection();
-        return new AdoLoader<ContractRecord, AdoReport>
+        return new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
@@ -44,10 +44,10 @@ public class AdoLoaderTests
 
 
     /// <inheritdoc/>
-    protected override AdoLoader<ContractRecord, AdoReport> CreateSutWithTimer(IProgressTimer timer)
+    protected override DbLoader<ContractRecord, DbReport> CreateSutWithTimer(IProgressTimer timer)
     {
         var conn = TestDb.CreateContractLoaderConnection();
-        return new AdoLoader<ContractRecord, AdoReport>
+        return new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -65,7 +65,7 @@ public class AdoLoaderTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new AdoLoader<PersonRecord, AdoReport>(null!, "INSERT INTO X VALUES (1)")
+            () => new DbLoader<PersonRecord, DbReport>(null!, "INSERT INTO X VALUES (1)")
         );
     }
 
@@ -77,7 +77,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new AdoLoader<PersonRecord, AdoReport>(conn, (string)null!)
+            () => new DbLoader<PersonRecord, DbReport>(conn, (string)null!)
         );
     }
 
@@ -93,7 +93,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -116,7 +116,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -142,7 +142,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             WriteMode.Insert
@@ -162,7 +162,7 @@ public class AdoLoaderTests
     public void CommandText_with_auto_generated_insert_contains_table_name()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new AdoLoader<PersonRecord, AdoReport>(conn, WriteMode.Insert);
+        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Insert);
 
         Assert.Contains("People", loader.CommandText, StringComparison.Ordinal);
         Assert.Contains("INSERT", loader.CommandText, StringComparison.OrdinalIgnoreCase);
@@ -180,7 +180,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -203,7 +203,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -230,7 +230,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -253,7 +253,7 @@ public class AdoLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -282,7 +282,7 @@ public class AdoLoaderTests
         await TestDb.CreateEmptyTableAsync(conn);
         using var transaction = conn.BeginTransaction();
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
@@ -308,7 +308,7 @@ public class AdoLoaderTests
         await TestDb.CreateEmptyTableAsync(conn);
         using var transaction = conn.BeginTransaction();
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
@@ -333,12 +333,12 @@ public class AdoLoaderTests
     // ------------------------------------------------------------------
 
     [Fact]
-    public async Task GetProgressReport_returns_AdoReport_with_counts()
+    public async Task GetProgressReport_returns_DbReport_with_counts()
     {
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>
+        var loader = new DbLoader<PersonRecord, DbReport>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -363,10 +363,10 @@ public class AdoLoaderTests
     // ------------------------------------------------------------------
 
     [Fact]
-    public void GetProgressReport_when_TProgress_is_not_AdoReport_throws_NotSupportedException()
+    public void GetProgressReport_when_TProgress_is_not_DbReport_throws_NotSupportedException()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new AdoLoader<PersonRecord, Exception>(conn, "INSERT INTO X VALUES (1)");
+        var loader = new DbLoader<PersonRecord, Exception>(conn, "INSERT INTO X VALUES (1)");
 
         Assert.Throws<NotSupportedException>(loader.GetProgressReport);
     }

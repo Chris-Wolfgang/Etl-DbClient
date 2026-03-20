@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Wolfgang.Etl.Abstractions;
 using Xunit;
 
-namespace Wolfgang.Etl.Ado.Tests.Unit;
+namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 public class AdoUpdateTests
 {
@@ -17,7 +17,7 @@ public class AdoUpdateTests
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
 
-        var loader = new AdoLoader<PersonRecord, AdoReport>(conn, WriteMode.Update);
+        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Update);
 
         var updates = new[]
         {
@@ -44,7 +44,7 @@ public class AdoUpdateTests
     public void CommandText_with_WriteMode_Update_contains_update_and_where()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new AdoLoader<PersonRecord, AdoReport>(conn, WriteMode.Update);
+        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Update);
 
         Assert.Contains("UPDATE", loader.CommandText, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("WHERE", loader.CommandText, StringComparison.OrdinalIgnoreCase);
@@ -57,7 +57,7 @@ public class AdoUpdateTests
     public void CommandText_with_WriteMode_Update_excludes_key_from_set_clause()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new AdoLoader<PersonRecord, AdoReport>(conn, WriteMode.Update);
+        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Update);
 
         // id should be in WHERE, not in SET
         var setClause = loader.CommandText.Split(new[] { "WHERE" }, StringSplitOptions.None)[0];

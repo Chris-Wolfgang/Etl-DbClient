@@ -6,13 +6,13 @@ using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
-namespace Wolfgang.Etl.Ado.Tests.Unit;
+namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
-public class AdoExtractorTests
+public class DbExtractorTests
     : ExtractorBaseContractTests<
-        AdoExtractor<ContractRecord, AdoReport>,
+        DbExtractor<ContractRecord, DbReport>,
         ContractRecord,
-        AdoReport>
+        DbReport>
 {
     // ------------------------------------------------------------------
     // Contract test factory methods
@@ -30,10 +30,10 @@ public class AdoExtractorTests
 
 
     /// <inheritdoc/>
-    protected override AdoExtractor<ContractRecord, AdoReport> CreateSut(int itemCount)
+    protected override DbExtractor<ContractRecord, DbReport> CreateSut(int itemCount)
     {
         var conn = TestDb.CreateContractConnection(itemCount);
-        return new AdoExtractor<ContractRecord, AdoReport>
+        return new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems ORDER BY Value"
@@ -48,10 +48,10 @@ public class AdoExtractorTests
 
 
     /// <inheritdoc/>
-    protected override AdoExtractor<ContractRecord, AdoReport> CreateSutWithTimer(IProgressTimer timer)
+    protected override DbExtractor<ContractRecord, DbReport> CreateSutWithTimer(IProgressTimer timer)
     {
         var conn = TestDb.CreateContractConnection(5);
-        return new AdoExtractor<ContractRecord, AdoReport>
+        return new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems ORDER BY Value",
@@ -69,7 +69,7 @@ public class AdoExtractorTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new AdoExtractor<PersonRecord, AdoReport>(null!, "SELECT 1")
+            () => new DbExtractor<PersonRecord, DbReport>(null!, "SELECT 1")
         );
     }
 
@@ -81,7 +81,7 @@ public class AdoExtractorTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new AdoExtractor<PersonRecord, AdoReport>(conn, (string)null!)
+            () => new DbExtractor<PersonRecord, DbReport>(conn, (string)null!)
         );
     }
 
@@ -93,7 +93,7 @@ public class AdoExtractorTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new AdoExtractor<PersonRecord, AdoReport>(conn, "SELECT 1", (Dictionary<string, object>)null!)
+            () => new DbExtractor<PersonRecord, DbReport>(conn, "SELECT 1", (Dictionary<string, object>)null!)
         );
     }
 
@@ -107,7 +107,7 @@ public class AdoExtractorTests
     public async Task ExtractAsync_returns_all_rows()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id"
@@ -127,7 +127,7 @@ public class AdoExtractorTests
     public async Task ExtractAsync_with_empty_result_set_returns_no_items()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(0);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People"
@@ -148,7 +148,7 @@ public class AdoExtractorTests
     public async Task ExtractAsync_with_parameters_filters_correctly()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(5);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People WHERE age > @MinAge",
@@ -171,7 +171,7 @@ public class AdoExtractorTests
     public async Task ExtractAsync_with_auto_generated_select_returns_all_rows()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>(conn);
+        var extractor = new DbExtractor<PersonRecord, DbReport>(conn);
 
         var results = await extractor.ExtractAsync().ToListAsync();
 
@@ -184,7 +184,7 @@ public class AdoExtractorTests
     public void CommandText_with_auto_generated_select_contains_table_name()
     {
         using var conn = TestDb.CreateConnection();
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>(conn);
+        var extractor = new DbExtractor<PersonRecord, DbReport>(conn);
 
         Assert.Contains("People", extractor.CommandText, StringComparison.Ordinal);
     }
@@ -199,7 +199,7 @@ public class AdoExtractorTests
     public async Task ExtractAsync_when_SkipItemCount_is_set_skips_rows()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(5);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id"
@@ -218,7 +218,7 @@ public class AdoExtractorTests
     public async Task ExtractAsync_when_MaximumItemCount_is_set_stops_early()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(5);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id"
@@ -241,7 +241,7 @@ public class AdoExtractorTests
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
         using var transaction = conn.BeginTransaction();
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id",
@@ -260,10 +260,10 @@ public class AdoExtractorTests
     // ------------------------------------------------------------------
 
     [Fact]
-    public async Task GetProgressReport_returns_AdoReport_with_counts()
+    public async Task GetProgressReport_returns_DbReport_with_counts()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
-        var extractor = new AdoExtractor<PersonRecord, AdoReport>
+        var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People"
@@ -281,10 +281,10 @@ public class AdoExtractorTests
 
 
     [Fact]
-    public void GetProgressReport_when_TProgress_is_not_AdoReport_throws_NotSupportedException()
+    public void GetProgressReport_when_TProgress_is_not_DbReport_throws_NotSupportedException()
     {
         using var conn = TestDb.CreateConnection();
-        var extractor = new AdoExtractor<PersonRecord, Exception>(conn, "SELECT 1");
+        var extractor = new DbExtractor<PersonRecord, Exception>(conn, "SELECT 1");
 
         Assert.Throws<NotSupportedException>(extractor.GetProgressReport);
     }

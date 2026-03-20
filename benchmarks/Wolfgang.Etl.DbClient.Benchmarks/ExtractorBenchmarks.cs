@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
-using Wolfgang.Etl.Ado;
+using Wolfgang.Etl.DbClient;
 
-namespace Wolfgang.Etl.Ado.Benchmarks;
+namespace Wolfgang.Etl.DbClient.Benchmarks;
 
 [MemoryDiagnoser]
 public class ExtractorBenchmarks
@@ -59,7 +59,7 @@ public class ExtractorBenchmarks
     [Benchmark]
     public async Task<int> Extract()
     {
-        var extractor = new AdoExtractor<BenchmarkRecord, Report>
+        var extractor = new DbExtractor<BenchmarkRecord, Report>
         (
             _connection,
             "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People"

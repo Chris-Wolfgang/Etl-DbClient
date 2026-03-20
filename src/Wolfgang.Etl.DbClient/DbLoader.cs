@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Wolfgang.Etl.Abstractions;
 
-namespace Wolfgang.Etl.Ado;
+namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
 /// Loads records into a database via INSERT or UPDATE commands.
@@ -22,7 +22,7 @@ namespace Wolfgang.Etl.Ado;
 /// </typeparam>
 /// <typeparam name="TProgress">
 /// The type of the progress object reported during loading.
-/// Use <see cref="AdoReport"/> for the default implementation.
+/// Use <see cref="DbReport"/> for the default implementation.
 /// </typeparam>
 /// <remarks>
 /// <para>
@@ -42,7 +42,7 @@ namespace Wolfgang.Etl.Ado;
 /// <c>LoadAsync</c>.
 /// </para>
 /// </remarks>
-public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
+public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     where TRecord : notnull
     where TProgress : notnull
 {
@@ -66,7 +66,7 @@ public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Initializes a new <see cref="AdoLoader{TRecord,TProgress}"/> with a custom SQL command.
+    /// Initializes a new <see cref="DbLoader{TRecord,TProgress}"/> with a custom SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL INSERT or UPDATE command to execute per record.</param>
@@ -78,12 +78,12 @@ public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/> or <paramref name="commandText"/> is null.
     /// </exception>
-    public AdoLoader
+    public DbLoader
     (
         DbConnection connection,
         string commandText,
         DbTransaction? transaction = null,
-        ILogger<AdoLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -96,7 +96,7 @@ public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
 
     /// <summary>
-    /// Initializes a new <see cref="AdoLoader{TRecord,TProgress}"/> that auto-generates
+    /// Initializes a new <see cref="DbLoader{TRecord,TProgress}"/> that auto-generates
     /// an INSERT statement from <c>[Table]</c> and <c>[Column]</c> attributes on
     /// <typeparamref name="TRecord"/>.
     /// </summary>
@@ -113,18 +113,18 @@ public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     /// <paramref name="writeMode"/> is <see cref="WriteMode.Update"/> and no <c>[Key]</c>
     /// properties exist.
     /// </exception>
-    public AdoLoader
+    public DbLoader
     (
         DbConnection connection,
         WriteMode writeMode,
         DbTransaction? transaction = null,
-        ILogger<AdoLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _commandText = writeMode == WriteMode.Update
-            ? CommandBuilder.BuildUpdate<TRecord>()
-            : CommandBuilder.BuildInsert<TRecord>();
+            ? DbCommandBuilder.BuildUpdate<TRecord>()
+            : DbCommandBuilder.BuildInsert<TRecord>();
         _callerTransaction = transaction;
         _ownsTransaction = transaction == null;
         _logger = logger ?? (ILogger)NullLogger.Instance;
@@ -135,12 +135,12 @@ public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     /// <summary>
     /// Internal constructor for timer injection (testing).
     /// </summary>
-    internal AdoLoader
+    internal DbLoader
     (
         DbConnection connection,
         string commandText,
         IProgressTimer timer,
-        ILogger<AdoLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -166,9 +166,9 @@ public class AdoLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     /// <inheritdoc/>
     protected override TProgress CreateProgressReport()
     {
-        if (typeof(TProgress) == typeof(AdoReport) || typeof(TProgress) == typeof(Report))
+        if (typeof(TProgress) == typeof(DbReport) || typeof(TProgress) == typeof(Report))
         {
-            return (TProgress)(object)new AdoReport
+            return (TProgress)(object)new DbReport
             (
                 CurrentItemCount,
                 CurrentSkippedItemCount,

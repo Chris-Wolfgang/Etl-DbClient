@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Wolfgang.Etl.Abstractions;
 
-namespace Wolfgang.Etl.Ado;
+namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
 /// Extracts records from a database query as an asynchronous stream.
@@ -23,7 +23,7 @@ namespace Wolfgang.Etl.Ado;
 /// </typeparam>
 /// <typeparam name="TProgress">
 /// The type of the progress object reported during extraction.
-/// Use <see cref="AdoReport"/> for the default implementation.
+/// Use <see cref="DbReport"/> for the default implementation.
 /// </typeparam>
 /// <remarks>
 /// <para>
@@ -36,7 +36,7 @@ namespace Wolfgang.Etl.Ado;
 /// The extractor never commits or rolls back the transaction.
 /// </para>
 /// </remarks>
-public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
+public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
     where TRecord : notnull
     where TProgress : notnull
 {
@@ -59,7 +59,7 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     // Static initializer
     // ------------------------------------------------------------------
 
-    static AdoExtractor()
+    static DbExtractor()
     {
         ColumnAttributeTypeMapper.Register<TRecord>();
     }
@@ -71,7 +71,7 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Initializes a new <see cref="AdoExtractor{TRecord,TProgress}"/> with a SQL command.
+    /// Initializes a new <see cref="DbExtractor{TRecord,TProgress}"/> with a SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL query to execute.</param>
@@ -80,12 +80,12 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/> or <paramref name="commandText"/> is null.
     /// </exception>
-    public AdoExtractor
+    public DbExtractor
     (
         DbConnection connection,
         string commandText,
         DbTransaction? transaction = null,
-        ILogger<AdoExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -97,7 +97,7 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
 
 
     /// <summary>
-    /// Initializes a new <see cref="AdoExtractor{TRecord,TProgress}"/> with a parameterized SQL command.
+    /// Initializes a new <see cref="DbExtractor{TRecord,TProgress}"/> with a parameterized SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL query to execute.</param>
@@ -107,13 +107,13 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/>, <paramref name="commandText"/>, or <paramref name="parameters"/> is null.
     /// </exception>
-    public AdoExtractor
+    public DbExtractor
     (
         DbConnection connection,
         string commandText,
         Dictionary<string, object> parameters,
         DbTransaction? transaction = null,
-        ILogger<AdoExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -126,7 +126,7 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
 
 
     /// <summary>
-    /// Initializes a new <see cref="AdoExtractor{TRecord,TProgress}"/> that auto-generates
+    /// Initializes a new <see cref="DbExtractor{TRecord,TProgress}"/> that auto-generates
     /// a SELECT statement from <c>[Table]</c> and <c>[Column]</c> attributes on
     /// <typeparamref name="TRecord"/>.
     /// </summary>
@@ -137,15 +137,15 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     /// <exception cref="InvalidOperationException">
     /// <typeparamref name="TRecord"/> does not have a <c>[Table]</c> attribute.
     /// </exception>
-    public AdoExtractor
+    public DbExtractor
     (
         DbConnection connection,
         DbTransaction? transaction = null,
-        ILogger<AdoExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = CommandBuilder.BuildSelect<TRecord>();
+        _commandText = DbCommandBuilder.BuildSelect<TRecord>();
         _transaction = transaction;
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
@@ -155,12 +155,12 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     /// <summary>
     /// Internal constructor for timer injection (testing).
     /// </summary>
-    internal AdoExtractor
+    internal DbExtractor
     (
         DbConnection connection,
         string commandText,
         IProgressTimer timer,
-        ILogger<AdoExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -185,9 +185,9 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
     /// <inheritdoc/>
     protected override TProgress CreateProgressReport()
     {
-        if (typeof(TProgress) == typeof(AdoReport) || typeof(TProgress) == typeof(Report))
+        if (typeof(TProgress) == typeof(DbReport) || typeof(TProgress) == typeof(Report))
         {
-            return (TProgress)(object)new AdoReport
+            return (TProgress)(object)new DbReport
             (
                 CurrentItemCount,
                 CurrentSkippedItemCount,

@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.Ado;
+using Wolfgang.Etl.DbClient;
 
 // ---------------------------------------------------------------
-// Example: Extract → Transform → Load using Wolfgang.Etl.Ado
+// Example: Extract → Transform → Load using Wolfgang.Etl.DbClient
 // ---------------------------------------------------------------
 
 // Set up an in-memory SQLite database
@@ -41,7 +41,7 @@ Console.WriteLine("=== ETL Pipeline: Employees → HighEarners (salary > 80000) 
 Console.WriteLine();
 
 // EXTRACT: Read employees with salary > 80000
-var extractor = new AdoExtractor<EmployeeRecord, AdoReport>
+var extractor = new DbExtractor<EmployeeRecord, DbReport>
 (
     connection,
     "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, salary AS Salary FROM Employees WHERE salary > @MinSalary",
@@ -49,7 +49,7 @@ var extractor = new AdoExtractor<EmployeeRecord, AdoReport>
 );
 
 // LOAD: Insert into HighEarners table
-var loader = new AdoLoader<HighEarnerRecord, AdoReport>
+var loader = new DbLoader<HighEarnerRecord, DbReport>
 (
     connection,
     "INSERT INTO HighEarners (full_name, salary) VALUES (@FullName, @Salary)"

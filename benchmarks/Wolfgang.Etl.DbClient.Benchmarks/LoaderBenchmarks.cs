@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
-using Wolfgang.Etl.Ado;
+using Wolfgang.Etl.DbClient;
 
-namespace Wolfgang.Etl.Ado.Benchmarks;
+namespace Wolfgang.Etl.DbClient.Benchmarks;
 
 [MemoryDiagnoser]
 public class LoaderBenchmarks
@@ -53,7 +53,7 @@ public class LoaderBenchmarks
             )";
         await cmd.ExecuteNonQueryAsync();
 
-        var loader = new AdoLoader<BenchmarkRecord, Report>
+        var loader = new DbLoader<BenchmarkRecord, Report>
         (
             connection,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"

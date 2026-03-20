@@ -1,21 +1,21 @@
 using Wolfgang.Etl.Abstractions;
 
-namespace Wolfgang.Etl.Ado;
+namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
 /// Progress report for ADO.NET extraction and loading operations.
 /// Extends the base <see cref="Report"/> with database-specific context.
 /// </summary>
-public record AdoReport : Report
+public record DbReport : Report
 {
     /// <summary>
-    /// Initializes a new <see cref="AdoReport"/> snapshot.
+    /// Initializes a new <see cref="DbReport"/> snapshot.
     /// </summary>
     /// <param name="currentItemCount">The number of records processed so far.</param>
     /// <param name="currentSkippedItemCount">The number of records skipped so far.</param>
     /// <param name="commandText">The SQL command text being executed.</param>
     /// <param name="elapsedMilliseconds">The wall clock time since execution started.</param>
-    public AdoReport
+    public DbReport
     (
         int currentItemCount,
         int currentSkippedItemCount,

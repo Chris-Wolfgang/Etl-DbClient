@@ -1,7 +1,7 @@
-namespace Wolfgang.Etl.Ado;
+namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
-/// Specifies the type of SQL command the <see cref="AdoLoader{TRecord,TProgress}"/>
+/// Specifies the type of SQL command the <see cref="DbLoader{TRecord,TProgress}"/>
 /// auto-generates from attribute metadata.
 /// </summary>
 public enum WriteMode

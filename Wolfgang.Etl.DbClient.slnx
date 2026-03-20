@@ -38,16 +38,16 @@
     <File Path="scripts/setup.ps1" />
   </Folder>
   <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/Wolfgang.Etl.Ado.Benchmarks/Wolfgang.Etl.Ado.Benchmarks.csproj" />
+    <Project Path="benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/examples/">
-    <Project Path="examples/Wolfgang.Etl.Ado.Example/Wolfgang.Etl.Ado.Example.csproj" />
+    <Project Path="examples/Wolfgang.Etl.DbClient.Example/Wolfgang.Etl.DbClient.Example.csproj" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/Wolfgang.Etl.Ado/Wolfgang.Etl.Ado.csproj" />
+    <Project Path="src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Wolfgang.Etl.Ado.Tests.Unit/Wolfgang.Etl.Ado.Tests.Unit.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj" />
   </Folder>
 </Solution>
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Dapper;
 
-namespace Wolfgang.Etl.Ado;
+namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
 /// Configures Dapper to respect <see cref="ColumnAttribute"/> when mapping

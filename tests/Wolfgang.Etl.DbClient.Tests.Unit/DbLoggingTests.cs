@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Wolfgang.Etl.Abstractions;
 using Xunit;
 
-namespace Wolfgang.Etl.Ado.Tests.Unit;
+namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 // ------------------------------------------------------------------
 // Spy logger
@@ -78,14 +78,14 @@ internal sealed class LogEntry
 // Extractor logging tests
 // ------------------------------------------------------------------
 
-public class AdoExtractorLoggingTests
+public class DbExtractorLoggingTests
 {
     [Fact]
     public async Task ExtractAsync_logs_Information_at_start_and_completion()
     {
-        var logger = new SpyLogger<AdoExtractor<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractConnection(3);
-        var extractor = new AdoExtractor<ContractRecord, AdoReport>
+        var extractor = new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -106,9 +106,9 @@ public class AdoExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_logs_Debug_per_row()
     {
-        var logger = new SpyLogger<AdoExtractor<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractConnection(3);
-        var extractor = new AdoExtractor<ContractRecord, AdoReport>
+        var extractor = new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -129,9 +129,9 @@ public class AdoExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_logs_Debug_parameters()
     {
-        var logger = new SpyLogger<AdoExtractor<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractConnection(5);
-        var extractor = new AdoExtractor<ContractRecord, AdoReport>
+        var extractor = new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems WHERE Value > @MinValue",
@@ -154,9 +154,9 @@ public class AdoExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_when_SkipItemCount_set_logs_Debug_skipped()
     {
-        var logger = new SpyLogger<AdoExtractor<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractConnection(5);
-        var extractor = new AdoExtractor<ContractRecord, AdoReport>
+        var extractor = new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -179,9 +179,9 @@ public class AdoExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_when_MaximumItemCount_reached_logs_Debug()
     {
-        var logger = new SpyLogger<AdoExtractor<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractConnection(5);
-        var extractor = new AdoExtractor<ContractRecord, AdoReport>
+        var extractor = new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -205,7 +205,7 @@ public class AdoExtractorLoggingTests
     public async Task ExtractAsync_when_no_logger_does_not_throw()
     {
         using var conn = TestDb.CreateContractConnection(3);
-        var extractor = new AdoExtractor<ContractRecord, AdoReport>
+        var extractor = new DbExtractor<ContractRecord, DbReport>
         (
             conn,
             "SELECT Name, Value FROM ContractItems"
@@ -223,7 +223,7 @@ public class AdoExtractorLoggingTests
 // Loader logging tests
 // ------------------------------------------------------------------
 
-public class AdoLoaderLoggingTests
+public class DbLoaderLoggingTests
 {
     private static ContractRecord[] CreateItems(int count)
     {
@@ -240,9 +240,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_Information_at_start_and_completion()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -263,9 +263,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_Debug_per_record()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -286,9 +286,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_Debug_transaction_lifecycle()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -316,9 +316,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_on_failure_logs_Debug_rollback()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -343,9 +343,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_auto_managed_transaction_mode()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -363,10 +363,10 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_with_caller_transaction_logs_caller_managed()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
         using var transaction = conn.BeginTransaction();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -387,7 +387,7 @@ public class AdoLoaderLoggingTests
     public async Task LoadAsync_when_no_logger_does_not_throw()
     {
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
@@ -403,9 +403,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_when_SkipItemCount_set_logs_Debug_skipped()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -428,9 +428,9 @@ public class AdoLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_when_MaximumItemCount_reached_logs_Debug()
     {
-        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new AdoLoader<ContractRecord, AdoReport>
+        var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",

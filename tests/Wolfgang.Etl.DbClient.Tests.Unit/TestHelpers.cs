@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 
-namespace Wolfgang.Etl.Ado.Tests.Unit;
+namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 // ------------------------------------------------------------------
 // Contract test record — value equality via Equals/GetHashCode

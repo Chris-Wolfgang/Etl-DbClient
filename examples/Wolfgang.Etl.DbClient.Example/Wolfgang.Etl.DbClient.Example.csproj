@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Wolfgang.Etl.Ado\Wolfgang.Etl.Ado.csproj" />
+    <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient\Wolfgang.Etl.DbClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>

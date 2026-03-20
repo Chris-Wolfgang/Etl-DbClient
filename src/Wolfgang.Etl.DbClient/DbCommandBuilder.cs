@@ -5,13 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 
-namespace Wolfgang.Etl.Ado;
+namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
 /// Generates SQL commands from <see cref="TableAttribute"/>, <see cref="ColumnAttribute"/>,
 /// and <see cref="KeyAttribute"/> annotations on a POCO type.
 /// </summary>
-internal static class CommandBuilder
+internal static class DbCommandBuilder
 {
     /// <summary>
     /// Generates a SELECT statement for all mapped columns.
