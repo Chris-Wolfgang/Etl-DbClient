@@ -37,9 +37,17 @@
     <File Path="scripts/Setup-Labels.ps1" />
     <File Path="scripts/setup.ps1" />
   </Folder>
-  <Folder Name="/benchmarks/" />
-  <Folder Name="/examples/" />
-  <Folder Name="/src/" />
-  <Folder Name="/tests/" />
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Wolfgang.Etl.Ado.Benchmarks/Wolfgang.Etl.Ado.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/Wolfgang.Etl.Ado.Example/Wolfgang.Etl.Ado.Example.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Wolfgang.Etl.Ado/Wolfgang.Etl.Ado.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wolfgang.Etl.Ado.Tests.Unit/Wolfgang.Etl.Ado.Tests.Unit.csproj" />
+  </Folder>
 </Solution>
 

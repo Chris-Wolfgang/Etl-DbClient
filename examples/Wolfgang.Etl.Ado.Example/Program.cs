@@ -1,0 +1,107 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
+using Wolfgang.Etl.Ado;
+
+// ---------------------------------------------------------------
+// Example: Extract → Transform → Load using Wolfgang.Etl.Ado
+// ---------------------------------------------------------------
+
+// Set up an in-memory SQLite database
+using var connection = new SqliteConnection("Data Source=:memory:");
+await connection.OpenAsync();
+
+// Create source and destination tables
+using (var cmd = connection.CreateCommand())
+{
+    cmd.CommandText = @"
+        CREATE TABLE Employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            salary REAL NOT NULL
+        );
+        CREATE TABLE HighEarners (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            salary REAL NOT NULL
+        );
+        INSERT INTO Employees (first_name, last_name, salary) VALUES ('Alice', 'Smith', 95000);
+        INSERT INTO Employees (first_name, last_name, salary) VALUES ('Bob', 'Jones', 45000);
+        INSERT INTO Employees (first_name, last_name, salary) VALUES ('Carol', 'Brown', 120000);
+        INSERT INTO Employees (first_name, last_name, salary) VALUES ('Dan', 'Wilson', 85000);
+        INSERT INTO Employees (first_name, last_name, salary) VALUES ('Eve', 'Davis', 150000);
+    ";
+    await cmd.ExecuteNonQueryAsync();
+}
+
+Console.WriteLine("=== ETL Pipeline: Employees → HighEarners (salary > 80000) ===");
+Console.WriteLine();
+
+// EXTRACT: Read employees with salary > 80000
+var extractor = new AdoExtractor<EmployeeRecord, AdoReport>
+(
+    connection,
+    "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, salary AS Salary FROM Employees WHERE salary > @MinSalary",
+    new System.Collections.Generic.Dictionary<string, object> { { "MinSalary", 80000 } }
+);
+
+// LOAD: Insert into HighEarners table
+var loader = new AdoLoader<HighEarnerRecord, AdoReport>
+(
+    connection,
+    "INSERT INTO HighEarners (full_name, salary) VALUES (@FullName, @Salary)"
+);
+
+// Transform in-flight: combine first + last name
+var count = 0;
+await loader.LoadAsync(TransformAsync());
+
+async System.Collections.Generic.IAsyncEnumerable<HighEarnerRecord> TransformAsync()
+{
+    await foreach (var employee in extractor.ExtractAsync())
+    {
+        count++;
+        Console.WriteLine($"  Extracted: {employee.FirstName} {employee.LastName} (${employee.Salary:N0})");
+        yield return new HighEarnerRecord
+        {
+            FullName = $"{employee.FirstName} {employee.LastName}",
+            Salary = employee.Salary
+        };
+    }
+}
+
+Console.WriteLine();
+Console.WriteLine($"=== Results: {count} high earners loaded ===");
+Console.WriteLine();
+
+// Verify the results
+using (var cmd = connection.CreateCommand())
+{
+    cmd.CommandText = "SELECT full_name, salary FROM HighEarners ORDER BY salary DESC";
+    using var reader = await cmd.ExecuteReaderAsync();
+    while (await reader.ReadAsync())
+    {
+        Console.WriteLine($"  {reader.GetString(0)}: ${reader.GetDouble(1):N0}");
+    }
+}
+
+// ---------------------------------------------------------------
+// Record types
+// ---------------------------------------------------------------
+
+public class EmployeeRecord
+{
+    public int Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public double Salary { get; set; }
+}
+
+public class HighEarnerRecord
+{
+    public string FullName { get; set; } = string.Empty;
+    public double Salary { get; set; }
+}
