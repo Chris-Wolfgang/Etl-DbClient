@@ -56,6 +56,17 @@ public class AdoExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress
 
 
     // ------------------------------------------------------------------
+    // Static initializer
+    // ------------------------------------------------------------------
+
+    static AdoExtractor()
+    {
+        ColumnAttributeTypeMapper.Register<TRecord>();
+    }
+
+
+
+    // ------------------------------------------------------------------
     // Constructors
     // ------------------------------------------------------------------
 

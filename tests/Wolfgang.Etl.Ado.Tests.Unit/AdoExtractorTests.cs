@@ -110,7 +110,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id"
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
         );
 
         var results = await extractor.ExtractAsync().ToListAsync();
@@ -130,7 +130,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People"
+            "SELECT id, first_name, last_name, age FROM People"
         );
 
         var results = await extractor.ExtractAsync().ToListAsync();
@@ -151,7 +151,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People WHERE age > @MinAge",
+            "SELECT id, first_name, last_name, age FROM People WHERE age > @MinAge",
             new Dictionary<string, object> { { "MinAge", 23 } }
         );
 
@@ -202,7 +202,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id"
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
         );
         extractor.SkipItemCount = 2;
 
@@ -221,7 +221,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id"
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
         );
         extractor.MaximumItemCount = 2;
 
@@ -244,7 +244,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id",
             transaction
         );
 
@@ -266,7 +266,7 @@ public class AdoExtractorTests
         var extractor = new AdoExtractor<PersonRecord, AdoReport>
         (
             conn,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People"
+            "SELECT id, first_name, last_name, age FROM People"
         );
 
         await extractor.ExtractAsync().ToListAsync();
