@@ -9,6 +9,42 @@ using Microsoft.Data.Sqlite;
 namespace Wolfgang.Etl.Ado.Tests.Unit;
 
 // ------------------------------------------------------------------
+// Contract test record — value equality via Equals/GetHashCode
+// ------------------------------------------------------------------
+
+[ExcludeFromCodeCoverage]
+public class ContractRecord
+{
+    public string Name { get; set; } = string.Empty;
+
+
+
+    public int Value { get; set; }
+
+
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is not ContractRecord other) return false;
+        return string.Equals(Name, other.Name, StringComparison.Ordinal) && Value == other.Value;
+    }
+
+
+
+    public override int GetHashCode()
+    {
+#if NETCOREAPP2_1_OR_GREATER || NET5_0_OR_GREATER
+        return HashCode.Combine(Name, Value);
+#else
+        unchecked
+        {
+            return (Name?.GetHashCode() ?? 0) * 397 ^ Value.GetHashCode();
+        }
+#endif
+    }
+}
+
+// ------------------------------------------------------------------
 // Test record types
 // ------------------------------------------------------------------
 
@@ -114,5 +150,48 @@ internal static class TestDb
         cmd.CommandText = $"SELECT COUNT(*) FROM {table}";
         var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
         return Convert.ToInt32(result);
+    }
+
+
+
+    internal static SqliteConnection CreateContractConnection(int rowCount)
+    {
+        var connection = CreateConnection();
+
+        using var createCmd = connection.CreateCommand();
+        createCmd.CommandText = @"
+            CREATE TABLE ContractItems (
+                Name TEXT NOT NULL,
+                Value INTEGER NOT NULL
+            )";
+        createCmd.ExecuteNonQuery();
+
+        for (var i = 0; i < rowCount; i++)
+        {
+            using var insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO ContractItems (Name, Value) VALUES (@name, @value)";
+            insert.Parameters.AddWithValue("@name", $"Item{i + 1}");
+            insert.Parameters.AddWithValue("@value", (i + 1) * 10);
+            insert.ExecuteNonQuery();
+        }
+
+        return connection;
+    }
+
+
+
+    internal static SqliteConnection CreateContractLoaderConnection()
+    {
+        var connection = CreateConnection();
+
+        using var createCmd = connection.CreateCommand();
+        createCmd.CommandText = @"
+            CREATE TABLE ContractItems (
+                Name TEXT NOT NULL,
+                Value INTEGER NOT NULL
+            )";
+        createCmd.ExecuteNonQuery();
+
+        return connection;
     }
 }

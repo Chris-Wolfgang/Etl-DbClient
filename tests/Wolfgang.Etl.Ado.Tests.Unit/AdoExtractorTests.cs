@@ -3,12 +3,63 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Wolfgang.Etl.Abstractions;
+using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
 namespace Wolfgang.Etl.Ado.Tests.Unit;
 
 public class AdoExtractorTests
+    : ExtractorBaseContractTests<
+        AdoExtractor<ContractRecord, AdoReport>,
+        ContractRecord,
+        AdoReport>
 {
+    // ------------------------------------------------------------------
+    // Contract test factory methods
+    // ------------------------------------------------------------------
+
+    private static readonly IReadOnlyList<ContractRecord> ExpectedItems = new[]
+    {
+        new ContractRecord { Name = "Item1", Value = 10 },
+        new ContractRecord { Name = "Item2", Value = 20 },
+        new ContractRecord { Name = "Item3", Value = 30 },
+        new ContractRecord { Name = "Item4", Value = 40 },
+        new ContractRecord { Name = "Item5", Value = 50 },
+    };
+
+
+
+    /// <inheritdoc/>
+    protected override AdoExtractor<ContractRecord, AdoReport> CreateSut(int itemCount)
+    {
+        var conn = TestDb.CreateContractConnection(itemCount);
+        return new AdoExtractor<ContractRecord, AdoReport>
+        (
+            conn,
+            "SELECT Name, Value FROM ContractItems ORDER BY Value"
+        );
+    }
+
+
+
+    /// <inheritdoc/>
+    protected override IReadOnlyList<ContractRecord> CreateExpectedItems() => ExpectedItems;
+
+
+
+    /// <inheritdoc/>
+    protected override AdoExtractor<ContractRecord, AdoReport> CreateSutWithTimer(IProgressTimer timer)
+    {
+        var conn = TestDb.CreateContractConnection(5);
+        return new AdoExtractor<ContractRecord, AdoReport>
+        (
+            conn,
+            "SELECT Name, Value FROM ContractItems ORDER BY Value",
+            timer
+        );
+    }
+
+
     // ------------------------------------------------------------------
     // Constructor validation
     // ------------------------------------------------------------------

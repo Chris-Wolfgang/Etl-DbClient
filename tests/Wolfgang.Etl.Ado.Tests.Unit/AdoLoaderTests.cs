@@ -3,12 +3,59 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Wolfgang.Etl.Abstractions;
+using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
 namespace Wolfgang.Etl.Ado.Tests.Unit;
 
 public class AdoLoaderTests
+    : LoaderBaseContractTests<
+        AdoLoader<ContractRecord, AdoReport>,
+        ContractRecord,
+        AdoReport>
 {
+    // ------------------------------------------------------------------
+    // Contract test factory methods
+    // ------------------------------------------------------------------
+
+    /// <inheritdoc/>
+    protected override AdoLoader<ContractRecord, AdoReport> CreateSut(int itemCount)
+    {
+        var conn = TestDb.CreateContractLoaderConnection();
+        return new AdoLoader<ContractRecord, AdoReport>
+        (
+            conn,
+            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
+        );
+    }
+
+
+
+    /// <inheritdoc/>
+    protected override IReadOnlyList<ContractRecord> CreateSourceItems() => new[]
+    {
+        new ContractRecord { Name = "Item1", Value = 10 },
+        new ContractRecord { Name = "Item2", Value = 20 },
+        new ContractRecord { Name = "Item3", Value = 30 },
+        new ContractRecord { Name = "Item4", Value = 40 },
+        new ContractRecord { Name = "Item5", Value = 50 },
+    };
+
+
+
+    /// <inheritdoc/>
+    protected override AdoLoader<ContractRecord, AdoReport> CreateSutWithTimer(IProgressTimer timer)
+    {
+        var conn = TestDb.CreateContractLoaderConnection();
+        return new AdoLoader<ContractRecord, AdoReport>
+        (
+            conn,
+            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
+            timer
+        );
+    }
+
+
     // ------------------------------------------------------------------
     // Constructor validation
     // ------------------------------------------------------------------
