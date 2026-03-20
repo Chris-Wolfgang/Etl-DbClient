@@ -72,6 +72,31 @@ public class CommandBuilderTests
 
 
 
+    [ExcludeFromCodeCoverage]
+    [Table("AllNotMapped")]
+    private class AllNotMappedRecord
+    {
+        [NotMapped]
+        public int Id { get; set; }
+
+        [NotMapped]
+        public string Name { get; set; } = string.Empty;
+    }
+
+
+
+    [ExcludeFromCodeCoverage]
+    [Table("AllIdentity")]
+    private class AllIdentityKeysRecord
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("id")]
+        public int Id { get; set; }
+    }
+
+
+
     // ------------------------------------------------------------------
     // BuildSelect
     // ------------------------------------------------------------------
@@ -86,6 +111,16 @@ public class CommandBuilderTests
         Assert.Contains("customer_id", sql, StringComparison.Ordinal);
         Assert.Contains("full_name", sql, StringComparison.Ordinal);
         Assert.DoesNotContain("TempValue", sql, StringComparison.Ordinal);
+    }
+
+
+
+    [Fact]
+    public void BuildSelect_when_all_properties_are_NotMapped_returns_select_star()
+    {
+        var sql = CommandBuilder.BuildSelect<AllNotMappedRecord>();
+
+        Assert.Contains("SELECT * FROM AllNotMapped", sql, StringComparison.Ordinal);
     }
 
 
@@ -138,6 +173,18 @@ public class CommandBuilderTests
 
         Assert.Contains("item_name", sql, StringComparison.Ordinal);
         Assert.Contains("price", sql, StringComparison.Ordinal);
+    }
+
+
+
+    [Fact]
+    public void BuildInsert_when_all_keys_are_identity_falls_back_to_all_columns()
+    {
+        var sql = CommandBuilder.BuildInsert<AllIdentityKeysRecord>();
+
+        // All columns are identity keys, so fallback includes them all
+        Assert.Contains("INSERT INTO AllIdentity", sql, StringComparison.Ordinal);
+        Assert.Contains("id", sql, StringComparison.Ordinal);
     }
 
 

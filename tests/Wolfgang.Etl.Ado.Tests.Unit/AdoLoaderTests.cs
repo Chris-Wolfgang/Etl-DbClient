@@ -359,6 +359,21 @@ public class AdoLoaderTests
 
 
     // ------------------------------------------------------------------
+    // Progress report — NotSupportedException
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void GetProgressReport_when_TProgress_is_not_AdoReport_throws_NotSupportedException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new AdoLoader<PersonRecord, Exception>(conn, "INSERT INTO X VALUES (1)");
+
+        Assert.Throws<NotSupportedException>(loader.GetProgressReport);
+    }
+
+
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 

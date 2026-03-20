@@ -400,6 +400,56 @@ public class AdoLoaderLoggingTests
 
 
 
+    [Fact]
+    public async Task LoadAsync_when_SkipItemCount_set_logs_Debug_skipped()
+    {
+        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        using var conn = TestDb.CreateContractLoaderConnection();
+        var loader = new AdoLoader<ContractRecord, AdoReport>
+        (
+            conn,
+            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
+            logger: logger
+        );
+        loader.SkipItemCount = 2;
+
+        await loader.LoadAsync(CreateItems(5).ToAsyncEnumerable());
+
+        Assert.Contains
+        (
+            logger.Entries,
+            e => e.Level == LogLevel.Debug
+                && e.Message.Contains("Skipping item", StringComparison.Ordinal)
+        );
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_MaximumItemCount_reached_logs_Debug()
+    {
+        var logger = new SpyLogger<AdoLoader<ContractRecord, AdoReport>>();
+        using var conn = TestDb.CreateContractLoaderConnection();
+        var loader = new AdoLoader<ContractRecord, AdoReport>
+        (
+            conn,
+            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
+            logger: logger
+        );
+        loader.MaximumItemCount = 2;
+
+        await loader.LoadAsync(CreateItems(5).ToAsyncEnumerable());
+
+        Assert.Contains
+        (
+            logger.Entries,
+            e => e.Level == LogLevel.Debug
+                && e.Message.Contains("MaximumItemCount", StringComparison.Ordinal)
+        );
+    }
+
+
+
     private static async IAsyncEnumerable<ContractRecord> FailingSource()
     {
         yield return new ContractRecord { Name = "Item1", Value = 10 };
