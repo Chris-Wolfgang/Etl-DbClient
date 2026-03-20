@@ -13,8 +13,8 @@
     <Authors>Chris Wolfgang</Authors>
     <Description>Extractor and Loader implementations for ADO.NET databases (DbConnection/DbCommand), built on Wolfgang.Etl.Abstractions.</Description>
     <Copyright>Copyright 2026 Chris Wolfgang</Copyright>
-    <PackageProjectUrl>https://github.com/Chris-Wolfgang/ETL-ADO.NET</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/Chris-Wolfgang/ETL-ADO.NET</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
