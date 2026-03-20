@@ -1,10 +1,10 @@
 # Introduction
 
-Welcome to {{PROJECT_NAME}}!
+Welcome to Wolfgang.Etl.Ado!
 
 ## Overview
 
-{{PROJECT_DESCRIPTION}}
+Extractors and Loaders for working with SQL databases using ADO.NET
 
 <!-- Add your project overview here -->
 
@@ -18,9 +18,9 @@ Welcome to {{PROJECT_NAME}}!
 
 ## Getting Help
 
-If you need help with {{PROJECT_NAME}}, please:
+If you need help with Wolfgang.Etl.Ado, please:
 
 - Check the [Getting Started](getting-started.md) guide
 - Review the [API Reference](../api/index.md)
-- Visit the [GitHub repository]({{GITHUB_REPO_URL}})
-- Open an issue on [GitHub Issues]({{GITHUB_REPO_URL}}/issues)
+- Visit the [GitHub repository](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado)
+- Open an issue on [GitHub Issues](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado/issues)
