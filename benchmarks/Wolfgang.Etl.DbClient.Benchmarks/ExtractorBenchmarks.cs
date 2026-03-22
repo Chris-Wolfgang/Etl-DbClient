@@ -8,7 +8,7 @@ using Wolfgang.Etl.DbClient;
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
 [MemoryDiagnoser]
-public class ExtractorBenchmarks
+public sealed class ExtractorBenchmarks : IDisposable
 {
     private SqliteConnection _connection = null!;
 
@@ -51,6 +51,13 @@ public class ExtractorBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
+        Dispose();
+    }
+
+
+
+    public void Dispose()
+    {
         _connection?.Dispose();
     }
 
@@ -73,14 +80,4 @@ public class ExtractorBenchmarks
 
         return count;
     }
-}
-
-
-
-public class BenchmarkRecord
-{
-    public int Id { get; set; }
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public int Age { get; set; }
 }
