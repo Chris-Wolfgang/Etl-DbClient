@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
+using Wolfgang.Etl.DbClient.Example;
 
 // ---------------------------------------------------------------
 // Example: Extract → Transform → Load using Wolfgang.Etl.DbClient
@@ -11,7 +12,7 @@ using Wolfgang.Etl.DbClient;
 
 // Set up an in-memory SQLite database
 using var connection = new SqliteConnection("Data Source=:memory:");
-await connection.OpenAsync();
+await connection.OpenAsync().ConfigureAwait(false);
 
 // Create source and destination tables
 using (var cmd = connection.CreateCommand())
@@ -34,7 +35,7 @@ using (var cmd = connection.CreateCommand())
         INSERT INTO Employees (first_name, last_name, salary) VALUES ('Dan', 'Wilson', 85000);
         INSERT INTO Employees (first_name, last_name, salary) VALUES ('Eve', 'Davis', 150000);
     ";
-    await cmd.ExecuteNonQueryAsync();
+    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 }
 
 Console.WriteLine("=== ETL Pipeline: Employees → HighEarners (salary > 80000) ===");
@@ -57,11 +58,11 @@ var loader = new DbLoader<HighEarnerRecord, DbReport>
 
 // Transform in-flight: combine first + last name
 var count = 0;
-await loader.LoadAsync(TransformAsync());
+await loader.LoadAsync(TransformAsync()).ConfigureAwait(false);
 
 async System.Collections.Generic.IAsyncEnumerable<HighEarnerRecord> TransformAsync()
 {
-    await foreach (var employee in extractor.ExtractAsync())
+    await foreach (var employee in extractor.ExtractAsync().ConfigureAwait(false))
     {
         count++;
         Console.WriteLine($"  Extracted: {employee.FirstName} {employee.LastName} (${employee.Salary:N0})");
@@ -81,27 +82,9 @@ Console.WriteLine();
 using (var cmd = connection.CreateCommand())
 {
     cmd.CommandText = "SELECT full_name, salary FROM HighEarners ORDER BY salary DESC";
-    using var reader = await cmd.ExecuteReaderAsync();
-    while (await reader.ReadAsync())
+    using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+    while (await reader.ReadAsync().ConfigureAwait(false))
     {
         Console.WriteLine($"  {reader.GetString(0)}: ${reader.GetDouble(1):N0}");
     }
-}
-
-// ---------------------------------------------------------------
-// Record types
-// ---------------------------------------------------------------
-
-public class EmployeeRecord
-{
-    public int Id { get; set; }
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public double Salary { get; set; }
-}
-
-public class HighEarnerRecord
-{
-    public string FullName { get; set; } = string.Empty;
-    public double Salary { get; set; }
 }
