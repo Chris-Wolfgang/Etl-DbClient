@@ -37,9 +37,17 @@
     <File Path="scripts/Setup-Labels.ps1" />
     <File Path="scripts/setup.ps1" />
   </Folder>
-  <Folder Name="/benchmarks/" />
-  <Folder Name="/examples/" />
-  <Folder Name="/src/" />
-  <Folder Name="/tests/" />
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/Wolfgang.Etl.DbClient.Example/Wolfgang.Etl.DbClient.Example.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj" />
+  </Folder>
 </Solution>
 
