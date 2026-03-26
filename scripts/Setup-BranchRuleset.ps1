@@ -54,7 +54,7 @@
 [CmdletBinding()]
 param(
     [Parameter()]
-    [string]$Repository = "@Chris-Wolfgang/Wolfgang.Etl.Ado",
+    [string]$Repository = "{{GITHUB_USERNAME}}/{{REPO_NAME}}",
     
     [Parameter()]
     [string]$BranchName = "main"
@@ -83,7 +83,7 @@ try {
 }
 
 # Determine repository
-if ($Repository -eq "@Chris-Wolfgang/Wolfgang.Etl.Ado" -or -not $Repository) {
+if ($Repository -eq "{{GITHUB_USERNAME}}/{{REPO_NAME}}" -or -not $Repository) {
     # Placeholders not replaced or no repository specified - auto-detect
     Write-Host "🔍 Detecting current repository..." -ForegroundColor Cyan
     try {
@@ -91,7 +91,7 @@ if ($Repository -eq "@Chris-Wolfgang/Wolfgang.Etl.Ado" -or -not $Repository) {
         $Repository = $repoInfo.nameWithOwner
         Write-Host "✅ Using repository: $Repository" -ForegroundColor Green
     } catch {
-        if ($Repository -eq "@Chris-Wolfgang/Wolfgang.Etl.Ado") {
+        if ($Repository -eq "{{GITHUB_USERNAME}}/{{REPO_NAME}}") {
             Write-Error "❌ Could not detect repository. Please run the setup script (pwsh ./scripts/setup.ps1) first to replace placeholders, or specify -Repository parameter."
         } else {
             Write-Error "❌ Could not detect repository. Please run from within a git repository or specify -Repository parameter."
@@ -108,28 +108,33 @@ Write-Host "📌 Protected branch: $BranchName`n" -ForegroundColor Cyan
 # Check if ruleset already exists
 Write-Host "🔍 Checking for existing rulesets..." -ForegroundColor Yellow
 try {
-    $matchingRulesets = gh api `
+    $rulesetOutput = gh api `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
         "/repos/$Repository/rulesets" `
         --paginate `
-        --jq '.[] | select(.name == "Protect main branch")' | ConvertFrom-Json
-    
-    $existingRuleset = $matchingRulesets | Select-Object -First 1
-    
-    if ($existingRuleset) {
-        Write-Host "✅ Ruleset 'Protect main branch' already exists!" -ForegroundColor Green
-        Write-Host "   View it at: https://github.com/$Repository/settings/rules" -ForegroundColor Cyan
-        $response = Read-Host "`nDo you want to continue anyway? This may fail. (y/N)"
-        if ($response -ne 'y' -and $response -ne 'Y') {
-            Write-Host "Exiting." -ForegroundColor Yellow
-            exit 0
+        --jq '.[] | select(.name == "Protect main branch")' 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "⚠️  Could not check for existing rulesets (API returned exit code $LASTEXITCODE). Continuing..."
+    } elseif ($rulesetOutput) {
+        $matchingRulesets = $rulesetOutput | ConvertFrom-Json
+        $existingRuleset = $matchingRulesets | Select-Object -First 1
+
+        if ($existingRuleset) {
+            Write-Host "✅ Ruleset 'Protect main branch' already exists!" -ForegroundColor Green
+            Write-Host "   View it at: https://github.com/$Repository/settings/rules" -ForegroundColor Cyan
+            $response = Read-Host "`nDo you want to continue anyway? This may fail. (y/N)"
+            if ($response -ne 'y' -and $response -ne 'Y') {
+                Write-Host "Exiting." -ForegroundColor Yellow
+                exit 0
+            }
         }
     } else {
         Write-Host "ℹ️  Ruleset 'Protect main branch' does not exist yet." -ForegroundColor Gray
     }
 } catch {
-    Write-Warning "⚠️  Could not check for existing rulesets. Continuing..."
+    Write-Warning "⚠️  Could not check for existing rulesets: $($_.Exception.Message). Continuing..."
 }
 
 # Prompt for repository type
@@ -248,7 +253,7 @@ $jsonConfig = $rulesetConfig | ConvertTo-Json -Depth 10
 
 # Save to temporary file
 $tempFile = [System.IO.Path]::GetTempFileName()
-$jsonConfig | Out-File -FilePath $tempFile -Encoding UTF8
+$jsonConfig | Out-File -FilePath $tempFile -Encoding utf8NoBOM
 
 try {
     Write-Host "🚀 Creating branch ruleset..." -ForegroundColor Cyan
@@ -329,4 +334,3 @@ try {
 }
 
 Write-Host "`n🎉 Setup complete!" -ForegroundColor Green
-
