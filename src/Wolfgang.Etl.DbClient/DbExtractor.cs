@@ -46,7 +46,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
 
     private readonly DbConnection _connection;
     private readonly string _commandText;
-    private readonly Dictionary<string, object>? _parameters;
+    private readonly IDictionary<string, object>? _parameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
     private readonly IProgressTimer? _progressTimer;
@@ -111,7 +111,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
     (
         DbConnection connection,
         string commandText,
-        Dictionary<string, object> parameters,
+        IDictionary<string, object> parameters,
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord, TProgress>>? logger = null
     )
