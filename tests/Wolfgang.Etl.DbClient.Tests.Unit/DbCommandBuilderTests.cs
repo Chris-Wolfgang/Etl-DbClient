@@ -54,7 +54,6 @@ public class DbCommandBuilderTests
     [ExcludeFromCodeCoverage]
     private class NoTableRecord
     {
-        public int Id { get; set; }
     }
 
 

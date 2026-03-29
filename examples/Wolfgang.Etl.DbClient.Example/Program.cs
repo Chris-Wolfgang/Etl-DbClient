@@ -46,7 +46,7 @@ var extractor = new DbExtractor<EmployeeRecord, DbReport>
 (
     connection,
     "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, salary AS Salary FROM Employees WHERE salary > @MinSalary",
-    new System.Collections.Generic.Dictionary<string, object> { { "MinSalary", 80000 } }
+    new System.Collections.Generic.Dictionary<string, object>(StringComparer.Ordinal) { { "MinSalary", 80000 } }
 );
 
 // LOAD: Insert into HighEarners table

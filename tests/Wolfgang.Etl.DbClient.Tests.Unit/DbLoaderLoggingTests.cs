@@ -149,7 +149,11 @@ public class DbLoaderLoggingTests
     {
         var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
         using var conn = TestDb.CreateContractLoaderConnection();
+#if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
+#else
+        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+#endif
         var loader = new DbLoader<ContractRecord, DbReport>
         (
             conn,
@@ -159,7 +163,11 @@ public class DbLoaderLoggingTests
         );
 
         await loader.LoadAsync(CreateItems(1).ToAsyncEnumerable());
+#if NETFRAMEWORK
         transaction.Commit();
+#else
+        await transaction.CommitAsync().ConfigureAwait(false);
+#endif
 
         var startMsg = logger.Entries.First(e => e.Level == LogLevel.Information);
         Assert.Contains("caller-managed", startMsg.Message, StringComparison.Ordinal);

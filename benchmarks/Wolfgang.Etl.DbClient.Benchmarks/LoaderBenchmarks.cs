@@ -38,10 +38,10 @@ public class LoaderBenchmarks
 
 
     [Benchmark]
-    public async Task Load()
+    public async Task LoadAsync()
     {
         using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
+        await connection.OpenAsync().ConfigureAwait(false);
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = @"
@@ -51,7 +51,7 @@ public class LoaderBenchmarks
                 last_name TEXT NOT NULL,
                 age INTEGER NOT NULL
             )";
-        await cmd.ExecuteNonQueryAsync();
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         var loader = new DbLoader<BenchmarkRecord, Report>
         (
@@ -59,7 +59,7 @@ public class LoaderBenchmarks
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
         );
 
-        await loader.LoadAsync(ToAsyncEnumerable(_records));
+        await loader.LoadAsync(ToAsyncEnumerable(_records)).ConfigureAwait(false);
     }
 
 
@@ -71,6 +71,6 @@ public class LoaderBenchmarks
             yield return item;
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }

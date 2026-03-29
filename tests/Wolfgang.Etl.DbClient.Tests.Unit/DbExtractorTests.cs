@@ -240,7 +240,11 @@ public class DbExtractorTests
     public async Task ExtractAsync_with_transaction_uses_provided_transaction()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+#if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
+#else
+        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+#endif
         var extractor = new DbExtractor<PersonRecord, DbReport>
         (
             conn,

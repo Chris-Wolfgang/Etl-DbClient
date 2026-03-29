@@ -265,8 +265,8 @@ public class DbLoaderTests
             async () => await loader.LoadAsync(FailingSourceAsync(2)).ConfigureAwait(false)
         );
 
-        // Rolled back — no rows persisted
-        Assert.Equal(0, await TestDb.CountRowsAsync(conn).ConfigureAwait(false));
+        // Rolled back -- no rows persisted
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
     }
 
 
@@ -280,7 +280,11 @@ public class DbLoaderTests
     {
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
+#if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
+#else
+        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+#endif
 
         var loader = new DbLoader<PersonRecord, DbReport>
         (
@@ -294,8 +298,12 @@ public class DbLoaderTests
             CreateTestRecords(3).ToAsyncEnumerable()
         );
 
-        // Loader did NOT commit — caller must commit
+        // Loader did NOT commit -- caller must commit
+#if NETFRAMEWORK
         transaction.Rollback();
+#else
+        await transaction.RollbackAsync().ConfigureAwait(false);
+#endif
         Assert.Equal(0, await TestDb.CountRowsAsync(conn));
     }
 
@@ -306,7 +314,11 @@ public class DbLoaderTests
     {
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
+#if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
+#else
+        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+#endif
 
         var loader = new DbLoader<PersonRecord, DbReport>
         (
@@ -322,8 +334,12 @@ public class DbLoaderTests
         );
 
         // Caller can still commit the partial work if desired
+#if NETFRAMEWORK
         transaction.Commit();
-        Assert.Equal(2, await TestDb.CountRowsAsync(conn).ConfigureAwait(false));
+#else
+        await transaction.CommitAsync().ConfigureAwait(false);
+#endif
+        Assert.Equal(2, await TestDb.CountRowsAsync(conn));
     }
 
 

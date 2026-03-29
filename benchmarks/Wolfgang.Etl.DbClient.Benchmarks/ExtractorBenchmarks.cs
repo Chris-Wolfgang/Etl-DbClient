@@ -20,10 +20,10 @@ public sealed class ExtractorBenchmarks : IDisposable
 
 
     [GlobalSetup]
-    public async Task Setup()
+    public async Task SetupAsync()
     {
         _connection = new SqliteConnection("Data Source=:memory:");
-        await _connection.OpenAsync();
+        await _connection.OpenAsync().ConfigureAwait(false);
 
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = @"
@@ -33,7 +33,7 @@ public sealed class ExtractorBenchmarks : IDisposable
                 last_name TEXT NOT NULL,
                 age INTEGER NOT NULL
             )";
-        await cmd.ExecuteNonQueryAsync();
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         for (var i = 0; i < RecordCount; i++)
         {
@@ -42,7 +42,7 @@ public sealed class ExtractorBenchmarks : IDisposable
             insert.Parameters.AddWithValue("@fn", $"First{i}");
             insert.Parameters.AddWithValue("@ln", $"Last{i}");
             insert.Parameters.AddWithValue("@age", 20 + (i % 60));
-            await insert.ExecuteNonQueryAsync();
+            await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
     }
 
@@ -64,7 +64,7 @@ public sealed class ExtractorBenchmarks : IDisposable
 
 
     [Benchmark]
-    public async Task<int> Extract()
+    public async Task<int> ExtractAsync()
     {
         var extractor = new DbExtractor<BenchmarkRecord, Report>
         (
@@ -73,7 +73,7 @@ public sealed class ExtractorBenchmarks : IDisposable
         );
 
         var count = 0;
-        await foreach (var _ in extractor.ExtractAsync())
+        await foreach (var _ in extractor.ExtractAsync().ConfigureAwait(false))
         {
             count++;
         }
