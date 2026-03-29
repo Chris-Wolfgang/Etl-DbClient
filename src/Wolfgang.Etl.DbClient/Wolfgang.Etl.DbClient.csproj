@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net481;netstandard2.0;net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <Title>Wolfgang.Etl.DbClient</Title>
+    <Authors>Chris Wolfgang</Authors>
+    <Description>Extractor and Loader implementations for ADO.NET databases (DbConnection/DbCommand), built on Wolfgang.Etl.Abstractions.</Description>
+    <Copyright>Copyright 2026 Chris Wolfgang</Copyright>
+    <PackageProjectUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <SignAssembly>False</SignAssembly>
+    <PackageTags>ETL;Extract-Transform-Load;ADO.NET;Database;SQL;DbConnection</PackageTags>
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.10.2" />
+  </ItemGroup>
+
+</Project>
