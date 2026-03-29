@@ -302,7 +302,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
     private static Task DisposeTransactionAsync(DbTransaction transaction)
     {
-#if NET8_0_OR_GREATER
+#if NET5_0_OR_GREATER
         return transaction.DisposeAsync().AsTask();
 #else
 #pragma warning disable CA1849, VSTHRD103
@@ -316,7 +316,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
     private async Task<DbTransaction> BeginAutoTransactionAsync(CancellationToken token)
     {
-#if NET8_0_OR_GREATER
+#if NET5_0_OR_GREATER
         var transaction = await _connection.BeginTransactionAsync(token).ConfigureAwait(false);
 #else
         _ = token; // Used on net8.0+
@@ -331,7 +331,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
     private async Task CommitAutoTransactionAsync(DbTransaction transaction, CancellationToken token)
     {
-#if NET8_0_OR_GREATER
+#if NET5_0_OR_GREATER
         await transaction.CommitAsync(token).ConfigureAwait(false);
 #else
         _ = token; // Used on net8.0+
@@ -347,7 +347,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     {
         try
         {
-#if NET8_0_OR_GREATER
+#if NET5_0_OR_GREATER
             await transaction.RollbackAsync(token).ConfigureAwait(false);
 #else
             _ = token; // Used on net8.0+

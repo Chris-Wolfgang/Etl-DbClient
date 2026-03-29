@@ -152,7 +152,7 @@ public class DbExtractorTests
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People WHERE age > @MinAge",
-            new Dictionary<string, object> { { "MinAge", 23 } }
+            new Dictionary<string, object>(StringComparer.Ordinal) { { "MinAge", 23 } }
         );
 
         var results = await extractor.ExtractAsync().ToListAsync();

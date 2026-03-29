@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
-public class AdoUpdateTests
+public class DbUpdateTests
 {
     // ------------------------------------------------------------------
     // WriteMode.Update — auto-generated

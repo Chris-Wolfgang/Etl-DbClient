@@ -262,7 +262,7 @@ public class DbLoaderTests
         // Create a source that fails partway through
         await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await loader.LoadAsync(FailingSource(2))
+            async () => await loader.LoadAsync(FailingSourceAsync(2)).ConfigureAwait(false)
         );
 
         // Rolled back — no rows persisted
@@ -318,7 +318,7 @@ public class DbLoaderTests
         // Loader throws but does NOT rollback the caller's transaction
         await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await loader.LoadAsync(FailingSource(2))
+            async () => await loader.LoadAsync(FailingSourceAsync(2)).ConfigureAwait(false)
         );
 
         // Caller can still commit the partial work if desired
@@ -394,7 +394,7 @@ public class DbLoaderTests
 
 
 
-    private static async IAsyncEnumerable<PersonRecord> FailingSource(int succeedCount)
+    private static async IAsyncEnumerable<PersonRecord> FailingSourceAsync(int succeedCount)
     {
         for (var i = 0; i < succeedCount; i++)
         {
