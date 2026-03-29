@@ -266,7 +266,7 @@ public class DbLoaderTests
         );
 
         // Rolled back — no rows persisted
-        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn).ConfigureAwait(false));
     }
 
 
@@ -323,7 +323,7 @@ public class DbLoaderTests
 
         // Caller can still commit the partial work if desired
         transaction.Commit();
-        Assert.Equal(2, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(2, await TestDb.CountRowsAsync(conn).ConfigureAwait(false));
     }
 
 
@@ -406,7 +406,7 @@ public class DbLoaderTests
             };
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
         throw new InvalidOperationException("Simulated failure");
     }
 }

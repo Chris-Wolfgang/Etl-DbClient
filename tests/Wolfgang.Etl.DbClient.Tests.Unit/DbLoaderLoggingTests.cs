@@ -237,7 +237,7 @@ public class DbLoaderLoggingTests
     private static async IAsyncEnumerable<ContractRecord> FailingSourceAsync()
     {
         yield return new ContractRecord { Name = "Item1", Value = 10 };
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
         throw new InvalidOperationException("Simulated failure");
     }
 }

@@ -6,6 +6,7 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);MA0004;MA0048;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
