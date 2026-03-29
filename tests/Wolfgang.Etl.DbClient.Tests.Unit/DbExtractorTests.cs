@@ -243,7 +243,7 @@ public class DbExtractorTests
 #if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
 #else
-        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+        using var transaction = await conn.BeginTransactionAsync();
 #endif
         var extractor = new DbExtractor<PersonRecord, DbReport>
         (

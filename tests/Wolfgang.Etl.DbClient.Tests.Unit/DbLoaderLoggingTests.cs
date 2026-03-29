@@ -111,7 +111,7 @@ public class DbLoaderLoggingTests
 
         await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await loader.LoadAsync(FailingSourceAsync()).ConfigureAwait(false)
+            async () => await loader.LoadAsync(FailingSourceAsync())
         );
 
         Assert.Contains
@@ -152,7 +152,7 @@ public class DbLoaderLoggingTests
 #if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
 #else
-        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+        using var transaction = await conn.BeginTransactionAsync();
 #endif
         var loader = new DbLoader<ContractRecord, DbReport>
         (
@@ -166,7 +166,7 @@ public class DbLoaderLoggingTests
 #if NETFRAMEWORK
         transaction.Commit();
 #else
-        await transaction.CommitAsync().ConfigureAwait(false);
+        await transaction.CommitAsync();
 #endif
 
         var startMsg = logger.Entries.First(e => e.Level == LogLevel.Information);
@@ -245,7 +245,7 @@ public class DbLoaderLoggingTests
     private static async IAsyncEnumerable<ContractRecord> FailingSourceAsync()
     {
         yield return new ContractRecord { Name = "Item1", Value = 10 };
-        await Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask;
         throw new InvalidOperationException("Simulated failure");
     }
 }

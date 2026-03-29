@@ -262,7 +262,7 @@ public class DbLoaderTests
         // Create a source that fails partway through
         await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await loader.LoadAsync(FailingSourceAsync(2)).ConfigureAwait(false)
+            async () => await loader.LoadAsync(FailingSourceAsync(2))
         );
 
         // Rolled back -- no rows persisted
@@ -283,7 +283,7 @@ public class DbLoaderTests
 #if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
 #else
-        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+        using var transaction = await conn.BeginTransactionAsync();
 #endif
 
         var loader = new DbLoader<PersonRecord, DbReport>
@@ -302,7 +302,7 @@ public class DbLoaderTests
 #if NETFRAMEWORK
         transaction.Rollback();
 #else
-        await transaction.RollbackAsync().ConfigureAwait(false);
+        await transaction.RollbackAsync();
 #endif
         Assert.Equal(0, await TestDb.CountRowsAsync(conn));
     }
@@ -317,7 +317,7 @@ public class DbLoaderTests
 #if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
 #else
-        using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+        using var transaction = await conn.BeginTransactionAsync();
 #endif
 
         var loader = new DbLoader<PersonRecord, DbReport>
@@ -330,14 +330,14 @@ public class DbLoaderTests
         // Loader throws but does NOT rollback the caller's transaction
         await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await loader.LoadAsync(FailingSourceAsync(2)).ConfigureAwait(false)
+            async () => await loader.LoadAsync(FailingSourceAsync(2))
         );
 
         // Caller can still commit the partial work if desired
 #if NETFRAMEWORK
         transaction.Commit();
 #else
-        await transaction.CommitAsync().ConfigureAwait(false);
+        await transaction.CommitAsync();
 #endif
         Assert.Equal(2, await TestDb.CountRowsAsync(conn));
     }
@@ -422,7 +422,7 @@ public class DbLoaderTests
             };
         }
 
-        await Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask;
         throw new InvalidOperationException("Simulated failure");
     }
 }

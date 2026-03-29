@@ -30,7 +30,7 @@ internal static class TestDb
                 last_name TEXT NOT NULL,
                 age INTEGER NOT NULL
             )";
-        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        await cmd.ExecuteNonQueryAsync();
 
         for (var i = 1; i <= rowCount; i++)
         {
@@ -39,7 +39,7 @@ internal static class TestDb
             insert.Parameters.AddWithValue("@fn", $"First{i}");
             insert.Parameters.AddWithValue("@ln", $"Last{i}");
             insert.Parameters.AddWithValue("@age", 20 + i);
-            await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await insert.ExecuteNonQueryAsync();
         }
 
         return connection;
@@ -57,7 +57,7 @@ internal static class TestDb
                 last_name TEXT NOT NULL,
                 age INTEGER NOT NULL
             )";
-        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        await cmd.ExecuteNonQueryAsync();
     }
 
 
@@ -66,7 +66,7 @@ internal static class TestDb
     {
         using var cmd = connection.CreateCommand();
         cmd.CommandText = $"SELECT COUNT(*) FROM {table}";
-        var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+        var result = await cmd.ExecuteScalarAsync();
         return System.Convert.ToInt32(result, CultureInfo.InvariantCulture);
     }
 
