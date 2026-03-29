@@ -1,64 +1,49 @@
-# Wolfgang.Etl.Ado
+# Wolfgang.Etl.DbClient
 
 Extractors and Loaders for working with SQL databases using ADO.NET
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-Multi--Targeted-purple.svg)](https://dotnet.microsoft.com/)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/Chris-Wolfgang/Etl-DbClient)
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
-dotnet add package Wolfgang.Etl.Ado
+dotnet add package Wolfgang.Etl.DbClient
 ```
 
 **NuGet Package:** Coming soon to NuGet.org
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
-- **GitHub Repository:** [https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado)
-- **API Documentation:** https://Chris-Wolfgang.github.io/Wolfgang.Etl.Ado/
+- **GitHub Repository:** [https://github.com/Chris-Wolfgang/Etl-DbClient](https://github.com/Chris-Wolfgang/Etl-DbClient)
+- **API Documentation:** https://Chris-Wolfgang.github.io/Etl-DbClient/
 - **Formatting Guide:** [README-FORMATTING.md](README-FORMATTING.md)
 - **Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
-## 🚀 Quick Start
-
-{{QUICK_START_EXAMPLE}}
-
----
-
-## ✨ Features
-
-{{FEATURES_TABLE}}
-
-**Examples:**
-{{FEATURE_EXAMPLES}}
-
----
-
-## 🎯 Target Frameworks
+## Target Frameworks
 
 | Framework | Versions |
 |-----------|----------|
-| .NET Framework | .NET 4.6.2, .NET 4.7.0, .NET 4.7.1, .NET 4.7.2, .NET 4.8, .NET 4.8.1 |
-| .NET Core | .NET Core 3.1 |
-| .NET | .NET 5.0, .NET 6.0, .NET 7.0, .NET 8.0, .NET 9.0, .NET 10.0 |
+| .NET Framework | .NET 4.6.2, .NET 4.8.1 |
+| .NET Standard | .NET Standard 2.0 |
+| .NET | .NET 8.0, .NET 10.0 |
 
 ---
 
-## 🔍 Code Quality & Static Analysis
+## Code Quality & Static Analysis
 
 This project enforces **strict code quality standards** through **7 specialized analyzers** and custom async-first rules:
 
@@ -77,18 +62,18 @@ This project enforces **strict code quality standards** through **7 specialized 
 This library uses **`BannedSymbols.txt`** to prohibit synchronous APIs and enforce async-first patterns:
 
 **Blocked APIs Include:**
-- ❌ `Task.Wait()`, `Task.Result` - Use `await` instead
-- ❌ `Thread.Sleep()` - Use `await Task.Delay()` instead
-- ❌ Synchronous file I/O (`File.ReadAllText`) - Use async versions
-- ❌ Synchronous stream operations - Use `ReadAsync()`, `WriteAsync()`
-- ❌ `Parallel.For/ForEach` - Use `Task.WhenAll()` or `Parallel.ForEachAsync()`
-- ❌ Obsolete APIs (`WebClient`, `BinaryFormatter`)
+- `Task.Wait()`, `Task.Result` - Use `await` instead
+- `Thread.Sleep()` - Use `await Task.Delay()` instead
+- Synchronous file I/O (`File.ReadAllText`) - Use async versions
+- Synchronous stream operations - Use `ReadAsync()`, `WriteAsync()`
+- `Parallel.For/ForEach` - Use `Task.WhenAll()` or `Parallel.ForEachAsync()`
+- Obsolete APIs (`WebClient`, `BinaryFormatter`)
 
 **Why?** To ensure all code is **truly async** and **non-blocking** for optimal performance in async contexts.
 
 ---
 
-## 🛠️ Building from Source
+## Building from Source
 
 ### Prerequisites
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download) or later
@@ -98,8 +83,8 @@ This library uses **`BannedSymbols.txt`** to prohibit synchronous APIs and enfor
 
 ```bash
 # Clone the repository
-git clone https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado.git
-cd Wolfgang.Etl.Ado
+git clone https://github.com/Chris-Wolfgang/Etl-DbClient.git
+cd Etl-DbClient
 
 # Restore dependencies
 dotnet restore
@@ -164,18 +149,10 @@ docfx build --serve
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Code quality standards
 - Build and test instructions
 - Pull request guidelines
 - Analyzer configuration details
-
----
-
-
-## 🙏 Acknowledgments
-
-{{ACKNOWLEDGMENTS}}
-

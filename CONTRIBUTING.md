@@ -1,6 +1,6 @@
-# Contributing to Wolfgang.Etl.Ado
+# Contributing to Wolfgang.Etl.DbClient
 
-Thank you for your interest in contributing to **Wolfgang.Etl.Ado**! We welcome contributions to help improve this project.
+Thank you for your interest in contributing to **Wolfgang.Etl.DbClient**! We welcome contributions to help improve this project.
 
 ## How Can You Contribute?
 
