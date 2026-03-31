@@ -429,3 +429,13 @@ nuget-packages/
 docfx_project/_site/
 docfx_project/obj/
 
+# Generated documentation (built by CI/CD)
+docs/*
+!docs/.gitkeep
+!docs/LICENSE-SELECTION.md
+!docs/README-FORMATTING.md
+!docs/RELEASE-WORKFLOW-SETUP.md
+!docs/TEMPLATE-PLACEHOLDERS.md
+!docs/WORKFLOW_SECURITY.md
+.nuget/nuget.exe
+
