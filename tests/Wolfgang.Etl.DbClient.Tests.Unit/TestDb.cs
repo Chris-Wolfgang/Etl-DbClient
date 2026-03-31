@@ -1,7 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
