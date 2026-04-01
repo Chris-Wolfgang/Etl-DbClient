@@ -1,0 +1,313 @@
+### YamlMime:XRefMap
+sorted: true
+references:
+- uid: Wolfgang.Etl.DbClient
+  name: Wolfgang.Etl.DbClient
+  href: api/Wolfgang.Etl.DbClient.html
+  commentId: N:Wolfgang.Etl.DbClient
+  fullName: Wolfgang.Etl.DbClient
+  nameWithType: Wolfgang.Etl.DbClient
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2
+  name: DbExtractor<TRecord, TProgress>
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html
+  commentId: T:Wolfgang.Etl.DbClient.DbExtractor`2
+  name.vb: DbExtractor(Of TRecord, TProgress)
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress)
+  nameWithType: DbExtractor<TRecord, TProgress>
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress)
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.#ctor(System.Data.Common.DbConnection,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0,`1}})
+  name: DbExtractor(DbConnection, DbTransaction?, ILogger<DbExtractor<TRecord, TProgress>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2__ctor_System_Data_Common_DbConnection_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0__1___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`2.#ctor(System.Data.Common.DbConnection,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0,`1}})
+  name.vb: New(DbConnection, DbTransaction, ILogger(Of DbExtractor(Of TRecord, TProgress)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.DbExtractor(System.Data.Common.DbConnection, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).New(System.Data.Common.DbConnection, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress)))
+  nameWithType: DbExtractor<TRecord, TProgress>.DbExtractor(DbConnection, DbTransaction?, ILogger<DbExtractor<TRecord, TProgress>>?)
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).New(DbConnection, DbTransaction, ILogger(Of DbExtractor(Of TRecord, TProgress)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.#ctor(System.Data.Common.DbConnection,System.String,System.Collections.Generic.IDictionary{System.String,System.Object},System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0,`1}})
+  name: DbExtractor(DbConnection, string, IDictionary<string, object>, DbTransaction?, ILogger<DbExtractor<TRecord, TProgress>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2__ctor_System_Data_Common_DbConnection_System_String_System_Collections_Generic_IDictionary_System_String_System_Object__System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0__1___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`2.#ctor(System.Data.Common.DbConnection,System.String,System.Collections.Generic.IDictionary{System.String,System.Object},System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0,`1}})
+  name.vb: New(DbConnection, String, IDictionary(Of String, Object), DbTransaction, ILogger(Of DbExtractor(Of TRecord, TProgress)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.DbExtractor(System.Data.Common.DbConnection, string, System.Collections.Generic.IDictionary<string, object>, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).New(System.Data.Common.DbConnection, String, System.Collections.Generic.IDictionary(Of String, Object), System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress)))
+  nameWithType: DbExtractor<TRecord, TProgress>.DbExtractor(DbConnection, string, IDictionary<string, object>, DbTransaction?, ILogger<DbExtractor<TRecord, TProgress>>?)
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).New(DbConnection, String, IDictionary(Of String, Object), DbTransaction, ILogger(Of DbExtractor(Of TRecord, TProgress)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0,`1}})
+  name: DbExtractor(DbConnection, string, DbTransaction?, ILogger<DbExtractor<TRecord, TProgress>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2__ctor_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0__1___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`2.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0,`1}})
+  name.vb: New(DbConnection, String, DbTransaction, ILogger(Of DbExtractor(Of TRecord, TProgress)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.DbExtractor(System.Data.Common.DbConnection, string, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).New(System.Data.Common.DbConnection, String, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress)))
+  nameWithType: DbExtractor<TRecord, TProgress>.DbExtractor(DbConnection, string, DbTransaction?, ILogger<DbExtractor<TRecord, TProgress>>?)
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).New(DbConnection, String, DbTransaction, ILogger(Of DbExtractor(Of TRecord, TProgress)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.#ctor*
+  name: DbExtractor
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2__ctor_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`2.#ctor
+  isSpec: "True"
+  name.vb: New
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.DbExtractor
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).New
+  nameWithType: DbExtractor<TRecord, TProgress>.DbExtractor
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).New
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.CommandText
+  name: CommandText
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_CommandText
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractor`2.CommandText
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.CommandText
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).CommandText
+  nameWithType: DbExtractor<TRecord, TProgress>.CommandText
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).CommandText
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.CommandText*
+  name: CommandText
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_CommandText_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`2.CommandText
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.CommandText
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).CommandText
+  nameWithType: DbExtractor<TRecord, TProgress>.CommandText
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).CommandText
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressReport
+  name: CreateProgressReport()
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_CreateProgressReport
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressReport
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.CreateProgressReport()
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).CreateProgressReport()
+  nameWithType: DbExtractor<TRecord, TProgress>.CreateProgressReport()
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).CreateProgressReport()
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressReport*
+  name: CreateProgressReport
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_CreateProgressReport_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressReport
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.CreateProgressReport
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).CreateProgressReport
+  nameWithType: DbExtractor<TRecord, TProgress>.CreateProgressReport
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).CreateProgressReport
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressTimer(System.IProgress{`1})
+  name: CreateProgressTimer(IProgress<TProgress>)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_CreateProgressTimer_System_IProgress__1__
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressTimer(System.IProgress{`1})
+  name.vb: CreateProgressTimer(IProgress(Of TProgress))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.CreateProgressTimer(System.IProgress<TProgress>)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).CreateProgressTimer(System.IProgress(Of TProgress))
+  nameWithType: DbExtractor<TRecord, TProgress>.CreateProgressTimer(IProgress<TProgress>)
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).CreateProgressTimer(IProgress(Of TProgress))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressTimer*
+  name: CreateProgressTimer
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_CreateProgressTimer_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`2.CreateProgressTimer
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.CreateProgressTimer
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).CreateProgressTimer
+  nameWithType: DbExtractor<TRecord, TProgress>.CreateProgressTimer
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).CreateProgressTimer
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.ExtractWorkerAsync(System.Threading.CancellationToken)
+  name: ExtractWorkerAsync(CancellationToken)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_ExtractWorkerAsync_System_Threading_CancellationToken_
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`2.ExtractWorkerAsync(System.Threading.CancellationToken)
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.ExtractWorkerAsync(System.Threading.CancellationToken)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).ExtractWorkerAsync(System.Threading.CancellationToken)
+  nameWithType: DbExtractor<TRecord, TProgress>.ExtractWorkerAsync(CancellationToken)
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).ExtractWorkerAsync(CancellationToken)
+- uid: Wolfgang.Etl.DbClient.DbExtractor`2.ExtractWorkerAsync*
+  name: ExtractWorkerAsync
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-2.html#Wolfgang_Etl_DbClient_DbExtractor_2_ExtractWorkerAsync_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`2.ExtractWorkerAsync
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord, TProgress>.ExtractWorkerAsync
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord, TProgress).ExtractWorkerAsync
+  nameWithType: DbExtractor<TRecord, TProgress>.ExtractWorkerAsync
+  nameWithType.vb: DbExtractor(Of TRecord, TProgress).ExtractWorkerAsync
+- uid: Wolfgang.Etl.DbClient.DbLoader`2
+  name: DbLoader<TRecord, TProgress>
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html
+  commentId: T:Wolfgang.Etl.DbClient.DbLoader`2
+  name.vb: DbLoader(Of TRecord, TProgress)
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress)
+  nameWithType: DbLoader<TRecord, TProgress>
+  nameWithType.vb: DbLoader(Of TRecord, TProgress)
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0,`1}})
+  name: DbLoader(DbConnection, string, DbTransaction?, ILogger<DbLoader<TRecord, TProgress>>?)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2__ctor_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0__1___
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`2.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0,`1}})
+  name.vb: New(DbConnection, String, DbTransaction, ILogger(Of DbLoader(Of TRecord, TProgress)))
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.DbLoader(System.Data.Common.DbConnection, string, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).New(System.Data.Common.DbConnection, String, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress)))
+  nameWithType: DbLoader<TRecord, TProgress>.DbLoader(DbConnection, string, DbTransaction?, ILogger<DbLoader<TRecord, TProgress>>?)
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).New(DbConnection, String, DbTransaction, ILogger(Of DbLoader(Of TRecord, TProgress)))
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0,`1}})
+  name: DbLoader(DbConnection, WriteMode, DbTransaction?, ILogger<DbLoader<TRecord, TProgress>>?)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_WriteMode_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0__1___
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`2.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0,`1}})
+  name.vb: New(DbConnection, WriteMode, DbTransaction, ILogger(Of DbLoader(Of TRecord, TProgress)))
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.DbLoader(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.WriteMode, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).New(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.WriteMode, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress)))
+  nameWithType: DbLoader<TRecord, TProgress>.DbLoader(DbConnection, WriteMode, DbTransaction?, ILogger<DbLoader<TRecord, TProgress>>?)
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).New(DbConnection, WriteMode, DbTransaction, ILogger(Of DbLoader(Of TRecord, TProgress)))
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.#ctor*
+  name: DbLoader
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2__ctor_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`2.#ctor
+  isSpec: "True"
+  name.vb: New
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.DbLoader
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).New
+  nameWithType: DbLoader<TRecord, TProgress>.DbLoader
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).New
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.CommandText
+  name: CommandText
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_CommandText
+  commentId: P:Wolfgang.Etl.DbClient.DbLoader`2.CommandText
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.CommandText
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).CommandText
+  nameWithType: DbLoader<TRecord, TProgress>.CommandText
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).CommandText
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.CommandText*
+  name: CommandText
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_CommandText_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`2.CommandText
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.CommandText
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).CommandText
+  nameWithType: DbLoader<TRecord, TProgress>.CommandText
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).CommandText
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressReport
+  name: CreateProgressReport()
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressReport
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressReport
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.CreateProgressReport()
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).CreateProgressReport()
+  nameWithType: DbLoader<TRecord, TProgress>.CreateProgressReport()
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).CreateProgressReport()
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressReport*
+  name: CreateProgressReport
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressReport_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressReport
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.CreateProgressReport
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).CreateProgressReport
+  nameWithType: DbLoader<TRecord, TProgress>.CreateProgressReport
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).CreateProgressReport
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressTimer(System.IProgress{`1})
+  name: CreateProgressTimer(IProgress<TProgress>)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressTimer_System_IProgress__1__
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressTimer(System.IProgress{`1})
+  name.vb: CreateProgressTimer(IProgress(Of TProgress))
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.CreateProgressTimer(System.IProgress<TProgress>)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).CreateProgressTimer(System.IProgress(Of TProgress))
+  nameWithType: DbLoader<TRecord, TProgress>.CreateProgressTimer(IProgress<TProgress>)
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).CreateProgressTimer(IProgress(Of TProgress))
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressTimer*
+  name: CreateProgressTimer
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressTimer_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressTimer
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.CreateProgressTimer
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).CreateProgressTimer
+  nameWithType: DbLoader<TRecord, TProgress>.CreateProgressTimer
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).CreateProgressTimer
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable{`0},System.Threading.CancellationToken)
+  name: LoadWorkerAsync(IAsyncEnumerable<TRecord>, CancellationToken)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_LoadWorkerAsync_System_Collections_Generic_IAsyncEnumerable__0__System_Threading_CancellationToken_
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`2.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable{`0},System.Threading.CancellationToken)
+  name.vb: LoadWorkerAsync(IAsyncEnumerable(Of TRecord), CancellationToken)
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable<TRecord>, System.Threading.CancellationToken)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable(Of TRecord), System.Threading.CancellationToken)
+  nameWithType: DbLoader<TRecord, TProgress>.LoadWorkerAsync(IAsyncEnumerable<TRecord>, CancellationToken)
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).LoadWorkerAsync(IAsyncEnumerable(Of TRecord), CancellationToken)
+- uid: Wolfgang.Etl.DbClient.DbLoader`2.LoadWorkerAsync*
+  name: LoadWorkerAsync
+  href: api/Wolfgang.Etl.DbClient.DbLoader-2.html#Wolfgang_Etl_DbClient_DbLoader_2_LoadWorkerAsync_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`2.LoadWorkerAsync
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord, TProgress>.LoadWorkerAsync
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord, TProgress).LoadWorkerAsync
+  nameWithType: DbLoader<TRecord, TProgress>.LoadWorkerAsync
+  nameWithType.vb: DbLoader(Of TRecord, TProgress).LoadWorkerAsync
+- uid: Wolfgang.Etl.DbClient.DbReport
+  name: DbReport
+  href: api/Wolfgang.Etl.DbClient.DbReport.html
+  commentId: T:Wolfgang.Etl.DbClient.DbReport
+  fullName: Wolfgang.Etl.DbClient.DbReport
+  nameWithType: DbReport
+- uid: Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64)
+  name: DbReport(int, int, string, long)
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport__ctor_System_Int32_System_Int32_System_String_System_Int64_
+  commentId: M:Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64)
+  name.vb: New(Integer, Integer, String, Long)
+  fullName: Wolfgang.Etl.DbClient.DbReport.DbReport(int, int, string, long)
+  fullName.vb: Wolfgang.Etl.DbClient.DbReport.New(Integer, Integer, String, Long)
+  nameWithType: DbReport.DbReport(int, int, string, long)
+  nameWithType.vb: DbReport.New(Integer, Integer, String, Long)
+- uid: Wolfgang.Etl.DbClient.DbReport.#ctor*
+  name: DbReport
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport__ctor_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbReport.#ctor
+  isSpec: "True"
+  name.vb: New
+  fullName: Wolfgang.Etl.DbClient.DbReport.DbReport
+  fullName.vb: Wolfgang.Etl.DbClient.DbReport.New
+  nameWithType: DbReport.DbReport
+  nameWithType.vb: DbReport.New
+- uid: Wolfgang.Etl.DbClient.DbReport.CommandText
+  name: CommandText
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport_CommandText
+  commentId: P:Wolfgang.Etl.DbClient.DbReport.CommandText
+  fullName: Wolfgang.Etl.DbClient.DbReport.CommandText
+  nameWithType: DbReport.CommandText
+- uid: Wolfgang.Etl.DbClient.DbReport.CommandText*
+  name: CommandText
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport_CommandText_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbReport.CommandText
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbReport.CommandText
+  nameWithType: DbReport.CommandText
+- uid: Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount
+  name: CurrentSkippedItemCount
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport_CurrentSkippedItemCount
+  commentId: P:Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount
+  fullName: Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount
+  nameWithType: DbReport.CurrentSkippedItemCount
+- uid: Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount*
+  name: CurrentSkippedItemCount
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport_CurrentSkippedItemCount_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount
+  nameWithType: DbReport.CurrentSkippedItemCount
+- uid: Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds
+  name: ElapsedMilliseconds
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport_ElapsedMilliseconds
+  commentId: P:Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds
+  fullName: Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds
+  nameWithType: DbReport.ElapsedMilliseconds
+- uid: Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds*
+  name: ElapsedMilliseconds
+  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport_ElapsedMilliseconds_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds
+  nameWithType: DbReport.ElapsedMilliseconds
+- uid: Wolfgang.Etl.DbClient.WriteMode
+  name: WriteMode
+  href: api/Wolfgang.Etl.DbClient.WriteMode.html
+  commentId: T:Wolfgang.Etl.DbClient.WriteMode
+  fullName: Wolfgang.Etl.DbClient.WriteMode
+  nameWithType: WriteMode
+- uid: Wolfgang.Etl.DbClient.WriteMode.Insert
+  name: Insert
+  href: api/Wolfgang.Etl.DbClient.WriteMode.html#Wolfgang_Etl_DbClient_WriteMode_Insert
+  commentId: F:Wolfgang.Etl.DbClient.WriteMode.Insert
+  fullName: Wolfgang.Etl.DbClient.WriteMode.Insert
+  nameWithType: WriteMode.Insert
+- uid: Wolfgang.Etl.DbClient.WriteMode.Update
+  name: Update
+  href: api/Wolfgang.Etl.DbClient.WriteMode.html#Wolfgang_Etl_DbClient_WriteMode_Update
+  commentId: F:Wolfgang.Etl.DbClient.WriteMode.Update
+  fullName: Wolfgang.Etl.DbClient.WriteMode.Update
+  nameWithType: WriteMode.Update

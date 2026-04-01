@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class DbLoader&lt;TRecord, TProgress&gt; | Wolfgang.Etl.DbClient Documentation </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class DbLoader&lt;TRecord, TProgress&gt; | Wolfgang.Etl.DbClient Documentation ">
+      
+      <meta name="description" content="Loads records into a database via INSERT or UPDATE commands. Uses Dapper for parameter mapping from POCO properties.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.1.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbLoader_2.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbLoader%602%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="Wolfgang.Etl.DbClient">
+            Wolfgang.Etl.DbClient
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+
+      <div class="content">
+        <div class="actionbar">
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Wolfgang.Etl.DbClient.DbLoader`2">
+
+
+
+  <h1 id="Wolfgang_Etl_DbClient_DbLoader_2" data-uid="Wolfgang.Etl.DbClient.DbLoader`2" class="text-break">
+Class DbLoader&lt;TRecord, TProgress&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L45"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Wolfgang.html">Wolfgang</a>.<a class="xref" href="Wolfgang.Etl.html">Etl</a>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Wolfgang.Etl.DbClient.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Loads records into a database via INSERT or UPDATE commands.
+Uses Dapper for parameter mapping from POCO properties.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class DbLoader&lt;TRecord, TProgress&gt; : LoaderBase&lt;TRecord, TProgress&gt;, ILoadWithProgressAndCancellationAsync&lt;TRecord, TProgress&gt;, ILoadWithProgressAsync&lt;TRecord, TProgress&gt;, ILoadWithCancellationAsync&lt;TRecord&gt;, ILoadAsync&lt;TRecord&gt; where TRecord : notnull where TProgress : notnull</code></pre>
+  </div>
+
+
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TRecord</code></dt>
+    <dd><p>The POCO type representing a single row. Properties are mapped to command
+parameters by name or <code>[Column(&quot;name&quot;)]</code> attribute.</p>
+</dd>
+    <dt><code>TProgress</code></dt>
+    <dd><p>The type of the progress object reported during loading.
+Use <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a> for the default implementation.</p>
+</dd>
+  </dl>
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">LoaderBase</span>&lt;TRecord, TProgress&gt;</div>
+      <div><span class="xref">DbLoader&lt;TRecord, TProgress&gt;</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><span class="xref">ILoadWithProgressAndCancellationAsync</span>&lt;TRecord, TProgress&gt;</div>
+      <div><span class="xref">ILoadWithProgressAsync</span>&lt;TRecord, TProgress&gt;</div>
+      <div><span class="xref">ILoadWithCancellationAsync</span>&lt;TRecord&gt;</div>
+      <div><span class="xref">ILoadAsync</span>&lt;TRecord&gt;</div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, TProgress&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, TProgress&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, TProgress&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;, IProgress&lt;TProgress&gt;)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, TProgress&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;, IProgress&lt;TProgress&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iprogress-1">LoaderBase&lt;TRecord, TProgress&gt;.CreateProgressTimer(IProgress&lt;TProgress&gt;)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, TProgress&gt;.LoadWorkerAsync(IAsyncEnumerable&lt;TRecord&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.CreateProgressReport()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.IncrementCurrentItemCount()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.IncrementCurrentSkippedItemCount()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.ReportingInterval</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.CurrentItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.CurrentSkippedItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.MaximumItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, TProgress&gt;.SkipItemCount</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+  <h2 id="Wolfgang_Etl_DbClient_DbLoader_2_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+Two transaction modes are supported:
+</p>
+<ul><li><b>Caller-managed</b> — pass a <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a> to the constructor.
+  The loader uses it but never commits or rolls back. The caller is responsible for
+  transaction lifetime.</li><li><b>Auto-managed</b> — pass <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a> for the transaction parameter.
+  The loader creates its own transaction, commits on success, and rolls back on
+  exception.</li></ul>
+<p>
+The caller owns the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a> lifetime — the loader does not
+open, close, or dispose it. The connection must be open before calling
+<code>LoadAsync</code>.
+</p>
+</div>
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_2__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_2__ctor_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0__1___" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0,`1}})">
+  DbLoader(DbConnection, string, DbTransaction?, ILogger&lt;DbLoader&lt;TRecord, TProgress&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L81"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-2.html">DbLoader&lt;TRecord, TProgress&gt;</a> with a custom SQL command.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public DbLoader(DbConnection connection, string commandText, DbTransaction? transaction = null, ILogger&lt;DbLoader&lt;TRecord, TProgress&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>connection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a></dt>
+    <dd><p>An open <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a>. The caller owns its lifetime.</p>
+</dd>
+    <dt><code>commandText</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The SQL INSERT or UPDATE command to execute per record.</p>
+</dd>
+    <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
+    <dd><p>An optional <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a>. If null, the loader creates and manages
+its own transaction (commit on success, rollback on failure).</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-2.html">DbLoader</a>&lt;TRecord, TProgress&gt;&gt;</dt>
+    <dd><p>An optional logger for diagnostic output.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p><code class="paramref">connection</code> or <code class="paramref">commandText</code> is null.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_2__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_2__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_WriteMode_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0__1___" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0,`1}})">
+  DbLoader(DbConnection, WriteMode, DbTransaction?, ILogger&lt;DbLoader&lt;TRecord, TProgress&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L116"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-2.html">DbLoader&lt;TRecord, TProgress&gt;</a> that auto-generates
+an INSERT statement from <code>[Table]</code> and <code>[Column]</code> attributes on
+<code class="typeparamref">TRecord</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public DbLoader(DbConnection connection, WriteMode writeMode, DbTransaction? transaction = null, ILogger&lt;DbLoader&lt;TRecord, TProgress&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>connection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a></dt>
+    <dd><p>An open <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a>. The caller owns its lifetime.</p>
+</dd>
+    <dt><code>writeMode</code> <a class="xref" href="Wolfgang.Etl.DbClient.WriteMode.html">WriteMode</a></dt>
+    <dd><p>Determines whether to generate INSERT or UPDATE commands.</p>
+</dd>
+    <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
+    <dd><p>An optional <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a>. If null, the loader creates and manages
+its own transaction.</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-2.html">DbLoader</a>&lt;TRecord, TProgress&gt;&gt;</dt>
+    <dd><p>An optional logger for diagnostic output.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p><code class="paramref">connection</code> is null.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a></dt>
+    <dd><p><code class="typeparamref">TRecord</code> does not have a <code>[Table]</code> attribute, or
+<code class="paramref">writeMode</code> is <a class="xref" href="Wolfgang.Etl.DbClient.WriteMode.html#Wolfgang_Etl_DbClient_WriteMode_Update">Update</a> and no <code>[Key]</code>
+properties exist.</p>
+</dd>
+  </dl>
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_2_CommandText_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.CommandText*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_2_CommandText" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.CommandText">
+  CommandText
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L162"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The SQL command text being executed per record.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public string CommandText { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressReport_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressReport*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressReport" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressReport">
+  CreateProgressReport()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L167"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a progress report of type TProgress. This gives the derived class the opportunity to
+implement a custom progress report that is specific to the loading process.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override TProgress CreateProgressReport()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">TProgress</span></dt>
+    <dd><p>Progress of type TProgress</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressTimer_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressTimer*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_2_CreateProgressTimer_System_IProgress__1__" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.CreateProgressTimer(System.IProgress{`1})">
+  CreateProgressTimer(IProgress&lt;TProgress&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L197"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates the <span class="xref">Wolfgang.Etl.Abstractions.IProgressTimer</span> used to drive progress callbacks.
+Override this method in a derived class to inject a custom timer
+(for example, a custom implementation that allows manual control in unit tests).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override IProgressTimer CreateProgressTimer(IProgress&lt;TProgress&gt; progress)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>progress</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iprogress-1">IProgress</a>&lt;TProgress&gt;</dt>
+    <dd><p>The progress sink that will receive callbacks.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">IProgressTimer</span></dt>
+    <dd><p>A started <span class="xref">Wolfgang.Etl.Abstractions.IProgressTimer</span> instance.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_2_LoadWorkerAsync_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.LoadWorkerAsync*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_2_LoadWorkerAsync_System_Collections_Generic_IAsyncEnumerable__0__System_Threading_CancellationToken_" data-uid="Wolfgang.Etl.DbClient.DbLoader`2.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable{`0},System.Threading.CancellationToken)">
+  LoadWorkerAsync(IAsyncEnumerable&lt;TRecord&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L216"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>This method is the core implementation of the loading logic and should be
+overridden by derived classes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override Task LoadWorkerAsync(IAsyncEnumerable&lt;TRecord&gt; items, CancellationToken token)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>items</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">IAsyncEnumerable</a>&lt;TRecord&gt;</dt>
+    <dd><p>The items to be loaded to the destination.</p>
+</dd>
+    <dt><code>token</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>A CancellationToken to observe while waiting for the task to complete.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a></dt>
+    <dd><p>A task representing the asynchronous operation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_2_LoadWorkerAsync_System_Collections_Generic_IAsyncEnumerable__0__System_Threading_CancellationToken__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Items may be an empty sequence if no data is available or if the loading fails.</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p>Argument items is null</p>
+</dd>
+  </dl>
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L45" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with DocFX
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
