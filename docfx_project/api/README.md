@@ -12,12 +12,10 @@ When you run `docfx docfx_project/docfx.json` from the repository root, DocFX wi
 
 ## Important Notes
 
-- **Do not manually edit generated DocFX output files in this folder** (such as `*.yml` and `toc.yml`) — they will be overwritten each time you run the DocFX build
+- **Do not manually edit generated DocFX output files in this folder** (such as `*.yml` and `toc.yml`) -- they will be overwritten each time you run the DocFX build
 - Hand-authored files like `index.md` and this `README.md` are intentionally maintained by hand and will be preserved across DocFX runs
 - The actual API reference metadata files (`*.yml` files) will be generated automatically
 
-## Template Placeholders
+## Namespace
 
-The `index.md` file uses the following template placeholder:
-- `Wolfgang.Etl.Ado` - Will be replaced with your project name
-
+The generated API documentation covers the `Wolfgang.Etl.DbClient` namespace and its sub-namespaces.

@@ -1,6 +1,6 @@
 # Introduction
 
-Welcome to Wolfgang.Etl.Ado!
+Welcome to Wolfgang.Etl.DbClient!
 
 ## Overview
 
@@ -18,9 +18,9 @@ Extractors and Loaders for working with SQL databases using ADO.NET
 
 ## Getting Help
 
-If you need help with Wolfgang.Etl.Ado, please:
+If you need help with Wolfgang.Etl.DbClient, please:
 
 - Check the [Getting Started](getting-started.md) guide
 - Review the [API Reference](../api/index.md)
-- Visit the [GitHub repository](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado)
-- Open an issue on [GitHub Issues](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado/issues)
+- Visit the [GitHub repository](https://github.com/Chris-Wolfgang/Etl-DbClient)
+- Open an issue on [GitHub Issues](https://github.com/Chris-Wolfgang/Etl-DbClient/issues)

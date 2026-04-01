@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide will help you quickly get up and running with Wolfgang.Etl.Ado.
+This guide will help you quickly get up and running with Wolfgang.Etl.DbClient.
 
 ## Prerequisites
 
@@ -14,13 +14,13 @@ This guide will help you quickly get up and running with Wolfgang.Etl.Ado.
 ### Via NuGet Package Manager
 
 ```bash
-dotnet add package Wolfgang.Etl.Ado
+dotnet add package Wolfgang.Etl.DbClient
 ```
 
 ### Via Package Manager Console
 
 ```powershell
-Install-Package Wolfgang.Etl.Ado
+Install-Package Wolfgang.Etl.DbClient
 ```
 
 ## Quick Start
@@ -31,7 +31,7 @@ Install-Package Wolfgang.Etl.Ado
 // Add your quick start code example here
 // This should show the simplest way to use your library
 
-using Wolfgang.Etl.Ado;
+using Wolfgang.Etl.DbClient;
 
 // Example usage
 ```
@@ -39,8 +39,8 @@ using Wolfgang.Etl.Ado;
 ## Next Steps
 
 - Explore the [API Reference](../api/index.md) for detailed documentation
-- Read the [Introduction](introduction.md) to learn more about Wolfgang.Etl.Ado
-- Check out example projects in the [GitHub repository](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado)
+- Read the [Introduction](introduction.md) to learn more about Wolfgang.Etl.DbClient
+- Check out example projects in the [GitHub repository](https://github.com/Chris-Wolfgang/Etl-DbClient)
 
 ## Common Issues
 
@@ -48,6 +48,6 @@ using Wolfgang.Etl.Ado;
 
 ## Additional Resources
 
-- [GitHub Repository](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado)
-- [Contributing Guidelines](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado/blob/main/CONTRIBUTING.md)
-- [Report an Issue](https://github.com/Chris-Wolfgang/Wolfgang.Etl.Ado/issues)
+- [GitHub Repository](https://github.com/Chris-Wolfgang/Etl-DbClient)
+- [Contributing Guidelines](https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/CONTRIBUTING.md)
+- [Report an Issue](https://github.com/Chris-Wolfgang/Etl-DbClient/issues)

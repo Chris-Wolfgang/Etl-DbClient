@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
+            3.1.x
             5.0.x
             6.0.x
             7.0.x
@@ -300,6 +301,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
+            3.1.x
             5.0.x
             6.0.x
             7.0.x
@@ -497,6 +499,7 @@ jobs:
             }
           }
 
+
       - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
         with:
@@ -516,6 +519,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
+            3.1.x
             5.0.x
             6.0.x
             7.0.x
@@ -618,5 +622,4 @@ jobs:
             ./nuget-packages/*.nupkg
             ./nuget-packages/*.bom.json
             release-coverage.zip
-
 
