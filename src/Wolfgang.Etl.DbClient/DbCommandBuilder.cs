@@ -125,6 +125,15 @@ internal static class DbCommandBuilder
             );
         }
 
+        if (whereColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has [Key] properties but none are mapped columns. " +
+                "Ensure key properties are not decorated with [NotMapped]."
+            );
+        }
+
         var setClause = string.Join(", ", setColumns.Select(c => $"{c.ColumnName} = @{c.PropertyName}"));
         var whereClause = string.Join(" AND ", whereColumns.Select(c => $"{c.ColumnName} = @{c.PropertyName}"));
 
