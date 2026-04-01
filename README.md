@@ -97,7 +97,7 @@ public class EmployeeRecord
 
 | Framework | Versions |
 |-----------|----------|
-| .NET Framework | .NET 4.6.2, .NET 4.8.1 |
+| .NET Framework | .NET 4.6.2, .NET 4.7.2, .NET 4.8, .NET 4.8.1 |
 | .NET Standard | .NET Standard 2.0 |
 | .NET | .NET 5.0, .NET 6.0, .NET 7.0, .NET 8.0, .NET 9.0, .NET 10.0 |
 
