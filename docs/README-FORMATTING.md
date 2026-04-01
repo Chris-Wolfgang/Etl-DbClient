@@ -15,13 +15,13 @@ The `dotnet format` command is **built into the .NET SDK** starting with .NET 6 
 Run the formatting script with PowerShell Core (`pwsh`) on any supported platform:
 
 ```powershell
-.\format.ps1
+.\scripts\format.ps1
 ```
 
 Or check without making changes:
 
 ```powershell
-.\format.ps1 -Check
+.\scripts\format.ps1 -Check
 ```
 
 ### Manual Formatting
