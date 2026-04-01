@@ -46,7 +46,7 @@ All pull requests are automatically checked for proper formatting. PRs with form
 
 ### If CI Fails
 
-1. Run `.\format.ps1` locally
+1. Run `.\scripts\format.ps1` locally
 2. Review the changes
 3. Commit and push the formatted code
 

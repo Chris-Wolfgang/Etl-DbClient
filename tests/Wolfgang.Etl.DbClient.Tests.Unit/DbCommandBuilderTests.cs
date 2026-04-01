@@ -95,6 +95,35 @@ public class DbCommandBuilderTests
 
 
 
+    [ExcludeFromCodeCoverage]
+    [Table("AllKeysOnly")]
+    private class AllKeysOnlyRecord
+    {
+        [Key]
+        [Column("key_a")]
+        public int KeyA { get; set; }
+
+        [Key]
+        [Column("key_b")]
+        public int KeyB { get; set; }
+    }
+
+
+
+    [ExcludeFromCodeCoverage]
+    [Table("NotMappedKey")]
+    private class NotMappedKeyRecord
+    {
+        [Key]
+        [NotMapped]
+        public int Id { get; set; }
+
+        [Column("value")]
+        public string Value { get; set; } = string.Empty;
+    }
+
+
+
     // ------------------------------------------------------------------
     // BuildSelect
     // ------------------------------------------------------------------
@@ -198,6 +227,23 @@ public class DbCommandBuilderTests
 
 
 
+    [Fact]
+    public void BuildInsert_when_all_properties_are_NotMapped_throws_InvalidOperationException()
+    {
+        var ex = Assert.Throws<InvalidOperationException>
+        (
+            DbCommandBuilder.BuildInsert<AllNotMappedRecord>
+        );
+
+        Assert.Contains
+        (
+            "no mapped columns",
+            ex.Message
+        );
+    }
+
+
+
     // ------------------------------------------------------------------
     // BuildUpdate
     // ------------------------------------------------------------------
@@ -244,6 +290,40 @@ public class DbCommandBuilderTests
         Assert.Throws<InvalidOperationException>
         (
             DbCommandBuilder.BuildUpdate<NoTableRecord>
+        );
+    }
+
+
+
+    [Fact]
+    public void BuildUpdate_when_all_columns_are_keys_throws_InvalidOperationException()
+    {
+        var ex = Assert.Throws<InvalidOperationException>
+        (
+            DbCommandBuilder.BuildUpdate<AllKeysOnlyRecord>
+        );
+
+        Assert.Contains
+        (
+            "no non-key columns",
+            ex.Message
+        );
+    }
+
+
+
+    [Fact]
+    public void BuildUpdate_when_key_properties_are_NotMapped_throws_InvalidOperationException()
+    {
+        var ex = Assert.Throws<InvalidOperationException>
+        (
+            DbCommandBuilder.BuildUpdate<NotMappedKeyRecord>
+        );
+
+        Assert.Contains
+        (
+            "none are mapped",
+            ex.Message
         );
     }
 }
