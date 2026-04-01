@@ -20,10 +20,6 @@ namespace Wolfgang.Etl.DbClient;
 /// The POCO type representing a single row. Properties are mapped to command
 /// parameters by name or <c>[Column("name")]</c> attribute.
 /// </typeparam>
-/// <typeparam name="TProgress">
-/// The type of the progress object reported during loading.
-/// Use <see cref="DbReport"/> for the default implementation.
-/// </typeparam>
 /// <remarks>
 /// <para>
 /// Two transaction modes are supported:
@@ -42,9 +38,8 @@ namespace Wolfgang.Etl.DbClient;
 /// <c>LoadAsync</c>.
 /// </para>
 /// </remarks>
-public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
+public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     where TRecord : notnull
-    where TProgress : notnull
 {
     // ------------------------------------------------------------------
     // Fields
@@ -66,7 +61,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Initializes a new <see cref="DbLoader{TRecord,TProgress}"/> with a custom SQL command.
+    /// Initializes a new <see cref="DbLoader{TRecord}"/> with a custom SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL INSERT or UPDATE command to execute per record.</param>
@@ -83,7 +78,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
         DbConnection connection,
         string commandText,
         DbTransaction? transaction = null,
-        ILogger<DbLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -96,7 +91,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
 
     /// <summary>
-    /// Initializes a new <see cref="DbLoader{TRecord,TProgress}"/> that auto-generates
+    /// Initializes a new <see cref="DbLoader{TRecord}"/> that auto-generates
     /// an INSERT statement from <c>[Table]</c> and <c>[Column]</c> attributes on
     /// <typeparamref name="TRecord"/>.
     /// </summary>
@@ -118,7 +113,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
         DbConnection connection,
         WriteMode writeMode,
         DbTransaction? transaction = null,
-        ILogger<DbLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -140,7 +135,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
         DbConnection connection,
         string commandText,
         IProgressTimer timer,
-        ILogger<DbLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -164,23 +159,14 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
 
     /// <inheritdoc/>
-    protected override TProgress CreateProgressReport()
+    protected override DbReport CreateProgressReport()
     {
-        if (typeof(TProgress) == typeof(DbReport) || typeof(TProgress) == typeof(Report))
-        {
-            return (TProgress)(object)new DbReport
-            (
-                CurrentItemCount,
-                CurrentSkippedItemCount,
-                _commandText,
-                _stopwatch.ElapsedMilliseconds
-            );
-        }
-
-        throw new NotSupportedException
+        return new DbReport
         (
-            $"Override {nameof(CreateProgressReport)} to supply a " +
-            $"{typeof(TProgress).Name} instance."
+            CurrentItemCount,
+            CurrentSkippedItemCount,
+            _commandText,
+            _stopwatch.ElapsedMilliseconds
         );
     }
 
@@ -189,12 +175,12 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     /// <summary>
     /// Returns a snapshot progress report. Visible to the test assembly via InternalsVisibleTo.
     /// </summary>
-    internal TProgress GetProgressReport() => CreateProgressReport();
+    internal DbReport GetProgressReport() => CreateProgressReport();
 
 
 
     /// <inheritdoc/>
-    protected override IProgressTimer CreateProgressTimer(IProgress<TProgress> progress)
+    protected override IProgressTimer CreateProgressTimer(IProgress<DbReport> progress)
     {
         if (_progressTimer != null)
         {

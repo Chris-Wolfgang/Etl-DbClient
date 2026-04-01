@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.DbClient;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
@@ -53,7 +52,7 @@ public class LoaderBenchmarks
             )";
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-        var loader = new DbLoader<BenchmarkRecord, Report>
+        var loader = new DbLoader<BenchmarkRecord>
         (
             connection,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"

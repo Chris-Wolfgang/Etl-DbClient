@@ -42,7 +42,7 @@ Console.WriteLine("=== ETL Pipeline: Employees → HighEarners (salary > 80000) 
 Console.WriteLine();
 
 // EXTRACT: Read employees with salary > 80000
-var extractor = new DbExtractor<EmployeeRecord, DbReport>
+var extractor = new DbExtractor<EmployeeRecord>
 (
     connection,
     "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, salary AS Salary FROM Employees WHERE salary > @MinSalary",
@@ -50,7 +50,7 @@ var extractor = new DbExtractor<EmployeeRecord, DbReport>
 );
 
 // LOAD: Insert into HighEarners table
-var loader = new DbLoader<HighEarnerRecord, DbReport>
+var loader = new DbLoader<HighEarnerRecord>
 (
     connection,
     "INSERT INTO HighEarners (full_name, salary) VALUES (@FullName, @Salary)"

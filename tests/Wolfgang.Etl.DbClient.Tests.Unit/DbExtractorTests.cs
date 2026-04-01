@@ -6,7 +6,7 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 public class DbExtractorTests
     : ExtractorBaseContractTests<
-        DbExtractor<ContractRecord, DbReport>,
+        DbExtractor<ContractRecord>,
         ContractRecord,
         DbReport>
 {
@@ -26,10 +26,10 @@ public class DbExtractorTests
 
 
     /// <inheritdoc/>
-    protected override DbExtractor<ContractRecord, DbReport> CreateSut(int itemCount)
+    protected override DbExtractor<ContractRecord> CreateSut(int itemCount)
     {
         var conn = TestDb.CreateContractConnection(itemCount);
-        return new DbExtractor<ContractRecord, DbReport>
+        return new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems ORDER BY Value"
@@ -44,10 +44,10 @@ public class DbExtractorTests
 
 
     /// <inheritdoc/>
-    protected override DbExtractor<ContractRecord, DbReport> CreateSutWithTimer(IProgressTimer timer)
+    protected override DbExtractor<ContractRecord> CreateSutWithTimer(IProgressTimer timer)
     {
         var conn = TestDb.CreateContractConnection(5);
-        return new DbExtractor<ContractRecord, DbReport>
+        return new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems ORDER BY Value",
@@ -65,7 +65,7 @@ public class DbExtractorTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbExtractor<PersonRecord, DbReport>(null!, "SELECT 1")
+            () => new DbExtractor<PersonRecord>(null!, "SELECT 1")
         );
     }
 
@@ -77,7 +77,7 @@ public class DbExtractorTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbExtractor<PersonRecord, DbReport>(conn, (string)null!)
+            () => new DbExtractor<PersonRecord>(conn, (string)null!)
         );
     }
 
@@ -89,7 +89,7 @@ public class DbExtractorTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbExtractor<PersonRecord, DbReport>(conn, "SELECT 1", (Dictionary<string, object>)null!)
+            () => new DbExtractor<PersonRecord>(conn, "SELECT 1", (Dictionary<string, object>)null!)
         );
     }
 
@@ -103,7 +103,7 @@ public class DbExtractorTests
     public async Task ExtractAsync_returns_all_rows()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id"
@@ -123,7 +123,7 @@ public class DbExtractorTests
     public async Task ExtractAsync_with_empty_result_set_returns_no_items()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(0);
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People"
@@ -144,7 +144,7 @@ public class DbExtractorTests
     public async Task ExtractAsync_with_parameters_filters_correctly()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(5);
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People WHERE age > @MinAge",
@@ -167,7 +167,7 @@ public class DbExtractorTests
     public async Task ExtractAsync_with_auto_generated_select_returns_all_rows()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
-        var extractor = new DbExtractor<PersonRecord, DbReport>(conn);
+        var extractor = new DbExtractor<PersonRecord>(conn);
 
         var results = await extractor.ExtractAsync().ToListAsync();
 
@@ -180,7 +180,7 @@ public class DbExtractorTests
     public void CommandText_with_auto_generated_select_contains_table_name()
     {
         using var conn = TestDb.CreateConnection();
-        var extractor = new DbExtractor<PersonRecord, DbReport>(conn);
+        var extractor = new DbExtractor<PersonRecord>(conn);
 
         Assert.Contains("People", extractor.CommandText, StringComparison.Ordinal);
     }
@@ -195,7 +195,7 @@ public class DbExtractorTests
     public async Task ExtractAsync_when_SkipItemCount_is_set_skips_rows()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(5);
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id"
@@ -214,7 +214,7 @@ public class DbExtractorTests
     public async Task ExtractAsync_when_MaximumItemCount_is_set_stops_early()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(5);
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id"
@@ -241,7 +241,7 @@ public class DbExtractorTests
 #else
         using var transaction = await conn.BeginTransactionAsync();
 #endif
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People ORDER BY id",
@@ -263,7 +263,7 @@ public class DbExtractorTests
     public async Task GetProgressReport_returns_DbReport_with_counts()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
-        var extractor = new DbExtractor<PersonRecord, DbReport>
+        var extractor = new DbExtractor<PersonRecord>
         (
             conn,
             "SELECT id, first_name, last_name, age FROM People"
@@ -276,16 +276,5 @@ public class DbExtractorTests
         Assert.Equal(3, report.CurrentItemCount);
         Assert.Contains("People", report.CommandText, StringComparison.Ordinal);
         Assert.True(report.ElapsedMilliseconds >= 0);
-    }
-
-
-
-    [Fact]
-    public void GetProgressReport_when_TProgress_is_not_DbReport_throws_NotSupportedException()
-    {
-        using var conn = TestDb.CreateConnection();
-        var extractor = new DbExtractor<PersonRecord, Exception>(conn, "SELECT 1");
-
-        Assert.Throws<NotSupportedException>(extractor.GetProgressReport);
     }
 }
