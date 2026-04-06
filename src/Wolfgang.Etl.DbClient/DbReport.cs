@@ -39,9 +39,9 @@ public record DbReport : Report
 
 
     /// <summary>
-    /// The SQL command text being executed.
+    /// The SQL command text being executed. Never null — always assigned by the constructor.
     /// </summary>
-    public string CommandText { get; }
+    public string CommandText { get; } = string.Empty;
 
 
 
