@@ -38,9 +38,8 @@ namespace Wolfgang.Etl.DbClient;
 /// <c>LoadAsync</c>.
 /// </para>
 /// <para>
-/// Command timeout is currently inherited from the <see cref="DbConnection.ConnectionTimeout"/>
-/// default (typically 30 seconds). A dedicated <c>CommandTimeout</c> property is planned
-/// (see GitHub issue #25).
+/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
+/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
 public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
@@ -310,7 +309,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #if NET5_0_OR_GREATER
         var transaction = await _connection.BeginTransactionAsync(token).ConfigureAwait(false);
 #else
-        _ = token; // Suppresses CS1998 — the token is used in the #if branch above
+        _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         var transaction = _connection.BeginTransaction();
         await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
 #endif
@@ -325,7 +324,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #if NET5_0_OR_GREATER
         await transaction.CommitAsync(token).ConfigureAwait(false);
 #else
-        _ = token; // Suppresses CS1998 — the token is used in the #if branch above
+        _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         transaction.Commit();
         await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
 #endif
@@ -334,12 +333,13 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
 
-    /// <remarks>
+    /// <summary>
+    /// Attempts to roll back an auto-managed transaction after an error.
     /// If the rollback itself fails, the rollback exception is logged at Error level
     /// and the original exception (which triggered the rollback) is allowed to propagate
     /// unchanged. This avoids masking the root cause while still surfacing the rollback
     /// failure in logs.
-    /// </remarks>
+    /// </summary>
     private async Task RollbackAutoTransactionAsync(DbTransaction transaction, CancellationToken token)
     {
         try
@@ -347,7 +347,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #if NET5_0_OR_GREATER
             await transaction.RollbackAsync(token).ConfigureAwait(false);
 #else
-            _ = token; // Suppresses CS1998 — the token is used in the #if branch above
+            _ = token; // Suppress unused parameter warning — token is used in the #if branch above
             transaction.Rollback();
             await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
 #endif

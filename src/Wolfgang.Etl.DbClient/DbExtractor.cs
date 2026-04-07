@@ -32,9 +32,8 @@ namespace Wolfgang.Etl.DbClient;
 /// The extractor never commits or rolls back the transaction.
 /// </para>
 /// <para>
-/// Command timeout is currently inherited from the <see cref="DbConnection.ConnectionTimeout"/>
-/// default (typically 30 seconds). A dedicated <c>CommandTimeout</c> property is planned
-/// (see GitHub issue #25).
+/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
+/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
 public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
