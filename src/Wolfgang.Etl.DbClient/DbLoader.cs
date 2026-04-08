@@ -20,10 +20,6 @@ namespace Wolfgang.Etl.DbClient;
 /// The POCO type representing a single row. Properties are mapped to command
 /// parameters by name or <c>[Column("name")]</c> attribute.
 /// </typeparam>
-/// <typeparam name="TProgress">
-/// The type of the progress object reported during loading.
-/// Use <see cref="DbReport"/> for the default implementation.
-/// </typeparam>
 /// <remarks>
 /// <para>
 /// Two transaction modes are supported:
@@ -41,10 +37,13 @@ namespace Wolfgang.Etl.DbClient;
 /// open, close, or dispose it. The connection must be open before calling
 /// <c>LoadAsync</c>.
 /// </para>
+/// <para>
+/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
+/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
+/// </para>
 /// </remarks>
-public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
+public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     where TRecord : notnull
-    where TProgress : notnull
 {
     // ------------------------------------------------------------------
     // Fields
@@ -66,7 +65,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Initializes a new <see cref="DbLoader{TRecord,TProgress}"/> with a custom SQL command.
+    /// Initializes a new <see cref="DbLoader{TRecord}"/> with a custom SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL INSERT or UPDATE command to execute per record.</param>
@@ -83,7 +82,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
         DbConnection connection,
         string commandText,
         DbTransaction? transaction = null,
-        ILogger<DbLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -96,7 +95,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
 
     /// <summary>
-    /// Initializes a new <see cref="DbLoader{TRecord,TProgress}"/> that auto-generates
+    /// Initializes a new <see cref="DbLoader{TRecord}"/> that auto-generates
     /// an INSERT statement from <c>[Table]</c> and <c>[Column]</c> attributes on
     /// <typeparamref name="TRecord"/>.
     /// </summary>
@@ -118,7 +117,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
         DbConnection connection,
         WriteMode writeMode,
         DbTransaction? transaction = null,
-        ILogger<DbLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -140,7 +139,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
         DbConnection connection,
         string commandText,
         IProgressTimer timer,
-        ILogger<DbLoader<TRecord, TProgress>>? logger = null
+        ILogger<DbLoader<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -164,23 +163,14 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
 
     /// <inheritdoc/>
-    protected override TProgress CreateProgressReport()
+    protected override DbReport CreateProgressReport()
     {
-        if (typeof(TProgress) == typeof(DbReport) || typeof(TProgress) == typeof(Report))
-        {
-            return (TProgress)(object)new DbReport
-            (
-                CurrentItemCount,
-                CurrentSkippedItemCount,
-                _commandText,
-                _stopwatch.ElapsedMilliseconds
-            );
-        }
-
-        throw new NotSupportedException
+        return new DbReport
         (
-            $"Override {nameof(CreateProgressReport)} to supply a " +
-            $"{typeof(TProgress).Name} instance."
+            CurrentItemCount,
+            CurrentSkippedItemCount,
+            _commandText,
+            _stopwatch.ElapsedMilliseconds
         );
     }
 
@@ -189,12 +179,12 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
     /// <summary>
     /// Returns a snapshot progress report. Visible to the test assembly via InternalsVisibleTo.
     /// </summary>
-    internal TProgress GetProgressReport() => CreateProgressReport();
+    internal DbReport GetProgressReport() => CreateProgressReport();
 
 
 
     /// <inheritdoc/>
-    protected override IProgressTimer CreateProgressTimer(IProgress<TProgress> progress)
+    protected override IProgressTimer CreateProgressTimer(IProgress<DbReport> progress)
     {
         if (_progressTimer != null)
         {
@@ -319,7 +309,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 #if NET5_0_OR_GREATER
         var transaction = await _connection.BeginTransactionAsync(token).ConfigureAwait(false);
 #else
-        _ = token; // Used on net8.0+
+        _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         var transaction = _connection.BeginTransaction();
         await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
 #endif
@@ -334,7 +324,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 #if NET5_0_OR_GREATER
         await transaction.CommitAsync(token).ConfigureAwait(false);
 #else
-        _ = token; // Used on net8.0+
+        _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         transaction.Commit();
         await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
 #endif
@@ -343,6 +333,13 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 
 
 
+    /// <summary>
+    /// Attempts to roll back an auto-managed transaction after an error.
+    /// If the rollback itself fails, the rollback exception is logged at Error level
+    /// and the original exception (which triggered the rollback) is allowed to propagate
+    /// unchanged. This avoids masking the root cause while still surfacing the rollback
+    /// failure in logs.
+    /// </summary>
     private async Task RollbackAutoTransactionAsync(DbTransaction transaction, CancellationToken token)
     {
         try
@@ -350,7 +347,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
 #if NET5_0_OR_GREATER
             await transaction.RollbackAsync(token).ConfigureAwait(false);
 #else
-            _ = token; // Used on net8.0+
+            _ = token; // Suppress unused parameter warning — token is used in the #if branch above
             transaction.Rollback();
             await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
 #endif
@@ -361,7 +358,7 @@ public class DbLoader<TRecord, TProgress> : LoaderBase<TRecord, TProgress>
             _logger.LogError
             (
                 rollbackEx,
-                "Failed to rollback transaction after error"
+                "Failed to rollback transaction after error. The original exception will propagate"
             );
         }
     }

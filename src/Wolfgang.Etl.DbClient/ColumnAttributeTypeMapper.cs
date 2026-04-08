@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
@@ -11,16 +12,31 @@ namespace Wolfgang.Etl.DbClient;
 /// result set columns to POCO properties. Without this, Dapper only matches
 /// by property name.
 /// </summary>
+/// <remarks>
+/// Column name matching is case-insensitive (<see cref="StringComparison.OrdinalIgnoreCase"/>),
+/// consistent with Dapper's default behavior and the default collation of SQL Server, SQLite,
+/// and MySQL. PostgreSQL lowercases unquoted identifiers, so case-insensitive matching is also
+/// correct for standard PostgreSQL usage.
+/// </remarks>
 internal static class ColumnAttributeTypeMapper
 {
+    private static readonly ConcurrentDictionary<Type, byte> RegisteredTypes = new();
+
+
+
     /// <summary>
     /// Registers a custom type map for <typeparamref name="T"/> that checks
     /// <see cref="ColumnAttribute"/> first, then falls back to Dapper's default
-    /// name-based matching.
+    /// name-based matching. Thread-safe — each type is registered at most once.
     /// </summary>
     internal static void Register<T>()
     {
         var type = typeof(T);
+
+        if (!RegisteredTypes.TryAdd(type, 0))
+        {
+            return;
+        }
 
         // Only register if the type has any [Column] attributes
         var hasColumnAttributes = type
@@ -39,7 +55,7 @@ internal static class ColumnAttributeTypeMapper
             {
                 var props = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-                // First try [Column("name")] match
+                // First try [Column("name")] match (case-insensitive)
                 var prop = props.FirstOrDefault(p =>
                 {
                     var attr = p.GetCustomAttribute<ColumnAttribute>();

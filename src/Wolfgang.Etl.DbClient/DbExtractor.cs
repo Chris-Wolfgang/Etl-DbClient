@@ -21,10 +21,6 @@ namespace Wolfgang.Etl.DbClient;
 /// The POCO type representing a single row. Properties are mapped from result set
 /// columns by name or <c>[Column("name")]</c> attribute.
 /// </typeparam>
-/// <typeparam name="TProgress">
-/// The type of the progress object reported during extraction.
-/// Use <see cref="DbReport"/> for the default implementation.
-/// </typeparam>
 /// <remarks>
 /// <para>
 /// The caller owns the <see cref="DbConnection"/> lifetime — the extractor does not
@@ -35,10 +31,13 @@ namespace Wolfgang.Etl.DbClient;
 /// An optional <see cref="DbTransaction"/> can be provided for isolation level control.
 /// The extractor never commits or rolls back the transaction.
 /// </para>
+/// <para>
+/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
+/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
+/// </para>
 /// </remarks>
-public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
+public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     where TRecord : notnull
-    where TProgress : notnull
 {
     // ------------------------------------------------------------------
     // Fields
@@ -71,7 +70,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Initializes a new <see cref="DbExtractor{TRecord,TProgress}"/> with a SQL command.
+    /// Initializes a new <see cref="DbExtractor{TRecord}"/> with a SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL query to execute.</param>
@@ -85,7 +84,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
         DbConnection connection,
         string commandText,
         DbTransaction? transaction = null,
-        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -97,7 +96,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
 
 
     /// <summary>
-    /// Initializes a new <see cref="DbExtractor{TRecord,TProgress}"/> with a parameterized SQL command.
+    /// Initializes a new <see cref="DbExtractor{TRecord}"/> with a parameterized SQL command.
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL query to execute.</param>
@@ -113,7 +112,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
         string commandText,
         IDictionary<string, object> parameters,
         DbTransaction? transaction = null,
-        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -126,7 +125,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
 
 
     /// <summary>
-    /// Initializes a new <see cref="DbExtractor{TRecord,TProgress}"/> that auto-generates
+    /// Initializes a new <see cref="DbExtractor{TRecord}"/> that auto-generates
     /// a SELECT statement from <c>[Table]</c> and <c>[Column]</c> attributes on
     /// <typeparamref name="TRecord"/>.
     /// </summary>
@@ -141,7 +140,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
     (
         DbConnection connection,
         DbTransaction? transaction = null,
-        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -160,7 +159,7 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
         DbConnection connection,
         string commandText,
         IProgressTimer timer,
-        ILogger<DbExtractor<TRecord, TProgress>>? logger = null
+        ILogger<DbExtractor<TRecord>>? logger = null
     )
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -183,23 +182,14 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
 
 
     /// <inheritdoc/>
-    protected override TProgress CreateProgressReport()
+    protected override DbReport CreateProgressReport()
     {
-        if (typeof(TProgress) == typeof(DbReport) || typeof(TProgress) == typeof(Report))
-        {
-            return (TProgress)(object)new DbReport
-            (
-                CurrentItemCount,
-                CurrentSkippedItemCount,
-                _commandText,
-                _stopwatch.ElapsedMilliseconds
-            );
-        }
-
-        throw new NotSupportedException
+        return new DbReport
         (
-            $"Override {nameof(CreateProgressReport)} to supply a " +
-            $"{typeof(TProgress).Name} instance."
+            CurrentItemCount,
+            CurrentSkippedItemCount,
+            _commandText,
+            _stopwatch.ElapsedMilliseconds
         );
     }
 
@@ -208,12 +198,12 @@ public class DbExtractor<TRecord, TProgress> : ExtractorBase<TRecord, TProgress>
     /// <summary>
     /// Returns a snapshot progress report. Visible to the test assembly via InternalsVisibleTo.
     /// </summary>
-    internal TProgress GetProgressReport() => CreateProgressReport();
+    internal DbReport GetProgressReport() => CreateProgressReport();
 
 
 
     /// <inheritdoc/>
-    protected override IProgressTimer CreateProgressTimer(IProgress<TProgress> progress)
+    protected override IProgressTimer CreateProgressTimer(IProgress<DbReport> progress)
     {
         if (_progressTimer != null)
         {

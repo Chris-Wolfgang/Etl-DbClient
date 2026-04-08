@@ -6,7 +6,7 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 public class DbLoaderTests
     : LoaderBaseContractTests<
-        DbLoader<ContractRecord, DbReport>,
+        DbLoader<ContractRecord>,
         ContractRecord,
         DbReport>
 {
@@ -15,10 +15,10 @@ public class DbLoaderTests
     // ------------------------------------------------------------------
 
     /// <inheritdoc/>
-    protected override DbLoader<ContractRecord, DbReport> CreateSut(int itemCount)
+    protected override DbLoader<ContractRecord> CreateSut(int itemCount)
     {
         var conn = TestDb.CreateContractLoaderConnection();
-        return new DbLoader<ContractRecord, DbReport>
+        return new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
@@ -40,10 +40,10 @@ public class DbLoaderTests
 
 
     /// <inheritdoc/>
-    protected override DbLoader<ContractRecord, DbReport> CreateSutWithTimer(IProgressTimer timer)
+    protected override DbLoader<ContractRecord> CreateSutWithTimer(IProgressTimer timer)
     {
         var conn = TestDb.CreateContractLoaderConnection();
-        return new DbLoader<ContractRecord, DbReport>
+        return new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -61,7 +61,7 @@ public class DbLoaderTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord, DbReport>(null!, "INSERT INTO X VALUES (1)")
+            () => new DbLoader<PersonRecord>(null!, "INSERT INTO X VALUES (1)")
         );
     }
 
@@ -73,7 +73,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord, DbReport>(conn, (string)null!)
+            () => new DbLoader<PersonRecord>(conn, (string)null!)
         );
     }
 
@@ -89,7 +89,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -112,7 +112,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -138,7 +138,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             WriteMode.Insert
@@ -158,7 +158,7 @@ public class DbLoaderTests
     public void CommandText_with_auto_generated_insert_contains_table_name()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Insert);
+        var loader = new DbLoader<PersonRecord>(conn, WriteMode.Insert);
 
         Assert.Contains("People", loader.CommandText, StringComparison.Ordinal);
         Assert.Contains("INSERT", loader.CommandText, StringComparison.OrdinalIgnoreCase);
@@ -176,7 +176,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -199,7 +199,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -226,7 +226,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -249,7 +249,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -282,7 +282,7 @@ public class DbLoaderTests
         using var transaction = await conn.BeginTransactionAsync();
 #endif
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
@@ -316,7 +316,7 @@ public class DbLoaderTests
         using var transaction = await conn.BeginTransactionAsync();
 #endif
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
@@ -350,7 +350,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
 
-        var loader = new DbLoader<PersonRecord, DbReport>
+        var loader = new DbLoader<PersonRecord>
         (
             conn,
             "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
@@ -366,21 +366,6 @@ public class DbLoaderTests
         Assert.Equal(3, report.CurrentItemCount);
         Assert.Contains("INSERT", report.CommandText, StringComparison.OrdinalIgnoreCase);
         Assert.True(report.ElapsedMilliseconds >= 0);
-    }
-
-
-
-    // ------------------------------------------------------------------
-    // Progress report — NotSupportedException
-    // ------------------------------------------------------------------
-
-    [Fact]
-    public void GetProgressReport_when_TProgress_is_not_DbReport_throws_NotSupportedException()
-    {
-        using var conn = TestDb.CreateConnection();
-        var loader = new DbLoader<PersonRecord, Exception>(conn, "INSERT INTO X VALUES (1)");
-
-        Assert.Throws<NotSupportedException>(loader.GetProgressReport);
     }
 
 

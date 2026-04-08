@@ -1,7 +1,7 @@
 namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
-/// Specifies the type of SQL command the <see cref="DbLoader{TRecord,TProgress}"/>
+/// Specifies the type of SQL command the <see cref="DbLoader{TRecord}"/>
 /// auto-generates from attribute metadata.
 /// </summary>
 public enum WriteMode

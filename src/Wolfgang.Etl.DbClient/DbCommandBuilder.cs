@@ -71,6 +71,15 @@ internal static class DbCommandBuilder
             insertColumns = columns;
         }
 
+        if (insertColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has no mapped columns for INSERT. " +
+                "Ensure at least one public instance property is not decorated with [NotMapped]."
+            );
+        }
+
         var columnList = string.Join(", ", insertColumns.Select(c => c.ColumnName));
         var paramList = string.Join(", ", insertColumns.Select(c => $"@{c.PropertyName}"));
 
@@ -106,6 +115,24 @@ internal static class DbCommandBuilder
         var keyNames = new HashSet<string>(keys.Select(k => k.Name), StringComparer.Ordinal);
         var setColumns = columns.Where(c => !keyNames.Contains(c.PropertyName)).ToList();
         var whereColumns = columns.Where(c => keyNames.Contains(c.PropertyName)).ToList();
+
+        if (setColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has no non-key columns for the SET clause. " +
+                "UPDATE requires at least one property that is not decorated with [Key]."
+            );
+        }
+
+        if (whereColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has [Key] properties but none are mapped columns. " +
+                "Ensure key properties are not decorated with [NotMapped]."
+            );
+        }
 
         var setClause = string.Join(", ", setColumns.Select(c => $"{c.ColumnName} = @{c.PropertyName}"));
         var whereClause = string.Join(" AND ", whereColumns.Select(c => $"{c.ColumnName} = @{c.PropertyName}"));

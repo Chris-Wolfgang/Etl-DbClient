@@ -45,7 +45,7 @@ using var connection = new SqliteConnection("Data Source=mydb.db");
 await connection.OpenAsync();
 
 // EXTRACT: stream rows from a query
-var extractor = new DbExtractor<EmployeeRecord, DbReport>(
+var extractor = new DbExtractor<EmployeeRecord>(
     connection,
     "SELECT id, first_name, last_name, salary FROM Employees WHERE salary > @Min",
     new Dictionary<string, object> { { "Min", 50000 } }
@@ -57,7 +57,7 @@ await foreach (var employee in extractor.ExtractAsync())
 }
 
 // LOAD: insert records from an async stream
-var loader = new DbLoader<EmployeeRecord, DbReport>(
+var loader = new DbLoader<EmployeeRecord>(
     connection,
     WriteMode.Insert
 );
@@ -104,7 +104,7 @@ public class EmployeeRecord
 
 | Framework | Versions |
 |-----------|----------|
-| .NET Framework | .NET 4.6.2, .NET 4.8.1 |
+| .NET Framework | .NET 4.6.2, .NET 4.7.2, .NET 4.8, .NET 4.8.1 |
 | .NET Standard | .NET Standard 2.0 |
 | .NET | .NET 5.0, .NET 6.0, .NET 7.0, .NET 8.0, .NET 9.0, .NET 10.0 |
 
