@@ -112,18 +112,18 @@ internal static class DbCommandBuilder
             );
         }
 
-        var keyNames = new HashSet<string>(keys.Select(k => k.Name), StringComparer.Ordinal);
-        var setColumns = columns.Where(c => !keyNames.Contains(c.PropertyName)).ToList();
-        var whereColumns = columns.Where(c => keyNames.Contains(c.PropertyName)).ToList();
-
-        if (setColumns.Count == 0)
+        if (columns.Count == 0)
         {
             throw new InvalidOperationException
             (
-                $"Type '{type.FullName}' has no non-key columns for the SET clause. " +
-                "UPDATE requires at least one property that is not decorated with [Key]."
+                $"Type '{type.FullName}' has no mapped columns. " +
+                "UPDATE requires at least one mapped property that is not decorated with [NotMapped]."
             );
         }
+
+        var keyNames = new HashSet<string>(keys.Select(k => k.Name), StringComparer.Ordinal);
+        var whereColumns = columns.Where(c => keyNames.Contains(c.PropertyName)).ToList();
+        var setColumns = columns.Where(c => !keyNames.Contains(c.PropertyName)).ToList();
 
         if (whereColumns.Count == 0)
         {
@@ -131,6 +131,15 @@ internal static class DbCommandBuilder
             (
                 $"Type '{type.FullName}' has [Key] properties but none are mapped columns. " +
                 "Ensure key properties are not decorated with [NotMapped]."
+            );
+        }
+
+        if (setColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has no non-key columns for the SET clause. " +
+                "UPDATE requires at least one property that is not decorated with [Key]."
             );
         }
 
