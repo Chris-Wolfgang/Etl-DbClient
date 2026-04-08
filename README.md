@@ -62,7 +62,14 @@ var loader = new DbLoader<EmployeeRecord, DbReport>(
     WriteMode.Insert
 );
 
-await loader.LoadAsync(GetRecordsAsync());
+await loader.LoadAsync(GetNewHiresAsync());
+
+// Example async stream of records to load
+async IAsyncEnumerable<EmployeeRecord> GetNewHiresAsync()
+{
+    yield return new EmployeeRecord { FirstName = "Jane", LastName = "Doe", Salary = 75000 };
+    await Task.CompletedTask;
+}
 
 // Record type with attribute-based mapping
 [Table("Employees")]
@@ -167,11 +174,11 @@ This project uses `.editorconfig` and `dotnet format`:
 # Format code
 dotnet format
 
-# Verify formatting (as CI does)
+# Verify formatting
 dotnet format --verify-no-changes
 ```
 
-See [README-FORMATTING.md](README-FORMATTING.md) for detailed formatting guidelines.
+See [docs/README-FORMATTING.md](docs/README-FORMATTING.md) for detailed formatting guidelines.
 
 ### Building Documentation
 
