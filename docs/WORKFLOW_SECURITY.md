@@ -116,14 +116,12 @@ This limits the impact if the `GITHUB_TOKEN` is somehow exposed or misused.
 **Prevention**: These files are fetched from main branch after checkout
 **Status**: ✅ Protected (as of this PR)
 
-## Testing
+## Validation
 
-Security tests have been created and validated:
+The following manual validation scenarios can be used when reviewing changes to the workflow security model:
 
-1. **Configuration Fetch Test**: Verifies that configuration files can be successfully fetched from the main branch
-2. **Malicious Modification Test**: Simulates a PR that modifies `.editorconfig` to disable analyzers and confirms it's replaced with the trusted version
-
-Both tests pass successfully.
+1. **Configuration Fetch Validation**: Confirm that configuration files are fetched from the `main` branch during workflow execution
+2. **Malicious Modification Validation**: Simulate a PR that modifies `.editorconfig` to disable analyzers and confirm the workflow replaces it with the trusted version from `main`
 
 ## Maintenance
 

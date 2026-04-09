@@ -45,7 +45,7 @@ using var connection = new SqliteConnection("Data Source=mydb.db");
 await connection.OpenAsync();
 
 // EXTRACT: stream rows from a query
-var extractor = new DbExtractor<EmployeeRecord, DbReport>(
+var extractor = new DbExtractor<EmployeeRecord>(
     connection,
     "SELECT id, first_name, last_name, salary FROM Employees WHERE salary > @Min",
     new Dictionary<string, object> { { "Min", 50000 } }
@@ -57,12 +57,19 @@ await foreach (var employee in extractor.ExtractAsync())
 }
 
 // LOAD: insert records from an async stream
-var loader = new DbLoader<EmployeeRecord, DbReport>(
+var loader = new DbLoader<EmployeeRecord>(
     connection,
     WriteMode.Insert
 );
 
-await loader.LoadAsync(GetRecordsAsync());
+await loader.LoadAsync(GetNewHiresAsync());
+
+// Example async stream of records to load
+async IAsyncEnumerable<EmployeeRecord> GetNewHiresAsync()
+{
+    yield return new EmployeeRecord { FirstName = "Jane", LastName = "Doe", Salary = 75000 };
+    await Task.CompletedTask;
+}
 
 // Record type with attribute-based mapping
 [Table("Employees")]
@@ -167,11 +174,11 @@ This project uses `.editorconfig` and `dotnet format`:
 # Format code
 dotnet format
 
-# Verify formatting (as CI does)
+# Verify formatting
 dotnet format --verify-no-changes
 ```
 
-See [README-FORMATTING.md](README-FORMATTING.md) for detailed formatting guidelines.
+See [docs/README-FORMATTING.md](docs/README-FORMATTING.md) for detailed formatting guidelines.
 
 ### Building Documentation
 
