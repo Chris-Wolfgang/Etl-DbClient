@@ -8,9 +8,9 @@ public class DbExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_logs_Information_at_start_and_completion()
     {
-        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
         using var conn = TestDb.CreateContractConnection(3);
-        var extractor = new DbExtractor<ContractRecord, DbReport>
+        var extractor = new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -31,9 +31,9 @@ public class DbExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_logs_Debug_per_row()
     {
-        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
         using var conn = TestDb.CreateContractConnection(3);
-        var extractor = new DbExtractor<ContractRecord, DbReport>
+        var extractor = new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -54,9 +54,9 @@ public class DbExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_logs_Debug_parameters()
     {
-        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
         using var conn = TestDb.CreateContractConnection(5);
-        var extractor = new DbExtractor<ContractRecord, DbReport>
+        var extractor = new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems WHERE Value > @MinValue",
@@ -79,9 +79,9 @@ public class DbExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_when_SkipItemCount_set_logs_Debug_skipped()
     {
-        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
         using var conn = TestDb.CreateContractConnection(5);
-        var extractor = new DbExtractor<ContractRecord, DbReport>
+        var extractor = new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -104,9 +104,9 @@ public class DbExtractorLoggingTests
     [Fact]
     public async Task ExtractAsync_when_MaximumItemCount_reached_logs_Debug()
     {
-        var logger = new SpyLogger<DbExtractor<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
         using var conn = TestDb.CreateContractConnection(5);
-        var extractor = new DbExtractor<ContractRecord, DbReport>
+        var extractor = new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems",
@@ -130,7 +130,7 @@ public class DbExtractorLoggingTests
     public async Task ExtractAsync_when_no_logger_does_not_throw()
     {
         using var conn = TestDb.CreateContractConnection(3);
-        var extractor = new DbExtractor<ContractRecord, DbReport>
+        var extractor = new DbExtractor<ContractRecord>
         (
             conn,
             "SELECT Name, Value FROM ContractItems"

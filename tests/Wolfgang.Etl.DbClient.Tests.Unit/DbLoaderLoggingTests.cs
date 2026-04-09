@@ -20,9 +20,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_Information_at_start_and_completion()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -43,9 +43,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_Debug_per_record()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -66,9 +66,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_Debug_transaction_lifecycle()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -96,9 +96,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_on_failure_logs_Debug_rollback()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -123,9 +123,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_logs_auto_managed_transaction_mode()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -143,14 +143,14 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_with_caller_transaction_logs_caller_managed()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
 #if NETFRAMEWORK
         using var transaction = conn.BeginTransaction();
 #else
         using var transaction = await conn.BeginTransactionAsync();
 #endif
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -175,7 +175,7 @@ public class DbLoaderLoggingTests
     public async Task LoadAsync_when_no_logger_does_not_throw()
     {
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
@@ -191,9 +191,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_when_SkipItemCount_set_logs_Debug_skipped()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
@@ -216,9 +216,9 @@ public class DbLoaderLoggingTests
     [Fact]
     public async Task LoadAsync_when_MaximumItemCount_reached_logs_Debug()
     {
-        var logger = new SpyLogger<DbLoader<ContractRecord, DbReport>>();
+        var logger = new SpyLogger<DbLoader<ContractRecord>>();
         using var conn = TestDb.CreateContractLoaderConnection();
-        var loader = new DbLoader<ContractRecord, DbReport>
+        var loader = new DbLoader<ContractRecord>
         (
             conn,
             "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",

@@ -14,7 +14,7 @@ public class DbUpdateTests
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(3);
 
-        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Update);
+        var loader = new DbLoader<PersonRecord>(conn, WriteMode.Update);
 
         var updates = new[]
         {
@@ -41,7 +41,7 @@ public class DbUpdateTests
     public void CommandText_with_WriteMode_Update_contains_update_and_where()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Update);
+        var loader = new DbLoader<PersonRecord>(conn, WriteMode.Update);
 
         Assert.Contains("UPDATE", loader.CommandText, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("WHERE", loader.CommandText, StringComparison.OrdinalIgnoreCase);
@@ -54,7 +54,7 @@ public class DbUpdateTests
     public void CommandText_with_WriteMode_Update_excludes_key_from_set_clause()
     {
         using var conn = TestDb.CreateConnection();
-        var loader = new DbLoader<PersonRecord, DbReport>(conn, WriteMode.Update);
+        var loader = new DbLoader<PersonRecord>(conn, WriteMode.Update);
 
         // id should be in WHERE, not in SET
         var setClause = loader.CommandText.Split(new[] { "WHERE" }, StringSplitOptions.None)[0];

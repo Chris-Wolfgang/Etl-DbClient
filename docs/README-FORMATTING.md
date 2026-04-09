@@ -42,7 +42,7 @@ Code style rules are defined in `.editorconfig` at the repository root.
 
 ## CI/CD
 
-All pull requests are automatically checked for proper formatting. PRs with formatting issues will fail the build.
+Code formatting is enforced locally via `.editorconfig` and `dotnet format`. Run the formatting script before submitting a PR.
 
 ### If CI Fails
 

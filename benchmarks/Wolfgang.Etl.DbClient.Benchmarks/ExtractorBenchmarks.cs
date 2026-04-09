@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.DbClient;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
@@ -66,7 +65,7 @@ public sealed class ExtractorBenchmarks : IDisposable
     [Benchmark]
     public async Task<int> ExtractAsync()
     {
-        var extractor = new DbExtractor<BenchmarkRecord, Report>
+        var extractor = new DbExtractor<BenchmarkRecord>
         (
             _connection,
             "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People"

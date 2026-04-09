@@ -88,6 +88,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
@@ -138,6 +139,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
           )
           
           for config_file in "${exact_files[@]}"; do
@@ -212,6 +214,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
@@ -255,6 +258,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
@@ -434,7 +438,8 @@ jobs:
               dotnet test "$test_proj" \
                 --configuration Release \
                 --framework "$fw" \
-                --collect:"XPlat Code Coverage" \
+                --collect "XPlat Code Coverage" \
+                --settings coverlet.runsettings \
                 --results-directory "./TestResults" \
                 --logger "console;verbosity=minimal" || exit 1
             done <<< "$frameworks"
@@ -712,7 +717,8 @@ jobs:
                 dotnet test $testProj.FullName `
                   --configuration Release `
                   --framework $fw `
-                  --collect:"XPlat Code Coverage" `
+                  --collect "XPlat Code Coverage" `
+                  --settings coverlet.runsettings `
                   --results-directory "./TestResults" `
                   --logger "console;verbosity=normal"
               } else {
@@ -843,6 +849,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
@@ -886,6 +893,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
@@ -1060,7 +1068,8 @@ jobs:
               dotnet test "$test_proj" \
                 --configuration Release \
                 --framework "$fw" \
-                --collect:"XPlat Code Coverage" \
+                --collect "XPlat Code Coverage" \
+                --settings coverlet.runsettings \
                 --results-directory "./TestResults" \
                 --logger "console;verbosity=normal" || exit 1
             done <<< "$frameworks"
@@ -1195,6 +1204,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
@@ -1238,6 +1248,7 @@ jobs:
             "Directory.Build.props"
             "Directory.Build.targets"
             "BannedSymbols.txt"
+            "coverlet.runsettings"
             "*.globalconfig"
             "*.ruleset"
           )
