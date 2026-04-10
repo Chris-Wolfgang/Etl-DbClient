@@ -103,36 +103,13 @@ internal static class DbCommandBuilder
         var columns = GetColumnMappings(type);
         var keys = GetKeyProperties(type);
 
-        if (keys.Count == 0)
-        {
-            throw new InvalidOperationException
-            (
-                $"Type '{type.FullName}' has no properties decorated with [Key]. " +
-                "UPDATE requires at least one key property for the WHERE clause."
-            );
-        }
+        ValidateUpdateInputs(type, columns, keys);
 
         var keyNames = new HashSet<string>(keys.Select(k => k.Name), StringComparer.Ordinal);
-        var setColumns = columns.Where(c => !keyNames.Contains(c.PropertyName)).ToList();
         var whereColumns = columns.Where(c => keyNames.Contains(c.PropertyName)).ToList();
+        var setColumns = columns.Where(c => !keyNames.Contains(c.PropertyName)).ToList();
 
-        if (setColumns.Count == 0)
-        {
-            throw new InvalidOperationException
-            (
-                $"Type '{type.FullName}' has no non-key columns for the SET clause. " +
-                "UPDATE requires at least one property that is not decorated with [Key]."
-            );
-        }
-
-        if (whereColumns.Count == 0)
-        {
-            throw new InvalidOperationException
-            (
-                $"Type '{type.FullName}' has [Key] properties but none are mapped columns. " +
-                "Ensure key properties are not decorated with [NotMapped]."
-            );
-        }
+        ValidateUpdateColumns(type, whereColumns, setColumns);
 
         var setClause = string.Join(", ", setColumns.Select(c => $"{c.ColumnName} = @{c.PropertyName}"));
         var whereClause = string.Join(" AND ", whereColumns.Select(c => $"{c.ColumnName} = @{c.PropertyName}"));
@@ -145,6 +122,62 @@ internal static class DbCommandBuilder
     // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------
+
+    private static void ValidateUpdateInputs
+    (
+        Type type,
+        List<ColumnMapping> columns,
+        List<PropertyInfo> keys
+    )
+    {
+        if (keys.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has no properties decorated with [Key]. " +
+                "UPDATE requires at least one key property for the WHERE clause."
+            );
+        }
+
+        if (columns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has no mapped columns. " +
+                "UPDATE requires at least one mapped property that is not decorated with [NotMapped]."
+            );
+        }
+    }
+
+
+
+    private static void ValidateUpdateColumns
+    (
+        Type type,
+        List<ColumnMapping> whereColumns,
+        List<ColumnMapping> setColumns
+    )
+    {
+        if (whereColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has [Key] properties but none are mapped columns. " +
+                "Ensure key properties are not decorated with [NotMapped]."
+            );
+        }
+
+        if (setColumns.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                $"Type '{type.FullName}' has no non-key columns for the SET clause. " +
+                "UPDATE requires at least one property that is not decorated with [Key]."
+            );
+        }
+    }
+
+
 
     private static string GetTableName(Type type)
     {
