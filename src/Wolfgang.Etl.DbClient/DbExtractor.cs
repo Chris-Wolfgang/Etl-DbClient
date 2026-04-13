@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -51,6 +52,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
     private bool _progressTimerWired;
+    private int? _totalItemCount;
 
 
 
@@ -181,6 +183,27 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+    /// <summary>
+    /// When non-null, this function is invoked before extraction begins to determine
+    /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
+    /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
+    /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
+    /// query. Defaults to <c>null</c> (total count is not fetched).
+    /// </summary>
+    public Func<CancellationToken, Task<int>>? TotalCountQuery { get; set; }
+
+
+
+    /// <summary>
+    /// The default total count implementation. Wraps <see cref="CommandText"/> in
+    /// <c>SELECT COUNT(*) FROM (...) AS _count</c> and executes it using the same
+    /// connection, parameters, and transaction as the extraction query.
+    /// Assign this to <see cref="TotalCountQuery"/> to enable the built-in behavior.
+    /// </summary>
+    public Func<CancellationToken, Task<int>> DefaultTotalCountQuery => ExecuteDefaultTotalCountQueryAsync;
+
+
+
     /// <inheritdoc/>
     protected override DbReport CreateProgressReport()
     {
@@ -189,7 +212,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             CurrentItemCount,
             CurrentSkippedItemCount,
             _commandText,
-            _stopwatch.ElapsedMilliseconds
+            _stopwatch.ElapsedMilliseconds,
+            _totalItemCount
         );
     }
 
@@ -236,6 +260,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         LogExtractionStarted();
 
         var param = _parameters != null ? new DynamicParameters(_parameters) : null;
+
+        if (TotalCountQuery != null)
+        {
+            _totalItemCount = await TotalCountQuery(token);
+        }
+
         long rowIndex = 0;
 
         await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction))
@@ -263,6 +293,20 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         }
 
         LogExtractionCompleted();
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // Private helpers
+    // ------------------------------------------------------------------
+
+    private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
+    {
+        var countSql = $"SELECT COUNT(*) FROM ({_commandText}) AS _count";
+        var param = _parameters != null ? new DynamicParameters(_parameters) : null;
+        return _connection.ExecuteScalarAsync<int>(
+            new CommandDefinition(countSql, param, _transaction, cancellationToken: token));
     }
 
 
