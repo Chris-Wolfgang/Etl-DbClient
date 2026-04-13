@@ -1,3 +1,4 @@
+using Dapper;
 using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
@@ -276,5 +277,81 @@ public class DbExtractorTests
         Assert.Equal(3, report.CurrentItemCount);
         Assert.Contains("People", report.CommandText, StringComparison.Ordinal);
         Assert.True(report.ElapsedMilliseconds >= 0);
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // TotalCountQuery
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task TotalCountQuery_when_null_TotalItemCount_is_null()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People"
+        );
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Null(extractor.GetProgressReport().TotalItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task TotalCountQuery_using_default_TotalItemCount_equals_row_count()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People"
+        );
+        extractor.TotalCountQuery = extractor.DefaultTotalCountQuery;
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, extractor.GetProgressReport().TotalItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task TotalCountQuery_using_default_with_parameterized_query_returns_filtered_count()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(5);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People WHERE age > @MinAge",
+            new Dictionary<string, object>(StringComparer.Ordinal) { { "MinAge", 23 } }
+        );
+        extractor.TotalCountQuery = extractor.DefaultTotalCountQuery;
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(2, extractor.GetProgressReport().TotalItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task TotalCountQuery_using_custom_func_returns_custom_count()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People"
+        );
+        extractor.TotalCountQuery = _ => conn.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM People");
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, extractor.GetProgressReport().TotalItemCount);
     }
 }

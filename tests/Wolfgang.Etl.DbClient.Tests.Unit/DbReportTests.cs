@@ -13,6 +13,17 @@ public class DbReportTests
         Assert.Equal(2, report.CurrentSkippedItemCount);
         Assert.Equal("SELECT 1", report.CommandText);
         Assert.Equal(500, report.ElapsedMilliseconds);
+        Assert.Null(report.TotalItemCount);
+    }
+
+
+
+    [Fact]
+    public void Constructor_with_totalItemCount_sets_TotalItemCount()
+    {
+        var report = new DbReport(10, 2, "SELECT 1", 500, 100);
+
+        Assert.Equal(100, report.TotalItemCount);
     }
 
 
