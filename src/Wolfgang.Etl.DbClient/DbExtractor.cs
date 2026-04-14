@@ -264,12 +264,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         if (TotalCountQuery != null)
         {
-            _totalItemCount = await TotalCountQuery(token);
+            _totalItemCount = await TotalCountQuery(token).ConfigureAwait(false);
         }
 
         long rowIndex = 0;
 
-        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction))
+        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction).ConfigureAwait(false))
         {
             token.ThrowIfCancellationRequested();
             rowIndex++;
