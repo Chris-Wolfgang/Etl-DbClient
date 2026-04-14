@@ -15,6 +15,26 @@ public record DbReport : Report
     /// <param name="currentSkippedItemCount">The number of records skipped so far.</param>
     /// <param name="commandText">The SQL command text being executed.</param>
     /// <param name="elapsedMilliseconds">The wall clock time since execution started.</param>
+    public DbReport
+    (
+        int currentItemCount,
+        int currentSkippedItemCount,
+        string commandText,
+        long elapsedMilliseconds
+    )
+        : this(currentItemCount, currentSkippedItemCount, commandText, elapsedMilliseconds, totalItemCount: null)
+    {
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new <see cref="DbReport"/> snapshot with a total item count.
+    /// </summary>
+    /// <param name="currentItemCount">The number of records processed so far.</param>
+    /// <param name="currentSkippedItemCount">The number of records skipped so far.</param>
+    /// <param name="commandText">The SQL command text being executed.</param>
+    /// <param name="elapsedMilliseconds">The wall clock time since execution started.</param>
     /// <param name="totalItemCount">
     /// The total number of records available, or <c>null</c> if
     /// <see cref="DbExtractor{TRecord}.TotalCountQuery"/> was not set.
@@ -25,7 +45,7 @@ public record DbReport : Report
         int currentSkippedItemCount,
         string commandText,
         long elapsedMilliseconds,
-        int? totalItemCount = null
+        int? totalItemCount
     )
         : base(currentItemCount)
     {
