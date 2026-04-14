@@ -257,6 +257,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 #pragma warning restore MA0051
     {
         _stopwatch.Restart();
+        _totalItemCount = null;
         LogExtractionStarted();
 
         var param = _parameters != null ? new DynamicParameters(_parameters) : null;
@@ -303,10 +304,41 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
     private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
     {
-        var countSql = $"SELECT COUNT(*) FROM ({_commandText}) AS _count";
+        var sanitized = SanitizeCommandTextForCount(_commandText);
+        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
         var param = _parameters != null ? new DynamicParameters(_parameters) : null;
         return _connection.ExecuteScalarAsync<int>(
             new CommandDefinition(countSql, param, _transaction, cancellationToken: token));
+    }
+
+
+
+    /// <summary>
+    /// Strips trailing semicolons from the command text so it can be safely
+    /// wrapped in a <c>SELECT COUNT(*) FROM (...)</c> subquery.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// The command text is empty or whitespace-only.
+    /// </exception>
+    private static string SanitizeCommandTextForCount(string commandText)
+    {
+        if (string.IsNullOrWhiteSpace(commandText))
+        {
+            throw new InvalidOperationException
+            (
+                "The default total count query requires a non-empty command text. " +
+                "Provide a custom TotalCountQuery when the extractor command text cannot be wrapped safely."
+            );
+        }
+
+        var sanitized = commandText.Trim();
+
+        while (sanitized.EndsWith(";", StringComparison.Ordinal))
+        {
+            sanitized = sanitized.Substring(0, sanitized.Length - 1).TrimEnd();
+        }
+
+        return sanitized;
     }
 
 
