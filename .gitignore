@@ -441,3 +441,6 @@ docs/*
 !docs/WORKFLOW_SECURITY.md
 .nuget/nuget.exe
 
+
+# ReSharper inspection output
+resharper-results.xml
