@@ -51,7 +51,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     private readonly ILogger _logger;
     private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
-    private bool _progressTimerWired;
+    private int _progressTimerWired;
     private int? _totalItemCount;
 
 
@@ -200,6 +200,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// connection, parameters, and transaction as the extraction query.
     /// Assign this to <see cref="TotalCountQuery"/> to enable the built-in behavior.
     /// </summary>
+    /// <remarks>
+    /// Trailing semicolons are stripped automatically. If the command text contains
+    /// an <c>ORDER BY</c> clause, some database providers (e.g. SQL Server) may reject
+    /// it inside a derived table. Use a custom <see cref="TotalCountQuery"/> in that case.
+    /// </remarks>
     public Func<CancellationToken, Task<int>> DefaultTotalCountQuery => ExecuteDefaultTotalCountQueryAsync;
 
 
@@ -231,9 +236,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         if (_progressTimer != null)
         {
-            if (!_progressTimerWired)
+            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
             {
-                _progressTimerWired = true;
                 _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
             }
 
