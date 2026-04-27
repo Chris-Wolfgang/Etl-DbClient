@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <FileVersion>1.0.0</FileVersion>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
@@ -52,7 +52,7 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.12.0" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.13.0" />
   </ItemGroup>
 
   <ItemGroup>
