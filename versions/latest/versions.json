@@ -4,6 +4,10 @@
     "url": "/Etl-DbClient/versions/latest/"
   },
   {
+    "version": "v0.2.0",
+    "url": "/Etl-DbClient/versions/v0.2.0/"
+  },
+  {
     "version": "v0.1.0",
     "url": "/Etl-DbClient/versions/v0.1.0/"
   }

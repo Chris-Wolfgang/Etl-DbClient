@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.1.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbReport.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbReport%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.2.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbReport.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbReport%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,7 +75,7 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_DbReport" data-uid="Wolfgang.Etl.DbClient.DbReport" class="text-break">
-Class DbReport  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L9"><i class="bi bi-code-slash"></i></a>
+Class DbReport  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L9"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -167,7 +167,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport__ctor_System_Int32_System_Int32_System_String_System_Int64_" data-uid="Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64)">
   DbReport(int, int, string, long)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L18"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L18"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a> snapshot.</p>
@@ -205,6 +205,52 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
 
 
+  <a id="Wolfgang_Etl_DbClient_DbReport__ctor_" data-uid="Wolfgang.Etl.DbClient.DbReport.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbReport__ctor_System_Int32_System_Int32_System_String_System_Int64_System_Nullable_System_Int32__" data-uid="Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64,System.Nullable{System.Int32})">
+  DbReport(int, int, string, long, int?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L42"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a> snapshot with a total item count.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public DbReport(int currentItemCount, int currentSkippedItemCount, string commandText, long elapsedMilliseconds, int? totalItemCount)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>currentItemCount</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of records processed so far.</p>
+</dd>
+    <dt><code>currentSkippedItemCount</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of records skipped so far.</p>
+</dd>
+    <dt><code>commandText</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The SQL command text being executed.</p>
+</dd>
+    <dt><code>elapsedMilliseconds</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int64">long</a></dt>
+    <dd><p>The wall clock time since execution started.</p>
+</dd>
+    <dt><code>totalItemCount</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>?</dt>
+    <dd><p>The total number of records available, or <code>null</code> if
+<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_TotalCountQuery">TotalCountQuery</a> was not set.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
   <h2 class="section" id="properties">Properties
 </h2>
 
@@ -213,10 +259,10 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport_CommandText" data-uid="Wolfgang.Etl.DbClient.DbReport.CommandText">
   CommandText
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L44"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L70"><i class="bi bi-code-slash"></i></a>
   </h3>
 
-  <div class="markdown level1 summary"><p>The SQL command text being executed.</p>
+  <div class="markdown level1 summary"><p>The SQL command text being executed. Never null — always assigned by the constructor.</p>
 </div>
   <div class="markdown level1 conceptual"></div>
 
@@ -245,7 +291,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport_CurrentSkippedItemCount" data-uid="Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount">
   CurrentSkippedItemCount
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L37"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L63"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The number of records skipped so far.</p>
@@ -277,7 +323,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport_ElapsedMilliseconds" data-uid="Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds">
   ElapsedMilliseconds
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L51"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L77"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The wall clock time in milliseconds since the operation started.</p>
@@ -305,11 +351,44 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
 
 
+  <a id="Wolfgang_Etl_DbClient_DbReport_TotalItemCount_" data-uid="Wolfgang.Etl.DbClient.DbReport.TotalItemCount*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbReport_TotalItemCount" data-uid="Wolfgang.Etl.DbClient.DbReport.TotalItemCount">
+  TotalItemCount
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L85"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The total number of records available for extraction, or <code>null</code> if
+<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_TotalCountQuery">TotalCountQuery</a> was not set.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int? TotalItemCount { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>?</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
 
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.1.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L9" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.2.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L9" class="edit-link">Edit this page</a>
         </div>
 
 
