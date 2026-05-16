@@ -686,6 +686,35 @@ jobs:
           path: TestResults-Integration/
 
   # ============================================================================
+  # INTEGRATION AGGREGATOR
+  # A single stable-named job whose only purpose is to roll up every cell of
+  # the test-integration matrix into one pass/fail signal. Mark THIS one
+  # required on the branch ruleset — the matrix can grow (MariaDB, Oracle,
+  # CockroachDB, …) or change TFMs without breaking the required-check name.
+  # ============================================================================
+  test-integration-all:
+    name: "Integration (all)"
+    runs-on: ubuntu-latest
+    needs: [detect-projects, test-integration]
+    # Run even when a matrix cell failed/cancelled so this job can report the
+    # rollup result instead of silently being marked "skipped". The if: predicate
+    # mirrors test-integration's so this aggregator is genuinely skipped (not
+    # failed) on the repo-template repo or on repos without .NET projects.
+    if: >-
+      always() &&
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true'
+    steps:
+      - name: Check matrix result
+        run: |
+          result="${{ needs.test-integration.result }}"
+          echo "Aggregated test-integration result: $result"
+          if [ "$result" != "success" ]; then
+            echo "::error::At least one integration matrix cell did not succeed (result=$result)"
+            exit 1
+          fi
+
+  # ============================================================================
   # STAGE 2: Windows - All .NET Tests (Gated by Stage 1)
   # ============================================================================
   test-windows:
