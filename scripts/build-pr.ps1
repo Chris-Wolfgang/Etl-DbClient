@@ -21,18 +21,24 @@
 .PARAMETER SkipSecurity
     Skip DevSkim and gitleaks scans.
 
+.PARAMETER SkipIntegration
+    Skip the per-RDBMS integration tests. By default the script runs them when
+    a Docker daemon is reachable and silently skips otherwise (with a warning).
+
 .PARAMETER CoverageThreshold
     Minimum coverage percentage required. Defaults to 90.
 
 .EXAMPLE
     pwsh ./scripts/build-pr.ps1
     pwsh ./scripts/build-pr.ps1 -SkipSecurity
+    pwsh ./scripts/build-pr.ps1 -SkipIntegration
     pwsh ./scripts/build-pr.ps1 -CoverageThreshold 80
 #>
 param(
     [switch]$SkipTests,
     [switch]$SkipCoverage,
     [switch]$SkipSecurity,
+    [switch]$SkipIntegration,
     [int]$CoverageThreshold = 90
 )
 
@@ -81,7 +87,11 @@ else {
 if (-not $SkipTests -and $failed.Count -eq 0) {
     Write-Step "Step 2: Run Tests (all target frameworks)"
 
-    $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue)
+    # Integration suites are container-backed and run in their own step below.
+    # Match on the file name (not the full path) so an unrelated directory
+    # containing the substring won't be excluded.
+    $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notlike '*.Tests.Integration.csproj' })
 
     if ($testProjects.Count -eq 0) {
         Write-Host "No test projects found in ./tests — skipping"
@@ -203,6 +213,63 @@ if (-not $SkipTests -and -not $SkipCoverage -and $failed.Count -eq 0) {
         }
         else {
             Write-Host "Coverage report not generated — skipping threshold check"
+        }
+    }
+}
+
+# ============================================================================
+# STEP 3.5: RDBMS Integration Tests (Testcontainers, requires Docker)
+# ============================================================================
+if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
+    Write-Step "Step 3.5: Integration Tests (per-RDBMS via Testcontainers)"
+
+    $integrationProj = Get-ChildItem -Path './tests' -Recurse -File -Filter '*.Tests.Integration.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (-not $integrationProj) {
+        Write-Host "ℹ️  No integration project found — skipping."
+    }
+    else {
+        $dockerOk = $false
+        try {
+            docker info *>$null
+            $dockerOk = ($LASTEXITCODE -eq 0)
+        }
+        catch {
+            $dockerOk = $false
+        }
+
+        # SQLite needs no Docker; the other providers do. Build the list accordingly.
+        $rdbmsList = @('sqlite')
+        if ($dockerOk) {
+            $rdbmsList += @('sqlserver', 'postgres', 'mysql')
+        }
+        else {
+            Write-Host "⚠️  Docker daemon is not reachable — running only the SQLite slice." -ForegroundColor Yellow
+            Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run for full coverage." -ForegroundColor Yellow
+        }
+
+        # Run every combination so a failure on one provider/TFM does not hide
+        # failures on the others. Each failure is recorded but the loop keeps going.
+        $tfmList = @('net8.0', 'net10.0')
+        foreach ($rdbms in $rdbmsList) {
+            foreach ($tfm in $tfmList) {
+                Write-Host ""
+                Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
+
+                dotnet test $integrationProj.FullName `
+                    --configuration Release `
+                    --framework $tfm `
+                    --filter "Category=$rdbms" `
+                    --logger "console;verbosity=normal"
+
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Fail "  Integration tests failed for $rdbms ($tfm)"
+                    $failed += "Integration ($rdbms/$tfm)"
+                }
+                else {
+                    Write-Pass "  Integration tests passed for $rdbms ($tfm)"
+                }
+            }
         }
     }
 }
