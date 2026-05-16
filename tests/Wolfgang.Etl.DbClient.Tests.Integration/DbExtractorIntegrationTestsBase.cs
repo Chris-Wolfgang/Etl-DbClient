@@ -21,13 +21,13 @@ public abstract class DbExtractorIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
-        await Fixture.SeedAsync(conn, rowCount: 5).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
 
         var extractor = new DbExtractor<ContractItem>(conn, "SELECT name AS Name, value AS Value FROM contract_items ORDER BY value");
 
-        var results = await extractor.ExtractAsync().ToListAsync().ConfigureAwait(true);
+        var results = await extractor.ExtractAsync().ToListAsync();
 
         Assert.Equal(5, results.Count);
         Assert.Equal("Item1", results[0].Name);
@@ -43,12 +43,12 @@ public abstract class DbExtractorIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
 
         var extractor = new DbExtractor<ContractItem>(conn, "SELECT name AS Name, value AS Value FROM contract_items");
 
-        var results = await extractor.ExtractAsync().ToListAsync().ConfigureAwait(true);
+        var results = await extractor.ExtractAsync().ToListAsync();
 
         Assert.Empty(results);
     }
@@ -60,16 +60,16 @@ public abstract class DbExtractorIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
-        await Fixture.SeedAsync(conn, rowCount: 5).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
 
         var extractor = new DbExtractor<ContractItem>(conn, "SELECT name AS Name, value AS Value FROM contract_items ORDER BY value")
         {
             SkipItemCount = 2
         };
 
-        var results = await extractor.ExtractAsync().ToListAsync().ConfigureAwait(true);
+        var results = await extractor.ExtractAsync().ToListAsync();
 
         Assert.Equal(3, results.Count);
         Assert.Equal("Item3", results[0].Name);
@@ -82,16 +82,16 @@ public abstract class DbExtractorIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
-        await Fixture.SeedAsync(conn, rowCount: 5).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
 
         var extractor = new DbExtractor<ContractItem>(conn, "SELECT name AS Name, value AS Value FROM contract_items ORDER BY value")
         {
             MaximumItemCount = 2
         };
 
-        var results = await extractor.ExtractAsync().ToListAsync().ConfigureAwait(true);
+        var results = await extractor.ExtractAsync().ToListAsync();
 
         Assert.Equal(2, results.Count);
         Assert.Equal("Item1", results[0].Name);

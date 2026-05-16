@@ -31,6 +31,18 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
         {
             Available = false;
             UnavailableReason = $"{ProviderName} unavailable: {ex.GetType().Name}: {ex.Message}";
+
+            // StartAsync may have allocated a partially-initialised container
+            // before throwing. Attempt best-effort cleanup so a failed init does
+            // not leak resources on the host.
+            try
+            {
+                await StopAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Swallow secondary failures during emergency cleanup.
+            }
         }
     }
 
@@ -38,11 +50,8 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
 
     public async Task DisposeAsync()
     {
-        if (!Available)
-        {
-            return;
-        }
-
+        // Always attempt teardown. StopAsync implementations are responsible
+        // for tolerating a never-started state (e.g. _container is null).
         try
         {
             await StopAsync().ConfigureAwait(false);

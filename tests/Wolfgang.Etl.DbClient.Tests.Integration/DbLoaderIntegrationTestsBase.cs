@@ -27,7 +27,7 @@ public abstract class DbLoaderIntegrationTestsBase
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM contract_items";
-        var result = await cmd.ExecuteScalarAsync().ConfigureAwait(true);
+        var result = await cmd.ExecuteScalarAsync();
         return Convert.ToInt32(result, System.Globalization.CultureInfo.InvariantCulture);
     }
 
@@ -38,14 +38,14 @@ public abstract class DbLoaderIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
 
         var loader = new DbLoader<ContractItem>(conn, "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)");
 
-        await loader.LoadAsync(Source(5)).ConfigureAwait(true);
+        await loader.LoadAsync(Source(5));
 
-        Assert.Equal(5, await CountRowsAsync(conn).ConfigureAwait(true));
+        Assert.Equal(5, await CountRowsAsync(conn));
     }
 
 
@@ -55,14 +55,14 @@ public abstract class DbLoaderIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
 
         var loader = new DbLoader<ContractItem>(conn, "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)");
 
-        await loader.LoadAsync(Source(0)).ConfigureAwait(true);
+        await loader.LoadAsync(Source(0));
 
-        Assert.Equal(0, await CountRowsAsync(conn).ConfigureAwait(true));
+        Assert.Equal(0, await CountRowsAsync(conn));
     }
 
 
@@ -72,16 +72,16 @@ public abstract class DbLoaderIntegrationTestsBase
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await Fixture.OpenConnectionAsync().ConfigureAwait(true);
-        await Fixture.ResetSchemaAsync(conn).ConfigureAwait(true);
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
 
         var loader = new DbLoader<ContractItem>(conn, "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)")
         {
             MaximumItemCount = 3
         };
 
-        await loader.LoadAsync(Source(10)).ConfigureAwait(true);
+        await loader.LoadAsync(Source(10));
 
-        Assert.Equal(3, await CountRowsAsync(conn).ConfigureAwait(true));
+        Assert.Equal(3, await CountRowsAsync(conn));
     }
 }
