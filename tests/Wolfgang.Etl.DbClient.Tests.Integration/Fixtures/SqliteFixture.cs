@@ -25,14 +25,13 @@ public sealed class SqliteFixture : DbProviderFixtureBase
 
 
 
-    protected override Task StartAsync()
+    protected override async Task StartAsync()
     {
         // shared-cache + a named in-memory DB lets multiple connections see the
         // same data; the "hold open" connection keeps the DB alive between tests.
         _connectionString = $"Data Source=file:integration-{Guid.NewGuid():N}?mode=memory&cache=shared";
         _holdOpen = new SqliteConnection(_connectionString);
-        _holdOpen.Open();
-        return Task.CompletedTask;
+        await _holdOpen.OpenAsync().ConfigureAwait(false);
     }
 
 

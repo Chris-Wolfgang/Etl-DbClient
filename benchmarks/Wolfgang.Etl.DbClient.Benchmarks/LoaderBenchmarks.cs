@@ -69,7 +69,7 @@ public class LoaderBenchmarks : IDisposable
 
 
     [Benchmark]
-    public async Task LoadAsync()
+    public Task LoadAsync()
     {
         var loader = new DbLoader<BenchmarkRecord>
         (
@@ -77,7 +77,9 @@ public class LoaderBenchmarks : IDisposable
             "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)"
         );
 
-        await loader.LoadAsync(ToAsyncEnumerable(_records)).ConfigureAwait(false);
+        // Return the Task directly — AsyncFixer01 (treated as error on Windows
+        // analyzer pack) flags `async + single await` as needless overhead.
+        return loader.LoadAsync(ToAsyncEnumerable(_records));
     }
 
 
