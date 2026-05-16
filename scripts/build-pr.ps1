@@ -248,9 +248,30 @@ if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
             Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run for full coverage." -ForegroundColor Yellow
         }
 
+        # Parse TFMs from the integration project's csproj so this step stays in
+        # sync if the project's TargetFrameworks ever change. Falls back to a
+        # built-in default if the parse fails for any reason.
+        $tfmList = @('net8.0', 'net10.0')
+        try {
+            $integrationCsprojXml = [xml](Get-Content $integrationProj.FullName -Raw)
+            $tfmRaw = $integrationCsprojXml.SelectSingleNode('//TargetFrameworks').'#text'
+            if (-not $tfmRaw) {
+                $tfmRaw = $integrationCsprojXml.SelectSingleNode('//TargetFramework').'#text'
+            }
+            if ($tfmRaw) {
+                $parsed = @($tfmRaw -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+                if ($parsed.Count -gt 0) {
+                    $tfmList = $parsed
+                    Write-Host "  Discovered integration TFMs: $($tfmList -join ', ')" -ForegroundColor DarkGray
+                }
+            }
+        }
+        catch {
+            Write-Host "  ⚠️  Could not parse TFMs from $($integrationProj.Name); falling back to defaults: $($tfmList -join ', ')" -ForegroundColor Yellow
+        }
+
         # Run every combination so a failure on one provider/TFM does not hide
         # failures on the others. Each failure is recorded but the loop keeps going.
-        $tfmList = @('net8.0', 'net10.0')
         foreach ($rdbms in $rdbmsList) {
             foreach ($tfm in $tfmList) {
                 Write-Host ""

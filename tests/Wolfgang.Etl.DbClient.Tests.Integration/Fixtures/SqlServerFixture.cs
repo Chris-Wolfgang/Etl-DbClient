@@ -17,8 +17,10 @@ public sealed class SqlServerFixture : DbProviderFixtureBase
 
     protected override async Task StartAsync()
     {
+        // Pinned tag for reproducible CI. Bump deliberately when you want
+        // to validate against a new CU.
         _container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithImage("mcr.microsoft.com/mssql/server:2022-CU20-ubuntu-22.04")
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);

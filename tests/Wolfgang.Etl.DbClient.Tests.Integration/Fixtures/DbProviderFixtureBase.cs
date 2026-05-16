@@ -34,11 +34,19 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
         // Pre-probe Docker availability. Only "Docker daemon unreachable" should
         // turn into a skip — every other StartAsync failure (bad image tag,
         // schema regression, etc.) must propagate so CI fails loudly.
-        if (RequiresDocker && !await IsDockerReachableAsync().ConfigureAwait(false))
+        if (RequiresDocker)
         {
-            Available = false;
-            UnavailableReason = $"{ProviderName} unavailable: Docker daemon is not reachable.";
-            return;
+            var probe = await ProbeDockerAsync().ConfigureAwait(false);
+            if (probe is not null)
+            {
+                Available = false;
+                // Include the probe exception's type+message so a "skipped"
+                // test still gives the reader enough to diagnose TLS,
+                // permission, or socket-path problems — not just an
+                // unhelpful "not reachable".
+                UnavailableReason = $"{ProviderName} unavailable: Docker probe failed — {probe.GetType().Name}: {probe.Message}";
+                return;
+            }
         }
 
         try
@@ -65,18 +73,22 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
 
 
 
-    private static async Task<bool> IsDockerReachableAsync()
+    /// <summary>
+    /// Pings the Docker daemon. Returns null on success, or the exception that
+    /// caused the probe to fail (TLS, permission, daemon-down, socket-path, ...).
+    /// </summary>
+    private static async Task<Exception?> ProbeDockerAsync()
     {
         try
         {
             using var cfg = new DockerClientConfiguration();
             using var client = cfg.CreateClient();
             await client.System.PingAsync().ConfigureAwait(false);
-            return true;
+            return null;
         }
-        catch
+        catch (Exception ex)
         {
-            return false;
+            return ex;
         }
     }
 
