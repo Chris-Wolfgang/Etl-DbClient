@@ -454,19 +454,26 @@ jobs:
             exit 0
           fi
 
-          mapfile -d '' -t test_projects < <(find ./tests -type f \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) -print0)
+          # Match on the filename, not the path, so an unrelated parent directory
+          # containing the substring "Tests.Integration" won't be excluded.
+          mapfile -d '' -t test_projects < <(find ./tests -type f \
+            \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) \
+            ! -name "*.Tests.Integration.csproj" \
+            ! -name "*.Tests.Integration.vbproj" \
+            ! -name "*.Tests.Integration.fsproj" \
+            -print0)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "ℹ️  No test projects found under ./tests — skipping test stage."
             exit 0
           fi
-          
+
           echo "=========================================="
-          echo "Found test projects:"
+          echo "Found test projects (integration suites are run in a separate job):"
           echo "=========================================="
           printf '%s\n' "${test_projects[@]}"
           echo ""
-          
+
           for test_proj in "${test_projects[@]}"; do
             echo "=========================================="
             echo "Testing project: $test_proj"
@@ -597,6 +604,68 @@ jobs:
           path: |
             src/**/bin/Release
             tests/**/bin/Release
+
+  # ============================================================================
+  # RDBMS INTEGRATION: per-database job using Testcontainers (Linux only)
+  # Runs in parallel with Stage 1. Does not gate Stage 2 / Stage 3 so a flaky
+  # container start cannot block the multi-TFM unit matrix.
+  # ============================================================================
+  test-integration:
+    name: "Integration / ${{ matrix.rdbms }} (${{ matrix.tfm }})"
+    runs-on: ubuntu-latest
+    needs: detect-projects
+    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        rdbms: [sqlserver, postgres, mysql, sqlite]
+        tfm: [net8.0, net10.0]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Locate integration project
+        id: locate
+        shell: bash
+        run: |
+          proj=$(find ./tests -type f -name "*.Tests.Integration.csproj" | head -n1)
+          if [ -z "$proj" ]; then
+            echo "ℹ️  No integration project found — skipping."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Integration project: $proj"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "project=$proj" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
+        if: steps.locate.outputs.found == 'true'
+        run: |
+          dotnet test "${{ steps.locate.outputs.project }}" \
+            --configuration Release \
+            --framework ${{ matrix.tfm }} \
+            --filter "Category=${{ matrix.rdbms }}" \
+            --logger "console;verbosity=normal" \
+            --logger "trx;LogFileName=integration-${{ matrix.rdbms }}-${{ matrix.tfm }}.trx" \
+            --results-directory "./TestResults-Integration"
+
+      - name: Upload integration test results
+        if: always() && steps.locate.outputs.found == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-${{ matrix.rdbms }}-${{ matrix.tfm }}-trx
+          path: TestResults-Integration/
 
   # ============================================================================
   # STAGE 2: Windows - All .NET Tests (Gated by Stage 1)
@@ -734,7 +803,11 @@ jobs:
             exit 0
           }
 
-          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj')
+          # Integration suites (*.Tests.Integration.csproj) live in a separate Linux-only
+          # job that provisions database containers via Testcontainers; not run here.
+          # Filter by file name, not path, so an unrelated parent directory containing the
+          # substring "Tests.Integration" won't be excluded.
+          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' | Where-Object { $_.Name -notlike '*.Tests.Integration.csproj' })
 
           if (@($testProjects).Count -eq 0) {
             Write-Host "ℹ️  No test projects found under ./tests — skipping test stage."
@@ -1118,7 +1191,12 @@ jobs:
           test_projects=()
           while IFS= read -r -d '' file; do
           test_projects+=("$file")
-          done < <(find ./tests -type f \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) -print0)
+          done < <(find ./tests -type f \
+            \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) \
+            ! -name "*.Tests.Integration.csproj" \
+            ! -name "*.Tests.Integration.vbproj" \
+            ! -name "*.Tests.Integration.fsproj" \
+            -print0)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "ℹ️  No test projects found under ./tests — skipping test stage."
