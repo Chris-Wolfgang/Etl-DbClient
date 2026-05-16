@@ -604,7 +604,7 @@ jobs:
   # container start cannot block the multi-TFM unit matrix.
   # ============================================================================
   test-integration:
-    name: "Integration / ${{ matrix.rdbms }}"
+    name: "Integration / ${{ matrix.rdbms }} (${{ matrix.tfm }})"
     runs-on: ubuntu-latest
     needs: detect-projects
     if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
@@ -612,6 +612,7 @@ jobs:
       fail-fast: false
       matrix:
         rdbms: [sqlserver, postgres, mysql, sqlite]
+        tfm: [net8.0, net10.0]
 
     steps:
       - name: Checkout code
@@ -641,22 +642,22 @@ jobs:
             echo "project=$proj" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run ${{ matrix.rdbms }} integration tests
+      - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
         if: steps.locate.outputs.found == 'true'
         run: |
           dotnet test "${{ steps.locate.outputs.project }}" \
             --configuration Release \
-            --framework net10.0 \
+            --framework ${{ matrix.tfm }} \
             --filter "Category=${{ matrix.rdbms }}" \
             --logger "console;verbosity=normal" \
-            --logger "trx;LogFileName=integration-${{ matrix.rdbms }}.trx" \
+            --logger "trx;LogFileName=integration-${{ matrix.rdbms }}-${{ matrix.tfm }}.trx" \
             --results-directory "./TestResults-Integration"
 
       - name: Upload integration test results
         if: always() && steps.locate.outputs.found == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: integration-${{ matrix.rdbms }}-trx
+          name: integration-${{ matrix.rdbms }}-${{ matrix.tfm }}-trx
           path: TestResults-Integration/
 
   # ============================================================================

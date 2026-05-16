@@ -242,23 +242,26 @@ if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
         }
         else {
             $rdbmsList = @('sqlite', 'sqlserver', 'postgres', 'mysql')
-            foreach ($rdbms in $rdbmsList) {
-                Write-Host ""
-                Write-Host "  RDBMS: $rdbms" -ForegroundColor Yellow
+            $tfmList   = @('net8.0', 'net10.0')
+            :outer foreach ($rdbms in $rdbmsList) {
+                foreach ($tfm in $tfmList) {
+                    Write-Host ""
+                    Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
 
-                dotnet test $integrationProj.FullName `
-                    --configuration Release `
-                    --framework net10.0 `
-                    --filter "Category=$rdbms" `
-                    --logger "console;verbosity=normal"
+                    dotnet test $integrationProj.FullName `
+                        --configuration Release `
+                        --framework $tfm `
+                        --filter "Category=$rdbms" `
+                        --logger "console;verbosity=normal"
 
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Fail "  Integration tests failed for $rdbms"
-                    $failed += "Integration ($rdbms)"
-                    break
-                }
-                else {
-                    Write-Pass "  Integration tests passed for $rdbms"
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Fail "  Integration tests failed for $rdbms ($tfm)"
+                        $failed += "Integration ($rdbms/$tfm)"
+                        break outer
+                    }
+                    else {
+                        Write-Pass "  Integration tests passed for $rdbms ($tfm)"
+                    }
                 }
             }
         }
