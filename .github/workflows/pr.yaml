@@ -613,6 +613,9 @@ jobs:
   test-integration:
     name: "Integration / ${{ matrix.rdbms }} (${{ matrix.tfm }})"
     runs-on: ubuntu-latest
+    # Ceiling protects against a stuck container start (esp. mssql / mysql)
+    # consuming the default 6-hour GitHub Actions limit per matrix cell.
+    timeout-minutes: 25
     needs: detect-projects
     if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
     strategy:
@@ -639,7 +642,12 @@ jobs:
         id: locate
         shell: bash
         run: |
-          proj=$(find ./tests -type f -name "*.Tests.Integration.csproj" | head -n1)
+          # Match all three project extensions so a future VB/F# rewrite is found.
+          proj=$(find ./tests -type f \
+            \( -name "*.Tests.Integration.csproj" \
+            -o -name "*.Tests.Integration.vbproj" \
+            -o -name "*.Tests.Integration.fsproj" \) \
+            | head -n1)
           if [ -z "$proj" ]; then
             echo "ℹ️  No integration project found — skipping."
             echo "found=false" >> "$GITHUB_OUTPUT"
@@ -807,7 +815,7 @@ jobs:
           # job that provisions database containers via Testcontainers; not run here.
           # Filter by file name, not path, so an unrelated parent directory containing the
           # substring "Tests.Integration" won't be excluded.
-          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' | Where-Object { $_.Name -notlike '*.Tests.Integration.csproj' })
+          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' | Where-Object { $_.Name -notmatch '\.Tests\.Integration\.(cs|vb|fs)proj$' })
 
           if (@($testProjects).Count -eq 0) {
             Write-Host "ℹ️  No test projects found under ./tests — skipping test stage."
