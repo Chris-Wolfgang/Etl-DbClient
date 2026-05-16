@@ -454,7 +454,14 @@ jobs:
             exit 0
           fi
 
-          mapfile -d '' -t test_projects < <(find ./tests -type f \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) -not -path "*Tests.Integration*" -print0)
+          # Match on the filename, not the path, so an unrelated parent directory
+          # containing the substring "Tests.Integration" won't be excluded.
+          mapfile -d '' -t test_projects < <(find ./tests -type f \
+            \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) \
+            ! -name "*.Tests.Integration.csproj" \
+            ! -name "*.Tests.Integration.vbproj" \
+            ! -name "*.Tests.Integration.fsproj" \
+            -print0)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "ℹ️  No test projects found under ./tests — skipping test stage."
@@ -796,9 +803,11 @@ jobs:
             exit 0
           }
 
-          # Integration suites (Tests.Integration) live in a separate Linux-only job that
-          # provisions database containers via Testcontainers; they are not run here.
-          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' | Where-Object { $_.FullName -notmatch 'Tests\.Integration' })
+          # Integration suites (*.Tests.Integration.csproj) live in a separate Linux-only
+          # job that provisions database containers via Testcontainers; not run here.
+          # Filter by file name, not path, so an unrelated parent directory containing the
+          # substring "Tests.Integration" won't be excluded.
+          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' | Where-Object { $_.Name -notlike '*.Tests.Integration.csproj' })
 
           if (@($testProjects).Count -eq 0) {
             Write-Host "ℹ️  No test projects found under ./tests — skipping test stage."
@@ -1182,7 +1191,12 @@ jobs:
           test_projects=()
           while IFS= read -r -d '' file; do
           test_projects+=("$file")
-          done < <(find ./tests -type f \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) -not -path "*Tests.Integration*" -print0)
+          done < <(find ./tests -type f \
+            \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) \
+            ! -name "*.Tests.Integration.csproj" \
+            ! -name "*.Tests.Integration.vbproj" \
+            ! -name "*.Tests.Integration.fsproj" \
+            -print0)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "ℹ️  No test projects found under ./tests — skipping test stage."

@@ -88,8 +88,10 @@ if (-not $SkipTests -and $failed.Count -eq 0) {
     Write-Step "Step 2: Run Tests (all target frameworks)"
 
     # Integration suites are container-backed and run in their own step below.
+    # Match on the file name (not the full path) so an unrelated directory
+    # containing the substring won't be excluded.
     $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch 'Tests\.Integration' })
+        Where-Object { $_.Name -notlike '*.Tests.Integration.csproj' })
 
     if ($testProjects.Count -eq 0) {
         Write-Host "No test projects found in ./tests — skipping"
@@ -236,32 +238,36 @@ if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
             $dockerOk = $false
         }
 
-        if (-not $dockerOk) {
-            Write-Host "⚠️  Docker daemon is not reachable — skipping integration tests." -ForegroundColor Yellow
-            Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run." -ForegroundColor Yellow
+        # SQLite needs no Docker; the other providers do. Build the list accordingly.
+        $rdbmsList = @('sqlite')
+        if ($dockerOk) {
+            $rdbmsList += @('sqlserver', 'postgres', 'mysql')
         }
         else {
-            $rdbmsList = @('sqlite', 'sqlserver', 'postgres', 'mysql')
-            $tfmList   = @('net8.0', 'net10.0')
-            :outer foreach ($rdbms in $rdbmsList) {
-                foreach ($tfm in $tfmList) {
-                    Write-Host ""
-                    Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
+            Write-Host "⚠️  Docker daemon is not reachable — running only the SQLite slice." -ForegroundColor Yellow
+            Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run for full coverage." -ForegroundColor Yellow
+        }
 
-                    dotnet test $integrationProj.FullName `
-                        --configuration Release `
-                        --framework $tfm `
-                        --filter "Category=$rdbms" `
-                        --logger "console;verbosity=normal"
+        # Run every combination so a failure on one provider/TFM does not hide
+        # failures on the others. Each failure is recorded but the loop keeps going.
+        $tfmList = @('net8.0', 'net10.0')
+        foreach ($rdbms in $rdbmsList) {
+            foreach ($tfm in $tfmList) {
+                Write-Host ""
+                Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
 
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Fail "  Integration tests failed for $rdbms ($tfm)"
-                        $failed += "Integration ($rdbms/$tfm)"
-                        break outer
-                    }
-                    else {
-                        Write-Pass "  Integration tests passed for $rdbms ($tfm)"
-                    }
+                dotnet test $integrationProj.FullName `
+                    --configuration Release `
+                    --framework $tfm `
+                    --filter "Category=$rdbms" `
+                    --logger "console;verbosity=normal"
+
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Fail "  Integration tests failed for $rdbms ($tfm)"
+                    $failed += "Integration ($rdbms/$tfm)"
+                }
+                else {
+                    Write-Pass "  Integration tests passed for $rdbms ($tfm)"
                 }
             }
         }
