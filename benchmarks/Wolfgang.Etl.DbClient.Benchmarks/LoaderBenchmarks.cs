@@ -44,11 +44,14 @@ public class LoaderBenchmarks : IDisposable
 
 
     [IterationSetup]
-    public void IterationSetup()
+    public Task IterationSetupAsync()
     {
         // Each Benchmark invocation should start from an empty table so timing
-        // is comparable across iterations.
-        BenchmarkContext.ResetSchemaAsync(_connection).GetAwaiter().GetResult();
+        // is comparable across iterations. BenchmarkDotNet 0.14 supports
+        // Task-returning IterationSetup, so we no longer need to block on
+        // .GetAwaiter().GetResult() (which is banned by this repo's
+        // BannedSymbols policy).
+        return BenchmarkContext.ResetSchemaAsync(_connection);
     }
 
 
