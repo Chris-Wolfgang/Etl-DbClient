@@ -17,8 +17,10 @@ public sealed class MySqlFixture : DbProviderFixtureBase
 
     protected override async Task StartAsync()
     {
+        // Pinned patch tag for reproducible CI. Bump deliberately when
+        // moving to a new minor.
         _container = new MySqlBuilder()
-            .WithImage("mysql:8.0")
+            .WithImage("mysql:8.0.39")
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);

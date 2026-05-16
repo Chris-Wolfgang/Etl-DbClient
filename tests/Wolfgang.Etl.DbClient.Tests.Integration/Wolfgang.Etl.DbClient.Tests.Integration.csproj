@@ -46,6 +46,10 @@
     <PackageReference Include="Testcontainers.MsSql" Version="4.4.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.4.0" />
     <PackageReference Include="Testcontainers.MySql" Version="4.4.0" />
+    <!-- Pulled in transitively by Testcontainers but referenced directly from
+         DbProviderFixtureBase for the Docker availability probe. Pin explicitly
+         so a future Testcontainers update can't silently break compilation. -->
+    <PackageReference Include="Docker.DotNet.Enhanced" Version="3.126.1" />
   </ItemGroup>
 
 </Project>

@@ -17,8 +17,10 @@ public sealed class PostgresFixture : DbProviderFixtureBase
 
     protected override async Task StartAsync()
     {
+        // Pinned patch tag for reproducible CI. Bump deliberately when
+        // moving to a new minor.
         _container = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+            .WithImage("postgres:16.4-alpine")
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);
