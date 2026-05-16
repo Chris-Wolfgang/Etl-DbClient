@@ -20,6 +20,9 @@ public sealed class SqliteFixture : DbProviderFixtureBase
 
     public override string ProviderName => "sqlite";
 
+    // SQLite uses an in-memory connection; no Docker daemon required.
+    protected override bool RequiresDocker => false;
+
 
 
     protected override Task StartAsync()
