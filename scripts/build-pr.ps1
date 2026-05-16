@@ -21,18 +21,24 @@
 .PARAMETER SkipSecurity
     Skip DevSkim and gitleaks scans.
 
+.PARAMETER SkipIntegration
+    Skip the per-RDBMS integration tests. By default the script runs them when
+    a Docker daemon is reachable and silently skips otherwise (with a warning).
+
 .PARAMETER CoverageThreshold
     Minimum coverage percentage required. Defaults to 90.
 
 .EXAMPLE
     pwsh ./scripts/build-pr.ps1
     pwsh ./scripts/build-pr.ps1 -SkipSecurity
+    pwsh ./scripts/build-pr.ps1 -SkipIntegration
     pwsh ./scripts/build-pr.ps1 -CoverageThreshold 80
 #>
 param(
     [switch]$SkipTests,
     [switch]$SkipCoverage,
     [switch]$SkipSecurity,
+    [switch]$SkipIntegration,
     [int]$CoverageThreshold = 90
 )
 
@@ -81,7 +87,9 @@ else {
 if (-not $SkipTests -and $failed.Count -eq 0) {
     Write-Step "Step 2: Run Tests (all target frameworks)"
 
-    $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue)
+    # Integration suites are container-backed and run in their own step below.
+    $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch 'Tests\.Integration' })
 
     if ($testProjects.Count -eq 0) {
         Write-Host "No test projects found in ./tests — skipping"
@@ -203,6 +211,56 @@ if (-not $SkipTests -and -not $SkipCoverage -and $failed.Count -eq 0) {
         }
         else {
             Write-Host "Coverage report not generated — skipping threshold check"
+        }
+    }
+}
+
+# ============================================================================
+# STEP 3.5: RDBMS Integration Tests (Testcontainers, requires Docker)
+# ============================================================================
+if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
+    Write-Step "Step 3.5: Integration Tests (per-RDBMS via Testcontainers)"
+
+    $integrationProj = Get-ChildItem -Path './tests' -Recurse -File -Filter '*.Tests.Integration.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (-not $integrationProj) {
+        Write-Host "ℹ️  No integration project found — skipping."
+    }
+    else {
+        $dockerOk = $false
+        try {
+            docker info *>$null
+            $dockerOk = ($LASTEXITCODE -eq 0)
+        }
+        catch {
+            $dockerOk = $false
+        }
+
+        if (-not $dockerOk) {
+            Write-Host "⚠️  Docker daemon is not reachable — skipping integration tests." -ForegroundColor Yellow
+            Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run." -ForegroundColor Yellow
+        }
+        else {
+            $rdbmsList = @('sqlite', 'sqlserver', 'postgres', 'mysql')
+            foreach ($rdbms in $rdbmsList) {
+                Write-Host ""
+                Write-Host "  RDBMS: $rdbms" -ForegroundColor Yellow
+
+                dotnet test $integrationProj.FullName `
+                    --configuration Release `
+                    --framework net10.0 `
+                    --filter "Category=$rdbms" `
+                    --logger "console;verbosity=normal"
+
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Fail "  Integration tests failed for $rdbms"
+                    $failed += "Integration ($rdbms)"
+                    break
+                }
+                else {
+                    Write-Pass "  Integration tests passed for $rdbms"
+                }
+            }
         }
     }
 }
