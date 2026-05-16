@@ -260,11 +260,14 @@ jobs:
           #   CNAME        – Custom domain config (if present)
           #   .nojekyll    – Tells GitHub Pages not to run Jekyll
           #   versions/    – All versioned docs (v1.0.0/, latest/, etc.)
+          #   dev/         – BenchmarkDotNet charts published by benchmarks.yaml
+          #                  (lives at dev/bench/<rdbms>/ and must survive doc redeploys)
           Get-ChildItem -Path $WORK_DIR -Force | Where-Object {
             $_.Name -ne '.git' -and
             $_.Name -ne 'CNAME' -and
             $_.Name -ne '.nojekyll' -and
-            $_.Name -ne 'versions'
+            $_.Name -ne 'versions' -and
+            $_.Name -ne 'dev'
           } | Remove-Item -Recurse -Force
 
           git -C "$WORK_DIR" add -A
@@ -347,9 +350,10 @@ jobs:
             New-Item -ItemType Directory -Force -Path $WORK_DIR | Out-Null
           }
 
-          # Remove stale root files; preserve versions/, .git, .nojekyll, CNAME
+          # Remove stale root files; preserve versions/, .git, .nojekyll, CNAME, dev/
+          # (dev/ holds BenchmarkDotNet charts published by benchmarks.yaml.)
           Get-ChildItem -Path $WORK_DIR -Force | Where-Object {
-            $_.Name -notin @('.git', 'CNAME', '.nojekyll', 'versions')
+            $_.Name -notin @('.git', 'CNAME', '.nojekyll', 'versions', 'dev')
           } | Remove-Item -Recurse -Force
 
           # Ensure .nojekyll exists so GitHub Pages does not run Jekyll
