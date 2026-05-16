@@ -1,15 +1,19 @@
 using System;
+using System.Data.Common;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
+/// <summary>
+/// Streams <see cref="BenchmarkRecord"/> rows out of the configured RDBMS.
+/// Selected by <c>ETL_DBCLIENT_BENCHMARK_RDBMS</c> — defaults to in-memory SQLite.
+/// </summary>
 [MemoryDiagnoser]
-public sealed class ExtractorBenchmarks : IDisposable
+public class ExtractorBenchmarks : IDisposable
 {
-    private SqliteConnection _connection = null!;
+    private DbConnection _connection = null!;
 
 
 
@@ -21,37 +25,15 @@ public sealed class ExtractorBenchmarks : IDisposable
     [GlobalSetup]
     public async Task SetupAsync()
     {
-        _connection = new SqliteConnection("Data Source=:memory:");
-        await _connection.OpenAsync().ConfigureAwait(false);
-
-        using var cmd = _connection.CreateCommand();
-        cmd.CommandText = @"
-            CREATE TABLE People (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                first_name TEXT NOT NULL,
-                last_name TEXT NOT NULL,
-                age INTEGER NOT NULL
-            )";
-        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-        for (var i = 0; i < RecordCount; i++)
-        {
-            using var insert = _connection.CreateCommand();
-            insert.CommandText = "INSERT INTO People (first_name, last_name, age) VALUES (@fn, @ln, @age)";
-            insert.Parameters.AddWithValue("@fn", $"First{i}");
-            insert.Parameters.AddWithValue("@ln", $"Last{i}");
-            insert.Parameters.AddWithValue("@age", 20 + (i % 60));
-            await insert.ExecuteNonQueryAsync().ConfigureAwait(false);
-        }
+        _connection = BenchmarkContext.OpenConnection();
+        await BenchmarkContext.ResetSchemaAsync(_connection).ConfigureAwait(false);
+        await BenchmarkContext.SeedAsync(_connection, RecordCount).ConfigureAwait(false);
     }
 
 
 
     [GlobalCleanup]
-    public void Cleanup()
-    {
-        Dispose();
-    }
+    public void Cleanup() => Dispose();
 
 
 
@@ -68,7 +50,7 @@ public sealed class ExtractorBenchmarks : IDisposable
         var extractor = new DbExtractor<BenchmarkRecord>
         (
             _connection,
-            "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, age AS Age FROM People"
+            "SELECT name AS Name, value AS Value FROM contract_items"
         );
 
         var count = 0;
