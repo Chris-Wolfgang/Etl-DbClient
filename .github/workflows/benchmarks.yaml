@@ -22,6 +22,12 @@ concurrency:
   group: benchmarks-${{ github.ref }}
   cancel-in-progress: false
 
+# Jobs are intentionally serialized via `needs:` so they don't race to push to
+# gh-pages. benchmark-action/github-action-benchmark commits + force-pushes the
+# benchmark history file (`data.js`) per run; parallel pushes would either
+# clobber each other or hit non-fast-forward errors. Per-provider charts each
+# live under their own `dev/bench/<rdbms>/` directory, but the action also
+# updates a shared metadata file so chaining is the safest model.
 jobs:
 
   # ============================================================================
@@ -32,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -45,7 +53,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
         with:
           name: "ExtractorBenchmarks (sqlite)"
           tool: 'benchmarkdotnet'
@@ -64,6 +72,7 @@ jobs:
   benchmark-sqlserver:
     name: "Benchmarks / sqlserver"
     runs-on: ubuntu-latest
+    needs: benchmark-sqlite
     services:
       mssql:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -79,6 +88,8 @@ jobs:
           --health-retries 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -93,7 +104,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
         with:
           name: "ExtractorBenchmarks (sqlserver)"
           tool: 'benchmarkdotnet'
@@ -112,6 +123,7 @@ jobs:
   benchmark-postgres:
     name: "Benchmarks / postgres"
     runs-on: ubuntu-latest
+    needs: benchmark-sqlserver
     services:
       postgres:
         image: postgres:16-alpine
@@ -127,6 +139,8 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -141,7 +155,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
         with:
           name: "ExtractorBenchmarks (postgres)"
           tool: 'benchmarkdotnet'
@@ -160,6 +174,7 @@ jobs:
   benchmark-mysql:
     name: "Benchmarks / mysql"
     runs-on: ubuntu-latest
+    needs: benchmark-postgres
     services:
       mysql:
         image: mysql:8.0
@@ -175,6 +190,8 @@ jobs:
           --health-retries 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -189,7 +206,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
         with:
           name: "ExtractorBenchmarks (mysql)"
           tool: 'benchmarkdotnet'
