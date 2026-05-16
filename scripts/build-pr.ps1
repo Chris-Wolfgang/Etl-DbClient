@@ -89,9 +89,10 @@ if (-not $SkipTests -and $failed.Count -eq 0) {
 
     # Integration suites are container-backed and run in their own step below.
     # Match on the file name (not the full path) so an unrelated directory
-    # containing the substring won't be excluded.
+    # containing the substring won't be excluded. Covers all three project
+    # extensions for symmetry with pr.yaml.
     $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -notlike '*.Tests.Integration.csproj' })
+        Where-Object { $_.Name -notmatch '\.Tests\.Integration\.(cs|vb|fs)proj$' })
 
     if ($testProjects.Count -eq 0) {
         Write-Host "No test projects found in ./tests — skipping"
@@ -223,7 +224,9 @@ if (-not $SkipTests -and -not $SkipCoverage -and $failed.Count -eq 0) {
 if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
     Write-Step "Step 3.5: Integration Tests (per-RDBMS via Testcontainers)"
 
-    $integrationProj = Get-ChildItem -Path './tests' -Recurse -File -Filter '*.Tests.Integration.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
+    # Match all three project extensions so a future VB / F# rewrite is found.
+    $integrationProj = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '\.Tests\.Integration\.(cs|vb|fs)proj$' }) | Select-Object -First 1
 
     if (-not $integrationProj) {
         Write-Host "ℹ️  No integration project found — skipping."
