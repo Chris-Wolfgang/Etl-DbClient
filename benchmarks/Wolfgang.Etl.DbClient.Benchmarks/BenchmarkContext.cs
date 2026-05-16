@@ -70,20 +70,21 @@ public static class BenchmarkContext
     {
         if (connection is null) throw new ArgumentNullException(nameof(connection));
 
-        var paramPrefix = string.Equals(Rdbms, "postgres", StringComparison.Ordinal) ? "" : "@";
-
+        // All four providers accept the @-prefixed parameter marker syntax in the
+        // command text. Npgsql in particular allows '@name' even though Postgres'
+        // native marker is '$1' — see https://www.npgsql.org/doc/basic-usage.html.
         for (var i = 1; i <= rowCount; i++)
         {
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"INSERT INTO contract_items (name, value) VALUES ({paramPrefix}name, {paramPrefix}value);";
+            cmd.CommandText = "INSERT INTO contract_items (name, value) VALUES (@name, @value);";
 
             var p1 = cmd.CreateParameter();
-            p1.ParameterName = $"{paramPrefix}name";
+            p1.ParameterName = "@name";
             p1.Value = string.Format(CultureInfo.InvariantCulture, "Item{0}", i);
             cmd.Parameters.Add(p1);
 
             var p2 = cmd.CreateParameter();
-            p2.ParameterName = $"{paramPrefix}value";
+            p2.ParameterName = "@value";
             p2.Value = i * 10;
             cmd.Parameters.Add(p2);
 
