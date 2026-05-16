@@ -210,6 +210,64 @@ jobs:
           fi
 
   # ============================================================================
+  # DETECTION: Classify changed paths (code vs workflows vs docs-only)
+  # ----------------------------------------------------------------------------
+  # Lets downstream jobs decide whether to run real work or to short-circuit.
+  # The Integration (all) aggregator is wired so that a path-gated "skipped"
+  # matrix is treated as success — docs-only PRs no longer burn ~10 min on
+  # eight Testcontainers cells that can't observe any product change.
+  # ============================================================================
+  detect-changes:
+    name: "Detect Changed Paths"
+    runs-on: ubuntu-latest
+    if: github.repository != 'Chris-Wolfgang/repo-template'
+    # The job-level read permission lets dorny/paths-filter fall back to the
+    # pull-request files API if pure-git diff fails for any reason. Workflow's
+    # top-level grants only contents: read.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          persist-credentials: false
+          # Full history so the action's git-diff path against the base ref
+          # works without falling back to the PR Files API.
+          fetch-depth: 0
+
+      - name: Filter changed paths
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          # Compare against the PR's base branch so we see the full PR diff,
+          # not just the latest commit. With fetch-depth: 0 above and an
+          # explicit `ref`, the action uses git compare instead of the API.
+          base: ${{ github.event.pull_request.base.ref }}
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          filters: |
+            code:
+              - 'src/**'
+              - 'tests/**'
+              - 'benchmarks/**'
+              - 'examples/**'
+              - '*.sln'
+              - '*.slnx'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'BannedSymbols.txt'
+              - '.editorconfig'
+              - '*.globalconfig'
+              - '*.ruleset'
+              - 'coverlet.runsettings'
+              - 'nuget.config'
+            workflows:
+              - '.github/workflows/**'
+
+  # ============================================================================
   # STAGE 1: Linux - .NET Core/5+ Tests with Coverage Gate
   # ============================================================================
   test-linux-core: 
@@ -622,8 +680,20 @@ jobs:
     # Ceiling protects against a stuck container start (esp. mssql / mysql)
     # consuming the default 6-hour GitHub Actions limit per matrix cell.
     timeout-minutes: 25
-    needs: detect-projects
-    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
+    needs: [detect-projects, detect-changes]
+    # Gate on code OR workflows so:
+    #   - Docs-only PRs (no code, no workflow change) skip the matrix entirely
+    #     and the aggregator below accepts that as success.
+    #   - Dependabot PRs to .github/workflows/*.yaml still run the matrix
+    #     (Dependabot is exempt from the protected-files guard upstream).
+    #   - Human PRs that touch .github/workflows/*.yaml never reach this job
+    #     anyway — detect-projects fails first via the protected-files guard,
+    #     so has-projects is unset and the predicate is short-circuited false.
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      (needs.detect-changes.outputs.code == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true')
     strategy:
       fail-fast: false
       matrix:
@@ -695,7 +765,7 @@ jobs:
   test-integration-all:
     name: "Integration (all)"
     runs-on: ubuntu-latest
-    needs: [detect-projects, test-integration]
+    needs: [detect-projects, detect-changes, test-integration]
     # Run even when a matrix cell failed/cancelled so this job can report the
     # rollup result instead of silently being marked "skipped". The if: predicate
     # mirrors test-integration's so this aggregator is genuinely skipped (not
@@ -704,15 +774,36 @@ jobs:
       always() &&
       github.repository != 'Chris-Wolfgang/repo-template' &&
       needs.detect-projects.outputs.has-projects == 'true'
+    env:
+      INTEGRATION_RESULT: ${{ needs.test-integration.result }}
+      DETECT_CHANGES_RESULT: ${{ needs.detect-changes.result }}
+      CODE_CHANGED: ${{ needs.detect-changes.outputs.code }}
+      WORKFLOWS_CHANGED: ${{ needs.detect-changes.outputs.workflows }}
     steps:
       - name: Check matrix result
         run: |
-          result="${{ needs.test-integration.result }}"
-          echo "Aggregated test-integration result: $result"
-          if [ "$result" != "success" ]; then
-            echo "::error::At least one integration matrix cell did not succeed (result=$result)"
-            exit 1
+          echo "test-integration  = $INTEGRATION_RESULT"
+          echo "detect-changes    = $DETECT_CHANGES_RESULT (code=$CODE_CHANGED, workflows=$WORKFLOWS_CHANGED)"
+
+          # Happy path: every matrix cell passed.
+          if [ "$INTEGRATION_RESULT" = "success" ]; then
+            echo "✅ Integration aggregator passes (all cells succeeded)"
+            exit 0
           fi
+
+          # Path-gated short-circuit: matrix was deliberately skipped because
+          # detect-changes succeeded and reported neither code nor workflow
+          # changes (docs-only PR). Only THEN is "skipped" valid.
+          if [ "$INTEGRATION_RESULT" = "skipped" ] \
+             && [ "$DETECT_CHANGES_RESULT" = "success" ] \
+             && [ "$CODE_CHANGED" = "false" ] \
+             && [ "$WORKFLOWS_CHANGED" = "false" ]; then
+            echo "✅ Integration aggregator passes (no code/workflow changes — matrix path-gated)"
+            exit 0
+          fi
+
+          echo "::error::Integration aggregator failed: test-integration=$INTEGRATION_RESULT, detect-changes=$DETECT_CHANGES_RESULT (code=$CODE_CHANGED, workflows=$WORKFLOWS_CHANGED)"
+          exit 1
 
   # ============================================================================
   # STAGE 2: Windows - All .NET Tests (Gated by Stage 1)
