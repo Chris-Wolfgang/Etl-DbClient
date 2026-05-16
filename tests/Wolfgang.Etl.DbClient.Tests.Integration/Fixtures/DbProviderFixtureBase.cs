@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using Docker.DotNet;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
@@ -20,21 +21,35 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
 
 
 
+    /// <summary>
+    /// True when this fixture needs Docker to be reachable. SQLite overrides this
+    /// to false since it uses an in-memory connection.
+    /// </summary>
+    protected virtual bool RequiresDocker => true;
+
+
+
     public async Task InitializeAsync()
     {
+        // Pre-probe Docker availability. Only "Docker daemon unreachable" should
+        // turn into a skip — every other StartAsync failure (bad image tag,
+        // schema regression, etc.) must propagate so CI fails loudly.
+        if (RequiresDocker && !await IsDockerReachableAsync().ConfigureAwait(false))
+        {
+            Available = false;
+            UnavailableReason = $"{ProviderName} unavailable: Docker daemon is not reachable.";
+            return;
+        }
+
         try
         {
             await StartAsync().ConfigureAwait(false);
             Available = true;
         }
-        catch (Exception ex)
+        catch
         {
-            Available = false;
-            UnavailableReason = $"{ProviderName} unavailable: {ex.GetType().Name}: {ex.Message}";
-
-            // StartAsync may have allocated a partially-initialised container
-            // before throwing. Attempt best-effort cleanup so a failed init does
-            // not leak resources on the host.
+            // Real failure: best-effort cleanup, then rethrow so the test run
+            // surfaces the error instead of silently skipping every test.
             try
             {
                 await StopAsync().ConfigureAwait(false);
@@ -43,6 +58,25 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
             {
                 // Swallow secondary failures during emergency cleanup.
             }
+
+            throw;
+        }
+    }
+
+
+
+    private static async Task<bool> IsDockerReachableAsync()
+    {
+        try
+        {
+            using var cfg = new DockerClientConfiguration();
+            using var client = cfg.CreateClient();
+            await client.System.PingAsync().ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 

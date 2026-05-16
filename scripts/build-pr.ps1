@@ -256,10 +256,14 @@ if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
                 Write-Host ""
                 Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
 
+                # --no-build / --no-restore: Step 1 already restored + built the
+                # whole solution. Re-running them per RDBMS/TFM would add minutes.
                 dotnet test $integrationProj.FullName `
                     --configuration Release `
                     --framework $tfm `
                     --filter "Category=$rdbms" `
+                    --no-build `
+                    --no-restore `
                     --logger "console;verbosity=normal"
 
                 if ($LASTEXITCODE -ne 0) {
