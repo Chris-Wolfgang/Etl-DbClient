@@ -16,14 +16,10 @@ public abstract class DbLoaderIntegrationTestsBase
 
 
 
-    private static async IAsyncEnumerable<ContractItem> Source(int count)
-    {
-        for (var i = 1; i <= count; i++)
-        {
-            yield return new ContractItem { Name = $"Item{i}", Value = i * 10 };
-        }
-        await Task.CompletedTask.ConfigureAwait(false);
-    }
+    private static IAsyncEnumerable<ContractItem> Source(int count) =>
+        Enumerable.Range(1, count)
+            .Select(i => new ContractItem { Name = $"Item{i}", Value = i * 10 })
+            .ToAsyncEnumerable();
 
 
 
