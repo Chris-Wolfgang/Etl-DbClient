@@ -1,0 +1,203 @@
+name: Benchmarks (per-RDBMS) → gh-pages
+
+# Run BenchmarkDotNet against each supported RDBMS and publish the results to
+# gh-pages so we can track perf trends over time. Charts land at
+# https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/<rdbms>/.
+#
+# Triggers:
+#   - workflow_dispatch — ad-hoc runs from the Actions tab
+#   - tag push (v*)      — auto-snapshot at release time
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write    # benchmark-action pushes commits to gh-pages
+  deployments: write # benchmark-action records a deployment
+
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+
+  # ============================================================================
+  # SQLite (no container needed)
+  # ============================================================================
+  benchmark-sqlite:
+    name: "Benchmarks / sqlite"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run benchmarks
+        env:
+          ETL_DBCLIENT_BENCHMARK_RDBMS: sqlite
+        run: |
+          dotnet run -c Release \
+            --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj \
+            -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
+
+      - name: Publish to gh-pages
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: "ExtractorBenchmarks (sqlite)"
+          tool: 'benchmarkdotnet'
+          output-file-path: BDN_OUT/results/Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks-report-full-compressed.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench/sqlite
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+  # ============================================================================
+  # SQL Server
+  # ============================================================================
+  benchmark-sqlserver:
+    name: "Benchmarks / sqlserver"
+    runs-on: ubuntu-latest
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "Bench-SA-Pass-1!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Bench-SA-Pass-1! -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run benchmarks
+        env:
+          ETL_DBCLIENT_BENCHMARK_RDBMS: sqlserver
+          ETL_DBCLIENT_BENCHMARK_MSSQL: "Server=localhost,1433;Database=master;User Id=sa;Password=Bench-SA-Pass-1!;Encrypt=False;TrustServerCertificate=True"
+        run: |
+          dotnet run -c Release \
+            --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj \
+            -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
+
+      - name: Publish to gh-pages
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: "ExtractorBenchmarks (sqlserver)"
+          tool: 'benchmarkdotnet'
+          output-file-path: BDN_OUT/results/Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks-report-full-compressed.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench/sqlserver
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+  # ============================================================================
+  # PostgreSQL
+  # ============================================================================
+  benchmark-postgres:
+    name: "Benchmarks / postgres"
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run benchmarks
+        env:
+          ETL_DBCLIENT_BENCHMARK_RDBMS: postgres
+          ETL_DBCLIENT_BENCHMARK_PG: "Host=localhost;Port=5432;Database=bench;Username=postgres;Password=postgres"
+        run: |
+          dotnet run -c Release \
+            --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj \
+            -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
+
+      - name: Publish to gh-pages
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: "ExtractorBenchmarks (postgres)"
+          tool: 'benchmarkdotnet'
+          output-file-path: BDN_OUT/results/Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks-report-full-compressed.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench/postgres
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+  # ============================================================================
+  # MySQL
+  # ============================================================================
+  benchmark-mysql:
+    name: "Benchmarks / mysql"
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: mysql
+          MYSQL_DATABASE: bench
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -uroot -pmysql"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run benchmarks
+        env:
+          ETL_DBCLIENT_BENCHMARK_RDBMS: mysql
+          ETL_DBCLIENT_BENCHMARK_MYSQL: "Server=localhost;Port=3306;Database=bench;User Id=root;Password=mysql;SslMode=None"
+        run: |
+          dotnet run -c Release \
+            --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj \
+            -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
+
+      - name: Publish to gh-pages
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: "ExtractorBenchmarks (mysql)"
+          tool: 'benchmarkdotnet'
+          output-file-path: BDN_OUT/results/Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks-report-full-compressed.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench/mysql
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
