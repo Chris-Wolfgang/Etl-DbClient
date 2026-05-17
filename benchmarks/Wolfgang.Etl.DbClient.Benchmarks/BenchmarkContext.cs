@@ -34,8 +34,10 @@ public static class BenchmarkContext
             "sqlserver" => new SqlConnection(Require("ETL_DBCLIENT_BENCHMARK_MSSQL")),
             "postgres"  => new NpgsqlConnection(Require("ETL_DBCLIENT_BENCHMARK_PG")),
             "mysql"     => new MySqlConnection(Require("ETL_DBCLIENT_BENCHMARK_MYSQL")),
+            // MariaDB shares the MySQL wire protocol — same MySqlConnector driver.
+            "mariadb"   => new MySqlConnection(Require("ETL_DBCLIENT_BENCHMARK_MARIADB")),
             "sqlite"    => new SqliteConnection("Data Source=:memory:"),
-            _           => throw new InvalidOperationException($"Unknown ETL_DBCLIENT_BENCHMARK_RDBMS value '{Rdbms}'. Expected one of: sqlite, sqlserver, postgres, mysql."),
+            _           => throw new InvalidOperationException($"Unknown ETL_DBCLIENT_BENCHMARK_RDBMS value '{Rdbms}'. Expected one of: sqlite, sqlserver, postgres, mysql, mariadb."),
         };
 
         conn.Open();
@@ -55,6 +57,8 @@ public static class BenchmarkContext
             "postgres"  => ("DROP TABLE IF EXISTS contract_items;",
                             "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INTEGER NOT NULL);"),
             "mysql"     => ("DROP TABLE IF EXISTS contract_items;",
+                            "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INT NOT NULL);"),
+            "mariadb"   => ("DROP TABLE IF EXISTS contract_items;",
                             "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INT NOT NULL);"),
             _           => ("DROP TABLE IF EXISTS contract_items;",
                             "CREATE TABLE contract_items (name TEXT NOT NULL, value INTEGER NOT NULL);"),

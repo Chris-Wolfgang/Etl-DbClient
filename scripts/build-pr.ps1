@@ -244,7 +244,7 @@ if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
         # SQLite needs no Docker; the other providers do. Build the list accordingly.
         $rdbmsList = @('sqlite')
         if ($dockerOk) {
-            $rdbmsList += @('sqlserver', 'postgres', 'mysql')
+            $rdbmsList += @('sqlserver', 'postgres', 'mysql', 'mariadb')
         }
         else {
             Write-Host "⚠️  Docker daemon is not reachable — running only the SQLite slice." -ForegroundColor Yellow

@@ -116,6 +116,7 @@ an in-memory connection instead of a container.
 | **SQL Server** | 2022 | `Microsoft.Data.SqlClient` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlserver/) |
 | **PostgreSQL** | 16 | `Npgsql` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/postgres/) |
 | **MySQL** | 8.0 | `MySqlConnector` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mysql/) |
+| **MariaDB** | 11.4 | `MySqlConnector` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mariadb/) |
 
 > **About these badges.** GitHub doesn't natively render a different status per matrix
 > job, so each row currently shows the *overall* `pr.yaml` status. If any of the four
