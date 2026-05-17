@@ -14,7 +14,7 @@ using Wolfgang.Etl.DbClient.Example.UpdateWithTransaction;
 // 3. Progress reporting during loading
 
 using var connection = new SqliteConnection("Data Source=:memory:");
-await connection.OpenAsync();
+await connection.OpenAsync().ConfigureAwait(false);
 
 // Create and seed the Inventory table
 using (var cmd = connection.CreateCommand())
@@ -31,7 +31,7 @@ using (var cmd = connection.CreateCommand())
         INSERT INTO Inventory VALUES ('SKU-003', 'Gadget X',  75, '2026-01-01');
         INSERT INTO Inventory VALUES ('SKU-004', 'Gadget Y',  25, '2026-01-01');
         INSERT INTO Inventory VALUES ('SKU-005', 'Doohickey', 200, '2026-01-01');";
-    await cmd.ExecuteNonQueryAsync();
+    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 }
 
 Console.WriteLine("=== Update with Transaction Example ===");
@@ -39,10 +39,10 @@ Console.WriteLine();
 
 // Show current state
 Console.WriteLine("Before update:");
-await PrintInventory(connection);
+await PrintInventoryAsync(connection).ConfigureAwait(false);
 
 // Create a caller-managed transaction
-using var transaction = await connection.BeginTransactionAsync();
+using var transaction = await connection.BeginTransactionAsync().ConfigureAwait(false);
 
 // Auto-generates:
 // UPDATE Inventory SET product_name = @ProductName, quantity = @Quantity, last_updated = @LastUpdated
@@ -57,16 +57,16 @@ Console.WriteLine($"Update SQL: {loader.CommandText}");
 Console.WriteLine();
 
 // Apply inventory adjustments within the caller's transaction
-await loader.LoadAsync(GetAdjustments());
+await loader.LoadAsync(GetAdjustmentsAsync()).ConfigureAwait(false);
 
 // Commit the transaction (caller controls the lifetime)
-await transaction.CommitAsync();
+await transaction.CommitAsync().ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("After update:");
-await PrintInventory(connection);
+await PrintInventoryAsync(connection).ConfigureAwait(false);
 
-static async IAsyncEnumerable<InventoryRecord> GetAdjustments()
+static async IAsyncEnumerable<InventoryRecord> GetAdjustmentsAsync()
 {
     var adjustments = new[]
     {
@@ -78,17 +78,17 @@ static async IAsyncEnumerable<InventoryRecord> GetAdjustments()
     foreach (var adj in adjustments)
     {
         Console.WriteLine($"  Updating {adj.Sku}: quantity {adj.Quantity}");
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
         yield return adj;
     }
 }
 
-static async Task PrintInventory(SqliteConnection conn)
+static async Task PrintInventoryAsync(SqliteConnection conn)
 {
     using var cmd = conn.CreateCommand();
     cmd.CommandText = "SELECT sku, product_name, quantity, last_updated FROM Inventory ORDER BY sku";
-    using var reader = await cmd.ExecuteReaderAsync();
-    while (await reader.ReadAsync())
+    using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+    while (await reader.ReadAsync().ConfigureAwait(false))
     {
         Console.WriteLine($"  {reader.GetString(0)}: {reader.GetString(1)} — qty {reader.GetInt32(2)} (updated {reader.GetString(3)})");
     }

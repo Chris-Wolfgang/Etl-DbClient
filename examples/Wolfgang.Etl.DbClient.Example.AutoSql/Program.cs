@@ -12,7 +12,7 @@ using Wolfgang.Etl.DbClient.Example.AutoSql;
 // automatically from data annotation attributes on the record type.
 
 using var connection = new SqliteConnection("Data Source=:memory:");
-await connection.OpenAsync();
+await connection.OpenAsync().ConfigureAwait(false);
 
 // Create the Products table
 using (var cmd = connection.CreateCommand())
@@ -24,7 +24,7 @@ using (var cmd = connection.CreateCommand())
             category TEXT NOT NULL,
             price REAL NOT NULL
         );";
-    await cmd.ExecuteNonQueryAsync();
+    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 }
 
 Console.WriteLine("=== Auto-SQL Example: Extract and Load with attribute-based SQL ===");
@@ -36,9 +36,9 @@ var loader = new DbLoader<ProductRecord>(connection, WriteMode.Insert);
 Console.WriteLine($"Loader SQL: {loader.CommandText}");
 Console.WriteLine();
 
-await loader.LoadAsync(SeedProducts());
+await loader.LoadAsync(SeedProductsAsync()).ConfigureAwait(false);
 
-static async IAsyncEnumerable<ProductRecord> SeedProducts()
+static async IAsyncEnumerable<ProductRecord> SeedProductsAsync()
 {
     var products = new[]
     {
@@ -52,7 +52,7 @@ static async IAsyncEnumerable<ProductRecord> SeedProducts()
     foreach (var p in products)
     {
         Console.WriteLine($"  Inserting: {p.Name} ({p.Category}) ${p.Price}");
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
         yield return p;
     }
 }
@@ -65,7 +65,7 @@ Console.WriteLine($"Extractor SQL: {extractor.CommandText}");
 Console.WriteLine();
 
 Console.WriteLine("All products:");
-await foreach (var product in extractor.ExtractAsync())
+await foreach (var product in extractor.ExtractAsync().ConfigureAwait(false))
 {
     Console.WriteLine($"  [{product.Id}] {product.Name} ({product.Category}): ${product.Price}");
 }
