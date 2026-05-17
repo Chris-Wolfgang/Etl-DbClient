@@ -504,9 +504,15 @@ jobs:
               [ -z "$fw" ] && continue
               echo "Testing framework: $fw"
               
+              # --no-build / --no-restore: the build step above already produced
+              # binaries for every TFM with -p:TreatWarningsAsErrors=true; the
+              # implicit `dotnet test` build wouldn't carry that flag, so an
+              # analyzer warning introduced during test build could slip through.
               dotnet test "$test_proj" \
                 --configuration Release \
                 --framework "$fw" \
+                --no-build \
+                --no-restore \
                 --collect:"XPlat Code Coverage" \
                 --settings coverlet.runsettings \
                 --results-directory "./TestResults" \
@@ -660,10 +666,14 @@ jobs:
       - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
         if: steps.locate.outputs.found == 'true'
         run: |
+          # This job has no prior build step, so dotnet test compiles inline.
+          # Pass -p:TreatWarningsAsErrors=true so analyzer warnings introduced
+          # in the integration project still fail CI.
           dotnet test "${{ steps.locate.outputs.project }}" \
             --configuration Release \
             --framework ${{ matrix.tfm }} \
             --filter "Category=${{ matrix.rdbms }}" \
+            -p:TreatWarningsAsErrors=true \
             --logger "console;verbosity=normal" \
             --logger "trx;LogFileName=integration-${{ matrix.rdbms }}-${{ matrix.tfm }}.trx" \
             --results-directory "./TestResults-Integration"
@@ -863,10 +873,15 @@ jobs:
             foreach ($fw in $frameworks) {
               Write-Host "Testing framework: $fw" -ForegroundColor Yellow
 
+              # --no-build / --no-restore: the build step above already produced
+              # binaries for every TFM with -p:TreatWarningsAsErrors=true; the
+              # implicit dotnet test build wouldn't carry that flag.
               if ($fw -match '^net([5-9]|[1-9][0-9]+)\.') {
                 dotnet test $testProj.FullName `
                   --configuration Release `
                   --framework $fw `
+                  --no-build `
+                  --no-restore `
                   --collect:"XPlat Code Coverage" `
                   --settings coverlet.runsettings `
                   --results-directory "./TestResults" `
@@ -875,6 +890,8 @@ jobs:
                 dotnet test $testProj.FullName `
                   --configuration Release `
                   --framework $fw `
+                  --no-build `
+                  --no-restore `
                   --logger "console;verbosity=normal"
               }
 
@@ -1248,9 +1265,14 @@ jobs:
               [ -z "$fw" ] && continue
               echo "Testing framework: $fw"
 
+              # --no-build / --no-restore: the build step above already produced
+              # binaries for every TFM with -p:TreatWarningsAsErrors=true; the
+              # implicit dotnet test build wouldn't carry that flag.
               dotnet test "$test_proj" \
                 --configuration Release \
                 --framework "$fw" \
+                --no-build \
+                --no-restore \
                 --collect:"XPlat Code Coverage" \
                 --settings coverlet.runsettings \
                 --results-directory "./TestResults" \
