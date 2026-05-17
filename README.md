@@ -100,6 +100,39 @@ public class EmployeeRecord
 
 ---
 
+## 🗄️ Tested Databases
+
+`Wolfgang.Etl.DbClient` is provider-agnostic over ADO.NET (`DbConnection` / `DbCommand`),
+so any compliant provider should work. The matrix below lists the RDBMSes that are
+verified by CI on every PR. Every row has both unit-test coverage (xUnit, on the
+full .NET TFM matrix) **and** a real-container integration run via
+[Testcontainers .NET](https://dotnet.testcontainers.org/) in the
+`Integration / <rdbms>` job of [pr.yaml](.github/workflows/pr.yaml). SQLite uses
+an in-memory connection instead of a container.
+
+| Database | Version Tested | Driver | CI Status | Benchmarks |
+|---|---|---|---|---|
+| **SQLite** | in-memory | `Microsoft.Data.Sqlite` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlite/) |
+| **SQL Server** | 2022 | `Microsoft.Data.SqlClient` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlserver/) |
+| **PostgreSQL** | 16 | `Npgsql` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/postgres/) |
+| **MySQL** | 8.0 | `MySqlConnector` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mysql/) |
+
+> **About these badges.** GitHub doesn't natively render a different status per matrix
+> job, so each row currently shows the *overall* `pr.yaml` status. If any of the four
+> integration jobs fails, every row in this table will go red. Click any badge to see
+> the per-RDBMS pass/fail detail in the Actions tab. Per-database dynamic badges are
+> tracked as a follow-up.
+
+> **About the charts.** Benchmark charts are published by
+> [`benchmarks.yaml`](.github/workflows/benchmarks.yaml) on every release tag and on
+> manual `workflow_dispatch`. They land on the `gh-pages` branch under
+> `dev/bench/<rdbms>/` and won't render until the first run has completed.
+
+Want to see your favourite RDBMS supported? Open an issue — adding a provider is
+typically a single fixture class plus a matrix entry in `pr.yaml` and `benchmarks.yaml`.
+
+---
+
 ## 🎯 Target Frameworks
 
 | Framework | Versions |

@@ -6,7 +6,10 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <NoWarn>$(NoWarn);MA0004;MA0048;VSTHRD200</NoWarn>
+    <!-- CA1063, S3881: BenchmarkDotNet requires non-sealed benchmark types, but the IDisposable
+         pattern analyzers want sealed or full Dispose(bool). BDN's lifecycle is fully controlled
+         by GlobalSetup/GlobalCleanup so the abbreviated Dispose() is intentional. -->
+    <NoWarn>$(NoWarn);MA0004;MA0048;VSTHRD200;CA1063;S3881</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +19,9 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
   </ItemGroup>
 
   <!-- Analyzer PackageReferences are centralized in Directory.Build.props -->
