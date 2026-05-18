@@ -33,6 +33,12 @@ namespace Wolfgang.Etl.DbClient;
 /// The extractor never commits or rolls back the transaction.
 /// </para>
 /// <para>
+/// <b>Thread safety.</b> A <see cref="DbExtractor{TRecord}"/> instance is not safe for
+/// concurrent <c>ExtractAsync</c> calls. Internal state (stopwatch, total-count snapshot,
+/// progress-counter increments) assumes a single extraction in flight. Build a separate
+/// instance per concurrent extraction.
+/// </para>
+/// <para>
 /// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
