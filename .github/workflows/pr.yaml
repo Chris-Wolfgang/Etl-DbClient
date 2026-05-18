@@ -270,11 +270,15 @@ jobs:
   # ============================================================================
   # STAGE 1: Linux - .NET Core/5+ Tests with Coverage Gate
   # ============================================================================
-  test-linux-core: 
+  test-linux-core:
     name: "Stage 1: Linux Tests (.NET 5.0-10.0) + Coverage Gate"
     runs-on:  ubuntu-latest
-    needs: detect-projects
-    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
+    needs: [detect-projects, detect-changes]
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      (needs.detect-changes.outputs.code == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true')
     
     steps:
       - name: Checkout code
@@ -811,8 +815,12 @@ jobs:
   test-windows:
     name: "Stage 2: Windows Tests (.NET 5.0-10.0, Framework 4.6.2-4.8.1)"
     runs-on: windows-latest
-    needs: [detect-projects, test-linux-core]
-    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
+    needs: [detect-projects, detect-changes, test-linux-core]
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      (needs.detect-changes.outputs.code == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true')
     
     steps:
       - name: Checkout code
@@ -1113,8 +1121,12 @@ jobs:
   test-macos-core:
     name: "Stage 3: macOS Tests (.NET 6.0-10.0)"
     runs-on: macos-latest
-    needs: [detect-projects, test-windows]
-    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
+    needs: [detect-projects, detect-changes, test-windows]
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      (needs.detect-changes.outputs.code == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true')
     
     steps:
       - name: Checkout code
@@ -1653,3 +1665,59 @@ jobs:
           name: devskim-results
           path: devskim-results.txt
           if-no-files-found: warn
+
+  # ============================================================================
+  # PATH-GATE STUBS for Stages 1 / 2 / 3
+  # ----------------------------------------------------------------------------
+  # When detect-changes reports neither code nor workflow changes (docs-only PR),
+  # the real Stage 1 / 2 / 3 jobs above skip via their `if:` predicates. The
+  # branch ruleset still requires those check names to report success, though,
+  # so we fire a stub job with the SAME `name:` whose `if:` is the complement
+  # of the real job's path-gate. Exactly one of (real, stub) runs per stage on
+  # any given PR.
+  #
+  # GitHub treats multiple jobs sharing a `name:` as separate jobs at runtime
+  # but the required-check matching for the ruleset is by name. Either passing
+  # satisfies the required check.
+  # ============================================================================
+  test-linux-core-skipped:
+    name: "Stage 1: Linux Tests (.NET 5.0-10.0) + Coverage Gate"
+    runs-on: ubuntu-latest
+    needs: [detect-projects, detect-changes]
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      needs.detect-changes.outputs.code != 'true' &&
+      needs.detect-changes.outputs.workflows != 'true'
+    steps:
+      - name: Stage 1 skipped via path-gate
+        run: |
+          echo "::notice::Skipped Stage 1 — this PR changes neither code nor workflows."
+
+  test-windows-skipped:
+    name: "Stage 2: Windows Tests (.NET 5.0-10.0, Framework 4.6.2-4.8.1)"
+    runs-on: ubuntu-latest
+    needs: [detect-projects, detect-changes]
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      needs.detect-changes.outputs.code != 'true' &&
+      needs.detect-changes.outputs.workflows != 'true'
+    steps:
+      - name: Stage 2 skipped via path-gate
+        run: |
+          echo "::notice::Skipped Stage 2 — this PR changes neither code nor workflows."
+
+  test-macos-core-skipped:
+    name: "Stage 3: macOS Tests (.NET 6.0-10.0)"
+    runs-on: ubuntu-latest
+    needs: [detect-projects, detect-changes]
+    if: >-
+      github.repository != 'Chris-Wolfgang/repo-template' &&
+      needs.detect-projects.outputs.has-projects == 'true' &&
+      needs.detect-changes.outputs.code != 'true' &&
+      needs.detect-changes.outputs.workflows != 'true'
+    steps:
+      - name: Stage 3 skipped via path-gate
+        run: |
+          echo "::notice::Skipped Stage 3 — this PR changes neither code nor workflows."
