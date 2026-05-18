@@ -66,7 +66,21 @@ internal static class ColumnAttributeTypeMapper
                 prop ??= props.FirstOrDefault(p =>
                     string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
 
-                return prop!;
+                if (prop == null)
+                {
+                    // Dapper's default behaviour on unmappable columns throws a
+                    // generic NullReferenceException downstream. Replace with a
+                    // self-describing error so the user sees the offending column
+                    // name and the target type immediately.
+                    throw new InvalidOperationException
+                    (
+                        $"Result-set column '{columnName}' does not map to any property on '{t.FullName}'. " +
+                        "Either add a property of that name, decorate an existing property with " +
+                        $"[Column(\"{columnName}\")], or alias the column in your SELECT statement."
+                    );
+                }
+
+                return prop;
             }
         );
 

@@ -38,6 +38,11 @@ namespace Wolfgang.Etl.DbClient;
 /// <c>LoadAsync</c>.
 /// </para>
 /// <para>
+/// <b>Thread safety.</b> A <see cref="DbLoader{TRecord}"/> instance is not safe for
+/// concurrent <c>LoadAsync</c> calls. Internal state (stopwatch, progress counters)
+/// assumes a single load in flight. Build a separate instance per concurrent load.
+/// </para>
+/// <para>
 /// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
@@ -56,7 +61,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     private readonly ILogger _logger;
     private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
-    private bool _progressTimerWired;
+    private int _progressTimerWired;
 
 
 
@@ -188,9 +193,10 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     {
         if (_progressTimer != null)
         {
-            if (!_progressTimerWired)
+            // Atomic 0 → 1 transition. Matches DbExtractor's pattern and prevents
+            // double-subscription if CreateProgressTimer is ever called concurrently.
+            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
             {
-                _progressTimerWired = true;
                 _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
             }
 
