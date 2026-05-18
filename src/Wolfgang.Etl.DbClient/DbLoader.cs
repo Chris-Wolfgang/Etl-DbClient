@@ -212,8 +212,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         _stopwatch.Restart();
         LogLoadingStarted();
 
-        var ownsTransaction = _ownsTransaction && _callerTransaction == null;
-        var transaction = ownsTransaction
+        // _ownsTransaction was set at construction to (_callerTransaction == null);
+        // the second-guess local that used to live here was always redundant.
+        var transaction = _ownsTransaction
             ? await BeginAutoTransactionAsync(token).ConfigureAwait(false)
             : _callerTransaction;
 
@@ -221,14 +222,14 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         {
             await ExecuteItemsAsync(items, transaction, token).ConfigureAwait(false);
 
-            if (ownsTransaction && transaction != null)
+            if (_ownsTransaction && transaction != null)
             {
                 await CommitAutoTransactionAsync(transaction, token).ConfigureAwait(false);
             }
         }
         catch
         {
-            if (ownsTransaction && transaction != null)
+            if (_ownsTransaction && transaction != null)
             {
                 await RollbackAutoTransactionAsync(transaction, token).ConfigureAwait(false);
             }
@@ -237,7 +238,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         }
         finally
         {
-            if (ownsTransaction && transaction != null)
+            if (_ownsTransaction && transaction != null)
             {
                 await DisposeTransactionAsync(transaction).ConfigureAwait(false);
             }

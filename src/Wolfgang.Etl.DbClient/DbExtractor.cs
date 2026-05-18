@@ -249,15 +249,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
     /// <inheritdoc/>
 #pragma warning disable MA0051
     protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([EnumeratorCancellation] CancellationToken token)
-#else
-    /// <inheritdoc/>
-#pragma warning disable MA0051
-    protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token)
-#endif
 #pragma warning restore MA0051
     {
         _stopwatch.Restart();
@@ -335,14 +329,10 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             );
         }
 
-        var sanitized = commandText.Trim();
-
-        while (sanitized.EndsWith(";", StringComparison.Ordinal))
-        {
-            sanitized = sanitized.Substring(0, sanitized.Length - 1).TrimEnd();
-        }
-
-        return sanitized;
+        // Strip any trailing run of semicolons and whitespace — including the
+        // interleaved case like "... FROM People; ; ;". TrimEnd(params char[])
+        // removes any combination of the supplied chars from the end in one pass.
+        return commandText.Trim().TrimEnd(';', ' ', '\t', '\r', '\n');
     }
 
 
