@@ -13,10 +13,13 @@ namespace Wolfgang.Etl.DbClient;
 /// and <see cref="KeyAttribute"/> annotations on a POCO type.
 /// </summary>
 /// <remarks>
-/// Reflection results are cached per <see cref="Type"/> via <see cref="TypeMetadataCache"/>;
-/// the cached entry contains the table name, column mappings, key set, and the
-/// already-built SELECT / INSERT / UPDATE strings. The first Build* call for a given
-/// type pays the reflection cost; subsequent calls return cached strings.
+/// Reflection results are cached per <see cref="Type"/> via <see cref="TypeMetadataCache"/>.
+/// The cached entry holds the eagerly-built SELECT string plus <see cref="Lazy{T}"/>
+/// wrappers around the INSERT and UPDATE strings — those two paths can throw on
+/// invalid annotations, so they're deferred to the first <see cref="BuildInsert{T}"/>
+/// / <see cref="BuildUpdate{T}"/> call rather than at cache-population time.
+/// The first Build* call for a given type pays the reflection cost; subsequent calls
+/// return the cached strings without further reflection or allocation.
 /// </remarks>
 internal static class DbCommandBuilder
 {
@@ -64,6 +67,14 @@ internal static class DbCommandBuilder
     /// Per-type cache of reflection metadata and pre-built SQL strings.
     /// Thread-safe via <see cref="ConcurrentDictionary{TKey,TValue}.GetOrAdd(TKey, Func{TKey, TValue})"/>.
     /// </summary>
+    /// <remarks>
+    /// Note: <see cref="ConcurrentDictionary{TKey,TValue}.GetOrAdd(TKey, Func{TKey, TValue})"/>
+    /// may invoke the value factory more than once for the same key under concurrent
+    /// cold-cache calls — only the winning result is stored. Building <see cref="TypeMetadata"/>
+    /// is idempotent and side-effect-free, so a rare duplicate reflection pass is wasted work
+    /// but never incorrect. If exactly-once reflection ever becomes a requirement, swap the
+    /// value type to <see cref="Lazy{T}"/> of <see cref="TypeMetadata"/>.
+    /// </remarks>
     private static class TypeMetadataCache
     {
         private static readonly ConcurrentDictionary<Type, TypeMetadata> Cache = new();
