@@ -1673,8 +1673,11 @@ jobs:
   # the real Stage 1 / 2 / 3 jobs above skip via their `if:` predicates. The
   # branch ruleset still requires those check names to report success, though,
   # so we fire a stub job with the SAME `name:` whose `if:` is the complement
-  # of the real job's path-gate. Exactly one of (real, stub) runs per stage on
-  # any given PR.
+  # of the real job's path-gate. On a docs-only PR exactly one of (real, stub)
+  # runs per stage. On a code/workflow PR the real job runs; if an upstream
+  # Stage 1 fails, Stage 2/3 real jobs skip via `needs` and the stub stays
+  # off (its predicate excludes code PRs), so neither member runs — that is
+  # the intended "previous stage failed" cascade, not a path-gate condition.
   #
   # GitHub treats multiple jobs sharing a `name:` as separate jobs at runtime
   # but the required-check matching for the ruleset is by name. Either passing
