@@ -17,7 +17,6 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 public sealed class CockroachDbFixture : DbProviderFixtureBase
 {
     private const int CockroachSqlPort = 26257;
-    private const int CockroachHttpPort = 8080;
 
     private IContainer? _container;
 
@@ -33,13 +32,14 @@ public sealed class CockroachDbFixture : DbProviderFixtureBase
             .WithImage("cockroachdb/cockroach:v24.3.5")
             .WithCommand("start-single-node", "--insecure")
             .WithPortBinding(CockroachSqlPort, true)
-            .WithPortBinding(CockroachHttpPort, true)
             // Wait by actually executing a SQL probe inside the container —
             // the SQL port opens a few seconds before the engine is accepting
             // queries, and the HTTP /health endpoint's behaviour varies across
             // versions. A successful `SELECT 1` is the unambiguous signal.
+            // Invoke via absolute path so a future image WORKDIR change won't
+            // silently break the probe.
             .WithWaitStrategy(Wait.ForUnixContainer()
-                .UntilCommandIsCompleted("./cockroach", "sql", "--insecure", "-e", "SELECT 1"))
+                .UntilCommandIsCompleted("/cockroach/cockroach", "sql", "--insecure", "-e", "SELECT 1"))
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);
@@ -59,9 +59,13 @@ public sealed class CockroachDbFixture : DbProviderFixtureBase
 
     public override async Task<DbConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
     {
-        var port = _container!.GetMappedPublicPort(CockroachSqlPort);
+        var host = _container!.Hostname;
+        var port = _container.GetMappedPublicPort(CockroachSqlPort);
         // Insecure single-node defaults: user 'root', no password, database 'defaultdb'.
-        var connectionString = $"Host=localhost;Port={port};Database=defaultdb;Username=root;";
+        // Use the container's reported Hostname (not literal "localhost") so the fixture
+        // works under Docker-in-Docker, remote DOCKER_HOST, rootless setups, and
+        // Testcontainers Cloud.
+        var connectionString = $"Host={host};Port={port};Database=defaultdb;Username=root;";
         var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
         return conn;
