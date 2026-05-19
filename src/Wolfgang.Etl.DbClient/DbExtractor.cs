@@ -53,6 +53,13 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     private readonly DbConnection _connection;
     private readonly string _commandText;
     private readonly IDictionary<string, object>? _parameters;
+
+    // Cached Dapper parameter wrapper. Built once at construction when
+    // _parameters is supplied; reused across the data query, the default
+    // total-count query, and any debug-logging path. Dapper treats input-
+    // parameter DynamicParameters as read-only during execution, so sharing
+    // is safe across the single-use lifetime of this extractor.
+    private readonly DynamicParameters? _dynamicParameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
     private readonly IProgressTimer? _progressTimer;
@@ -126,6 +133,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
         _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+        _dynamicParameters = new DynamicParameters(parameters);
         _transaction = transaction;
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
@@ -264,7 +272,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         _totalItemCount = null;
         LogExtractionStarted();
 
-        var param = _parameters != null ? new DynamicParameters(_parameters) : null;
+        var param = _dynamicParameters;
 
         if (TotalCountQuery != null)
         {
@@ -310,7 +318,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         var sanitized = SanitizeCommandTextForCount(_commandText);
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
-        var param = _parameters != null ? new DynamicParameters(_parameters) : null;
+        var param = _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>(
             new CommandDefinition(countSql, param, _transaction, cancellationToken: token));
     }
