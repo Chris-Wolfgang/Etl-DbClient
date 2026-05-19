@@ -181,8 +181,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// <para>
     /// <c>SkipItemCount</c> and <c>MaximumItemCount</c> are still honored at the
     /// per-record granularity — skipped records never enter the batch buffer,
-    /// and the buffer is trimmed so the cumulative loaded count never exceeds
-    /// <c>MaximumItemCount</c>.
+    /// and buffering stops accepting new items once the cumulative-plus-buffered
+    /// count would exceed <c>MaximumItemCount</c>.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
