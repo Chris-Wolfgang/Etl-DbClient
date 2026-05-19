@@ -299,15 +299,25 @@ jobs:
             cockroachdb/cockroach:v24.3.5 \
             start-single-node --insecure --accept-sql-without-tls
           # Wait for /health?ready=1 — SQL port opens a few seconds before
-          # the engine is actually accepting queries.
+          # the engine is actually accepting queries. If it never reports
+          # ready inside the budget, fail the step explicitly (and dump
+          # container logs) so downstream benchmark failures point at the
+          # real cause instead of a misleading connection error.
+          ready=0
           for i in $(seq 1 30); do
             if curl -sf http://localhost:8080/health?ready=1 > /dev/null; then
-              echo "✅ CockroachDB ready after $i attempt(s)"
+              echo "CockroachDB ready after $i attempt(s)"
+              ready=1
               break
             fi
             echo "Waiting for CockroachDB... ($i/30)"
             sleep 2
           done
+          if [ "$ready" != "1" ]; then
+            echo "::error::CockroachDB did not become ready within 60s"
+            docker logs crdb || true
+            exit 1
+          fi
 
       - name: Run benchmarks
         env:
