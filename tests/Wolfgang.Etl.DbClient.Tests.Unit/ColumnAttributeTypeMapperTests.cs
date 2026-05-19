@@ -42,10 +42,10 @@ public class ColumnAttributeTypeMapperTests
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await extractor.ExtractAsync().ToListAsync()
+            () => extractor.ExtractAsync().ToListAsync().AsTask()
         );
 
         Assert.Contains("age_in_years", ex.Message, StringComparison.Ordinal);
-        Assert.Contains(typeof(AnnotatedRecord).FullName!, ex.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(AnnotatedRecord), ex.Message, StringComparison.Ordinal);
     }
 }

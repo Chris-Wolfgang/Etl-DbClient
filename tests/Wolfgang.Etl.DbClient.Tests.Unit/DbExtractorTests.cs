@@ -390,7 +390,7 @@ public class DbExtractorTests
 
         await Assert.ThrowsAsync<InvalidOperationException>
         (
-            async () => await extractor.ExtractAsync().ToListAsync()
+            () => extractor.ExtractAsync().ToListAsync().AsTask()
         );
     }
 }
