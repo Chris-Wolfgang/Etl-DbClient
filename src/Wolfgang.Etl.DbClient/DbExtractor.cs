@@ -335,10 +335,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             );
         }
 
-        // Strip any trailing run of semicolons and whitespace — including the
-        // interleaved case like "... FROM People; ; ;". TrimEnd(params char[])
-        // removes any combination of the supplied chars from the end in one pass.
-        return commandText.Trim().TrimEnd(';', ' ', '\t', '\r', '\n');
+        // Strip any trailing run of semicolons and *all* whitespace — including
+        // non-breaking space and other Unicode whitespace that a hard-coded char
+        // list would miss. Loop on TrimEnd() / TrimEnd(';') until both passes
+        // become no-ops, so interleaved cases like "... FROM People; ; ;" (or
+        // "; ;") fully collapse.
+        var result = commandText;
+        while (true)
+        {
+            var trimmed = result.TrimEnd().TrimEnd(';');
+            if (trimmed.Length == result.Length)
+            {
+                return trimmed.TrimEnd();
+            }
+
+            result = trimmed;
+        }
     }
 
 
