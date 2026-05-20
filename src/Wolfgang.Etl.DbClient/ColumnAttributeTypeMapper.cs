@@ -66,21 +66,24 @@ internal static class ColumnAttributeTypeMapper
                 prop ??= props.FirstOrDefault(p =>
                     string.Equals(p.Name, columnName, StringComparison.OrdinalIgnoreCase));
 
-                if (prop == null)
+                if (prop == null && DbClientOptions.StrictColumnMapping)
                 {
-                    // Dapper's default behaviour on unmappable columns throws a
-                    // generic NullReferenceException downstream. Replace with a
-                    // self-describing error so the user sees the offending column
-                    // name and the target type immediately.
+                    // Strict mode: surface a self-describing error instead of
+                    // letting Dapper silently drop the column (its default behavior
+                    // when the type-map delegate returns null).
                     throw new InvalidOperationException
                     (
                         $"Result-set column '{columnName}' does not map to any property on '{t.FullName}'. " +
                         "Either add a property of that name, decorate an existing property with " +
-                        $"[Column(\"{columnName}\")], or alias the column in your SELECT statement."
+                        $"[Column(\"{columnName}\")], or alias the column in your SELECT statement. " +
+                        "Set DbClientOptions.StrictColumnMapping = false to silently drop unmapped columns."
                     );
                 }
 
-                return prop;
+                // prop may be null here — that's intentional in the default
+                // (non-strict) mode and matches Dapper's pre-existing behavior
+                // for the CustomPropertyTypeMap delegate contract.
+                return prop!;
             }
         );
 
