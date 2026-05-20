@@ -33,6 +33,12 @@ namespace Wolfgang.Etl.DbClient;
 /// The extractor never commits or rolls back the transaction.
 /// </para>
 /// <para>
+/// <b>Thread safety.</b> A <see cref="DbExtractor{TRecord}"/> instance is not safe for
+/// concurrent <c>ExtractAsync</c> calls. Internal state (stopwatch, total-count snapshot,
+/// progress-counter increments) assumes a single extraction in flight. Build a separate
+/// instance per concurrent extraction.
+/// </para>
+/// <para>
 /// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
@@ -249,15 +255,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
     /// <inheritdoc/>
 #pragma warning disable MA0051
     protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([EnumeratorCancellation] CancellationToken token)
-#else
-    /// <inheritdoc/>
-#pragma warning disable MA0051
-    protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token)
-#endif
 #pragma warning restore MA0051
     {
         _stopwatch.Restart();
@@ -335,14 +335,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             );
         }
 
-        var sanitized = commandText.Trim();
-
-        while (sanitized.EndsWith(";", StringComparison.Ordinal))
+        // Strip any trailing run of semicolons and *all* whitespace — including
+        // non-breaking space and other Unicode whitespace that a hard-coded char
+        // list would miss. Loop on TrimEnd() / TrimEnd(';') until both passes
+        // become no-ops, so interleaved cases like "... FROM People; ; ;" (or
+        // "; ;") fully collapse.
+        var result = commandText;
+        while (true)
         {
-            sanitized = sanitized.Substring(0, sanitized.Length - 1).TrimEnd();
-        }
+            var trimmed = result.TrimEnd().TrimEnd(';');
+            if (trimmed.Length == result.Length)
+            {
+                return trimmed.TrimEnd();
+            }
 
-        return sanitized;
+            result = trimmed;
+        }
     }
 
 
