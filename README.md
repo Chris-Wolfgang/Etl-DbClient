@@ -112,18 +112,20 @@ an in-memory connection instead of a container.
 
 | Database | Version Tested | Driver | CI Status | Benchmarks |
 |---|---|---|---|---|
-| **SQLite** | in-memory | `Microsoft.Data.Sqlite` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlite/) |
-| **SQL Server** | 2022 | `Microsoft.Data.SqlClient` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlserver/) |
-| **PostgreSQL** | 16 | `Npgsql` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/postgres/) |
-| **MySQL** | 8.0 | `MySqlConnector` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mysql/) |
-| **MariaDB** | 11.4 | `MySqlConnector` | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mariadb/) |
-| **CockroachDB** | v24.3 | `Npgsql` (Postgres-wire-compatible) | [![CI](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml/badge.svg?branch=main)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/pr.yaml?query=branch%3Amain) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/cockroachdb/) |
+| **SQLite** | in-memory | `Microsoft.Data.Sqlite` | [![SQLite](https://img.shields.io/endpoint?url=https%3A%2F%2Fchris-wolfgang.github.io%2FEtl-DbClient%2Fdev%2Fstatus%2Fsqlite.json)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/integration-status.yaml) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlite/) |
+| **SQL Server** | 2022 | `Microsoft.Data.SqlClient` | [![SQL Server](https://img.shields.io/endpoint?url=https%3A%2F%2Fchris-wolfgang.github.io%2FEtl-DbClient%2Fdev%2Fstatus%2Fsqlserver.json)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/integration-status.yaml) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/sqlserver/) |
+| **PostgreSQL** | 16 | `Npgsql` | [![PostgreSQL](https://img.shields.io/endpoint?url=https%3A%2F%2Fchris-wolfgang.github.io%2FEtl-DbClient%2Fdev%2Fstatus%2Fpostgres.json)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/integration-status.yaml) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/postgres/) |
+| **MySQL** | 8.0 | `MySqlConnector` | [![MySQL](https://img.shields.io/endpoint?url=https%3A%2F%2Fchris-wolfgang.github.io%2FEtl-DbClient%2Fdev%2Fstatus%2Fmysql.json)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/integration-status.yaml) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mysql/) |
+| **MariaDB** | 11.4 | `MySqlConnector` | [![MariaDB](https://img.shields.io/endpoint?url=https%3A%2F%2Fchris-wolfgang.github.io%2FEtl-DbClient%2Fdev%2Fstatus%2Fmariadb.json)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/integration-status.yaml) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/mariadb/) |
+| **CockroachDB** | v24.3 | `Npgsql` (Postgres-wire-compatible) | [![CockroachDB](https://img.shields.io/endpoint?url=https%3A%2F%2Fchris-wolfgang.github.io%2FEtl-DbClient%2Fdev%2Fstatus%2Fcockroachdb.json)](https://github.com/Chris-Wolfgang/Etl-DbClient/actions/workflows/integration-status.yaml) | [📊 chart](https://chris-wolfgang.github.io/Etl-DbClient/dev/bench/cockroachdb/) |
 
-> **About these badges.** GitHub doesn't natively render a different status per matrix
-> job, so each row currently shows the *overall* `pr.yaml` status. If any of the four
-> integration jobs fails, every row in this table will go red. Click any badge to see
-> the per-RDBMS pass/fail detail in the Actions tab. Per-database dynamic badges are
-> tracked as a follow-up.
+> **About these badges.** Each row's CI Status badge reflects *that specific
+> RDBMS's* most-recent integration result on `main`, aggregated across both
+> .NET 8 and .NET 10 TFMs. Powered by the
+> [`integration-status.yaml`](.github/workflows/integration-status.yaml) workflow,
+> which runs the matrix on every push to `main` and writes one shields.io
+> endpoint-format JSON per RDBMS to `gh-pages/dev/status/<rdbms>.json`.
+> Click any badge to open the workflow page.
 
 > **About the charts.** Benchmark charts are published by
 > [`benchmarks.yaml`](.github/workflows/benchmarks.yaml) on every release tag and on
