@@ -1,12 +1,31 @@
 namespace Wolfgang.Etl.DbClient;
 
 /// <summary>
-/// Process-wide knobs for <c>Wolfgang.Etl.DbClient</c>. These settings flip the
-/// behavior of the global Dapper type map and therefore affect every
-/// <see cref="DbExtractor{TRecord}"/> / <see cref="DbLoader{TRecord}"/> instance
-/// in the AppDomain — set them once at startup, before constructing extractors
-/// or loaders.
+/// Process-wide knobs for <c>Wolfgang.Etl.DbClient</c>. Settings here are read
+/// from the global Dapper type-map delegate that <c>ColumnAttributeTypeMapper</c>
+/// installs, so they affect read-side column resolution only.
 /// </summary>
+/// <remarks>
+/// Scope today:
+/// <list type="bullet">
+///   <item><description>
+///   Applies to <see cref="DbExtractor{TRecord}"/> — its static constructor
+///   triggers the type-map registration that consults these settings.
+///   </description></item>
+///   <item><description>
+///   Only takes effect for <c>TRecord</c> types that have at least one
+///   <see cref="System.ComponentModel.DataAnnotations.Schema.ColumnAttribute"/>;
+///   types without any <c>[Column]</c> use Dapper's built-in name matcher,
+///   which is not routed through this options class.
+///   </description></item>
+///   <item><description>
+///   Does <b>not</b> affect <see cref="DbLoader{TRecord}"/>: loaders emit
+///   parameters from a POCO, they don't read result-set columns.
+///   </description></item>
+/// </list>
+/// Set the flags once at process startup, before constructing the first
+/// extractor for a given <c>TRecord</c>, for the most predictable behavior.
+/// </remarks>
 public static class DbClientOptions
 {
     /// <summary>
