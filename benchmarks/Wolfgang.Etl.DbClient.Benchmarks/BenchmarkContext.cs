@@ -36,7 +36,7 @@ public static class BenchmarkContext
             "mysql"       => new MySqlConnection(Require("ETL_DBCLIENT_BENCHMARK_MYSQL")),
             // MariaDB shares the MySQL wire protocol — same MySqlConnector driver.
             "mariadb"     => new MySqlConnection(Require("ETL_DBCLIENT_BENCHMARK_MARIADB")),
-            // CockroachDB speaks the PostgreSQL wire protocol — Npgsql works unchanged.
+            // CockroachDB speaks the Postgres wire protocol — same Npgsql driver.
             "cockroachdb" => new NpgsqlConnection(Require("ETL_DBCLIENT_BENCHMARK_COCKROACHDB")),
             "sqlite"      => new SqliteConnection("Data Source=:memory:"),
             _             => throw new InvalidOperationException($"Unknown ETL_DBCLIENT_BENCHMARK_RDBMS value '{Rdbms}'. Expected one of: sqlite, sqlserver, postgres, mysql, mariadb, cockroachdb."),
@@ -62,9 +62,8 @@ public static class BenchmarkContext
                             "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INT NOT NULL);"),
             "mariadb"   => ("DROP TABLE IF EXISTS contract_items;",
                             "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INT NOT NULL);"),
-            // CockroachDB is Postgres-compatible for the DDL we need here.
             "cockroachdb" => ("DROP TABLE IF EXISTS contract_items;",
-                              "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INTEGER NOT NULL);"),
+                              "CREATE TABLE contract_items (name VARCHAR(100) NOT NULL, value INT NOT NULL);"),
             _           => ("DROP TABLE IF EXISTS contract_items;",
                             "CREATE TABLE contract_items (name TEXT NOT NULL, value INTEGER NOT NULL);"),
         };
