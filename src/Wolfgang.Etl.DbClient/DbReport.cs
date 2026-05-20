@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Wolfgang.Etl.Abstractions;
 
 namespace Wolfgang.Etl.DbClient;
@@ -33,6 +35,28 @@ public record DbReport : Report
         CommandText = commandText;
         ElapsedMilliseconds = elapsedMilliseconds;
         TotalItemCount = totalItemCount;
+    }
+
+
+
+    /// <summary>
+    /// Binary-compatibility shim for the original four-parameter constructor.
+    /// The current primary constructor takes an optional <c>totalItemCount</c>
+    /// with a default of <c>null</c>; source callers recompile cleanly, but
+    /// consumers already compiled against the four-arg signature would otherwise
+    /// hit a <see cref="MissingMethodException"/> at load time. Keeping this
+    /// overload preserves the assembly's public API surface.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public DbReport
+    (
+        int currentItemCount,
+        int currentSkippedItemCount,
+        string commandText,
+        long elapsedMilliseconds
+    )
+        : this(currentItemCount, currentSkippedItemCount, commandText, elapsedMilliseconds, totalItemCount: null)
+    {
     }
 
 
