@@ -209,6 +209,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Dispatches to one of two paths based on transaction ownership (decided at
+    /// construction time). Splitting the two flows keeps each one short and removes
+    /// the repeated <c>if (_ownsTransaction &amp;&amp; transaction != null)</c> guard
+    /// that the combined version needed.
+    /// </remarks>
     protected override async Task LoadWorkerAsync
     (
         IAsyncEnumerable<TRecord> items,
@@ -218,39 +224,62 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         _stopwatch.Restart();
         LogLoadingStarted();
 
-        // _ownsTransaction was set at construction to (_callerTransaction == null);
-        // the second-guess local that used to live here was always redundant.
-        var transaction = _ownsTransaction
-            ? await BeginAutoTransactionAsync(token).ConfigureAwait(false)
-            : _callerTransaction;
+        if (_ownsTransaction)
+        {
+            await LoadWithAutoTransactionAsync(items, token).ConfigureAwait(false);
+        }
+        else
+        {
+            await LoadWithCallerTransactionAsync(items, token).ConfigureAwait(false);
+        }
+
+        LogLoadingCompleted();
+    }
+
+
+
+    /// <summary>
+    /// Load path when the loader owns the transaction. Begins, executes, and
+    /// commits on success; rolls back on exception; always disposes.
+    /// </summary>
+    private async Task LoadWithAutoTransactionAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        CancellationToken token
+    )
+    {
+        var transaction = await BeginAutoTransactionAsync(token).ConfigureAwait(false);
 
         try
         {
             await ExecuteItemsAsync(items, transaction, token).ConfigureAwait(false);
-
-            if (_ownsTransaction && transaction != null)
-            {
-                await CommitAutoTransactionAsync(transaction, token).ConfigureAwait(false);
-            }
+            await CommitAutoTransactionAsync(transaction, token).ConfigureAwait(false);
         }
         catch
         {
-            if (_ownsTransaction && transaction != null)
-            {
-                await RollbackAutoTransactionAsync(transaction, token).ConfigureAwait(false);
-            }
-
+            await RollbackAutoTransactionAsync(transaction, token).ConfigureAwait(false);
             throw;
         }
         finally
         {
-            if (_ownsTransaction && transaction != null)
-            {
-                await DisposeTransactionAsync(transaction).ConfigureAwait(false);
-            }
+            await DisposeTransactionAsync(transaction).ConfigureAwait(false);
         }
+    }
 
-        LogLoadingCompleted();
+
+
+    /// <summary>
+    /// Load path when the caller supplied the transaction. The loader executes
+    /// against it but never commits, rolls back, or disposes — those are the
+    /// caller's responsibilities.
+    /// </summary>
+    private Task LoadWithCallerTransactionAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        CancellationToken token
+    )
+    {
+        return ExecuteItemsAsync(items, _callerTransaction, token);
     }
 
 
