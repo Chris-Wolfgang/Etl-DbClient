@@ -89,13 +89,22 @@ public class DbLoaderBatchSizeBenchmarks : IDisposable
 
 
     [GlobalCleanup]
-    public void Cleanup()
+    public void Cleanup() => Dispose();
+
+
+    // Single disposal path; guarded so the BDN-injected GlobalCleanup
+    // and a direct Dispose() can't race into a double-dispose.
+    private bool _disposed;
+    public void Dispose()
     {
-        _conn.Dispose();
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _conn?.Dispose();
     }
-
-
-    public void Dispose() => _conn?.Dispose();
 
 
     [Benchmark]
