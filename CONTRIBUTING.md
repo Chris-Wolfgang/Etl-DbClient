@@ -1,6 +1,6 @@
-# Contributing to Wolfgang.Etl.DbClient
+# Contributing to {{PROJECT_NAME}}
 
-Thank you for your interest in contributing to **Wolfgang.Etl.DbClient**! We welcome contributions to help improve this project.
+Thank you for your interest in contributing to **{{PROJECT_NAME}}**! We welcome contributions to help improve this project.
 
 ## How Can You Contribute?
 
@@ -182,7 +182,7 @@ dotnet format
 dotnet format --verify-no-changes
 
 # PowerShell formatting script
-pwsh ./scripts/format.ps1
+pwsh ./format.ps1
 ```
 
 See [README-FORMATTING.md](README-FORMATTING.md) for detailed formatting rules.
@@ -237,4 +237,3 @@ Please be respectful and considerate in all interactions. See [CODE_OF_CONDUCT.m
 ---
 
 Thank you for contributing! 🎉
-
