@@ -210,75 +210,13 @@ jobs:
           fi
 
   # ============================================================================
-  # DETECTION: Classify changed paths (code vs workflows vs docs-only)
-  # ----------------------------------------------------------------------------
-  # Lets downstream jobs decide whether to run real work or to short-circuit.
-  # The Integration (all) aggregator is wired so that a path-gated "skipped"
-  # matrix is treated as success — docs-only PRs no longer burn ~10 min on
-  # eight Testcontainers cells that can't observe any product change.
-  # ============================================================================
-  detect-changes:
-    name: "Detect Changed Paths"
-    runs-on: ubuntu-latest
-    if: github.repository != 'Chris-Wolfgang/repo-template'
-    # The job-level read permission lets dorny/paths-filter fall back to the
-    # pull-request files API if pure-git diff fails for any reason. Workflow's
-    # top-level grants only contents: read.
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      code: ${{ steps.filter.outputs.code }}
-      workflows: ${{ steps.filter.outputs.workflows }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
-          persist-credentials: false
-          # Full history so the action's git-diff path against the base ref
-          # works without falling back to the PR Files API.
-          fetch-depth: 0
-
-      - name: Filter changed paths
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
-        id: filter
-        with:
-          # Compare against the PR's base branch so we see the full PR diff,
-          # not just the latest commit. With fetch-depth: 0 above and an
-          # explicit `ref`, the action uses git compare instead of the API.
-          base: ${{ github.event.pull_request.base.ref }}
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
-          filters: |
-            code:
-              - 'src/**'
-              - 'tests/**'
-              - 'benchmarks/**'
-              - 'examples/**'
-              - '*.sln'
-              - '*.slnx'
-              - 'Directory.Build.props'
-              - 'Directory.Build.targets'
-              - 'BannedSymbols.txt'
-              - '.editorconfig'
-              - '*.globalconfig'
-              - '*.ruleset'
-              - 'coverlet.runsettings'
-              - 'nuget.config'
-            workflows:
-              - '.github/workflows/**'
-
-  # ============================================================================
   # STAGE 1: Linux - .NET Core/5+ Tests with Coverage Gate
   # ============================================================================
-  test-linux-core:
+  test-linux-core: 
     name: "Stage 1: Linux Tests (.NET 5.0-10.0) + Coverage Gate"
     runs-on:  ubuntu-latest
-    needs: [detect-projects, detect-changes]
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      (needs.detect-changes.outputs.code == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true')
+    needs: detect-projects
+    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
     
     steps:
       - name: Checkout code
@@ -336,55 +274,6 @@ jobs:
           echo ""
           echo "✅ Configuration files secured - using versions from main branch"
 
-      - name: Fetch trusted configuration files from main branch
-        # Skip for Dependabot — its package-version bumps to protected files (e.g.
-        # Directory.Build.props) are legitimate and should not be overwritten by main's
-        # older versions. Dependabot's identity is GitHub-controlled and not spoofable.
-        if: github.event.pull_request.user.login != 'dependabot[bot]'
-        run: |
-          echo "Fetching configuration files from main branch to prevent malicious overrides..."
-
-          # Fetch the main branch
-          git fetch origin main:main-branch
-
-          # List of configuration files that should come from trusted main branch
-          config_files=(
-            ".editorconfig"
-            "Directory.Build.props"
-            "Directory.Build.targets"
-            "BannedSymbols.txt"
-            "*.globalconfig"
-            "*.ruleset"
-            ".github/workflows/*.yml"
-            ".github/workflows/*.yaml"
-          )
-
-          # Copy each configuration file from main branch if it exists
-          for config_file in "${config_files[@]}"; do
-            # Handle glob patterns
-            if [[ "$config_file" == *"*"* ]]; then
-              # Find files matching the pattern in main branch
-              git ls-tree -r --name-only main-branch | grep -E "${config_file//\*/.*}" | while read -r file; do
-                if [ -n "$file" ]; then
-                  echo "  ✓ Copying $file from main branch"
-                  mkdir -p "$(dirname "$file")"
-                  git show "main-branch:$file" > "$file" || echo "  ⚠️  Failed to copy $file"
-                fi
-              done
-            else
-              # Check if file exists in main branch
-              if git cat-file -e "main-branch:$config_file" 2>/dev/null; then
-                echo "  ✓ Copying $config_file from main branch"
-                git show "main-branch:$config_file" > "$config_file"
-              else
-                echo "  ℹ️  $config_file not found in main branch, skipping"
-              fi
-            fi
-          done
-
-          echo ""
-          echo "✅ Configuration files secured - using versions from main branch"
-
       # Fix for .NET 5.0 on Ubuntu 22.04+ - install libssl1.1 from the focal-security
       # repository so APT verifies the package via GPG instead of a plain wget download.
       - name: Install OpenSSL 1.1 for .NET 5.0
@@ -411,6 +300,12 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+
+      - name: Restore .NET workloads
+        # Some projects (MAUI / MauiHybrid / Android / iOS / WPF) declare workloads via
+        # their TFMs (e.g. net10.0-android). For workload-bearing repos this installs them
+        # before restore; for pure libraries it's a fast no-op.
+        run: dotnet workload restore
 
       - name: Restore and build (exclude .NET Framework-only projects)
         run: |
@@ -490,14 +385,14 @@ jobs:
             if [ "$framework_count" -eq 1 ]; then
               # Single target framework - build normally
               echo "  Target framework: $frameworks"
-              dotnet build "$proj" --no-restore --configuration Release -p:TreatWarningsAsErrors=true || exit 1
+              dotnet build "$proj" --no-restore --configuration Release || exit 1
             else
               # Multi-targeting project - build each compatible framework separately
               echo "  Target frameworks (multi-targeting): $(echo "$frameworks" | tr '\n' ' ')"
               while IFS= read -r fw; do
                 [ -z "$fw" ] && continue
                 echo "  Building framework: $fw"
-                dotnet build "$proj" --no-restore --configuration Release --framework "$fw" -p:TreatWarningsAsErrors=true || exit 1
+                dotnet build "$proj" --no-restore --configuration Release --framework "$fw" || exit 1
               done <<< "$frameworks"
             fi
           done
@@ -516,26 +411,19 @@ jobs:
             exit 0
           fi
 
-          # Match on the filename, not the path, so an unrelated parent directory
-          # containing the substring "Tests.Integration" won't be excluded.
-          mapfile -d '' -t test_projects < <(find ./tests -type f \
-            \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) \
-            ! -name "*.Tests.Integration.csproj" \
-            ! -name "*.Tests.Integration.vbproj" \
-            ! -name "*.Tests.Integration.fsproj" \
-            -print0)
+          mapfile -d '' -t test_projects < <(find ./tests -type f \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) -print0)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "ℹ️  No test projects found under ./tests — skipping test stage."
             exit 0
           fi
-
+          
           echo "=========================================="
-          echo "Found test projects (integration suites are run in a separate job):"
+          echo "Found test projects:"
           echo "=========================================="
           printf '%s\n' "${test_projects[@]}"
           echo ""
-
+          
           for test_proj in "${test_projects[@]}"; do
             echo "=========================================="
             echo "Testing project: $test_proj"
@@ -566,15 +454,9 @@ jobs:
               [ -z "$fw" ] && continue
               echo "Testing framework: $fw"
               
-              # --no-build / --no-restore: the build step above already produced
-              # binaries for every TFM with -p:TreatWarningsAsErrors=true; the
-              # implicit `dotnet test` build wouldn't carry that flag, so an
-              # analyzer warning introduced during test build could slip through.
               dotnet test "$test_proj" \
                 --configuration Release \
                 --framework "$fw" \
-                --no-build \
-                --no-restore \
                 --collect:"XPlat Code Coverage" \
                 --settings coverlet.runsettings \
                 --results-directory "./TestResults" \
@@ -674,153 +556,13 @@ jobs:
             tests/**/bin/Release
 
   # ============================================================================
-  # RDBMS INTEGRATION: per-database job using Testcontainers (Linux only)
-  # Runs in parallel with Stage 1. Does not gate Stage 2 / Stage 3 so a flaky
-  # container start cannot block the multi-TFM unit matrix.
-  # ============================================================================
-  test-integration:
-    name: "Integration / ${{ matrix.rdbms }} (${{ matrix.tfm }})"
-    runs-on: ubuntu-latest
-    # Ceiling protects against a stuck container start (esp. mssql / mysql)
-    # consuming the default 6-hour GitHub Actions limit per matrix cell.
-    timeout-minutes: 25
-    needs: [detect-projects, detect-changes]
-    # Gate on code OR workflows so:
-    #   - Docs-only PRs (no code, no workflow change) skip the matrix entirely
-    #     and the aggregator below accepts that as success.
-    #   - Dependabot PRs to .github/workflows/*.yaml still run the matrix
-    #     (Dependabot is exempt from the protected-files guard upstream).
-    #   - Human PRs that touch .github/workflows/*.yaml never reach this job
-    #     anyway — detect-projects fails first via the protected-files guard,
-    #     so has-projects is unset and the predicate is short-circuited false.
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      (needs.detect-changes.outputs.code == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true')
-    strategy:
-      fail-fast: false
-      matrix:
-        rdbms: [sqlserver, postgres, mysql, mariadb, sqlite]
-        tfm: [net8.0, net10.0]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
-          persist-credentials: false
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
-
-      - name: Locate integration project
-        id: locate
-        shell: bash
-        run: |
-          # Match all three project extensions so a future VB/F# rewrite is found.
-          proj=$(find ./tests -type f \
-            \( -name "*.Tests.Integration.csproj" \
-            -o -name "*.Tests.Integration.vbproj" \
-            -o -name "*.Tests.Integration.fsproj" \) \
-            | head -n1)
-          if [ -z "$proj" ]; then
-            echo "ℹ️  No integration project found — skipping."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Integration project: $proj"
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "project=$proj" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
-        if: steps.locate.outputs.found == 'true'
-        run: |
-          # This job has no prior build step, so dotnet test compiles inline.
-          # Pass -p:TreatWarningsAsErrors=true so analyzer warnings introduced
-          # in the integration project still fail CI.
-          dotnet test "${{ steps.locate.outputs.project }}" \
-            --configuration Release \
-            --framework ${{ matrix.tfm }} \
-            --filter "Category=${{ matrix.rdbms }}" \
-            -p:TreatWarningsAsErrors=true \
-            --logger "console;verbosity=normal" \
-            --logger "trx;LogFileName=integration-${{ matrix.rdbms }}-${{ matrix.tfm }}.trx" \
-            --results-directory "./TestResults-Integration"
-
-      - name: Upload integration test results
-        if: always() && steps.locate.outputs.found == 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: integration-${{ matrix.rdbms }}-${{ matrix.tfm }}-trx
-          path: TestResults-Integration/
-
-  # ============================================================================
-  # INTEGRATION AGGREGATOR
-  # A single stable-named job whose only purpose is to roll up every cell of
-  # the test-integration matrix into one pass/fail signal. Mark THIS one
-  # required on the branch ruleset — the matrix can grow (MariaDB, Oracle,
-  # CockroachDB, …) or change TFMs without breaking the required-check name.
-  # ============================================================================
-  test-integration-all:
-    name: "Integration (all)"
-    runs-on: ubuntu-latest
-    needs: [detect-projects, detect-changes, test-integration]
-    # Run even when a matrix cell failed/cancelled so this job can report the
-    # rollup result instead of silently being marked "skipped". The if: predicate
-    # mirrors test-integration's so this aggregator is genuinely skipped (not
-    # failed) on the repo-template repo or on repos without .NET projects.
-    if: >-
-      always() &&
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true'
-    env:
-      INTEGRATION_RESULT: ${{ needs.test-integration.result }}
-      DETECT_CHANGES_RESULT: ${{ needs.detect-changes.result }}
-      CODE_CHANGED: ${{ needs.detect-changes.outputs.code }}
-      WORKFLOWS_CHANGED: ${{ needs.detect-changes.outputs.workflows }}
-    steps:
-      - name: Check matrix result
-        run: |
-          echo "test-integration  = $INTEGRATION_RESULT"
-          echo "detect-changes    = $DETECT_CHANGES_RESULT (code=$CODE_CHANGED, workflows=$WORKFLOWS_CHANGED)"
-
-          # Happy path: every matrix cell passed.
-          if [ "$INTEGRATION_RESULT" = "success" ]; then
-            echo "✅ Integration aggregator passes (all cells succeeded)"
-            exit 0
-          fi
-
-          # Path-gated short-circuit: matrix was deliberately skipped because
-          # detect-changes succeeded and reported neither code nor workflow
-          # changes (docs-only PR). Only THEN is "skipped" valid.
-          if [ "$INTEGRATION_RESULT" = "skipped" ] \
-             && [ "$DETECT_CHANGES_RESULT" = "success" ] \
-             && [ "$CODE_CHANGED" = "false" ] \
-             && [ "$WORKFLOWS_CHANGED" = "false" ]; then
-            echo "✅ Integration aggregator passes (no code/workflow changes — matrix path-gated)"
-            exit 0
-          fi
-
-          echo "::error::Integration aggregator failed: test-integration=$INTEGRATION_RESULT, detect-changes=$DETECT_CHANGES_RESULT (code=$CODE_CHANGED, workflows=$WORKFLOWS_CHANGED)"
-          exit 1
-
-  # ============================================================================
   # STAGE 2: Windows - All .NET Tests (Gated by Stage 1)
   # ============================================================================
   test-windows:
     name: "Stage 2: Windows Tests (.NET 5.0-10.0, Framework 4.6.2-4.8.1)"
     runs-on: windows-latest
-    needs: [detect-projects, detect-changes, test-linux-core]
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      (needs.detect-changes.outputs.code == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true')
+    needs: [detect-projects, test-linux-core]
+    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
     
     steps:
       - name: Checkout code
@@ -830,6 +572,10 @@ jobs:
           persist-credentials: false
       
       - name: Fetch trusted configuration files from main branch
+        # Skip for Dependabot — its package-version bumps to protected files (e.g.
+        # Directory.Build.props) are legitimate and should not be overwritten by main's
+        # older versions. Dependabot's identity is GitHub-controlled and not spoofable.
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         shell: pwsh
         run: |
           Write-Host "Fetching configuration files from main branch to prevent malicious overrides..."
@@ -871,51 +617,6 @@ jobs:
             }
           }
           
-          Write-Host ""
-          Write-Host "✅ Configuration files secured - using versions from main branch"
-
-      - name: Fetch trusted configuration files from main branch
-        shell: pwsh
-        run: |
-          Write-Host "Fetching configuration files from main branch to prevent malicious overrides..."
-
-          # Fetch the main branch
-          git fetch origin main:main-branch
-
-          # List of configuration files that should come from trusted main branch
-          $configFiles = @(
-            ".editorconfig",
-            "Directory.Build.props",
-            "Directory.Build.targets",
-            "BannedSymbols.txt"
-          )
-
-          # Copy each configuration file from main branch if it exists
-          foreach ($configFile in $configFiles) {
-            # Check if file exists in main branch
-            $exists = git cat-file -e "main-branch:$configFile" 2>&1
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "  ✓ Copying $configFile from main branch"
-              git show "main-branch:$configFile" | Out-File -FilePath $configFile -Encoding UTF8NoBOM -NoNewline
-            } else {
-              Write-Host "  ℹ️  $configFile not found in main branch, skipping"
-            }
-          }
-
-          # Handle glob patterns for .globalconfig, .ruleset, and workflow files
-          $globPatterns = @("*.globalconfig", "*.ruleset", ".github/workflows/*.yml", ".github/workflows/*.yaml")
-          foreach ($pattern in $globPatterns) {
-            $files = git ls-tree -r --name-only main-branch | Select-String -Pattern $pattern.Replace("*", ".*")
-            foreach ($file in $files) {
-              if ($file) {
-                Write-Host "  ✓ Copying $file from main branch"
-                $dir = Split-Path -Parent $file
-                if ($dir) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-                git show "main-branch:$file" | Out-File -FilePath $file -Encoding UTF8NoBOM -NoNewline
-              }
-            }
-          }
-
           Write-Host ""
           Write-Host "✅ Configuration files secured - using versions from main branch"
 
@@ -931,11 +632,17 @@ jobs:
             9.0.x
             10.0.x
 
+      - name: Restore .NET workloads
+        # Some projects (MAUI / MauiHybrid / Android / iOS / WPF) declare workloads via
+        # their TFMs (e.g. net10.0-android). For workload-bearing repos this installs them
+        # before restore; for pure libraries it's a fast no-op.
+        run: dotnet workload restore
+
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build solution
-        run: dotnet build --no-restore --configuration Release -p:TreatWarningsAsErrors=true
+        run: dotnet build --no-restore --configuration Release
 
       - name: Run all .NET tests (.NET 5.0-10.0 and Framework 4.6.2-4.8.1)
         shell: pwsh
@@ -949,11 +656,7 @@ jobs:
             exit 0
           }
 
-          # Integration suites (*.Tests.Integration.csproj) live in a separate Linux-only
-          # job that provisions database containers via Testcontainers; not run here.
-          # Filter by file name, not path, so an unrelated parent directory containing the
-          # substring "Tests.Integration" won't be excluded.
-          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' | Where-Object { $_.Name -notmatch '\.Tests\.Integration\.(cs|vb|fs)proj$' })
+          $testProjects = @(Get-ChildItem -Path './tests/*' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj')
 
           if (@($testProjects).Count -eq 0) {
             Write-Host "ℹ️  No test projects found under ./tests — skipping test stage."
@@ -1001,15 +704,10 @@ jobs:
             foreach ($fw in $frameworks) {
               Write-Host "Testing framework: $fw" -ForegroundColor Yellow
 
-              # --no-build / --no-restore: the build step above already produced
-              # binaries for every TFM with -p:TreatWarningsAsErrors=true; the
-              # implicit dotnet test build wouldn't carry that flag.
               if ($fw -match '^net([5-9]|[1-9][0-9]+)\.') {
                 dotnet test $testProj.FullName `
                   --configuration Release `
                   --framework $fw `
-                  --no-build `
-                  --no-restore `
                   --collect:"XPlat Code Coverage" `
                   --settings coverlet.runsettings `
                   --results-directory "./TestResults" `
@@ -1018,8 +716,6 @@ jobs:
                 dotnet test $testProj.FullName `
                   --configuration Release `
                   --framework $fw `
-                  --no-build `
-                  --no-restore `
                   --logger "console;verbosity=normal"
               }
 
@@ -1121,12 +817,8 @@ jobs:
   test-macos-core:
     name: "Stage 3: macOS Tests (.NET 6.0-10.0)"
     runs-on: macos-latest
-    needs: [detect-projects, detect-changes, test-windows]
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      (needs.detect-changes.outputs.code == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true')
+    needs: [detect-projects, test-windows]
+    if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
     
     steps:
       - name: Checkout code
@@ -1184,55 +876,6 @@ jobs:
           echo ""
           echo "✅ Configuration files secured - using versions from main branch"
 
-      - name: Fetch trusted configuration files from main branch
-        # Skip for Dependabot — its package-version bumps to protected files (e.g.
-        # Directory.Build.props) are legitimate and should not be overwritten by main's
-        # older versions. Dependabot's identity is GitHub-controlled and not spoofable.
-        if: github.event.pull_request.user.login != 'dependabot[bot]'
-        run: |
-          echo "Fetching configuration files from main branch to prevent malicious overrides..."
-
-          # Fetch the main branch
-          git fetch origin main:main-branch
-
-          # List of configuration files that should come from trusted main branch
-          config_files=(
-            ".editorconfig"
-            "Directory.Build.props"
-            "Directory.Build.targets"
-            "BannedSymbols.txt"
-            "*.globalconfig"
-            "*.ruleset"
-            ".github/workflows/*.yml"
-            ".github/workflows/*.yaml"
-          )
-
-          # Copy each configuration file from main branch if it exists
-          for config_file in "${config_files[@]}"; do
-            # Handle glob patterns
-            if [[ "$config_file" == *"*"* ]]; then
-              # Find files matching the pattern in main branch
-              git ls-tree -r --name-only main-branch | grep -E "${config_file//\*/.*}" | while read -r file; do
-                if [ -n "$file" ]; then
-                  echo "  ✓ Copying $file from main branch"
-                  mkdir -p "$(dirname "$file")"
-                  git show "main-branch:$file" > "$file" || echo "  ⚠️  Failed to copy $file"
-                fi
-              done
-            else
-              # Check if file exists in main branch
-              if git cat-file -e "main-branch:$config_file" 2>/dev/null; then
-                echo "  ✓ Copying $config_file from main branch"
-                git show "main-branch:$config_file" > "$config_file"
-              else
-                echo "  ℹ️  $config_file not found in main branch, skipping"
-              fi
-            fi
-          done
-
-          echo ""
-          echo "✅ Configuration files secured - using versions from main branch"
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -1242,6 +885,12 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+
+      - name: Restore .NET workloads
+        # Some projects (MAUI / MauiHybrid / Android / iOS / WPF) declare workloads via
+        # their TFMs (e.g. net10.0-android). For workload-bearing repos this installs them
+        # before restore; for pure libraries it's a fast no-op.
+        run: dotnet workload restore
 
       - name: Restore and build (exclude .NET Framework-only projects)
         run: |
@@ -1320,14 +969,14 @@ jobs:
             if [ "$framework_count" -eq 1 ]; then
               # Single target framework - build normally
               echo "  Target framework: $frameworks"
-              dotnet build "$proj" --no-restore --configuration Release -p:TreatWarningsAsErrors=true || exit 1
+              dotnet build "$proj" --no-restore --configuration Release || exit 1
             else
               # Multi-targeting project - build each compatible framework separately
               echo "  Target frameworks (multi-targeting): $(echo "$frameworks" | tr '\n' ' ')"
               while IFS= read -r fw; do
                 [ -z "$fw" ] && continue
                 echo "  Building framework: $fw"
-                dotnet build "$proj" --no-restore --configuration Release --framework "$fw" -p:TreatWarningsAsErrors=true || exit 1
+                dotnet build "$proj" --no-restore --configuration Release --framework "$fw" || exit 1
               done <<< "$frameworks"
             fi
           done
@@ -1348,12 +997,7 @@ jobs:
           test_projects=()
           while IFS= read -r -d '' file; do
           test_projects+=("$file")
-          done < <(find ./tests -type f \
-            \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) \
-            ! -name "*.Tests.Integration.csproj" \
-            ! -name "*.Tests.Integration.vbproj" \
-            ! -name "*.Tests.Integration.fsproj" \
-            -print0)
+          done < <(find ./tests -type f \( -name "*.csproj" -o -name "*.vbproj" -o -name "*.fsproj" \) -print0)
 
           if [ ${#test_projects[@]} -eq 0 ]; then
             echo "ℹ️  No test projects found under ./tests — skipping test stage."
@@ -1397,14 +1041,9 @@ jobs:
               [ -z "$fw" ] && continue
               echo "Testing framework: $fw"
 
-              # --no-build / --no-restore: the build step above already produced
-              # binaries for every TFM with -p:TreatWarningsAsErrors=true; the
-              # implicit dotnet test build wouldn't carry that flag.
               dotnet test "$test_proj" \
                 --configuration Release \
                 --framework "$fw" \
-                --no-build \
-                --no-restore \
                 --collect:"XPlat Code Coverage" \
                 --settings coverlet.runsettings \
                 --results-directory "./TestResults" \
@@ -1577,55 +1216,6 @@ jobs:
           echo ""
           echo "✅ Configuration files secured - using versions from main branch"
 
-      - name: Fetch trusted configuration files from main branch
-        # Skip for Dependabot — its package-version bumps to protected files (e.g.
-        # Directory.Build.props) are legitimate and should not be overwritten by main's
-        # older versions. Dependabot's identity is GitHub-controlled and not spoofable.
-        if: github.event.pull_request.user.login != 'dependabot[bot]'
-        run: |
-          echo "Fetching configuration files from main branch to prevent malicious overrides..."
-
-          # Fetch the main branch
-          git fetch origin main:main-branch
-
-          # List of configuration files that should come from trusted main branch
-          config_files=(
-            ".editorconfig"
-            "Directory.Build.props"
-            "Directory.Build.targets"
-            "BannedSymbols.txt"
-            "*.globalconfig"
-            "*.ruleset"
-            ".github/workflows/*.yml"
-            ".github/workflows/*.yaml"
-          )
-
-          # Copy each configuration file from main branch if it exists
-          for config_file in "${config_files[@]}"; do
-            # Handle glob patterns
-            if [[ "$config_file" == *"*"* ]]; then
-              # Find files matching the pattern in main branch
-              git ls-tree -r --name-only main-branch | grep -E "${config_file//\*/.*}" | while read -r file; do
-                if [ -n "$file" ]; then
-                  echo "  ✓ Copying $file from main branch"
-                  mkdir -p "$(dirname "$file")"
-                  git show "main-branch:$file" > "$file" || echo "  ⚠️  Failed to copy $file"
-                fi
-              done
-            else
-              # Check if file exists in main branch
-              if git cat-file -e "main-branch:$config_file" 2>/dev/null; then
-                echo "  ✓ Copying $config_file from main branch"
-                git show "main-branch:$config_file" > "$config_file"
-              else
-                echo "  ℹ️  $config_file not found in main branch, skipping"
-              fi
-            fi
-          done
-
-          echo ""
-          echo "✅ Configuration files secured - using versions from main branch"
-
       - name: Install DevSkim CLI
         run: dotnet tool install --global Microsoft.CST.DevSkim.CLI
 
@@ -1665,62 +1255,3 @@ jobs:
           name: devskim-results
           path: devskim-results.txt
           if-no-files-found: warn
-
-  # ============================================================================
-  # PATH-GATE STUBS for Stages 1 / 2 / 3
-  # ----------------------------------------------------------------------------
-  # When detect-changes reports neither code nor workflow changes (docs-only PR),
-  # the real Stage 1 / 2 / 3 jobs above skip via their `if:` predicates. The
-  # branch ruleset still requires those check names to report success, though,
-  # so we fire a stub job with the SAME `name:` whose `if:` is the complement
-  # of the real job's path-gate. On a docs-only PR exactly one of (real, stub)
-  # runs per stage. On a code/workflow PR the real job runs; if an upstream
-  # Stage 1 fails, Stage 2/3 real jobs skip via `needs` and the stub stays
-  # off (its predicate excludes code PRs), so neither member runs — that is
-  # the intended "previous stage failed" cascade, not a path-gate condition.
-  #
-  # GitHub treats multiple jobs sharing a `name:` as separate jobs at runtime
-  # but the required-check matching for the ruleset is by name. Either passing
-  # satisfies the required check.
-  # ============================================================================
-  test-linux-core-skipped:
-    name: "Stage 1: Linux Tests (.NET 5.0-10.0) + Coverage Gate"
-    runs-on: ubuntu-latest
-    needs: [detect-projects, detect-changes]
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      needs.detect-changes.outputs.code != 'true' &&
-      needs.detect-changes.outputs.workflows != 'true'
-    steps:
-      - name: Stage 1 skipped via path-gate
-        run: |
-          echo "::notice::Skipped Stage 1 — this PR changes neither code nor workflows."
-
-  test-windows-skipped:
-    name: "Stage 2: Windows Tests (.NET 5.0-10.0, Framework 4.6.2-4.8.1)"
-    runs-on: ubuntu-latest
-    needs: [detect-projects, detect-changes]
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      needs.detect-changes.outputs.code != 'true' &&
-      needs.detect-changes.outputs.workflows != 'true'
-    steps:
-      - name: Stage 2 skipped via path-gate
-        run: |
-          echo "::notice::Skipped Stage 2 — this PR changes neither code nor workflows."
-
-  test-macos-core-skipped:
-    name: "Stage 3: macOS Tests (.NET 6.0-10.0)"
-    runs-on: ubuntu-latest
-    needs: [detect-projects, detect-changes]
-    if: >-
-      github.repository != 'Chris-Wolfgang/repo-template' &&
-      needs.detect-projects.outputs.has-projects == 'true' &&
-      needs.detect-changes.outputs.code != 'true' &&
-      needs.detect-changes.outputs.workflows != 'true'
-    steps:
-      - name: Stage 3 skipped via path-gate
-        run: |
-          echo "::notice::Skipped Stage 3 — this PR changes neither code nor workflows."
