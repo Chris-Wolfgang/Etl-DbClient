@@ -51,7 +51,7 @@ internal static class ColumnAttributeTypeMapper
             return;
         }
 
-        var columnMap = new CustomPropertyTypeMap(type, (t, columnName) => ResolveColumn(t, columnName, lookup));
+        var columnMap = new CustomPropertyTypeMap(type, (t, columnName) => ResolveColumn(t, columnName, lookup)!);
         SqlMapper.SetTypeMap(type, columnMap);
     }
 
@@ -92,21 +92,29 @@ internal static class ColumnAttributeTypeMapper
 
 
 
-    private static PropertyInfo ResolveColumn(Type type, string columnName, Dictionary<string, PropertyInfo> lookup)
+    private static PropertyInfo? ResolveColumn(Type type, string columnName, Dictionary<string, PropertyInfo> lookup)
     {
         if (lookup.TryGetValue(columnName, out var prop))
         {
             return prop;
         }
 
-        // Dapper's default behaviour on unmappable columns throws a generic
-        // NullReferenceException downstream. Replace with a self-describing error
-        // so the user sees the offending column name and the target type immediately.
-        throw new InvalidOperationException
-        (
-            $"Result-set column '{columnName}' does not map to any property on '{type.FullName}'. " +
-            "Either add a property of that name, decorate an existing property with " +
-            $"[Column(\"{columnName}\")], or alias the column in your SELECT statement."
-        );
+        if (DbClientOptions.StrictColumnMapping)
+        {
+            // Strict mode: surface a self-describing error instead of letting
+            // Dapper silently drop the column (its default behavior when the
+            // type-map delegate returns null).
+            throw new InvalidOperationException
+            (
+                $"Result-set column '{columnName}' does not map to any property on '{type.FullName}'. " +
+                "Either add a property of that name, decorate an existing property with " +
+                $"[Column(\"{columnName}\")], or alias the column in your SELECT statement. " +
+                "Set DbClientOptions.StrictColumnMapping = false to silently drop unmapped columns."
+            );
+        }
+
+        // Non-strict (default): return null so Dapper drops the unmapped column,
+        // matching its out-of-the-box behavior.
+        return null;
     }
 }
