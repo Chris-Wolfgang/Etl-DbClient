@@ -10,7 +10,6 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Title>$(AssemblyName)</Title>
     <Description>Extractor and Loader implementations for ADO.NET databases (DbConnection/DbCommand), built on Wolfgang.Etl.Abstractions.</Description>
-    <Copyright>Copyright 2026 Chris Wolfgang</Copyright>
     <PackageProjectUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</RepositoryUrl>
