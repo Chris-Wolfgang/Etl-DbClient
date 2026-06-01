@@ -1,0 +1,38 @@
+#nullable enable
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandText.get -> string!
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, string! commandText, System.Collections.Generic.IDictionary<string!, object!>! parameters, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DefaultTotalCountQuery.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>!
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.TotalCountQuery.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>?
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.TotalCountQuery.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandText.get -> string!
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection! connection, Wolfgang.Etl.DbClient.WriteMode writeMode, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbReport
+Wolfgang.Etl.DbClient.DbReport.CommandText.get -> string!
+Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount.get -> int
+Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds) -> void
+Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds, int? totalItemCount) -> void
+Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds.get -> long
+Wolfgang.Etl.DbClient.DbReport.TotalItemCount.get -> int?
+Wolfgang.Etl.DbClient.WriteMode
+Wolfgang.Etl.DbClient.WriteMode.Insert -> Wolfgang.Etl.DbClient.WriteMode
+Wolfgang.Etl.DbClient.WriteMode.Update -> Wolfgang.Etl.DbClient.WriteMode
+override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
+override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport!>! progress) -> Wolfgang.Etl.Abstractions.IProgressTimer!
+override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ExtractWorkerAsync(System.Threading.CancellationToken token) -> System.Collections.Generic.IAsyncEnumerable<TRecord>!
+override Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
+override Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport!>! progress) -> Wolfgang.Etl.Abstractions.IProgressTimer!
+override Wolfgang.Etl.DbClient.DbLoader<TRecord>.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable<TRecord>! items, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
+override Wolfgang.Etl.DbClient.DbReport.<Clone>$() -> Wolfgang.Etl.Abstractions.Report!
+override Wolfgang.Etl.DbClient.DbReport.Equals(object? obj) -> bool
+override Wolfgang.Etl.DbClient.DbReport.GetHashCode() -> int
+override Wolfgang.Etl.DbClient.DbReport.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override Wolfgang.Etl.DbClient.DbReport.ToString() -> string!
+override sealed Wolfgang.Etl.DbClient.DbReport.Equals(Wolfgang.Etl.Abstractions.Report? other) -> bool
+static Wolfgang.Etl.DbClient.DbReport.operator !=(Wolfgang.Etl.DbClient.DbReport? left, Wolfgang.Etl.DbClient.DbReport? right) -> bool
+static Wolfgang.Etl.DbClient.DbReport.operator ==(Wolfgang.Etl.DbClient.DbReport? left, Wolfgang.Etl.DbClient.DbReport? right) -> bool
+virtual Wolfgang.Etl.DbClient.DbReport.Equals(Wolfgang.Etl.DbClient.DbReport? other) -> bool
