@@ -21,24 +21,18 @@
 .PARAMETER SkipSecurity
     Skip DevSkim and gitleaks scans.
 
-.PARAMETER SkipIntegration
-    Skip the per-RDBMS integration tests. By default the script runs them when
-    a Docker daemon is reachable and silently skips otherwise (with a warning).
-
 .PARAMETER CoverageThreshold
     Minimum coverage percentage required. Defaults to 90.
 
 .EXAMPLE
     pwsh ./scripts/build-pr.ps1
     pwsh ./scripts/build-pr.ps1 -SkipSecurity
-    pwsh ./scripts/build-pr.ps1 -SkipIntegration
     pwsh ./scripts/build-pr.ps1 -CoverageThreshold 80
 #>
 param(
     [switch]$SkipTests,
     [switch]$SkipCoverage,
     [switch]$SkipSecurity,
-    [switch]$SkipIntegration,
     [int]$CoverageThreshold = 90
 )
 
@@ -87,15 +81,20 @@ else {
 if (-not $SkipTests -and $failed.Count -eq 0) {
     Write-Step "Step 2: Run Tests (all target frameworks)"
 
-    # Integration suites are container-backed and run in their own step below.
-    # Match on the file name (not the full path) so an unrelated directory
-    # containing the substring won't be excluded. Covers all three project
-    # extensions for symmetry with pr.yaml.
-    $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -notmatch '\.Tests\.Integration\.(cs|vb|fs)proj$' })
+    $testProjects = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue)
 
     if ($testProjects.Count -eq 0) {
-        Write-Host "No test projects found in ./tests — skipping"
+        # If ./src has projects, fail — silent skip would diverge from CI's
+        # strict gate. If neither ./src nor ./tests has projects (template-pack
+        # / in-dev repos), the skip is legitimate.
+        $srcHasProjects = @(Get-ChildItem -Path './src' -Recurse -File -Include '*.csproj','*.vbproj','*.fsproj' -ErrorAction SilentlyContinue).Count -gt 0
+        if ($srcHasProjects) {
+            Write-Fail "./tests has no test projects but ./src contains projects — refusing to silently skip the coverage gate."
+            $failed += "Tests"
+        }
+        else {
+            Write-Host "No test projects found in ./tests and no ./src projects — skipping (template-pack / in-dev shape)."
+        }
     }
     else {
         foreach ($testProj in $testProjects) {
@@ -175,7 +174,23 @@ if (-not $SkipTests -and -not $SkipCoverage -and $failed.Count -eq 0) {
         $rgPath = Get-Command reportgenerator -ErrorAction SilentlyContinue
         if (-not $rgPath) {
             Write-Host "Installing ReportGenerator..."
-            dotnet tool install -g dotnet-reportgenerator-globaltool
+            dotnet tool update -g dotnet-reportgenerator-globaltool 2>$null
+            if ($LASTEXITCODE -ne 0) { dotnet tool install -g dotnet-reportgenerator-globaltool }
+            # Ensure global tools dir is on PATH for this session. The .NET
+            # installer normally adds it to the user's profile, but a fresh
+            # shell or a pwsh-invoked-from-script session may not have it yet.
+            $globalToolsDir = if ($IsWindows -or $env:OS -eq 'Windows_NT') {
+                Join-Path $env:USERPROFILE '.dotnet\tools'
+            } else {
+                Join-Path $HOME '.dotnet/tools'
+            }
+            if (Test-Path $globalToolsDir -PathType Container) {
+                $sep = [IO.Path]::PathSeparator
+                $pathSegments = $env:PATH -split [regex]::Escape($sep)
+                if ($pathSegments -notcontains $globalToolsDir) {
+                    $env:PATH = "$globalToolsDir$sep$env:PATH"
+                }
+            }
         }
 
         reportgenerator `
@@ -213,91 +228,11 @@ if (-not $SkipTests -and -not $SkipCoverage -and $failed.Count -eq 0) {
             }
         }
         else {
-            Write-Host "Coverage report not generated — skipping threshold check"
-        }
-    }
-}
-
-# ============================================================================
-# STEP 3.5: RDBMS Integration Tests (Testcontainers, requires Docker)
-# ============================================================================
-if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
-    Write-Step "Step 3.5: Integration Tests (per-RDBMS via Testcontainers)"
-
-    # Match all three project extensions so a future VB / F# rewrite is found.
-    $integrationProj = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -match '\.Tests\.Integration\.(cs|vb|fs)proj$' }) | Select-Object -First 1
-
-    if (-not $integrationProj) {
-        Write-Host "ℹ️  No integration project found — skipping."
-    }
-    else {
-        $dockerOk = $false
-        try {
-            docker info *>$null
-            $dockerOk = ($LASTEXITCODE -eq 0)
-        }
-        catch {
-            $dockerOk = $false
-        }
-
-        # SQLite needs no Docker; the other providers do. Build the list accordingly.
-        $rdbmsList = @('sqlite')
-        if ($dockerOk) {
-            $rdbmsList += @('sqlserver', 'postgres', 'mysql', 'mariadb')
-        }
-        else {
-            Write-Host "⚠️  Docker daemon is not reachable — running only the SQLite slice." -ForegroundColor Yellow
-            Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run for full coverage." -ForegroundColor Yellow
-        }
-
-        # Parse TFMs from the integration project's csproj so this step stays in
-        # sync if the project's TargetFrameworks ever change. Falls back to a
-        # built-in default if the parse fails for any reason.
-        $tfmList = @('net8.0', 'net10.0')
-        try {
-            $integrationCsprojXml = [xml](Get-Content $integrationProj.FullName -Raw)
-            $tfmRaw = $integrationCsprojXml.SelectSingleNode('//TargetFrameworks').'#text'
-            if (-not $tfmRaw) {
-                $tfmRaw = $integrationCsprojXml.SelectSingleNode('//TargetFramework').'#text'
-            }
-            if ($tfmRaw) {
-                $parsed = @($tfmRaw -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-                if ($parsed.Count -gt 0) {
-                    $tfmList = $parsed
-                    Write-Host "  Discovered integration TFMs: $($tfmList -join ', ')" -ForegroundColor DarkGray
-                }
-            }
-        }
-        catch {
-            Write-Host "  ⚠️  Could not parse TFMs from $($integrationProj.Name); falling back to defaults: $($tfmList -join ', ')" -ForegroundColor Yellow
-        }
-
-        # Run every combination so a failure on one provider/TFM does not hide
-        # failures on the others. Each failure is recorded but the loop keeps going.
-        foreach ($rdbms in $rdbmsList) {
-            foreach ($tfm in $tfmList) {
-                Write-Host ""
-                Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
-
-                # --no-build / --no-restore: Step 1 already restored + built the
-                # whole solution. Re-running them per RDBMS/TFM would add minutes.
-                dotnet test $integrationProj.FullName `
-                    --configuration Release `
-                    --framework $tfm `
-                    --filter "Category=$rdbms" `
-                    --no-build `
-                    --no-restore `
-                    --logger "console;verbosity=normal"
-
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Fail "  Integration tests failed for $rdbms ($tfm)"
-                    $failed += "Integration ($rdbms/$tfm)"
-                }
-                else {
-                    Write-Pass "  Integration tests passed for $rdbms ($tfm)"
-                }
-            }
+            # Diverged from pr.yaml behavior in the past — that would let a local
+            # "All checks passed" silently hide ReportGenerator failures while CI
+            # rejected the same situation. Fail loudly here too, so local matches CI.
+            Write-Fail "Coverage report not generated (CoverageReport/Summary.txt missing) — ReportGenerator likely failed."
+            $failed += "Coverage"
         }
     }
 }
@@ -354,7 +289,7 @@ if (-not $SkipSecurity) {
             $dest = Join-Path $env:LOCALAPPDATA "gitleaks"
             New-Item -ItemType Directory -Force -Path $dest | Out-Null
             $zip = Join-Path $env:TEMP $archive
-            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+            Invoke-WebRequest -Uri $url -OutFile $zip
             Expand-Archive -Path $zip -DestinationPath $dest -Force
             Remove-Item $zip -ErrorAction SilentlyContinue
             $env:PATH = "$dest;$env:PATH"
@@ -362,7 +297,15 @@ if (-not $SkipSecurity) {
         else {
             $archive = "gitleaks_${version}_linux_x64.tar.gz"
             $url = "https://github.com/gitleaks/gitleaks/releases/download/v${version}/$archive"
-            curl -sSfL $url | tar xz -C /usr/local/bin gitleaks
+            # Install to a user-writable location instead of /usr/local/bin
+            # (which would require sudo for most local dev shells). $HOME/.local/bin
+            # is on PATH by default on most Linux distros and macOS; if not, prepend it.
+            $localBin = Join-Path $HOME ".local/bin"
+            New-Item -ItemType Directory -Force -Path $localBin | Out-Null
+            curl -sSfL $url | tar xz -C $localBin gitleaks
+            if (-not ($env:PATH -split [IO.Path]::PathSeparator | Where-Object { $_ -eq $localBin })) {
+                $env:PATH = "$localBin$([IO.Path]::PathSeparator)$env:PATH"
+            }
         }
     }
 
