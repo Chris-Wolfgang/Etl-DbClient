@@ -238,6 +238,90 @@ if (-not $SkipTests -and -not $SkipCoverage -and $failed.Count -eq 0) {
 }
 
 # ============================================================================
+# STEP 3.5: RDBMS Integration Tests (Testcontainers, requires Docker)
+# ============================================================================
+if (-not $SkipIntegration -and -not $SkipTests -and $failed.Count -eq 0) {
+    Write-Step "Step 3.5: Integration Tests (per-RDBMS via Testcontainers)"
+
+    # Match all three project extensions so a future VB / F# rewrite is found.
+    $integrationProj = @(Get-ChildItem -Path './tests' -Recurse -File -Include '*.csproj', '*.vbproj', '*.fsproj' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '\.Tests\.Integration\.(cs|vb|fs)proj$' }) | Select-Object -First 1
+
+    if (-not $integrationProj) {
+        Write-Host "ℹ️  No integration project found — skipping."
+    }
+    else {
+        $dockerOk = $false
+        try {
+            docker info *>$null
+            $dockerOk = ($LASTEXITCODE -eq 0)
+        }
+        catch {
+            $dockerOk = $false
+        }
+
+        # SQLite needs no Docker; the other providers do. Build the list accordingly.
+        $rdbmsList = @('sqlite')
+        if ($dockerOk) {
+            $rdbmsList += @('sqlserver', 'postgres', 'mysql', 'mariadb', 'cockroachdb')
+        }
+        else {
+            Write-Host "⚠️  Docker daemon is not reachable — running only the SQLite slice." -ForegroundColor Yellow
+            Write-Host "    Start Docker Desktop (or pass -SkipIntegration to silence this) and re-run for full coverage." -ForegroundColor Yellow
+        }
+
+        # Parse TFMs from the integration project's csproj so this step stays in
+        # sync if the project's TargetFrameworks ever change. Falls back to a
+        # built-in default if the parse fails for any reason.
+        $tfmList = @('net8.0', 'net10.0')
+        try {
+            $integrationCsprojXml = [xml](Get-Content $integrationProj.FullName -Raw)
+            $tfmRaw = $integrationCsprojXml.SelectSingleNode('//TargetFrameworks').'#text'
+            if (-not $tfmRaw) {
+                $tfmRaw = $integrationCsprojXml.SelectSingleNode('//TargetFramework').'#text'
+            }
+            if ($tfmRaw) {
+                $parsed = @($tfmRaw -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+                if ($parsed.Count -gt 0) {
+                    $tfmList = $parsed
+                    Write-Host "  Discovered integration TFMs: $($tfmList -join ', ')" -ForegroundColor DarkGray
+                }
+            }
+        }
+        catch {
+            Write-Host "  ⚠️  Could not parse TFMs from $($integrationProj.Name); falling back to defaults: $($tfmList -join ', ')" -ForegroundColor Yellow
+        }
+
+        # Run every combination so a failure on one provider/TFM does not hide
+        # failures on the others. Each failure is recorded but the loop keeps going.
+        foreach ($rdbms in $rdbmsList) {
+            foreach ($tfm in $tfmList) {
+                Write-Host ""
+                Write-Host "  RDBMS: $rdbms ($tfm)" -ForegroundColor Yellow
+
+                # --no-build / --no-restore: Step 1 already restored + built the
+                # whole solution. Re-running them per RDBMS/TFM would add minutes.
+                dotnet test $integrationProj.FullName `
+                    --configuration Release `
+                    --framework $tfm `
+                    --filter "Category=$rdbms" `
+                    --no-build `
+                    --no-restore `
+                    --logger "console;verbosity=normal"
+
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Fail "  Integration tests failed for $rdbms ($tfm)"
+                    $failed += "Integration ($rdbms/$tfm)"
+                }
+                else {
+                    Write-Pass "  Integration tests passed for $rdbms ($tfm)"
+                }
+            }
+        }
+    }
+}
+
+# ============================================================================
 # STEP 4: DevSkim Security Scan
 # ============================================================================
 if (-not $SkipSecurity) {
