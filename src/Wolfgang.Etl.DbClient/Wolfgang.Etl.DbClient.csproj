@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Unit" />
+    <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Benchmarks" />
   </ItemGroup>
 
   <ItemGroup>

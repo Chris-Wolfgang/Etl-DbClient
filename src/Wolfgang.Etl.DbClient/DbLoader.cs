@@ -62,6 +62,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
     private int _progressTimerWired;
+    private int _batchSize = 1;
 
 
 
@@ -167,6 +168,47 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
 
+    /// <summary>
+    /// Number of records sent per <c>ExecuteAsync</c> call. Defaults to <c>1</c>
+    /// (one round-trip per record). Larger values pass an <c>IEnumerable&lt;TRecord&gt;</c>
+    /// to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
+    /// and lets the ADO.NET provider reuse the prepared command across rows.
+    /// </summary>
+    /// <remarks>
+    /// On networked databases (SQL Server, PostgreSQL, MySQL) this is typically the
+    /// largest single performance lever in the loader. Memory cost is one buffered
+    /// <see cref="List{T}"/> of up to <c>BatchSize</c> records at a time.
+    /// <para>
+    /// <c>SkipItemCount</c> and <c>MaximumItemCount</c> are still honored at the
+    /// per-record granularity — skipped records never enter the batch buffer,
+    /// and buffering stops accepting new items once the cumulative-plus-buffered
+    /// count would exceed <c>MaximumItemCount</c>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when the assigned value is less than 1.
+    /// </exception>
+    public int BatchSize
+    {
+        get => _batchSize;
+        set
+        {
+            if (value < 1)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "BatchSize must be at least 1."
+                );
+            }
+
+            _batchSize = value;
+        }
+    }
+
+
+
     /// <inheritdoc/>
     protected override DbReport CreateProgressReport()
     {
@@ -209,6 +251,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Dispatches to one of two paths based on transaction ownership (decided at
+    /// construction time). Splitting the two flows keeps each one short and removes
+    /// the repeated <c>if (_ownsTransaction &amp;&amp; transaction != null)</c> guard
+    /// that the combined version needed.
+    /// </remarks>
     protected override async Task LoadWorkerAsync
     (
         IAsyncEnumerable<TRecord> items,
@@ -218,36 +266,13 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         _stopwatch.Restart();
         LogLoadingStarted();
 
-        // _ownsTransaction was set at construction to (_callerTransaction == null);
-        // the second-guess local that used to live here was always redundant.
-        var transaction = _ownsTransaction
-            ? await BeginAutoTransactionAsync(token).ConfigureAwait(false)
-            : _callerTransaction;
-
-        try
+        if (_ownsTransaction)
         {
-            await ExecuteItemsAsync(items, transaction, token).ConfigureAwait(false);
-
-            if (_ownsTransaction && transaction != null)
-            {
-                await CommitAutoTransactionAsync(transaction, token).ConfigureAwait(false);
-            }
+            await LoadWithAutoTransactionAsync(items, token).ConfigureAwait(false);
         }
-        catch
+        else
         {
-            if (_ownsTransaction && transaction != null)
-            {
-                await RollbackAutoTransactionAsync(transaction, token).ConfigureAwait(false);
-            }
-
-            throw;
-        }
-        finally
-        {
-            if (_ownsTransaction && transaction != null)
-            {
-                await DisposeTransactionAsync(transaction).ConfigureAwait(false);
-            }
+            await LoadWithCallerTransactionAsync(items, token).ConfigureAwait(false);
         }
 
         LogLoadingCompleted();
@@ -255,7 +280,67 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
 
-    private async Task ExecuteItemsAsync
+    /// <summary>
+    /// Load path when the loader owns the transaction. Begins, executes, and
+    /// commits on success; rolls back on exception; always disposes.
+    /// </summary>
+    private async Task LoadWithAutoTransactionAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        CancellationToken token
+    )
+    {
+        var transaction = await BeginAutoTransactionAsync(token).ConfigureAwait(false);
+
+        try
+        {
+            await ExecuteItemsAsync(items, transaction, token).ConfigureAwait(false);
+            await CommitAutoTransactionAsync(transaction, token).ConfigureAwait(false);
+        }
+        catch
+        {
+            await RollbackAutoTransactionAsync(transaction, token).ConfigureAwait(false);
+            throw;
+        }
+        finally
+        {
+            await DisposeTransactionAsync(transaction).ConfigureAwait(false);
+        }
+    }
+
+
+
+    /// <summary>
+    /// Load path when the caller supplied the transaction. The loader executes
+    /// against it but never commits, rolls back, or disposes — those are the
+    /// caller's responsibilities.
+    /// </summary>
+    private Task LoadWithCallerTransactionAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        CancellationToken token
+    )
+    {
+        return ExecuteItemsAsync(items, _callerTransaction, token);
+    }
+
+
+
+    private Task ExecuteItemsAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        return _batchSize <= 1
+            ? ExecuteItemsPerRowAsync(items, transaction, token)
+            : ExecuteItemsBatchedAsync(items, transaction, token);
+    }
+
+
+
+    private async Task ExecuteItemsPerRowAsync
     (
         IAsyncEnumerable<TRecord> items,
         DbTransaction? transaction,
@@ -293,6 +378,85 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
             IncrementCurrentItemCount();
             LogDebugRecordLoaded();
         }
+    }
+
+
+
+    /// <summary>
+    /// Batched load path. Buffers up to <see cref="BatchSize"/> records, then sends
+    /// the buffer to Dapper as an <see cref="IEnumerable{T}"/> — Dapper executes the
+    /// command once per item using the already-prepared parameter map.
+    /// </summary>
+    private async Task ExecuteItemsBatchedAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        var batch = new List<TRecord>(_batchSize);
+
+        await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
+        {
+            token.ThrowIfCancellationRequested();
+
+            // Stop accepting items once we've buffered enough to hit MaximumItemCount.
+            // CurrentItemCount only advances when a batch flushes, so the still-pending
+            // batch.Count must be included in the comparison.
+            if (CurrentItemCount + batch.Count >= MaximumItemCount)
+            {
+                LogDebugMaxReached();
+                break;
+            }
+
+            if (CurrentSkippedItemCount < SkipItemCount)
+            {
+                IncrementCurrentSkippedItemCount();
+                LogDebugItemSkipped();
+                continue;
+            }
+
+            batch.Add(item);
+
+            if (batch.Count >= _batchSize)
+            {
+                await FlushBatchAsync(batch, transaction, token).ConfigureAwait(false);
+            }
+        }
+
+        if (batch.Count > 0)
+        {
+            await FlushBatchAsync(batch, transaction, token).ConfigureAwait(false);
+        }
+    }
+
+
+
+    private async Task FlushBatchAsync
+    (
+        List<TRecord> batch,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        await _connection.ExecuteAsync
+        (
+            new CommandDefinition
+            (
+                _commandText,
+                batch,
+                transaction,
+                cancellationToken: token
+            )
+        ).ConfigureAwait(false);
+
+        for (var i = 0; i < batch.Count; i++)
+        {
+            IncrementCurrentItemCount();
+            LogDebugRecordLoaded();
+        }
+
+        batch.Clear();
     }
 
 

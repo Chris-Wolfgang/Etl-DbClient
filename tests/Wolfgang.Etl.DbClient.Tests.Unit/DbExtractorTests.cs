@@ -354,4 +354,43 @@ public class DbExtractorTests
 
         Assert.Equal(3, extractor.GetProgressReport().TotalItemCount);
     }
+
+
+
+    // ------------------------------------------------------------------
+    // TotalCountQuery — SanitizeCommandTextForCount edge cases (review #15)
+    // ------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("SELECT id, first_name, last_name, age FROM People;")]
+    [InlineData("SELECT id, first_name, last_name, age FROM People;;")]
+    [InlineData("SELECT id, first_name, last_name, age FROM People; ; ;  ")]
+    public async Task DefaultTotalCountQuery_strips_trailing_semicolons_and_whitespace(string commandText)
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>(conn, commandText);
+        extractor.TotalCountQuery = extractor.DefaultTotalCountQuery;
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, extractor.GetProgressReport().TotalItemCount);
+    }
+
+
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t\n\r")]
+    public async Task DefaultTotalCountQuery_throws_when_command_text_is_blank(string blank)
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(1);
+        var extractor = new DbExtractor<PersonRecord>(conn, blank);
+        extractor.TotalCountQuery = extractor.DefaultTotalCountQuery;
+
+        await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            async () => await extractor.ExtractAsync().ToListAsync()
+        );
+    }
 }
