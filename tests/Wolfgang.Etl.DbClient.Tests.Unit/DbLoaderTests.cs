@@ -371,6 +371,169 @@ public class DbLoaderTests
 
 
     // ------------------------------------------------------------------
+    // BatchSize
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void BatchSize_default_is_one()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        );
+
+        Assert.Equal(1, loader.BatchSize);
+    }
+
+
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public void BatchSize_when_less_than_one_throws_ArgumentOutOfRangeException(int badValue)
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        );
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.BatchSize = badValue);
+    }
+
+
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(10)]
+    [InlineData(100)]
+    public async Task LoadAsync_with_BatchSize_inserts_all_records(int batchSize)
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        );
+        loader.BatchSize = batchSize;
+
+        await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
+
+        Assert.Equal(7, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(7, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchSize_when_records_do_not_divide_evenly_flushes_remainder()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        );
+        loader.BatchSize = 4;
+
+        // 10 records / batch 4 → 4 + 4 + 2 (remainder)
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+        Assert.Equal(10, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(10, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchSize_honors_SkipItemCount()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        );
+        loader.BatchSize = 3;
+        loader.SkipItemCount = 4;
+
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+        // 10 - 4 skipped = 6 inserted
+        Assert.Equal(6, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(6, loader.CurrentItemCount);
+        Assert.Equal(4, loader.CurrentSkippedItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchSize_honors_MaximumItemCount()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        );
+        loader.BatchSize = 5;
+        loader.MaximumItemCount = 7;
+
+        await loader.LoadAsync(CreateTestRecords(20).ToAsyncEnumerable());
+
+        Assert.Equal(7, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(7, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchSize_and_caller_transaction_does_not_commit()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+#if NETFRAMEWORK
+        using var transaction = conn.BeginTransaction();
+#else
+        using var transaction = await conn.BeginTransactionAsync();
+#endif
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
+            transaction
+        );
+        loader.BatchSize = 4;
+
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+#if NETFRAMEWORK
+        transaction.Rollback();
+#else
+        await transaction.RollbackAsync();
+#endif
+
+        // After rollback, nothing persisted
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 

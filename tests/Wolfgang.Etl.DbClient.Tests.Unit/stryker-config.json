@@ -1,0 +1,25 @@
+{
+    "stryker-config": {
+        "project": "../../src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj",
+        "test-projects": [
+            "Wolfgang.Etl.DbClient.Tests.Unit.csproj"
+        ],
+        "target-framework": "net10.0",
+        "reporters": [
+            "html",
+            "progress",
+            "cleartext"
+        ],
+        "mutation-level": "Standard",
+        "concurrency": 0,
+        "thresholds": {
+            "high": 80,
+            "low": 60,
+            "break": 0
+        },
+        "ignore-mutations": [
+            "string"
+        ],
+        "comment": "thresholds.break=0 keeps the run non-gating per #99 (scheduled + workflow_dispatch only, not a PR gate). Raise to a real score (50, 60, ...) when the mutation baseline is established and you want a gate."
+    }
+}
