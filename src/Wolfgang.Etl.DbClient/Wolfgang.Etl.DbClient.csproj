@@ -3,18 +3,38 @@
   <PropertyGroup>
     <TargetFrameworks>net462;net472;net48;net481;netstandard2.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Version>0.2.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
+    <!-- ===== Version metadata strategy =====================================
+         Three numbers, three different roles:
+
+           <Version>            — the package / NuGet version. Source of truth;
+                                  every other version below derives from it.
+                                  Update at release time.
+
+           <AssemblyVersion>    — the binding identity that the CLR matches on.
+                                  Pinned to 1.0.0.0 so consumers don't need
+                                  binding redirects on every minor/patch bump.
+                                  ONLY bump on a deliberate breaking API change.
+
+           <FileVersion>        — the Windows file-properties version. Derived
+                                  from <Version> via regex (prerelease tag
+                                  stripped, ".0" appended to make 4 parts).
+
+           <InformationalVersion> — the human-readable version (with prerelease
+                                  / build metadata if any). Defaults to
+                                  <Version>; set explicitly here so it's
+                                  discoverable in a metadata dump.
+         ===================================================================== -->
+    <Version>0.3.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>$([System.Text.RegularExpressions.Regex]::Replace("$(Version)", "[-+].*$", "")).0</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Title>$(AssemblyName)</Title>
-    <Authors>Chris Wolfgang</Authors>
     <Description>Extractor and Loader implementations for ADO.NET databases (DbConnection/DbCommand), built on Wolfgang.Etl.Abstractions.</Description>
-    <Copyright>Copyright 2026 Chris Wolfgang</Copyright>
     <PackageProjectUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -27,12 +47,21 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Unit" />
+    <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Benchmarks" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
+    </None>
+    <!-- NuGet PackageIcon: 180×180 PNG, sourced from the canonical favicon set
+         that ships under docfx_project/. Pinned to a single asset so the
+         package icon and the docs site favicon stay in lockstep. -->
+    <None Include="..\..\docfx_project\apple-touch-icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\icon.png</PackagePath>
+      <Visible>False</Visible>
     </None>
   </ItemGroup>
 

@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using Wolfgang.Etl.Abstractions;
 
 namespace Wolfgang.Etl.DbClient;
@@ -9,12 +11,16 @@ namespace Wolfgang.Etl.DbClient;
 public record DbReport : Report
 {
     /// <summary>
-    /// Initializes a new <see cref="DbReport"/> snapshot.
+    /// Binary-compatibility shim for the original four-parameter constructor.
+    /// Already-compiled consumers of the four-arg signature would otherwise hit
+    /// a <see cref="MissingMethodException"/> at load time if only the five-arg
+    /// form existed. Hidden from IntelliSense via <see cref="EditorBrowsableAttribute"/>.
     /// </summary>
     /// <param name="currentItemCount">The number of records processed so far.</param>
     /// <param name="currentSkippedItemCount">The number of records skipped so far.</param>
     /// <param name="commandText">The SQL command text being executed.</param>
     /// <param name="elapsedMilliseconds">The wall clock time since execution started.</param>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public DbReport
     (
         int currentItemCount,
@@ -29,14 +35,14 @@ public record DbReport : Report
 
 
     /// <summary>
-    /// Initializes a new <see cref="DbReport"/> snapshot with a total item count.
+    /// Initializes a new <see cref="DbReport"/> snapshot.
     /// </summary>
     /// <param name="currentItemCount">The number of records processed so far.</param>
     /// <param name="currentSkippedItemCount">The number of records skipped so far.</param>
     /// <param name="commandText">The SQL command text being executed.</param>
     /// <param name="elapsedMilliseconds">The wall clock time since execution started.</param>
     /// <param name="totalItemCount">
-    /// The total number of records available, or <c>null</c> if
+    /// The total number of records available, or <c>null</c> when
     /// <see cref="DbExtractor{TRecord}.TotalCountQuery"/> was not set.
     /// </param>
     public DbReport
@@ -67,7 +73,7 @@ public record DbReport : Report
     /// <summary>
     /// The SQL command text being executed. Never null — always assigned by the constructor.
     /// </summary>
-    public string CommandText { get; } = string.Empty;
+    public string CommandText { get; }
 
 
 

@@ -33,6 +33,12 @@ namespace Wolfgang.Etl.DbClient;
 /// The extractor never commits or rolls back the transaction.
 /// </para>
 /// <para>
+/// <b>Thread safety.</b> A <see cref="DbExtractor{TRecord}"/> instance is not safe for
+/// concurrent <c>ExtractAsync</c> calls. Internal state (stopwatch, total-count snapshot,
+/// progress-counter increments) assumes a single extraction in flight. Build a separate
+/// instance per concurrent extraction.
+/// </para>
+/// <para>
 /// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
@@ -46,7 +52,21 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
     private readonly DbConnection _connection;
     private readonly string _commandText;
+
+    // Defensive snapshot of the caller's parameter dictionary. Copying at
+    // construction time guarantees the data query, the default total-count
+    // query, and debug logging all see the same values, even if the caller
+    // mutates the dictionary they passed in after construction.
     private readonly IDictionary<string, object>? _parameters;
+
+    // Cached Dapper parameter wrapper. Built once at construction from the
+    // defensive snapshot and reused across the data query and the default
+    // total-count query. Debug logging still reads from _parameters (the
+    // dictionary form) — both come from the same snapshot, so they cannot
+    // diverge. Dapper treats input-parameter DynamicParameters as read-only
+    // during execution, so sharing is safe across this type's documented
+    // single-use lifetime.
+    private readonly DynamicParameters? _dynamicParameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
     private readonly IProgressTimer? _progressTimer;
@@ -102,7 +122,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </summary>
     /// <param name="connection">An open <see cref="DbConnection"/>. The caller owns its lifetime.</param>
     /// <param name="commandText">The SQL query to execute.</param>
-    /// <param name="parameters">Named parameters for the query.</param>
+    /// <param name="parameters">
+    /// Named parameters for the query. A defensive copy is taken at construction time,
+    /// so mutations to the supplied dictionary after construction do not affect the
+    /// executed query or the values reported in debug logs.
+    /// </param>
     /// <param name="transaction">An optional <see cref="DbTransaction"/> for isolation control.</param>
     /// <param name="logger">An optional logger for diagnostic output.</param>
     /// <exception cref="ArgumentNullException">
@@ -119,7 +143,14 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+        if (parameters == null)
+        {
+            throw new ArgumentNullException(nameof(parameters));
+        }
+
+        // Defensive copy — see the field-level comment on _parameters.
+        _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
+        _dynamicParameters = new DynamicParameters(_parameters);
         _transaction = transaction;
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
@@ -249,22 +280,16 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
     /// <inheritdoc/>
 #pragma warning disable MA0051
     protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([EnumeratorCancellation] CancellationToken token)
-#else
-    /// <inheritdoc/>
-#pragma warning disable MA0051
-    protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token)
-#endif
 #pragma warning restore MA0051
     {
         _stopwatch.Restart();
         _totalItemCount = null;
         LogExtractionStarted();
 
-        var param = _parameters != null ? new DynamicParameters(_parameters) : null;
+        var param = _dynamicParameters;
 
         if (TotalCountQuery != null)
         {
@@ -310,7 +335,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         var sanitized = SanitizeCommandTextForCount(_commandText);
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
-        var param = _parameters != null ? new DynamicParameters(_parameters) : null;
+        var param = _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>(
             new CommandDefinition(countSql, param, _transaction, cancellationToken: token));
     }
@@ -335,14 +360,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             );
         }
 
-        var sanitized = commandText.Trim();
-
-        while (sanitized.EndsWith(";", StringComparison.Ordinal))
+        // Strip any trailing run of semicolons and *all* whitespace — including
+        // non-breaking space and other Unicode whitespace that a hard-coded char
+        // list would miss. Loop on TrimEnd() / TrimEnd(';') until both passes
+        // become no-ops, so interleaved cases like "... FROM People; ; ;" (or
+        // "; ;") fully collapse.
+        var result = commandText;
+        while (true)
         {
-            sanitized = sanitized.Substring(0, sanitized.Length - 1).TrimEnd();
-        }
+            var trimmed = result.TrimEnd().TrimEnd(';');
+            if (trimmed.Length == result.Length)
+            {
+                return trimmed.TrimEnd();
+            }
 
-        return sanitized;
+            result = trimmed;
+        }
     }
 
 

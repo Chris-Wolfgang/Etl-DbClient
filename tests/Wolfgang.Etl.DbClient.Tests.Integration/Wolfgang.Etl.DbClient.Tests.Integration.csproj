@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Version>0.2.0</Version>
     <IsPackable>false</IsPackable>
@@ -43,6 +42,10 @@
     <PackageReference Include="MySqlConnector" Version="2.4.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
+    <!-- Explicit Testcontainers base — CockroachDbFixture uses the generic
+         ContainerBuilder directly (no dedicated Testcontainers.CockroachDb
+         module exists at this version). -->
+    <PackageReference Include="Testcontainers" Version="4.4.0" />
     <PackageReference Include="Testcontainers.MsSql" Version="4.4.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.4.0" />
     <PackageReference Include="Testcontainers.MySql" Version="4.4.0" />
