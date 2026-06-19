@@ -34,6 +34,7 @@
     <Description>Extractor and Loader implementations for ADO.NET databases (DbConnection/DbCommand), built on Wolfgang.Etl.Abstractions.</Description>
     <PackageProjectUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/Chris-Wolfgang/Wolfgang.Etl.DbClient</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -53,6 +54,14 @@
     <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
+    </None>
+    <!-- NuGet PackageIcon: 180×180 PNG, sourced from the canonical favicon set
+         that ships under docfx_project/. Pinned to a single asset so the
+         package icon and the docs site favicon stay in lockstep. -->
+    <None Include="..\..\docfx_project\apple-touch-icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\icon.png</PackagePath>
+      <Visible>False</Visible>
     </None>
   </ItemGroup>
 
