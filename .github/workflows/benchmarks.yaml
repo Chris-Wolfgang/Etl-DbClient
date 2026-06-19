@@ -53,7 +53,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           name: "ExtractorBenchmarks (sqlite)"
           tool: 'benchmarkdotnet'
@@ -104,7 +104,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           name: "ExtractorBenchmarks (sqlserver)"
           tool: 'benchmarkdotnet'
@@ -155,7 +155,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           name: "ExtractorBenchmarks (postgres)"
           tool: 'benchmarkdotnet'
@@ -208,7 +208,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           name: "ExtractorBenchmarks (mysql)"
           tool: 'benchmarkdotnet'
@@ -261,7 +261,7 @@ jobs:
             -- --filter "*ExtractorBenchmarks*" --exporters json --artifacts BDN_OUT
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           name: "ExtractorBenchmarks (mariadb)"
           tool: 'benchmarkdotnet'
@@ -334,7 +334,7 @@ jobs:
         run: docker rm -f crdb || true
 
       - name: Publish to gh-pages
-        uses: benchmark-action/github-action-benchmark@d48d326b4ca9ba73ca0cd0d59f108f9e02a381c7 # v1.20.4
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           name: "ExtractorBenchmarks (cockroachdb)"
           tool: 'benchmarkdotnet'
