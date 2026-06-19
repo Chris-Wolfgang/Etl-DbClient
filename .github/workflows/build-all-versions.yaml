@@ -25,13 +25,13 @@ jobs:
 
     steps:
       - name: Checkout repository (full history + all tags)
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Full history so all tags are reachable
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             5.0.x
