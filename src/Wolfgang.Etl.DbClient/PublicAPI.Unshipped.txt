@@ -1,4 +1,1 @@
 #nullable enable
-Wolfgang.Etl.DbClient.DbClientOptions
-static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.get -> bool
-static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.set -> void

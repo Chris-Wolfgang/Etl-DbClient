@@ -42,15 +42,6 @@
     <SignAssembly>False</SignAssembly>
     <PackageTags>ETL;Extract-Transform-Load;ADO.NET;Database;SQL;DbConnection</PackageTags>
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
-    <!--
-      RS0017 (PublicAPI: symbol declared but could not be found) is suppressed
-      because the v0.3.0 merge introduced record-generated DbReport members and
-      a new DbClientOptions type that the vNext-authored PublicAPI.Shipped.txt
-      baseline doesn't yet describe. PublicAPI tracking should be rebaselined
-      after this merge lands — re-enable RS0017 then by removing this entry.
-      Tracked: TODO/issue.
-    -->
-    <NoWarn>$(NoWarn);RS0017</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
