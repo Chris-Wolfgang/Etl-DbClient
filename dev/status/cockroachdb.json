@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "label": "CockroachDB",
+  "message": "failing",
+  "color": "red"
+}
