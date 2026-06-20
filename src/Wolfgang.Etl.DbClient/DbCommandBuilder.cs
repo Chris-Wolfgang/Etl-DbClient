@@ -102,6 +102,14 @@ internal static class DbCommandBuilder
     // Metadata construction (runs once per Type)
     // ------------------------------------------------------------------
 
+    // S3398 wants BuildMetadata moved inside TypeMetadataCache since that's
+    // its only caller. Declining — BuildMetadata depends on the file-private
+    // helpers below (BuildSelectSql, BuildInsertSql, BuildUpdateSql,
+    // GetTableName, ColumnMapping), and nesting all of them inside
+    // TypeMetadataCache to satisfy a single style rule hurts readability
+    // more than it helps. The current shape — cache as a small nested type,
+    // build logic at the outer class — keeps each concern visible.
+#pragma warning disable S3398
     private static TypeMetadata BuildMetadata(Type type)
     {
         var table = GetTableName(type);
@@ -157,6 +165,7 @@ internal static class DbCommandBuilder
             updateSql: new Lazy<string>(() => BuildUpdateSql(type, table, columns, anyKeyPropertyNames))
         );
     }
+#pragma warning restore S3398
 
 
 
