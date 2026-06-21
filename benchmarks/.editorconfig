@@ -38,3 +38,11 @@ dotnet_diagnostic.CA1063.severity = none
 # S3881 — "IDisposable" should be implemented correctly. Same rationale
 # as CA1063 — BDN's lifecycle owns teardown, not the standard pattern.
 dotnet_diagnostic.S3881.severity = none
+
+# RS0016/RS0017/RS0037 — PublicApiAnalyzers is loaded fleet-wide via
+# Directory.Build.props but only meaningful for src/. Benchmark projects
+# don't ship and shouldn't be tracked. Same suppression that lives in
+# tests/.editorconfig — kept in parity for the whole non-shipping fleet.
+dotnet_diagnostic.RS0016.severity = none
+dotnet_diagnostic.RS0017.severity = none
+dotnet_diagnostic.RS0037.severity = none

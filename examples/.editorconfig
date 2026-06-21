@@ -1,0 +1,15 @@
+# Example projects don't ship as NuGet packages and shouldn't be held to
+# the same public-API tracking + vulnerability-warning gate as src/.
+
+[*.cs]
+
+# RS0016/RS0017/RS0037 — PublicApiAnalyzers is loaded fleet-wide via
+# Directory.Build.props but only meaningful for src/. Example projects
+# don't ship and shouldn't be tracked. Same suppression that lives in
+# tests/.editorconfig and benchmarks/.editorconfig.
+#   RS0016 — symbol not in PublicAPI
+#   RS0017 — declared in PublicAPI but not found
+#   RS0037 — PublicAPI.txt missing #nullable enable
+dotnet_diagnostic.RS0016.severity = none
+dotnet_diagnostic.RS0017.severity = none
+dotnet_diagnostic.RS0037.severity = none
