@@ -47,9 +47,15 @@ dotnet_diagnostic.S1144.severity = none
 # xUnit2013: Use Assert.Single instead of Assert.Equal for collection size
 dotnet_diagnostic.xUnit2013.severity = none
 
-# RS0016/RS0017: PublicApiAnalyzers — only meaningful for src/. Microsoft
-# .CodeAnalysis.PublicApiAnalyzers is loaded fleet-wide via Directory.Build
-# .props but test projects never ship and their public-test-class surface
-# shouldn't be tracked. Disable both rules for everything under tests/.
+# RS0016/RS0017/RS0037: PublicApiAnalyzers — only meaningful for src/.
+# Microsoft.CodeAnalysis.PublicApiAnalyzers is loaded fleet-wide via
+# Directory.Build.props but test projects never ship and their public-
+# test-class surface shouldn't be tracked. Disable the whole RS00* rule
+# family for everything under tests/.
+#   RS0016 — symbol not in PublicAPI
+#   RS0017 — declared in PublicAPI but not found
+#   RS0037 — PublicAPI.txt missing #nullable enable (fires per nullable
+#            annotation on a public test member)
 dotnet_diagnostic.RS0016.severity = none
 dotnet_diagnostic.RS0017.severity = none
+dotnet_diagnostic.RS0037.severity = none
