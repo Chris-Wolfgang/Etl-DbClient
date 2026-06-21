@@ -6,7 +6,8 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <NoWarn>$(NoWarn);MA0002;MA0004;MA0048;VSTHRD200;S3903</NoWarn>
+    <!-- NU1903: see sister-csproj note in Example.AutoSql. -->
+    <NoWarn>$(NoWarn);MA0002;MA0004;MA0048;VSTHRD200;S3903;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
