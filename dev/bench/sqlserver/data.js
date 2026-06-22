@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782150742570,
+  "lastUpdate": 1782161603492,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlserver)": [
@@ -204,6 +204,48 @@ window.BENCHMARK_DATA = {
             "value": 4776333.1611328125,
             "unit": "ns",
             "range": "± 86427.52800791297"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a74b76d026470f11623cd4975c0f846e893c0050",
+          "message": "Merge pull request #191 from Chris-Wolfgang/vNext\n\nRelease v0.4.0 — production-readiness knobs",
+          "timestamp": "2026-06-22T16:48:57-04:00",
+          "tree_id": "3b3a5faabe05fdc256d76c17887a02bfa3cd7228",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/a74b76d026470f11623cd4975c0f846e893c0050"
+        },
+        "date": 1782161601961,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 434798.72184244794,
+            "unit": "ns",
+            "range": "± 1604.9126109958554"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 865923.9534254808,
+            "unit": "ns",
+            "range": "± 6240.199566360357"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 4924520.914583334,
+            "unit": "ns",
+            "range": "± 50122.47771235441"
           }
         ]
       }
