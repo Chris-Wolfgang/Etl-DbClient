@@ -5,11 +5,20 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <!-- CA1063, S3881: BenchmarkDotNet requires non-sealed benchmark types, but the IDisposable
-         pattern analyzers want sealed or full Dispose(bool). BDN's lifecycle is fully controlled
-         by GlobalSetup/GlobalCleanup so the abbreviated Dispose() is intentional. -->
-    <NoWarn>$(NoWarn);MA0004;MA0048;VSTHRD200;CA1063;S3881</NoWarn>
+    <!-- Analyzer-rule suppressions for BenchmarkDotNet compatibility now live
+         in benchmarks/.editorconfig (curated, one-comment-per-rule). The
+         Release-mode TreatWarningsAsErrors gate inherited from
+         Directory.Build.props stays on for every other rule.
+
+         NU1903 (NuGet vulnerability warning) is suppressed for the benchmarks
+         project only — the bundled SQLite native library (SQLitePCLRaw.lib.
+         e_sqlite3) is on GHSA-2m69-gcr7-jv3q and the upstream advisory has no
+         patched version yet (firstPatchedVersion: null at audit time). The
+         benchmark assembly is never published or distributed, so the impact
+         is limited to local + CI bench runs. Re-evaluate when the advisory
+         gets a fix. NU1903 is a NuGet warning, not an analyzer diagnostic,
+         so it must be suppressed here (not in editorconfig). -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
     <PackageReference Include="MySqlConnector" Version="2.4.0" />

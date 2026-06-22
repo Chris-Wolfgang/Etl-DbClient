@@ -5,8 +5,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 (transitive from Microsoft.Data.Sqlite)
+         is on GHSA-2m69-gcr7-jv3q with no patched version available yet. Same
+         treatment as the test + benchmark projects. Example assembly is never
+         published; impact limited to local + CI runs. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
