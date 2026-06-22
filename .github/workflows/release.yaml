@@ -98,8 +98,14 @@ jobs:
       - name: Run multi-framework tests with coverage
         shell: pwsh
         run: |
-          $testProjects = Get-ChildItem -Path './tests' -Recurse -Filter '*Test*.csproj'
-          
+          # Exclude *.Tests.Integration.* — those need Docker / Testcontainers,
+          # which the release runner doesn't provide. The integration matrix is
+          # exercised by pr.yaml's test-integration job (with proper services:
+          # blocks per RDBMS) on every PR, so release-time re-validation isn't
+          # adding signal. Match the per-language SDK extensions (cs / vb / fs).
+          $testProjects = Get-ChildItem -Path './tests' -Recurse -Include '*Test*.csproj', '*Test*.vbproj', '*Test*.fsproj' |
+            Where-Object { $_.Name -notmatch '\.Tests\.Integration\.(cs|vb|fs)proj$' }
+
           if ($testProjects.Count -eq 0) {
             Write-Error "❌ No test projects found - release requires tests to validate quality"
             exit 1
