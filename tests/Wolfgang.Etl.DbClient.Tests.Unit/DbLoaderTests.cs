@@ -732,6 +732,124 @@ public class DbLoaderTests
 
 
 
+    // ------------------------------------------------------------------
+    // RowErrorHandling (#24)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ErrorHandling_defaults_to_Abort()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(RowErrorHandling.Abort, loader.ErrorHandling);
+    }
+
+
+
+    [Fact]
+    public void MaxErrorCount_defaults_to_zero()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(0, loader.MaxErrorCount);
+    }
+
+
+
+    [Fact]
+    public void MaxErrorCount_when_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.MaxErrorCount = -1);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_in_Skip_mode_continues_past_failing_rows()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        // 5 valid records; constraint-violation SQL targets the `age` column
+        // with a fixed non-existent column to force per-row failures.
+        // Use a SQL that ALWAYS fails to verify Skip semantics cleanly.
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, no_such_column) VALUES (@FirstName, @Age)"
+        )
+        {
+            ErrorHandling = RowErrorHandling.Skip
+        };
+
+        var failures = new List<long>();
+        loader.RowFailed += (_, args) => failures.Add(args.ItemIndex);
+
+        await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable());
+
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));     // every row failed
+        Assert.Equal(0, loader.CurrentItemCount);               // none "loaded"
+        Assert.Equal(5, loader.CurrentErrorCount);              // all five captured
+        Assert.Equal(new long[] { 1, 2, 3, 4, 5 }, failures);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_in_Skip_mode_aborts_when_MaxErrorCount_is_reached()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, no_such_column) VALUES (@FirstName, @Age)"
+        )
+        {
+            ErrorHandling = RowErrorHandling.Skip,
+            MaxErrorCount = 3
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            async () => await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable())
+        );
+
+        Assert.Contains("MaxErrorCount", ex.Message, StringComparison.Ordinal);
+        Assert.NotNull(ex.InnerException);
+        Assert.Equal(3, loader.CurrentErrorCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_in_Abort_mode_propagates_the_first_failure()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, no_such_column) VALUES (@FirstName, @Age)"
+        );
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>
+        (
+            async () => await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable())
+        );
+
+        Assert.Equal(0, loader.CurrentErrorCount); // never tracked in Abort mode
+    }
+
+
+
     [Fact]
     public async Task LoadAsync_when_DryRun_is_true_and_BatchSize_is_set_does_not_flush_batches()
     {
