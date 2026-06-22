@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782151210437,
+  "lastUpdate": 1782162104169,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mariadb)": [
@@ -122,6 +122,48 @@ window.BENCHMARK_DATA = {
             "value": 6733048.09375,
             "unit": "ns",
             "range": "± 123676.81993555455"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a74b76d026470f11623cd4975c0f846e893c0050",
+          "message": "Merge pull request #191 from Chris-Wolfgang/vNext\n\nRelease v0.4.0 — production-readiness knobs",
+          "timestamp": "2026-06-22T16:48:57-04:00",
+          "tree_id": "3b3a5faabe05fdc256d76c17887a02bfa3cd7228",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/a74b76d026470f11623cd4975c0f846e893c0050"
+        },
+        "date": 1782162102857,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 1157310.9427584135,
+            "unit": "ns",
+            "range": "± 11910.07791959731"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 4176067.2421875,
+            "unit": "ns",
+            "range": "± 122815.05777580208"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 6393488.203645834,
+            "unit": "ns",
+            "range": "± 77986.99525174353"
           }
         ]
       }
