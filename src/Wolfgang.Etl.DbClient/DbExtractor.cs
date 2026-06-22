@@ -351,6 +351,54 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+    /// <summary>
+    /// Runs the configured <see cref="TotalCountQuery"/> (or the built-in
+    /// <see cref="DefaultTotalCountQuery"/> if none is assigned) and returns
+    /// the result. Useful when the caller wants the total count without
+    /// actually streaming the rows — for example, sizing a progress bar
+    /// before kicking off the extract.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the count query.</param>
+    /// <returns>The row count reported by the underlying query.</returns>
+    /// <remarks>
+    /// <para>
+    /// Doesn't mutate any state on the extractor — does not touch
+    /// <see cref="DbReport.TotalItemCount"/>, the stopwatch, or any of the
+    /// progress counters. Safe to call any number of times before, during
+    /// (different cancellation token), or after an <c>ExtractAsync</c>.
+    /// </para>
+    /// <para>
+    /// Opens the connection on the owned-connection ctor path before running
+    /// the query and disposes it after — same lifecycle as a full extraction.
+    /// </para>
+    /// </remarks>
+    public async Task<int> CountAsync(CancellationToken cancellationToken = default)
+    {
+        var query = TotalCountQuery ?? DefaultTotalCountQuery;
+
+        if (_ownsConnection && _connection.State != ConnectionState.Open)
+        {
+            await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                return await query(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+#if NET5_0_OR_GREATER
+                await _connection.DisposeAsync().ConfigureAwait(false);
+#else
+                _connection.Dispose();
+#endif
+            }
+        }
+
+        return await query(cancellationToken).ConfigureAwait(false);
+    }
+
+
+
     /// <inheritdoc/>
     protected override DbReport CreateProgressReport()
     {
