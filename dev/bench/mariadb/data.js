@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782144279103,
+  "lastUpdate": 1782151210437,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mariadb)": [
@@ -82,6 +82,46 @@ window.BENCHMARK_DATA = {
             "value": 9004075.502083333,
             "unit": "ns",
             "range": "± 151224.10290329717"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang",
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "9aaa7af819a0ad1a799c6edab1295c566e489db0",
+          "message": "Merge pull request #186 from Chris-Wolfgang/fix/release-skip-integration-tests\n\nfix(release): skip integration tests in release validation",
+          "timestamp": "2026-06-22T16:19:07Z",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/9aaa7af819a0ad1a799c6edab1295c566e489db0"
+        },
+        "date": 1782151209243,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 1200300.1999162945,
+            "unit": "ns",
+            "range": "± 9929.338721681612"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 4021123.0013020835,
+            "unit": "ns",
+            "range": "± 84377.14384901802"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 6733048.09375,
+            "unit": "ns",
+            "range": "± 123676.81993555455"
           }
         ]
       }
