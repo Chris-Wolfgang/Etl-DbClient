@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — production-readiness knobs
+
+### Added
+- `DbExtractor<TRecord>.CommandTimeout` / `DbLoader<TRecord>.CommandTimeout` (`TimeSpan?`) — controls how long each underlying command can run before timing out. `null` (the default) falls back to the ADO.NET provider default (~30 s). Negative values throw `ArgumentOutOfRangeException`. Wired through every Dapper call site (extractor's main query + default count query; loader's per-record and batched `ExecuteAsync`).
+- `DbExtractor<TRecord>.CommandType` / `DbLoader<TRecord>.CommandType` (`System.Data.CommandType`) — enables stored-procedure invocation. Default `CommandType.Text` preserves prior behavior. Set to `CommandType.StoredProcedure` and `CommandText` becomes the sproc name; Dapper binds parameters from the POCO properties as usual. Not wired to `DefaultTotalCountQuery` (that path wraps `CommandText` in `SELECT COUNT(*) FROM (...)` which is incompatible with sprocs by construction; supply a custom `TotalCountQuery` instead).
+- `DbExtractor<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload. The extractor creates the connection via the supplied `DbProviderFactory`, opens it lazily before the first command, and disposes it when extraction completes (or throws). Saves callers the `using var conn = …; await conn.OpenAsync();` boilerplate for one-off scenarios.
+- `DbLoader<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload with the same semantics (open lazily, dispose at end). Defaults to auto-managed transaction.
+
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.4.0
+
 ## [0.3.0] — code-review pass + integration-test surface
 
 ### Added
@@ -30,5 +41,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See git history.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.3.0...HEAD
 [0.3.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.3.0
