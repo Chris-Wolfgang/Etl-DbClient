@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
   "label": "MySQL",
-  "message": "failing",
-  "color": "red"
+  "message": "passing",
+  "color": "brightgreen"
 }
