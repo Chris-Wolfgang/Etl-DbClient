@@ -851,6 +851,101 @@ public class DbLoaderTests
 
 
     // ------------------------------------------------------------------
+    // InsertBatchSize / multi-row INSERT (#30)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void InsertBatchSize_defaults_to_one()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(1, loader.InsertBatchSize);
+    }
+
+
+
+    [Fact]
+    public void InsertBatchSize_when_less_than_one_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.InsertBatchSize = 0);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_writes_one_multi_row_statement_per_chunk()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            InsertBatchSize = 4
+        };
+
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+        // All 10 rows landed (4 + 4 + 2 trailing chunk).
+        Assert.Equal(10, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(10, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_and_partial_final_chunk_inserts_all_rows()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            InsertBatchSize = 100   // larger than the source — single partial chunk
+        };
+
+        await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
+
+        Assert.Equal(7, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_when_CommandText_missing_VALUES_throws_InvalidOperationException()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "UPDATE People SET age = @Age WHERE first_name = @FirstName"
+        )
+        {
+            InsertBatchSize = 5
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            async () => await loader.LoadAsync(CreateTestRecords(3).ToAsyncEnumerable())
+        );
+    }
+
+
+
+    // ------------------------------------------------------------------
     // ManageConnection (#31)
     // ------------------------------------------------------------------
 

@@ -17,6 +17,8 @@ Wolfgang.Etl.DbClient.DbLoader<TRecord>.DryRun.get -> bool
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.DryRun.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.InsertBatchSize.get -> int
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.InsertBatchSize.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ManageConnection.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.get -> int
