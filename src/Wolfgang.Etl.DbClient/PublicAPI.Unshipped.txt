@@ -1,1 +1,5 @@
 #nullable enable
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandTimeout.get -> System.TimeSpan?
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandTimeout.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandTimeout.get -> System.TimeSpan?
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandTimeout.set -> void
