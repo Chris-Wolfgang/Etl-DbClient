@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782144147138,
+  "lastUpdate": 1782145844804,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mysql)": [
@@ -82,6 +82,48 @@ window.BENCHMARK_DATA = {
             "value": 8017040.1074892245,
             "unit": "ns",
             "range": "± 224275.7569686742"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9aaa7af819a0ad1a799c6edab1295c566e489db0",
+          "message": "Merge pull request #186 from Chris-Wolfgang/fix/release-skip-integration-tests\n\nfix(release): skip integration tests in release validation",
+          "timestamp": "2026-06-22T12:19:07-04:00",
+          "tree_id": "2b3c7010d00afeb4ca521b159e1ea1cb13f81c2e",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/9aaa7af819a0ad1a799c6edab1295c566e489db0"
+        },
+        "date": 1782145843159,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 1530384.9771634615,
+            "unit": "ns",
+            "range": "± 11597.911198763772"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 2265547.1121651786,
+            "unit": "ns",
+            "range": "± 8645.327484567815"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 7852663.051988636,
+            "unit": "ns",
+            "range": "± 182205.3812551547"
           }
         ]
       }
