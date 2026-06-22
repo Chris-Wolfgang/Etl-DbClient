@@ -676,4 +676,81 @@ public class DbLoaderTests
             () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", (string)null!)
         );
     }
+
+
+
+    // ------------------------------------------------------------------
+    // DryRun (#21)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void DryRun_defaults_to_false()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.False(loader.DryRun);
+    }
+
+
+
+    [Fact]
+    public void DryRun_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        loader.DryRun = true;
+
+        Assert.True(loader.DryRun);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_DryRun_is_true_does_not_write_to_database()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            DryRun = true
+        };
+
+        await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable());
+
+        // Pipeline ran end-to-end (counter incremented for every record) but
+        // the DB is untouched.
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(5, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_DryRun_is_true_and_BatchSize_is_set_does_not_flush_batches()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            DryRun = true,
+            BatchSize = 3
+        };
+
+        await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
+
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(7, loader.CurrentItemCount);
+    }
 }
