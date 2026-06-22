@@ -50,7 +50,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // Fields
     // ------------------------------------------------------------------
 
+    // _connection is not `readonly` because the DbProviderFactory ctor overload
+    // creates the connection itself; the caller-supplied-DbConnection ctors set
+    // it once and never re-assign. _ownsConnection tracks whether ExtractWorkerAsync
+    // is responsible for OpenAsync + Dispose.
     private readonly DbConnection _connection;
+    private readonly bool _ownsConnection;
     private readonly string _commandText;
 
     // Defensive snapshot of the caller's parameter dictionary. Copying at
@@ -179,6 +184,53 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _commandText = DbCommandBuilder.BuildSelect<TRecord>();
         _transaction = transaction;
+        _logger = logger ?? (ILogger)NullLogger.Instance;
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new <see cref="DbExtractor{TRecord}"/> that owns the
+    /// connection's lifetime. The connection is created from the supplied
+    /// <see cref="DbProviderFactory"/>, opened lazily before extraction begins,
+    /// and disposed when extraction completes (or throws).
+    /// </summary>
+    /// <param name="factory">
+    /// The provider-specific factory (e.g. <c>Microsoft.Data.SqlClient
+    /// .SqlClientFactory.Instance</c>, <c>Npgsql.NpgsqlFactory.Instance</c>).
+    /// </param>
+    /// <param name="connectionString">The provider-specific connection string.</param>
+    /// <param name="commandText">The SQL query to execute.</param>
+    /// <param name="logger">An optional logger for diagnostic output.</param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/>, <paramref name="connectionString"/>, or
+    /// <paramref name="commandText"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="factory"/> returned a null connection from
+    /// <see cref="DbProviderFactory.CreateConnection"/>.
+    /// </exception>
+    public DbExtractor
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+    {
+        if (factory == null) throw new ArgumentNullException(nameof(factory));
+        if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
+        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
+
+        var conn = factory.CreateConnection()
+            ?? throw new InvalidOperationException
+            (
+                $"{factory.GetType().FullName}.CreateConnection() returned null. " +
+                "The provider factory does not produce DbConnection instances."
+            );
+        conn.ConnectionString = connectionString;
+        _connection = conn;
+        _ownsConnection = true;
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
@@ -348,40 +400,62 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         _totalItemCount = null;
         LogExtractionStarted();
 
-        var param = _dynamicParameters;
-
-        if (TotalCountQuery != null)
+        // Owned-connection ctor path: open before the first query, dispose after.
+        // try/finally in an async iterator is OK in C# 8+; the iterator runtime
+        // routes break/exception through the finally on Dispose.
+        if (_ownsConnection && _connection.State != ConnectionState.Open)
         {
-            _totalItemCount = await TotalCountQuery(token).ConfigureAwait(false);
+            await _connection.OpenAsync(token).ConfigureAwait(false);
         }
 
-        long rowIndex = 0;
-
-        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
+        try
         {
-            token.ThrowIfCancellationRequested();
-            rowIndex++;
+            var param = _dynamicParameters;
 
-            if (rowIndex <= SkipItemCount)
+            if (TotalCountQuery != null)
             {
-                IncrementCurrentSkippedItemCount();
-                LogDebugRowSkipped(rowIndex);
-                continue;
+                _totalItemCount = await TotalCountQuery(token).ConfigureAwait(false);
             }
 
-            if (CurrentItemCount >= MaximumItemCount)
+            long rowIndex = 0;
+
+            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
             {
-                LogDebugMaxReached();
-                LogExtractionCompleted();
-                yield break;
+                token.ThrowIfCancellationRequested();
+                rowIndex++;
+
+                if (rowIndex <= SkipItemCount)
+                {
+                    IncrementCurrentSkippedItemCount();
+                    LogDebugRowSkipped(rowIndex);
+                    continue;
+                }
+
+                if (CurrentItemCount >= MaximumItemCount)
+                {
+                    LogDebugMaxReached();
+                    LogExtractionCompleted();
+                    yield break;
+                }
+
+                LogDebugRowExtracted(rowIndex);
+                IncrementCurrentItemCount();
+                yield return record;
             }
 
-            LogDebugRowExtracted(rowIndex);
-            IncrementCurrentItemCount();
-            yield return record;
+            LogExtractionCompleted();
         }
-
-        LogExtractionCompleted();
+        finally
+        {
+            if (_ownsConnection)
+            {
+#if NET5_0_OR_GREATER
+                await _connection.DisposeAsync().ConfigureAwait(false);
+#else
+                _connection.Dispose();
+#endif
+            }
+        }
     }
 
 

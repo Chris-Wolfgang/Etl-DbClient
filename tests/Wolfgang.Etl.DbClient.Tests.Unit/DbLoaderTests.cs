@@ -639,4 +639,41 @@ public class DbLoaderTests
 
         Assert.Equal(System.Data.CommandType.StoredProcedure, loader.CommandType);
     }
+
+
+
+    // ------------------------------------------------------------------
+    // DbProviderFactory ctor (#28)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_factory_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbLoader<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "INSERT INTO People (first_name) VALUES (@FirstName)")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_connectionString_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, null!, "INSERT INTO People (first_name) VALUES (@FirstName)")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_commandText_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", (string)null!)
+        );
+    }
 }

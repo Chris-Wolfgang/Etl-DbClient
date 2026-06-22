@@ -3,7 +3,9 @@ Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandTimeout.get -> System.TimeSpan
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandTimeout.set -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandType.get -> System.Data.CommandType
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandType.set -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbProviderFactory! factory, string! connectionString, string! commandText, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandTimeout.get -> System.TimeSpan?
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandTimeout.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandType.get -> System.Data.CommandType
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandType.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbProviderFactory! factory, string! connectionString, string! commandText, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void

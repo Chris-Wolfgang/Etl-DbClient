@@ -487,6 +487,64 @@ public class DbExtractorTests
 
 
 
+    // ------------------------------------------------------------------
+    // DbProviderFactory ctor (#28)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_factory_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbExtractor<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "SELECT 1")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_connectionString_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbExtractor<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, null!, "SELECT 1")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_commandText_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbExtractor<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", null!)
+        );
+    }
+
+
+
+    [Fact]
+    public async Task DbProviderFactory_ctor_extractor_opens_and_disposes_connection()
+    {
+        // Owned-connection path: connection is created from SqliteFactory, opened
+        // on first use inside ExtractWorkerAsync, and disposed when the iterator
+        // completes. Smoke-test that the round-trip succeeds for an empty query
+        // (in-memory SQLite, fresh schema, returns 0 rows).
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            Microsoft.Data.Sqlite.SqliteFactory.Instance,
+            "Data Source=:memory:",
+            "SELECT 1 AS id, 'x' AS first_name, 'y' AS last_name, 30 AS age WHERE 0=1"
+        );
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Empty(results);
+    }
+
+
+
     [Fact]
     public async Task CommandTimeout_does_not_break_extraction_against_in_memory_db()
     {
