@@ -603,6 +603,72 @@ public class DbExtractorTests
 
 
 
+    // ------------------------------------------------------------------
+    // ManageConnection (#31)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ManageConnection_defaults_to_false()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        Assert.False(extractor.ManageConnection);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_ManageConnection_is_true_opens_a_closed_connection_and_closes_it_after()
+    {
+        // Shared-cache in-memory SQLite so a Close()→Open() cycle preserves
+        // schema + data (plain :memory: drops it).
+        var connString = $"Data Source=mc_extractor_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+        using var keeper = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        await keeper.OpenAsync();
+        await TestDb.CreateEmptyTableAsync(keeper);
+        using (var seed = keeper.CreateCommand())
+        {
+            seed.CommandText = "INSERT INTO People (first_name, last_name, age) VALUES ('Ada','Lovelace',36),('Alan','Turing',41),('Grace','Hopper',85)";
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People")
+        {
+            ManageConnection = true
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, records.Count);
+        Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_ManageConnection_is_true_leaves_already_open_connections_open()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 3);
+        Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People")
+        {
+            ManageConnection = true
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        // We only close what we opened. The caller had it open; it stays open.
+        Assert.Equal(3, records.Count);
+        Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+    }
+
+
+
     [Fact]
     public async Task CountAsync_does_not_affect_progress_state()
     {

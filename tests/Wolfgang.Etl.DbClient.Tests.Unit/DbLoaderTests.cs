@@ -851,6 +851,53 @@ public class DbLoaderTests
 
 
     // ------------------------------------------------------------------
+    // ManageConnection (#31)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ManageConnection_defaults_to_false()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.False(loader.ManageConnection);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_ManageConnection_is_true_opens_a_closed_connection_and_closes_it_after()
+    {
+        // Shared-cache in-memory SQLite so a Close()→Open() cycle preserves
+        // the table (plain :memory: drops it).
+        var connString = $"Data Source=mc_loader_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+        using var keeper = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        await keeper.OpenAsync();
+        await TestDb.CreateEmptyTableAsync(keeper);
+
+        using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            ManageConnection = true
+        };
+
+        await loader.LoadAsync(CreateTestRecords(4).ToAsyncEnumerable());
+
+        Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+        // Re-open and verify the 4 rows landed AND the connection wasn't disposed.
+        await conn.OpenAsync();
+        Assert.Equal(4, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    // ------------------------------------------------------------------
     // BatchCommitSize (#22)
     // ------------------------------------------------------------------
 
