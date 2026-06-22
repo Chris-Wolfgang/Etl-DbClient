@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782145383667,
+  "lastUpdate": 1782150615902,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlite)": [
@@ -164,6 +164,46 @@ window.BENCHMARK_DATA = {
             "value": 5595818.276227678,
             "unit": "ns",
             "range": "± 10137.655435239842"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang",
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "9aaa7af819a0ad1a799c6edab1295c566e489db0",
+          "message": "Merge pull request #186 from Chris-Wolfgang/fix/release-skip-integration-tests\n\nfix(release): skip integration tests in release validation",
+          "timestamp": "2026-06-22T16:19:07Z",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/9aaa7af819a0ad1a799c6edab1295c566e489db0"
+        },
+        "date": 1782150614837,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 62647.79967447917,
+            "unit": "ns",
+            "range": "± 1012.0560169995952"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 577728.6833333333,
+            "unit": "ns",
+            "range": "± 2406.292296949423"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 5679477.702566965,
+            "unit": "ns",
+            "range": "± 14666.075908613971"
           }
         ]
       }
