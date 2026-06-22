@@ -604,6 +604,82 @@ public class DbExtractorTests
 
 
     // ------------------------------------------------------------------
+    // Server-side paging (#33)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Paging_defaults_disable_server_side_paging()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        Assert.Null(extractor.ServerOffset);
+        Assert.Null(extractor.ServerLimit);
+        Assert.Equal("LIMIT @PageLimit OFFSET @PageOffset", extractor.PagingClauseTemplate);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_with_ServerLimit_caps_rows_at_the_database()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
+        {
+            ServerOffset = 0,
+            ServerLimit = 5
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(5, records.Count);
+        Assert.Equal("First1", records[0].FirstName);
+        Assert.Equal("First5", records[4].FirstName);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_with_ServerOffset_and_ServerLimit_returns_a_page()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
+        {
+            ServerOffset = 10,
+            ServerLimit = 5
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        // Skipped 10, took 5 → First11..First15.
+        Assert.Equal(5, records.Count);
+        Assert.Equal("First11", records[0].FirstName);
+        Assert.Equal("First15", records[4].FirstName);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_with_only_ServerOffset_does_not_apply_paging()
+    {
+        // The clause is only appended when BOTH are set.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
+        {
+            ServerOffset = 5
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(10, records.Count); // all rows — paging disabled
+    }
+
+
+
+    // ------------------------------------------------------------------
     // Parameters property override (#27)
     // ------------------------------------------------------------------
 
