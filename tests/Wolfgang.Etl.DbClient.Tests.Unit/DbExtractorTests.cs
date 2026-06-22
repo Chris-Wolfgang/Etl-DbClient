@@ -438,6 +438,55 @@ public class DbExtractorTests
 
 
 
+    // ------------------------------------------------------------------
+    // CommandType (#26)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandType_defaults_to_Text()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        Assert.Equal(System.Data.CommandType.Text, extractor.CommandType);
+    }
+
+
+
+    [Fact]
+    public void CommandType_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "usp_GetPeople");
+
+        extractor.CommandType = System.Data.CommandType.StoredProcedure;
+
+        Assert.Equal(System.Data.CommandType.StoredProcedure, extractor.CommandType);
+    }
+
+
+
+    [Fact]
+    public async Task CommandType_Text_still_executes_normal_query()
+    {
+        // Explicitly setting to Text (the default) should be a no-op regression check.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
+        )
+        {
+            CommandType = System.Data.CommandType.Text
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
+
+
+
     [Fact]
     public async Task CommandTimeout_does_not_break_extraction_against_in_memory_db()
     {

@@ -209,6 +209,17 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// How <see cref="CommandText"/> is interpreted by the ADO.NET provider.
+    /// Defaults to <see cref="CommandType.Text"/> (a SQL INSERT / UPDATE).
+    /// Set to <see cref="CommandType.StoredProcedure"/> to invoke a stored
+    /// procedure by name per record (or per batch when <see cref="BatchSize"/>
+    /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
+    /// </summary>
+    public CommandType CommandType { get; set; } = CommandType.Text;
+
+
+
+    /// <summary>
     /// Number of records sent per <c>ExecuteAsync</c> call. Defaults to <c>1</c>
     /// (one round-trip per record). Larger values pass an <c>IEnumerable&lt;TRecord&gt;</c>
     /// to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
@@ -412,6 +423,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                     item,
                     transaction,
                     CommandTimeoutSeconds,
+                    CommandType,
                     cancellationToken: token
                 )
             ).ConfigureAwait(false);
@@ -488,6 +500,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 batch,
                 transaction,
                 CommandTimeoutSeconds,
+                CommandType,
                 cancellationToken: token
             )
         ).ConfigureAwait(false);

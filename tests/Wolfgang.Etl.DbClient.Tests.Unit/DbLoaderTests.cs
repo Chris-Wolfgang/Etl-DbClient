@@ -611,4 +611,32 @@ public class DbLoaderTests
             () => loader.CommandTimeout = TimeSpan.FromMilliseconds(-1)
         );
     }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandType (#26)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandType_defaults_to_Text()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(System.Data.CommandType.Text, loader.CommandType);
+    }
+
+
+
+    [Fact]
+    public void CommandType_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "usp_InsertPerson");
+
+        loader.CommandType = System.Data.CommandType.StoredProcedure;
+
+        Assert.Equal(System.Data.CommandType.StoredProcedure, loader.CommandType);
+    }
 }

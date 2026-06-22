@@ -258,6 +258,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// How <see cref="CommandText"/> is interpreted by the ADO.NET provider.
+    /// Defaults to <see cref="CommandType.Text"/> (a SQL statement). Set to
+    /// <see cref="CommandType.StoredProcedure"/> to invoke a stored procedure
+    /// by name; <see cref="CommandText"/> then holds the procedure name.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="CommandType.TableDirect"/> is supported by very few providers
+    /// (notably OleDb). It's accepted on this property — Dapper passes it
+    /// through — but most consumers should stick to <c>Text</c> or
+    /// <c>StoredProcedure</c>.
+    /// </remarks>
+    public CommandType CommandType { get; set; } = CommandType.Text;
+
+
+
+    /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
     /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
@@ -341,7 +357,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         long rowIndex = 0;
 
-        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds).ConfigureAwait(false))
+        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
         {
             token.ThrowIfCancellationRequested();
             rowIndex++;
