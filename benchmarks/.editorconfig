@@ -46,3 +46,10 @@ dotnet_diagnostic.S3881.severity = none
 dotnet_diagnostic.RS0016.severity = none
 dotnet_diagnostic.RS0017.severity = none
 dotnet_diagnostic.RS0037.severity = none
+
+# S3267 — Loops should be simplified using LINQ "Where". Benchmark hot
+# loops measure their inner call cost; rewriting `foreach` + `if` as
+# `.Count(predicate)` introduces enumerator-allocation + lambda-dispatch
+# noise that pollutes the signal we're trying to measure. Keep loops
+# raw inside [Benchmark] methods.
+dotnet_diagnostic.S3267.severity = none
