@@ -569,4 +569,46 @@ public class DbLoaderTests
         await Task.CompletedTask;
         throw new InvalidOperationException("Simulated failure");
     }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandTimeout (#25)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandTimeout_defaults_to_null()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Null(loader.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        loader.CommandTimeout = TimeSpan.FromMinutes(10);
+
+        Assert.Equal(TimeSpan.FromMinutes(10), loader.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_when_set_to_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => loader.CommandTimeout = TimeSpan.FromMilliseconds(-1)
+        );
+    }
 }

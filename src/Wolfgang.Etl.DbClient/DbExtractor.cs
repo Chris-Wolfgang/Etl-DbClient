@@ -215,6 +215,49 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// How long each command (the extraction query and the
+    /// <see cref="TotalCountQuery"/>) may execute before timing out. <c>null</c>
+    /// (the default) means "use the ADO.NET provider's default", which is
+    /// typically 30 seconds.
+    /// </summary>
+    /// <remarks>
+    /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
+    /// of seconds). Fractional seconds in the supplied <see cref="TimeSpan"/>
+    /// are truncated. A negative <see cref="TimeSpan"/> is rejected.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public TimeSpan? CommandTimeout
+    {
+        get => _commandTimeout;
+        set
+        {
+            if (value.HasValue && value.Value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "CommandTimeout cannot be negative. Use null to fall back to the ADO.NET default."
+                );
+            }
+            _commandTimeout = value;
+        }
+    }
+
+    private TimeSpan? _commandTimeout;
+
+    // Dapper's commandTimeout parameter is `int?` seconds. Centralized here so
+    // every call site uses the same conversion (and so future "0 = infinite"
+    // semantics, if needed, only have to flip in one place).
+    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
+        ? (int)_commandTimeout.Value.TotalSeconds
+        : (int?)null;
+
+
+
+    /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
     /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
@@ -298,7 +341,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         long rowIndex = 0;
 
-        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction).ConfigureAwait(false))
+        await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds).ConfigureAwait(false))
         {
             token.ThrowIfCancellationRequested();
             rowIndex++;
@@ -337,7 +380,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
         var param = _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>(
-            new CommandDefinition(countSql, param, _transaction, cancellationToken: token));
+            new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token));
     }
 
 

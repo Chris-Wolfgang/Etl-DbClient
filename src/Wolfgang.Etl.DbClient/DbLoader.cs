@@ -169,6 +169,46 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// How long each <c>ExecuteAsync</c> call may run before timing out.
+    /// <c>null</c> (the default) means "use the ADO.NET provider's default",
+    /// typically 30 seconds.
+    /// </summary>
+    /// <remarks>
+    /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
+    /// of seconds). Fractional seconds are truncated. Applies to every batch,
+    /// not the whole load — so a batched insert of 10 batches each gets the
+    /// full timeout independently.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public TimeSpan? CommandTimeout
+    {
+        get => _commandTimeout;
+        set
+        {
+            if (value.HasValue && value.Value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "CommandTimeout cannot be negative. Use null to fall back to the ADO.NET default."
+                );
+            }
+            _commandTimeout = value;
+        }
+    }
+
+    private TimeSpan? _commandTimeout;
+
+    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
+        ? (int)_commandTimeout.Value.TotalSeconds
+        : (int?)null;
+
+
+
+    /// <summary>
     /// Number of records sent per <c>ExecuteAsync</c> call. Defaults to <c>1</c>
     /// (one round-trip per record). Larger values pass an <c>IEnumerable&lt;TRecord&gt;</c>
     /// to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
@@ -371,6 +411,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                     _commandText,
                     item,
                     transaction,
+                    CommandTimeoutSeconds,
                     cancellationToken: token
                 )
             ).ConfigureAwait(false);
@@ -446,6 +487,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 _commandText,
                 batch,
                 transaction,
+                CommandTimeoutSeconds,
                 cancellationToken: token
             )
         ).ConfigureAwait(false);

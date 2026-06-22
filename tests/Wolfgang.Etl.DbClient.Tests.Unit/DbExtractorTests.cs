@@ -393,4 +393,69 @@ public class DbExtractorTests
             async () => await extractor.ExtractAsync().ToListAsync()
         );
     }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandTimeout (#25)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandTimeout_defaults_to_null()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        Assert.Null(extractor.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        extractor.CommandTimeout = TimeSpan.FromMinutes(5);
+
+        Assert.Equal(TimeSpan.FromMinutes(5), extractor.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_when_set_to_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => extractor.CommandTimeout = TimeSpan.FromSeconds(-1)
+        );
+    }
+
+
+
+    [Fact]
+    public async Task CommandTimeout_does_not_break_extraction_against_in_memory_db()
+    {
+        // SQLite in-memory ignores commandTimeout but the call path must still
+        // succeed when a non-null timeout is supplied. Guards against accidentally
+        // routing through a code path that doesn't pass the timeout cleanly.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
+        )
+        {
+            CommandTimeout = TimeSpan.FromMinutes(2)
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
 }
