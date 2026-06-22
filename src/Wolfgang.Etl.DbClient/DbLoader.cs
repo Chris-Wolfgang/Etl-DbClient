@@ -272,6 +272,32 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// When <see langword="true"/>, the loader opens the connection before the
+    /// first command runs and closes it after the load ends. The connection
+    /// is NOT disposed — it's returned to the pool for reuse, which plays
+    /// better with connection-pool lifetime in web apps and hosted services.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default <see langword="false"/> preserves the v0.4.0 behavior: the
+    /// caller is responsible for opening the connection before calling
+    /// <c>LoadAsync</c>.
+    /// </para>
+    /// <para>
+    /// Ignored on the owned-connection ctor path (the
+    /// <c>(DbProviderFactory, connectionString, …)</c> overload). That path
+    /// always manages and disposes the connection because it created it.
+    /// </para>
+    /// <para>
+    /// If the connection is already open when <c>LoadAsync</c> starts, it's
+    /// left open — the loader only closes connections it itself opened.
+    /// </para>
+    /// </remarks>
+    public bool ManageConnection { get; set; }
+
+
+
+    /// <summary>
     /// When <see langword="true"/>, the loader runs the full pipeline —
     /// enumerates the source, evaluates <c>SkipItemCount</c> /
     /// <c>MaximumItemCount</c>, increments progress counters, fires the
@@ -522,11 +548,14 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         LogLoadingStarted();
 
         // Owned-connection ctor path: open before the first execute, dispose at
-        // the end. Wrapped in try/finally so the connection is released even
-        // when LoadWith*Async throws (the caller's exception still propagates).
-        if (_ownsConnection && _connection.State != ConnectionState.Open)
+        // the end. ManageConnection=true path: open before, CLOSE (don't dispose)
+        // after. Wrapped in try/finally so the connection is released even when
+        // LoadWith*Async throws (the caller's exception still propagates).
+        var openedHere = false;
+        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
+            openedHere = true;
         }
 
         try
@@ -550,6 +579,15 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 await _connection.DisposeAsync().ConfigureAwait(false);
 #else
                 _connection.Dispose();
+#endif
+            }
+            else if (openedHere)
+            {
+#if NET5_0_OR_GREATER
+                await _connection.CloseAsync().ConfigureAwait(false);
+#else
+                _connection.Close();
+                await Task.CompletedTask.ConfigureAwait(false);
 #endif
             }
         }
