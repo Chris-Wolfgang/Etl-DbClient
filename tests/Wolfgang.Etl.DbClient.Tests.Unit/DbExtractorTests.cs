@@ -604,6 +604,77 @@ public class DbExtractorTests
 
 
     // ------------------------------------------------------------------
+    // Parameters property override (#27)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Parameters_defaults_to_null()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        Assert.Null(extractor.Parameters);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_Parameters_is_set_uses_those_for_the_query()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
+
+        // Build a DynamicParameters with a single input parameter; bind it
+        // into a parameterized WHERE.
+        var p = new Dapper.DynamicParameters();
+        p.Add("@Age", 25);
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People WHERE age >= @Age"
+        )
+        {
+            Parameters = p
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        // Seed rows have ages 21..30 (20 + i, i=1..10), so age >= 25 matches 6.
+        Assert.Equal(6, records.Count);
+        Assert.All(records, r => Assert.True(r.Age >= 25));
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_Parameters_takes_precedence_over_constructor_dictionary()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
+
+        var dictParams = new Dictionary<string, object> { ["@Age"] = 28 };
+        var p = new Dapper.DynamicParameters();
+        p.Add("@Age", 22); // overrides the dictionary value
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People WHERE age >= @Age",
+            dictParams
+        )
+        {
+            Parameters = p
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        // Ages 22..30 = 9 rows (overrode dict's 28→22). If the dictionary
+        // had won we'd see 3 rows (28,29,30).
+        Assert.Equal(9, records.Count);
+    }
+
+
+
+    // ------------------------------------------------------------------
     // ManageConnection (#31)
     // ------------------------------------------------------------------
 

@@ -2,6 +2,8 @@
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CountAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.set -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.Parameters.get -> Dapper.DynamicParameters?
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.Parameters.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CurrentErrorCount.get -> int
