@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/main/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbExtractor_1.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbExtractor%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.3.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbExtractor_1.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbExtractor%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,7 +75,7 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_DbExtractor_1" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1" class="text-break">
-Class DbExtractor&lt;TRecord&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L40"><i class="bi bi-code-slash"></i></a>
+Class DbExtractor&lt;TRecord&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L46"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -205,6 +205,12 @@ An optional <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.
 The extractor never commits or rolls back the transaction.
 </p>
 <p>
+<b>Thread safety.</b> A <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a> instance is not safe for
+concurrent <code>ExtractAsync</code> calls. Internal state (stopwatch, total-count snapshot,
+progress-counter increments) assumes a single extraction in flight. Build a separate
+instance per concurrent extraction.
+</p>
+<p>
 Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
 A dedicated <code>CommandTimeout</code> property is planned (see GitHub issue #25).
 </p>
@@ -219,7 +225,7 @@ A dedicated <code>CommandTimeout</code> property is planned (see GitHub issue #2
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})">
   DbExtractor(DbConnection, DbTransaction?, ILogger&lt;DbExtractor&lt;TRecord&gt;&gt;?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L141"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L172"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a> that auto-generates
@@ -269,7 +275,7 @@ a SELECT statement from <code>[Table]</code> and <code>[Column]</code> attribute
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_System_String_System_Collections_Generic_IDictionary_System_String_System_Object__System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,System.Collections.Generic.IDictionary{System.String,System.Object},System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})">
   DbExtractor(DbConnection, string, IDictionary&lt;string, object&gt;, DbTransaction?, ILogger&lt;DbExtractor&lt;TRecord&gt;&gt;?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L111"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L135"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a> with a parameterized SQL command.</p>
@@ -289,7 +295,9 @@ a SELECT statement from <code>[Table]</code> and <code>[Column]</code> attribute
     <dd><p>The SQL query to execute.</p>
 </dd>
     <dt><code>parameters</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.idictionary-2">IDictionary</a>&lt;<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a>&gt;</dt>
-    <dd><p>Named parameters for the query.</p>
+    <dd><p>Named parameters for the query. A defensive copy is taken at construction time,
+so mutations to the supplied dictionary after construction do not affect the
+executed query or the values reported in debug logs.</p>
 </dd>
     <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
     <dd><p>An optional <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a> for isolation control.</p>
@@ -320,7 +328,7 @@ a SELECT statement from <code>[Table]</code> and <code>[Column]</code> attribute
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})">
   DbExtractor(DbConnection, string, DbTransaction?, ILogger&lt;DbExtractor&lt;TRecord&gt;&gt;?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L84"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L104"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a> with a SQL command.</p>
@@ -372,7 +380,7 @@ a SELECT statement from <code>[Table]</code> and <code>[Column]</code> attribute
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1_CommandText" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.CommandText">
   CommandText
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L182"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L213"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The SQL command text being executed.</p>
@@ -404,7 +412,7 @@ a SELECT statement from <code>[Table]</code> and <code>[Column]</code> attribute
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1_DefaultTotalCountQuery" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.DefaultTotalCountQuery">
   DefaultTotalCountQuery
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L208"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L239"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The default total count implementation. Wraps <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_CommandText">CommandText</a> in
@@ -444,7 +452,7 @@ it inside a derived table. Use a custom <a class="xref" href="Wolfgang.Etl.DbCli
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1_TotalCountQuery" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.TotalCountQuery">
   TotalCountQuery
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L193"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L224"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>When non-null, this function is invoked before extraction begins to determine
@@ -484,7 +492,7 @@ query. Defaults to <code>null</code> (total count is not fetched).</p>
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1_CreateProgressReport" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.CreateProgressReport">
   CreateProgressReport()
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L213"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L244"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Creates a progress report of type TProgress. This gives the derived class the opportunity to
@@ -518,7 +526,7 @@ implement a custom progress report that is specific to the extraction process.</
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1_CreateProgressTimer_System_IProgress_Wolfgang_Etl_DbClient_DbReport__" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.CreateProgressTimer(System.IProgress{Wolfgang.Etl.DbClient.DbReport})">
   CreateProgressTimer(IProgress&lt;DbReport&gt;)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L235"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L266"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Creates the <span class="xref">Wolfgang.Etl.Abstractions.IProgressTimer</span> used to drive progress callbacks.
@@ -559,7 +567,7 @@ Override this method in a derived class to inject a custom timer
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractor_1_ExtractWorkerAsync_System_Threading_CancellationToken_" data-uid="Wolfgang.Etl.DbClient.DbExtractor`1.ExtractWorkerAsync(System.Threading.CancellationToken)">
   ExtractWorkerAsync(CancellationToken)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L255"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L285"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>This method is the core implementation of the extraction logic and should be
@@ -600,7 +608,7 @@ The result may be an empty sequence if no data is available or if the extraction
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L40" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.3.0/src/Wolfgang.Etl.DbClient/DbExtractor.cs/#L46" class="edit-link">Edit this page</a>
         </div>
 
 

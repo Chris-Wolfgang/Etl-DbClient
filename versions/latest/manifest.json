@@ -22,6 +22,20 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbClientOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbClientOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbClientOptions",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbClientOptions.yml\" sourcestartlinenumber=\"1\">Process-wide knobs for <code>Wolfgang.Etl.DbClient</code>. Settings here are read\nfrom the global Dapper type-map delegate that <code>ColumnAttributeTypeMapper</code>\ninstalls, so they affect read-side column resolution only.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/Wolfgang.Etl.DbClient.DbExtractor-1.yml",
       "output": {
         ".html": {

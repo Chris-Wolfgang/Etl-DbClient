@@ -290,11 +290,12 @@ var assemblies = [
   {
     "name": "Wolfgang.Etl.DbClient",
     "classes": [
-      { "name": "Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper", "rp": "Wolfgang.Etl.DbClient_ColumnAttributeTypeMapper.html", "cl": 31, "ucl": 1, "cal": 32, "tl": 75, "cb": 10, "tb": 12, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Wolfgang.Etl.DbClient.DbCommandBuilder", "rp": "Wolfgang.Etl.DbClient_DbCommandBuilder.html", "cl": 95, "ucl": 5, "cal": 100, "tl": 257, "cb": 40, "tb": 44, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Wolfgang.Etl.DbClient.DbExtractor\u003CT\u003E", "rp": "Wolfgang.Etl.DbClient_DbExtractor_1.html", "cl": 155, "ucl": 6, "cal": 161, "tl": 445, "cb": 56, "tb": 66, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Wolfgang.Etl.DbClient.DbLoader\u003CT\u003E", "rp": "Wolfgang.Etl.DbClient_DbLoader_1.html", "cl": 171, "ucl": 0, "cal": 171, "tl": 480, "cb": 62, "tb": 66, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "Wolfgang.Etl.DbClient.DbReport", "rp": "Wolfgang.Etl.DbClient_DbReport.html", "cl": 12, "ucl": 0, "cal": 12, "tl": 86, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper", "rp": "Wolfgang.Etl.DbClient_ColumnAttributeTypeMapper.html", "cl": 31, "ucl": 1, "cal": 32, "tl": 120, "cb": 17, "tb": 18, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Wolfgang.Etl.DbClient.DbClientOptions", "rp": "Wolfgang.Etl.DbClient_DbClientOptions.html", "cl": 1, "ucl": 0, "cal": 1, "tl": 58, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Wolfgang.Etl.DbClient.DbCommandBuilder", "rp": "Wolfgang.Etl.DbClient_DbCommandBuilder.html", "cl": 97, "ucl": 5, "cal": 102, "tl": 307, "cb": 32, "tb": 36, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Wolfgang.Etl.DbClient.DbExtractor\u003CT\u003E", "rp": "Wolfgang.Etl.DbClient_DbExtractor_1.html", "cl": 166, "ucl": 0, "cal": 166, "tl": 478, "cb": 54, "tb": 62, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Wolfgang.Etl.DbClient.DbLoader\u003CT\u003E", "rp": "Wolfgang.Etl.DbClient_DbLoader_1.html", "cl": 214, "ucl": 0, "cal": 214, "tl": 651, "cb": 64, "tb": 68, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "Wolfgang.Etl.DbClient.DbReport", "rp": "Wolfgang.Etl.DbClient_DbReport.html", "cl": 12, "ucl": 0, "cal": 12, "tl": 92, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
 ];
 
@@ -309,10 +310,10 @@ var riskHotspotMetrics = [
 
 var riskHotspots = [
   {
-    "assembly": "Wolfgang.Etl.DbClient", "class": "Wolfgang.Etl.DbClient.DbLoader\u003CT\u003E", "reportPath": "Wolfgang.Etl.DbClient_DbLoader_1.html", "methodName": "LoadWorkerAsync()", "methodShortName": "LoadWorkerAsync()", "fileIndex": 0, "line": 212,
+    "assembly": "Wolfgang.Etl.DbClient", "class": "Wolfgang.Etl.DbClient.DbCommandBuilder", "reportPath": "Wolfgang.Etl.DbClient_DbCommandBuilder.html", "methodName": "BuildMetadata(System.Type)", "methodShortName": "BuildMetadata(...)", "fileIndex": 0, "line": 115,
     "metrics": [
-      { "value": 18, "exceeded": false },
-      { "value": 18, "exceeded": true },
+      { "value": 16, "exceeded": false },
+      { "value": 16, "exceeded": true },
     ]},
 ];
 

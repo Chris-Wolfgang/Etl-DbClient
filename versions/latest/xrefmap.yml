@@ -7,6 +7,25 @@ references:
   commentId: N:Wolfgang.Etl.DbClient
   fullName: Wolfgang.Etl.DbClient
   nameWithType: Wolfgang.Etl.DbClient
+- uid: Wolfgang.Etl.DbClient.DbClientOptions
+  name: DbClientOptions
+  href: api/Wolfgang.Etl.DbClient.DbClientOptions.html
+  commentId: T:Wolfgang.Etl.DbClient.DbClientOptions
+  fullName: Wolfgang.Etl.DbClient.DbClientOptions
+  nameWithType: DbClientOptions
+- uid: Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping
+  name: StrictColumnMapping
+  href: api/Wolfgang.Etl.DbClient.DbClientOptions.html#Wolfgang_Etl_DbClient_DbClientOptions_StrictColumnMapping
+  commentId: P:Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping
+  fullName: Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping
+  nameWithType: DbClientOptions.StrictColumnMapping
+- uid: Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping*
+  name: StrictColumnMapping
+  href: api/Wolfgang.Etl.DbClient.DbClientOptions.html#Wolfgang_Etl_DbClient_DbClientOptions_StrictColumnMapping_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping
+  nameWithType: DbClientOptions.StrictColumnMapping
 - uid: Wolfgang.Etl.DbClient.DbExtractor`1
   name: DbExtractor<TRecord>
   href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html
@@ -193,6 +212,23 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New
   nameWithType: DbLoader<TRecord>.DbLoader
   nameWithType.vb: DbLoader(Of TRecord).New
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.BatchSize
+  name: BatchSize
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize
+  commentId: P:Wolfgang.Etl.DbClient.DbLoader`1.BatchSize
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchSize
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).BatchSize
+  nameWithType: DbLoader<TRecord>.BatchSize
+  nameWithType.vb: DbLoader(Of TRecord).BatchSize
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.BatchSize*
+  name: BatchSize
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`1.BatchSize
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchSize
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).BatchSize
+  nameWithType: DbLoader<TRecord>.BatchSize
+  nameWithType.vb: DbLoader(Of TRecord).BatchSize
 - uid: Wolfgang.Etl.DbClient.DbLoader`1.CommandText
   name: CommandText
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CommandText
@@ -269,15 +305,6 @@ references:
   commentId: T:Wolfgang.Etl.DbClient.DbReport
   fullName: Wolfgang.Etl.DbClient.DbReport
   nameWithType: DbReport
-- uid: Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64)
-  name: DbReport(int, int, string, long)
-  href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport__ctor_System_Int32_System_Int32_System_String_System_Int64_
-  commentId: M:Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64)
-  name.vb: New(Integer, Integer, String, Long)
-  fullName: Wolfgang.Etl.DbClient.DbReport.DbReport(int, int, string, long)
-  fullName.vb: Wolfgang.Etl.DbClient.DbReport.New(Integer, Integer, String, Long)
-  nameWithType: DbReport.DbReport(int, int, string, long)
-  nameWithType.vb: DbReport.New(Integer, Integer, String, Long)
 - uid: Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64,System.Nullable{System.Int32})
   name: DbReport(int, int, string, long, int?)
   href: api/Wolfgang.Etl.DbClient.DbReport.html#Wolfgang_Etl_DbClient_DbReport__ctor_System_Int32_System_Int32_System_String_System_Int64_System_Nullable_System_Int32__

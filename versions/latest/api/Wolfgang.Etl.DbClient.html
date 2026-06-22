@@ -81,6 +81,13 @@
 Classes
 </h3>
     <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbClientOptions.html">DbClientOptions</a></dt>
+      <dd><p>Process-wide knobs for <code>Wolfgang.Etl.DbClient</code>. Settings here are read
+from the global Dapper type-map delegate that <code>ColumnAttributeTypeMapper</code>
+installs, so they affect read-side column resolution only.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a></dt>
       <dd><p>Extracts records from a database query as an asynchronous stream.
 Uses Dapper for column-to-property mapping, supporting <code>[Column]</code> attribute
