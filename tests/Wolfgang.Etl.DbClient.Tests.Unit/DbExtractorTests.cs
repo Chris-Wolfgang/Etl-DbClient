@@ -393,4 +393,176 @@ public class DbExtractorTests
             async () => await extractor.ExtractAsync().ToListAsync()
         );
     }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandTimeout (#25)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandTimeout_defaults_to_null()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        Assert.Null(extractor.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        extractor.CommandTimeout = TimeSpan.FromMinutes(5);
+
+        Assert.Equal(TimeSpan.FromMinutes(5), extractor.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_when_set_to_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => extractor.CommandTimeout = TimeSpan.FromSeconds(-1)
+        );
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandType (#26)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandType_defaults_to_Text()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT 1");
+
+        Assert.Equal(System.Data.CommandType.Text, extractor.CommandType);
+    }
+
+
+
+    [Fact]
+    public void CommandType_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "usp_GetPeople");
+
+        extractor.CommandType = System.Data.CommandType.StoredProcedure;
+
+        Assert.Equal(System.Data.CommandType.StoredProcedure, extractor.CommandType);
+    }
+
+
+
+    [Fact]
+    public async Task CommandType_Text_still_executes_normal_query()
+    {
+        // Explicitly setting to Text (the default) should be a no-op regression check.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
+        )
+        {
+            CommandType = System.Data.CommandType.Text
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // DbProviderFactory ctor (#28)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_factory_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbExtractor<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "SELECT 1")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_connectionString_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbExtractor<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, null!, "SELECT 1")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_commandText_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbExtractor<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", null!)
+        );
+    }
+
+
+
+    [Fact]
+    public async Task DbProviderFactory_ctor_extractor_opens_and_disposes_connection()
+    {
+        // Owned-connection path: connection is created from SqliteFactory, opened
+        // on first use inside ExtractWorkerAsync, and disposed when the iterator
+        // completes. Smoke-test that the round-trip succeeds for an empty query
+        // (in-memory SQLite, fresh schema, returns 0 rows).
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            Microsoft.Data.Sqlite.SqliteFactory.Instance,
+            "Data Source=:memory:",
+            "SELECT 1 AS id, 'x' AS first_name, 'y' AS last_name, 30 AS age WHERE 0=1"
+        );
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Empty(results);
+    }
+
+
+
+    [Fact]
+    public async Task CommandTimeout_does_not_break_extraction_against_in_memory_db()
+    {
+        // SQLite in-memory ignores commandTimeout but the call path must still
+        // succeed when a non-null timeout is supplied. Guards against accidentally
+        // routing through a code path that doesn't pass the timeout cleanly.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(3);
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT id, first_name, last_name, age FROM People ORDER BY id"
+        )
+        {
+            CommandTimeout = TimeSpan.FromMinutes(2)
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
 }

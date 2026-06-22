@@ -54,7 +54,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     // Fields
     // ------------------------------------------------------------------
 
+    // _ownsConnection tracks whether LoadWorkerAsync is responsible for the
+    // connection's OpenAsync + Dispose. True for the DbProviderFactory ctor
+    // overloads; false when the caller passes a pre-opened DbConnection.
     private readonly DbConnection _connection;
+    private readonly bool _ownsConnection;
     private readonly string _commandText;
     private readonly DbTransaction? _callerTransaction;
     private readonly bool _ownsTransaction;
@@ -138,6 +142,54 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// Initializes a new <see cref="DbLoader{TRecord}"/> that owns the
+    /// connection's lifetime. The connection is created from the supplied
+    /// <see cref="DbProviderFactory"/>, opened lazily before loading begins,
+    /// and disposed when loading completes (or throws).
+    /// </summary>
+    /// <param name="factory">
+    /// The provider-specific factory (e.g. <c>Microsoft.Data.SqlClient
+    /// .SqlClientFactory.Instance</c>, <c>Npgsql.NpgsqlFactory.Instance</c>).
+    /// </param>
+    /// <param name="connectionString">The provider-specific connection string.</param>
+    /// <param name="commandText">The SQL INSERT or UPDATE command to execute per record.</param>
+    /// <param name="logger">An optional logger for diagnostic output.</param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/>, <paramref name="connectionString"/>, or
+    /// <paramref name="commandText"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="factory"/> returned a null connection from
+    /// <see cref="DbProviderFactory.CreateConnection"/>.
+    /// </exception>
+    public DbLoader
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+    {
+        if (factory == null) throw new ArgumentNullException(nameof(factory));
+        if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
+        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
+
+        var conn = factory.CreateConnection()
+            ?? throw new InvalidOperationException
+            (
+                $"{factory.GetType().FullName}.CreateConnection() returned null. " +
+                "The provider factory does not produce DbConnection instances."
+            );
+        conn.ConnectionString = connectionString;
+        _connection = conn;
+        _ownsConnection = true;
+        _ownsTransaction = true;  // auto-managed transaction inside the owned connection
+        _logger = logger ?? (ILogger)NullLogger.Instance;
+    }
+
+
+
+    /// <summary>
     /// Internal constructor for timer injection (testing).
     /// </summary>
     internal DbLoader
@@ -165,6 +217,57 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// The SQL command text being executed per record.
     /// </summary>
     public string CommandText => _commandText;
+
+
+
+    /// <summary>
+    /// How long each <c>ExecuteAsync</c> call may run before timing out.
+    /// <c>null</c> (the default) means "use the ADO.NET provider's default",
+    /// typically 30 seconds.
+    /// </summary>
+    /// <remarks>
+    /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
+    /// of seconds). Fractional seconds are truncated. Applies to every batch,
+    /// not the whole load — so a batched insert of 10 batches each gets the
+    /// full timeout independently.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public TimeSpan? CommandTimeout
+    {
+        get => _commandTimeout;
+        set
+        {
+            if (value.HasValue && value.Value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "CommandTimeout cannot be negative. Use null to fall back to the ADO.NET default."
+                );
+            }
+            _commandTimeout = value;
+        }
+    }
+
+    private TimeSpan? _commandTimeout;
+
+    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
+        ? (int)_commandTimeout.Value.TotalSeconds
+        : (int?)null;
+
+
+
+    /// <summary>
+    /// How <see cref="CommandText"/> is interpreted by the ADO.NET provider.
+    /// Defaults to <see cref="CommandType.Text"/> (a SQL INSERT / UPDATE).
+    /// Set to <see cref="CommandType.StoredProcedure"/> to invoke a stored
+    /// procedure by name per record (or per batch when <see cref="BatchSize"/>
+    /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
+    /// </summary>
+    public CommandType CommandType { get; set; } = CommandType.Text;
 
 
 
@@ -266,16 +369,38 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         _stopwatch.Restart();
         LogLoadingStarted();
 
-        if (_ownsTransaction)
+        // Owned-connection ctor path: open before the first execute, dispose at
+        // the end. Wrapped in try/finally so the connection is released even
+        // when LoadWith*Async throws (the caller's exception still propagates).
+        if (_ownsConnection && _connection.State != ConnectionState.Open)
         {
-            await LoadWithAutoTransactionAsync(items, token).ConfigureAwait(false);
-        }
-        else
-        {
-            await LoadWithCallerTransactionAsync(items, token).ConfigureAwait(false);
+            await _connection.OpenAsync(token).ConfigureAwait(false);
         }
 
-        LogLoadingCompleted();
+        try
+        {
+            if (_ownsTransaction)
+            {
+                await LoadWithAutoTransactionAsync(items, token).ConfigureAwait(false);
+            }
+            else
+            {
+                await LoadWithCallerTransactionAsync(items, token).ConfigureAwait(false);
+            }
+
+            LogLoadingCompleted();
+        }
+        finally
+        {
+            if (_ownsConnection)
+            {
+#if NET5_0_OR_GREATER
+                await _connection.DisposeAsync().ConfigureAwait(false);
+#else
+                _connection.Dispose();
+#endif
+            }
+        }
     }
 
 
@@ -371,6 +496,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                     _commandText,
                     item,
                     transaction,
+                    CommandTimeoutSeconds,
+                    CommandType,
                     cancellationToken: token
                 )
             ).ConfigureAwait(false);
@@ -446,6 +573,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 _commandText,
                 batch,
                 transaction,
+                CommandTimeoutSeconds,
+                CommandType,
                 cancellationToken: token
             )
         ).ConfigureAwait(false);

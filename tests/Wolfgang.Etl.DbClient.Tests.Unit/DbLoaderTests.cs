@@ -569,4 +569,111 @@ public class DbLoaderTests
         await Task.CompletedTask;
         throw new InvalidOperationException("Simulated failure");
     }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandTimeout (#25)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandTimeout_defaults_to_null()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Null(loader.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        loader.CommandTimeout = TimeSpan.FromMinutes(10);
+
+        Assert.Equal(TimeSpan.FromMinutes(10), loader.CommandTimeout);
+    }
+
+
+
+    [Fact]
+    public void CommandTimeout_when_set_to_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => loader.CommandTimeout = TimeSpan.FromMilliseconds(-1)
+        );
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // CommandType (#26)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CommandType_defaults_to_Text()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(System.Data.CommandType.Text, loader.CommandType);
+    }
+
+
+
+    [Fact]
+    public void CommandType_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "usp_InsertPerson");
+
+        loader.CommandType = System.Data.CommandType.StoredProcedure;
+
+        Assert.Equal(System.Data.CommandType.StoredProcedure, loader.CommandType);
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // DbProviderFactory ctor (#28)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_factory_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbLoader<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "INSERT INTO People (first_name) VALUES (@FirstName)")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_connectionString_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, null!, "INSERT INTO People (first_name) VALUES (@FirstName)")
+        );
+    }
+
+
+
+    [Fact]
+    public void DbProviderFactory_ctor_when_commandText_is_null_throws_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>
+        (
+            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", (string)null!)
+        );
+    }
 }
