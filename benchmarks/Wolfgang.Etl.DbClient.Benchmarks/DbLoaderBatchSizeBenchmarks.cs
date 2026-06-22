@@ -108,11 +108,11 @@ public class DbLoaderBatchSizeBenchmarks : IDisposable
 
 
     [Benchmark]
-    public async Task Load1000Rows()
+    public Task Load1000Rows()
     {
         var loader = new DbLoader<BenchmarkPerson>(_conn, WriteMode.Insert);
         loader.BatchSize = BatchSize;
-        await loader.LoadAsync(ToAsyncEnumerable(_records));
+        return loader.LoadAsync(ToAsyncEnumerable(_records));
     }
 
 
