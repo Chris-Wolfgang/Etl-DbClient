@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782151048732,
+  "lastUpdate": 1782161945840,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mysql)": [
@@ -164,6 +164,48 @@ window.BENCHMARK_DATA = {
             "value": 5684579.7219827585,
             "unit": "ns",
             "range": "± 153923.66845570388"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a74b76d026470f11623cd4975c0f846e893c0050",
+          "message": "Merge pull request #191 from Chris-Wolfgang/vNext\n\nRelease v0.4.0 — production-readiness knobs",
+          "timestamp": "2026-06-22T16:48:57-04:00",
+          "tree_id": "3b3a5faabe05fdc256d76c17887a02bfa3cd7228",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/a74b76d026470f11623cd4975c0f846e893c0050"
+        },
+        "date": 1782161944534,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 1416641.7940848214,
+            "unit": "ns",
+            "range": "± 12836.637749626674"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 2928498.38953125,
+            "unit": "ns",
+            "range": "± 1180720.2816320346"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 7269300.713169643,
+            "unit": "ns",
+            "range": "± 177772.31580444536"
           }
         ]
       }
