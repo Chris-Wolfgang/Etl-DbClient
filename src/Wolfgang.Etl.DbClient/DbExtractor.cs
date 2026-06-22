@@ -388,6 +388,51 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// When both <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are
+    /// set, the extractor appends <see cref="PagingClauseTemplate"/> to the
+    /// command text before sending it. Default <see langword="null"/> disables
+    /// server-side paging (the v0.4.0 behavior — the full result set comes
+    /// back and <c>SkipItemCount</c>/<c>MaximumItemCount</c> filter
+    /// client-side).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use server-side paging for very large tables where streaming
+    /// everything to the client is wasteful. SQL Server requires an
+    /// <c>ORDER BY</c> in the command text for paging to be deterministic;
+    /// SQLite, PostgreSQL, and MySQL don't require it but you should still
+    /// include one — without a stable order, page contents drift.
+    /// </para>
+    /// </remarks>
+    public long? ServerOffset { get; set; }
+
+
+
+    /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
+    public long? ServerLimit { get; set; }
+
+
+
+    /// <summary>
+    /// SQL fragment appended to the command text when both
+    /// <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are set.
+    /// Bound as Dapper parameters <c>@PageOffset</c> and <c>@PageLimit</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Defaults to <c>LIMIT @PageLimit OFFSET @PageOffset</c> — the SQLite /
+    /// PostgreSQL / MySQL syntax.
+    /// </para>
+    /// <para>
+    /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
+    /// (and ensure the base SQL ends with an <c>ORDER BY</c>).
+    /// </para>
+    /// </remarks>
+    public string PagingClauseTemplate { get; set; } = "LIMIT @PageLimit OFFSET @PageOffset";
+
+
+
+    /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
     /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
@@ -537,7 +582,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         try
         {
-            var param = Parameters ?? _dynamicParameters;
+            var (commandText, param) = ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters);
 
             if (TotalCountQuery != null)
             {
@@ -546,7 +591,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
             long rowIndex = 0;
 
-            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
+            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
             {
                 token.ThrowIfCancellationRequested();
                 rowIndex++;
@@ -608,6 +653,28 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         var param = Parameters ?? _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>(
             new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token));
+    }
+
+
+
+    /// <summary>
+    /// If <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are both
+    /// set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
+    /// and add <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set.
+    /// Otherwise returns the inputs unchanged.
+    /// </summary>
+    private (string CommandText, DynamicParameters? Param) ApplyServerPaging(string commandText, DynamicParameters? param)
+    {
+        if (!ServerOffset.HasValue || !ServerLimit.HasValue)
+        {
+            return (commandText, param);
+        }
+
+        var pagingParam = param ?? new DynamicParameters();
+        pagingParam.Add("@PageOffset", ServerOffset.Value);
+        pagingParam.Add("@PageLimit", ServerLimit.Value);
+
+        return (commandText + " " + PagingClauseTemplate, pagingParam);
     }
 
 
