@@ -1,3 +1,17 @@
 #nullable enable
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.CurrentErrorCount.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.DryRun.get -> bool
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.DryRun.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.get -> int
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.RowFailed -> System.EventHandler<Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>!>?
+Wolfgang.Etl.DbClient.RowErrorHandling
+Wolfgang.Etl.DbClient.RowErrorHandling.Abort = 0 -> Wolfgang.Etl.DbClient.RowErrorHandling
+Wolfgang.Etl.DbClient.RowErrorHandling.Skip = 1 -> Wolfgang.Etl.DbClient.RowErrorHandling
+Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>
+Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.Exception.get -> System.Exception!
+Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.ItemIndex.get -> long
+Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.Record.get -> TRecord
+Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.RowFailedEventArgs(TRecord record, System.Exception! exception, long itemIndex) -> void
