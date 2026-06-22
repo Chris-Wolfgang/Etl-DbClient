@@ -1,5 +1,7 @@
 #nullable enable
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CountAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.get -> bool
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CurrentErrorCount.get -> int
@@ -7,6 +9,8 @@ Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.get -> Wolfgang.Etl.DbClie
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.IsDryRun.get -> bool
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.IsDryRun.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ManageConnection.get -> bool
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ManageConnection.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.RowFailed -> System.EventHandler<Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>!>?
