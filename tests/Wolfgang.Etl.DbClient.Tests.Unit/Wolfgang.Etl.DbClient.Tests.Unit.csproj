@@ -17,6 +17,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient\Wolfgang.Etl.DbClient.csproj" />
+    <!-- Source generator pulled in as analyzer so [DbTable] decorated records
+         in this test project trigger the generator at compile time. -->
+    <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient.SourceGenerator\Wolfgang.Etl.DbClient.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
   </ItemGroup>
 
   <!-- net462; net47; net471; net472; net48; net481 -->

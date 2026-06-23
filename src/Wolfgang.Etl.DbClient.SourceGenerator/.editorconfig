@@ -1,0 +1,11 @@
+root = false
+
+# Source generators are highly mechanical, string-heavy code that doesn't fit
+# the same hygiene bar as runtime library code. Relax the rules that fire
+# noisily here without protecting us from real bugs.
+[*.cs]
+dotnet_diagnostic.MA0006.severity = none   # string == operator (we compare metadata strings constantly)
+dotnet_diagnostic.MA0051.severity = none   # method too long (Extract / Emit are long by design)
+dotnet_diagnostic.S3358.severity  = none   # nested ternary (acceptable in record-building paths)
+dotnet_diagnostic.S3267.severity  = none   # collection LINQ (clarity > microbenchmarks at gen time)
+dotnet_diagnostic.S3398.severity  = none   # move private to nested type (Emit / Extract are intentional outer methods)
