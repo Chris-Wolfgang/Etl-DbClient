@@ -1,4 +1,12 @@
 #nullable enable
+Wolfgang.Etl.DbClient.DbColumnAttribute
+Wolfgang.Etl.DbClient.DbColumnAttribute.DbColumnAttribute(string! name) -> void
+Wolfgang.Etl.DbClient.DbColumnAttribute.Name.get -> string!
+Wolfgang.Etl.DbClient.DbColumnAttribute.Skip.get -> bool
+Wolfgang.Etl.DbClient.DbColumnAttribute.Skip.set -> void
+Wolfgang.Etl.DbClient.DbTableAttribute
+Wolfgang.Etl.DbClient.DbTableAttribute.DbTableAttribute(string! name) -> void
+Wolfgang.Etl.DbClient.DbTableAttribute.Name.get -> string!
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CountAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.set -> void
