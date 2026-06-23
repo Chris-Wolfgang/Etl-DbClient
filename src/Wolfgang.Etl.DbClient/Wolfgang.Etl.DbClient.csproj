@@ -84,6 +84,25 @@
     <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.13.0" />
   </ItemGroup>
 
+  <!-- Source generator: built alongside the runtime, packed into the same
+       NuGet under analyzers/dotnet/cs. PrivateAssets=all so consumers don't
+       transitively reference the generator project. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Wolfgang.Etl.DbClient.SourceGenerator\Wolfgang.Etl.DbClient.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="PackSourceGenerator" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="..\Wolfgang.Etl.DbClient.SourceGenerator\bin\$(Configuration)\netstandard2.0\Wolfgang.Etl.DbClient.SourceGenerator.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false" />
+    </ItemGroup>
+  </Target>
+
   <!-- Analyzer PackageReferences are centralized in Directory.Build.props -->
 
 
