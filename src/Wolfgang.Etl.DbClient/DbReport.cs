@@ -81,12 +81,4 @@ public record DbReport : Report
     /// The wall clock time in milliseconds since the operation started.
     /// </summary>
     public long ElapsedMilliseconds { get; }
-
-
-
-    /// <summary>
-    /// The total number of records available for extraction, or <c>null</c> if
-    /// <see cref="DbExtractor{TRecord}.TotalCountQuery"/> was not set.
-    /// </summary>
-    public int? TotalItemCount { get; }
 }

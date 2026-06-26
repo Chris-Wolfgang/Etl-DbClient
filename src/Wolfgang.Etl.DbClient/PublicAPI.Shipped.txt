@@ -30,7 +30,6 @@ Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount.get -> int
 Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds) -> void
 Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds, int? totalItemCount) -> void
 Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds.get -> long
-Wolfgang.Etl.DbClient.DbReport.TotalItemCount.get -> int?
 Wolfgang.Etl.DbClient.WriteMode
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport!>! progress) -> Wolfgang.Etl.Abstractions.IProgressTimer!
