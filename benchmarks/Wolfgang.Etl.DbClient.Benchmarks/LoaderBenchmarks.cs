@@ -63,7 +63,7 @@ public class LoaderBenchmarks : IDisposable
 
     public void Dispose()
     {
-        _connection?.Dispose();
+        _connection.Dispose();
     }
 
 
