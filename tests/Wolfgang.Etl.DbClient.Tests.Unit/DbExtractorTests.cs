@@ -348,7 +348,11 @@ public class DbExtractorTests
             conn,
             "SELECT id, first_name, last_name, age FROM People"
         );
-        extractor.TotalCountQuery = _ => conn.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM People");
+        // Don't capture `conn` in the lambda — ReSharper's AccessToDisposedClosure
+        // flag is technically correct: the using-scope could outlive the closure.
+        // The test only needs to prove a custom TotalCountQuery's return value is
+        // surfaced through GetProgressReport().TotalItemCount, so return a constant.
+        extractor.TotalCountQuery = _ => Task.FromResult(3);
 
         await extractor.ExtractAsync().ToListAsync();
 
