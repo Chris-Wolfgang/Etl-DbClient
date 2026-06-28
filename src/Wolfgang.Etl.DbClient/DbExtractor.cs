@@ -326,6 +326,34 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// When <see langword="true"/>, the extractor opens the connection before
+    /// the first command runs and closes it after the enumeration ends. The
+    /// connection is NOT disposed — it's returned to the pool for reuse,
+    /// which plays better with connection-pool lifetime in web apps and
+    /// hosted services.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default <see langword="false"/> preserves the v0.4.0 behavior: the
+    /// caller is responsible for opening the connection before calling
+    /// <c>ExtractAsync</c>.
+    /// </para>
+    /// <para>
+    /// Ignored on the owned-connection ctor path (the
+    /// <c>(DbProviderFactory, connectionString, …)</c> overload). That path
+    /// always manages and disposes the connection because it created it.
+    /// </para>
+    /// <para>
+    /// If the connection is already open when <c>ExtractAsync</c> starts,
+    /// it's left open — the extractor only closes connections it itself
+    /// opened.
+    /// </para>
+    /// </remarks>
+    public bool ManageConnection { get; set; }
+
+
+
+    /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
     /// the total record count, which is then reported via <c>DbReport.TotalItemCount</c>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
@@ -375,16 +403,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     public async Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         var query = TotalCountQuery ?? DefaultTotalCountQuery;
+        var needsOpen = (_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open;
 
-        if (_ownsConnection && _connection.State != ConnectionState.Open)
+        if (!needsOpen)
         {
-            await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return await query(cancellationToken).ConfigureAwait(false);
+        }
 
-            try
-            {
-                return await query(cancellationToken).ConfigureAwait(false);
-            }
-            finally
+        await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return await query(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (_ownsConnection)
             {
 #if NET5_0_OR_GREATER
                 await _connection.DisposeAsync().ConfigureAwait(false);
@@ -392,9 +426,16 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 _connection.Dispose();
 #endif
             }
+            else
+            {
+#if NET5_0_OR_GREATER
+                await _connection.CloseAsync().ConfigureAwait(false);
+#else
+                _connection.Close();
+                await Task.CompletedTask.ConfigureAwait(false);
+#endif
+            }
         }
-
-        return await query(cancellationToken).ConfigureAwait(false);
     }
 
 
@@ -449,11 +490,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         LogExtractionStarted();
 
         // Owned-connection ctor path: open before the first query, dispose after.
+        // ManageConnection=true path: open before the first query, CLOSE (don't
+        // dispose) after — connection returns to the pool, caller keeps it.
         // try/finally in an async iterator is OK in C# 8+; the iterator runtime
         // routes break/exception through the finally on Dispose.
-        if (_ownsConnection && _connection.State != ConnectionState.Open)
+        var openedHere = false;
+        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
+            openedHere = true;
         }
 
         try
@@ -501,6 +546,16 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 await _connection.DisposeAsync().ConfigureAwait(false);
 #else
                 _connection.Dispose();
+#endif
+            }
+            else if (openedHere)
+            {
+                // ManageConnection path — close (do NOT dispose; caller owns it).
+#if NET5_0_OR_GREATER
+                await _connection.CloseAsync().ConfigureAwait(false);
+#else
+                _connection.Close();
+                await Task.CompletedTask.ConfigureAwait(false);
 #endif
             }
         }
