@@ -39,7 +39,7 @@ public class ExtractorBenchmarks : IDisposable
 
     public void Dispose()
     {
-        _connection?.Dispose();
+        _connection.Dispose();
     }
 
 

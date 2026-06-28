@@ -103,7 +103,7 @@ public class DbLoaderBatchSizeBenchmarks : IDisposable
         }
 
         _disposed = true;
-        _conn?.Dispose();
+        _conn.Dispose();
     }
 
 
