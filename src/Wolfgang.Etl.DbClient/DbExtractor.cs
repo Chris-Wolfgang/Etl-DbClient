@@ -327,7 +327,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
     /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
-    /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
+    /// the total record count, which is then reported via <c>DbReport.TotalItemCount</c>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).

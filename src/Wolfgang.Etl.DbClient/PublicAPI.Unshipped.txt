@@ -1,1 +1,3 @@
 #nullable enable
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.IsDryRun.get -> bool
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.IsDryRun.set -> void

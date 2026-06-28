@@ -47,7 +47,7 @@ namespace Wolfgang.Etl.DbClient;
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
-public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
+public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     where TRecord : notnull
 {
     // ------------------------------------------------------------------
@@ -272,6 +272,36 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// When <see langword="true"/>, the loader runs the full pipeline —
+    /// enumerates the source, evaluates <c>SkipItemCount</c> /
+    /// <c>MaximumItemCount</c>, increments progress counters, fires the
+    /// progress-timer callback, and emits all the usual log messages — but
+    /// **skips the actual <c>ExecuteAsync</c> call**. The database is not
+    /// modified.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Useful for validating an ETL pipeline (source feed, mapping, batching,
+    /// throttling) against production without writing anything, or for
+    /// estimating how long a write would take.
+    /// </para>
+    /// <para>
+    /// The auto-managed-transaction path still <c>BeginTransaction</c> /
+    /// <c>Commit</c>s — those are connection-level operations and are needed
+    /// for the open/dispose lifecycle. They have no effect on the database
+    /// because no writes happen inside the transaction.
+    /// </para>
+    /// <para>
+    /// Default <see langword="false"/> preserves the prior behavior. This is
+    /// the implementation of <see cref="ISupportDryRun.IsDryRun"/> from
+    /// Wolfgang.Etl.Abstractions 0.15.0+.
+    /// </para>
+    /// </remarks>
+    public bool IsDryRun { get; set; }
+
+
+
+    /// <summary>
     /// Number of records sent per <c>ExecuteAsync</c> call. Defaults to <c>1</c>
     /// (one round-trip per record). Larger values pass an <c>IEnumerable&lt;TRecord&gt;</c>
     /// to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
@@ -489,18 +519,21 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 continue;
             }
 
-            await _connection.ExecuteAsync
-            (
-                new CommandDefinition
+            if (!IsDryRun)
+            {
+                await _connection.ExecuteAsync
                 (
-                    _commandText,
-                    item,
-                    transaction,
-                    CommandTimeoutSeconds,
-                    CommandType,
-                    cancellationToken: token
-                )
-            ).ConfigureAwait(false);
+                    new CommandDefinition
+                    (
+                        _commandText,
+                        item,
+                        transaction,
+                        CommandTimeoutSeconds,
+                        CommandType,
+                        cancellationToken: token
+                    )
+                ).ConfigureAwait(false);
+            }
 
             IncrementCurrentItemCount();
             LogDebugRecordLoaded();
@@ -566,18 +599,21 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         CancellationToken token
     )
     {
-        await _connection.ExecuteAsync
-        (
-            new CommandDefinition
+        if (!IsDryRun)
+        {
+            await _connection.ExecuteAsync
             (
-                _commandText,
-                batch,
-                transaction,
-                CommandTimeoutSeconds,
-                CommandType,
-                cancellationToken: token
-            )
-        ).ConfigureAwait(false);
+                new CommandDefinition
+                (
+                    _commandText,
+                    batch,
+                    transaction,
+                    CommandTimeoutSeconds,
+                    CommandType,
+                    cancellationToken: token
+                )
+            ).ConfigureAwait(false);
+        }
 
         for (var i = 0; i < batch.Count; i++)
         {
