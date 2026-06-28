@@ -434,7 +434,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
     /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
-    /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
+    /// the total record count, which is then reported via <c>DbReport.TotalItemCount</c>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).
@@ -470,7 +470,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <remarks>
     /// <para>
     /// Doesn't mutate any state on the extractor — does not touch
-    /// <see cref="DbReport.TotalItemCount"/>, the stopwatch, or any of the
+    /// <c>DbReport.TotalItemCount</c>, the stopwatch, or any of the
     /// progress counters. Safe to call any number of times before, during
     /// (different cancellation token), or after an <c>ExtractAsync</c>.
     /// </para>
@@ -582,7 +582,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         try
         {
-            var (commandText, param) = ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters);
+            ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
 
             if (TotalCountQuery != null)
             {
@@ -660,21 +660,31 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <summary>
     /// If <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are both
     /// set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
-    /// and add <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set.
-    /// Otherwise returns the inputs unchanged.
+    /// (returned via <paramref name="pagedCommandText"/>) and add
+    /// <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set (returned
+    /// via <paramref name="pagedParam"/>). Otherwise returns the inputs
+    /// unchanged.
     /// </summary>
-    private (string CommandText, DynamicParameters? Param) ApplyServerPaging(string commandText, DynamicParameters? param)
+    /// <remarks>
+    /// out parameters instead of a tuple — net462 doesn't ship
+    /// <c>System.ValueTuple</c> in the base targeting pack and we avoid the
+    /// extra package reference.
+    /// </remarks>
+    private void ApplyServerPaging(string commandText, DynamicParameters? param, out string pagedCommandText, out DynamicParameters? pagedParam)
     {
         if (!ServerOffset.HasValue || !ServerLimit.HasValue)
         {
-            return (commandText, param);
+            pagedCommandText = commandText;
+            pagedParam = param;
+            return;
         }
 
         var pagingParam = param ?? new DynamicParameters();
         pagingParam.Add("@PageOffset", ServerOffset.Value);
         pagingParam.Add("@PageLimit", ServerLimit.Value);
 
-        return (commandText + " " + PagingClauseTemplate, pagingParam);
+        pagedCommandText = commandText + " " + PagingClauseTemplate;
+        pagedParam = pagingParam;
     }
 
 

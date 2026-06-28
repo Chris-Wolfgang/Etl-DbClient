@@ -21,8 +21,8 @@ Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ServerOffset.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CurrentErrorCount.get -> int
-Wolfgang.Etl.DbClient.DbLoader<TRecord>.DryRun.get -> bool
-Wolfgang.Etl.DbClient.DbLoader<TRecord>.DryRun.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.IsDryRun.get -> bool
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.IsDryRun.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.InsertBatchSize.get -> int

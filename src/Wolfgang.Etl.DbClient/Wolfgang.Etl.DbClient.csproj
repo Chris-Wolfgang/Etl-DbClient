@@ -81,7 +81,7 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.13.0" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.15.0" />
   </ItemGroup>
 
   <!-- Source generator: built alongside the runtime, packed into the same

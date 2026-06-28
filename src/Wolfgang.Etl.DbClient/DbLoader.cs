@@ -47,7 +47,7 @@ namespace Wolfgang.Etl.DbClient;
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
-public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
+public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     where TRecord : notnull
 {
     // ------------------------------------------------------------------
@@ -326,7 +326,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// Mutually exclusive with <see cref="BatchSize"/> &gt; <c>1</c> — when
     /// both are set, <c>InsertBatchSize</c> wins because it generates a
     /// single statement per chunk instead of N. Mutually exclusive with
-    /// <see cref="DryRun"/> = <see langword="true"/> (DryRun short-circuits
+    /// <c>IsDryRun</c> = <see langword="true"/> (IsDryRun short-circuits
     /// before SQL generation) and with stored-procedure
     /// <see cref="CommandType"/>.
     /// </para>
@@ -377,10 +377,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// because no writes happen inside the transaction.
     /// </para>
     /// <para>
-    /// Default <see langword="false"/> preserves the prior behavior.
+    /// Default <see langword="false"/> preserves the prior behavior. This is
+    /// the implementation of <see cref="ISupportDryRun.IsDryRun"/> from
+    /// Wolfgang.Etl.Abstractions 0.15.0+.
     /// </para>
     /// </remarks>
-    public bool DryRun { get; set; }
+    public bool IsDryRun { get; set; }
 
 
 
@@ -804,7 +806,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         CancellationToken token
     )
     {
-        if (DryRun)
+        if (IsDryRun)
         {
             foreach (var _ in batch)
             {
@@ -989,7 +991,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 continue;
             }
 
-            if (!DryRun && !await TryExecuteItemAsync(item, transaction, token).ConfigureAwait(false))
+            if (!IsDryRun && !await TryExecuteItemAsync(item, transaction, token).ConfigureAwait(false))
             {
                 continue;
             }
@@ -1114,7 +1116,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         CancellationToken token
     )
     {
-        if (!DryRun)
+        if (!IsDryRun)
         {
             await _connection.ExecuteAsync
             (
