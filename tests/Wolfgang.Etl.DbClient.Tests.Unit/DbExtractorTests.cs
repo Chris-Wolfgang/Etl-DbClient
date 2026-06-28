@@ -565,4 +565,56 @@ public class DbExtractorTests
 
         Assert.Equal(3, results.Count);
     }
+
+
+
+    // ------------------------------------------------------------------
+    // CountAsync (#32)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task CountAsync_uses_default_count_query_and_returns_row_count()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 7);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        var count = await extractor.CountAsync();
+
+        Assert.Equal(7, count);
+    }
+
+
+
+    [Fact]
+    public async Task CountAsync_with_custom_TotalCountQuery_returns_that_value()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 4);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People")
+        {
+            TotalCountQuery = _ => Task.FromResult(42)
+        };
+
+        var count = await extractor.CountAsync();
+
+        Assert.Equal(42, count);
+    }
+
+
+
+    [Fact]
+    public async Task CountAsync_does_not_affect_progress_state()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 5);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        var count = await extractor.CountAsync();
+
+        // CountAsync runs the count query but does not touch the progress
+        // counters — those advance only when ExtractAsync streams rows.
+        Assert.Equal(5, count);
+        Assert.Equal(0, extractor.CurrentItemCount);
+    }
 }
