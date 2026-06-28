@@ -882,11 +882,16 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
     private static IReadOnlyList<string> ExtractTemplateParamNames(string template)
     {
+        // `while` rather than `for` — the loop intentionally jumps the cursor past
+        // the matched parameter name in one step, which Sonar's S127 flags as
+        // "loop counter mutated in body" when the cursor is a for-loop variable.
         var names = new List<string>();
-        for (var i = 0; i < template.Length; i++)
+        var i = 0;
+        while (i < template.Length)
         {
             if (template[i] != '@')
             {
+                i++;
                 continue;
             }
             var start = i + 1;
@@ -899,7 +904,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
             {
                 names.Add(template.Substring(start, end - start));
             }
-            i = end - 1;
+            i = end;
         }
         return names;
     }
