@@ -298,6 +298,65 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
     /// <summary>
+    /// When greater than <c>1</c>, the loader replaces N per-row
+    /// <c>INSERT</c>s with a single multi-row <c>INSERT … VALUES (…), (…), …</c>
+    /// statement. The single biggest single-line perf win available
+    /// without provider-specific bulk APIs.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Contract on <c>CommandText</c>: it MUST end with the literal token
+    /// <c>VALUES</c> followed by a parenthesized parameter template such as
+    /// <c>(@FirstName, @LastName, @Age)</c>. The loader extracts that
+    /// template, replicates it once per row in the batch with suffixed
+    /// parameter names (<c>@FirstName_0</c>, <c>@FirstName_1</c>, …), and
+    /// rebinds each row's properties to its slot via reflection.
+    /// </para>
+    /// <para>
+    /// Database parameter limits apply — SQL Server caps at 2,100 params per
+    /// command, SQLite at 999, MySQL much higher. Choose
+    /// <c>InsertBatchSize</c> so that <c>InsertBatchSize × columns</c> stays
+    /// under your provider's limit.
+    /// </para>
+    /// <para>
+    /// Default <c>1</c> preserves the v0.4.0 behavior (one statement per row,
+    /// or N statements bundled via <see cref="BatchSize"/>).
+    /// </para>
+    /// <para>
+    /// Mutually exclusive with <see cref="BatchSize"/> &gt; <c>1</c> — when
+    /// both are set, <c>InsertBatchSize</c> wins because it generates a
+    /// single statement per chunk instead of N. Mutually exclusive with
+    /// <c>IsDryRun</c> = <see langword="true"/> (IsDryRun short-circuits
+    /// before SQL generation) and with stored-procedure
+    /// <see cref="CommandType"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is less than <c>1</c>.
+    /// </exception>
+    public int InsertBatchSize
+    {
+        get => _insertBatchSize;
+        set
+        {
+            if (value < 1)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "InsertBatchSize must be at least 1."
+                );
+            }
+            _insertBatchSize = value;
+        }
+    }
+
+    private int _insertBatchSize = 1;
+
+
+
+    /// <summary>
     /// When <see langword="true"/>, the loader runs the full pipeline —
     /// enumerates the source, evaluates <c>SkipItemCount</c> /
     /// <c>MaximumItemCount</c>, increments progress counters, fires the
@@ -690,6 +749,189 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
 
+    private async Task ExecuteItemsMultiRowInsertAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        var prefix = ExtractInsertPrefix(_commandText, out var template);
+        var paramNames = ExtractTemplateParamNames(template);
+        var properties = GetMappedProperties(paramNames);
+
+        var buffer = new List<TRecord>(_insertBatchSize);
+        await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
+        {
+            token.ThrowIfCancellationRequested();
+
+            if (CurrentItemCount + buffer.Count >= MaximumItemCount)
+            {
+                LogDebugMaxReached();
+                break;
+            }
+
+            if (CurrentSkippedItemCount < SkipItemCount)
+            {
+                IncrementCurrentSkippedItemCount();
+                LogDebugItemSkipped();
+                continue;
+            }
+
+            buffer.Add(item);
+
+            if (buffer.Count >= _insertBatchSize)
+            {
+                await FlushMultiRowInsertAsync(prefix, template, paramNames, properties, buffer, transaction, token).ConfigureAwait(false);
+                buffer.Clear();
+            }
+        }
+
+        if (buffer.Count > 0)
+        {
+            await FlushMultiRowInsertAsync(prefix, template, paramNames, properties, buffer, transaction, token).ConfigureAwait(false);
+        }
+    }
+
+
+
+    private async Task FlushMultiRowInsertAsync
+    (
+        string prefix,
+        string template,
+        IReadOnlyList<string> paramNames,
+        IReadOnlyList<System.Reflection.PropertyInfo> properties,
+        List<TRecord> batch,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        if (IsDryRun)
+        {
+            foreach (var _ in batch)
+            {
+                IncrementCurrentItemCount();
+                LogDebugRecordLoaded();
+            }
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder(prefix.Length + batch.Count * (template.Length + 8));
+        sb.Append(prefix);
+
+        var dp = new DynamicParameters();
+        for (var i = 0; i < batch.Count; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+
+            var rowTemplate = template;
+            for (var p = 0; p < paramNames.Count; p++)
+            {
+                var original = "@" + paramNames[p];
+                var suffixed = original + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                rowTemplate = rowTemplate.Replace(original, suffixed);
+                dp.Add(suffixed, properties[p].GetValue(batch[i]));
+            }
+            sb.Append(rowTemplate);
+        }
+
+        await _connection.ExecuteAsync
+        (
+            new CommandDefinition(sb.ToString(), dp, transaction, CommandTimeoutSeconds, CommandType.Text, cancellationToken: token)
+        ).ConfigureAwait(false);
+
+        foreach (var _ in batch)
+        {
+            IncrementCurrentItemCount();
+            LogDebugRecordLoaded();
+        }
+    }
+
+
+
+    private static string ExtractInsertPrefix(string commandText, out string template)
+    {
+        var idx = commandText.LastIndexOf("VALUES", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+        {
+            throw new InvalidOperationException
+            (
+                "InsertBatchSize > 1 requires CommandText to contain 'VALUES (template)'. " +
+                $"CommandText was: {commandText}"
+            );
+        }
+
+        var afterValues = commandText.Substring(idx + "VALUES".Length).Trim();
+        if (afterValues.Length < 2 || afterValues[0] != '(' || afterValues[afterValues.Length - 1] != ')')
+        {
+            throw new InvalidOperationException
+            (
+                "InsertBatchSize > 1 requires the VALUES clause to be a single parenthesized " +
+                "parameter template such as '(@A, @B, @C)'. Got: " + afterValues
+            );
+        }
+
+        template = afterValues;
+        return commandText.Substring(0, idx + "VALUES".Length) + " ";
+    }
+
+
+
+    private static IReadOnlyList<string> ExtractTemplateParamNames(string template)
+    {
+        var names = new List<string>();
+        for (var i = 0; i < template.Length; i++)
+        {
+            if (template[i] != '@')
+            {
+                continue;
+            }
+            var start = i + 1;
+            var end = start;
+            while (end < template.Length && (char.IsLetterOrDigit(template[end]) || template[end] == '_'))
+            {
+                end++;
+            }
+            if (end > start)
+            {
+                names.Add(template.Substring(start, end - start));
+            }
+            i = end - 1;
+        }
+        return names;
+    }
+
+
+
+    private static IReadOnlyList<System.Reflection.PropertyInfo> GetMappedProperties(IReadOnlyList<string> paramNames)
+    {
+        var props = typeof(TRecord).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var byName = new Dictionary<string, System.Reflection.PropertyInfo>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in props)
+        {
+            byName[p.Name] = p;
+        }
+
+        var result = new System.Reflection.PropertyInfo[paramNames.Count];
+        for (var i = 0; i < paramNames.Count; i++)
+        {
+            if (!byName.TryGetValue(paramNames[i], out var info))
+            {
+                throw new InvalidOperationException
+                (
+                    $"InsertBatchSize > 1: TRecord '{typeof(TRecord).Name}' has no public property matching parameter '@{paramNames[i]}'."
+                );
+            }
+            result[i] = info;
+        }
+        return result;
+    }
+
+
+
     /// <summary>
     /// Load path when the caller supplied the transaction. The loader executes
     /// against it but never commits, rolls back, or disposes — those are the
@@ -713,6 +955,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         CancellationToken token
     )
     {
+        if (_insertBatchSize > 1)
+        {
+            return ExecuteItemsMultiRowInsertAsync(items, transaction, token);
+        }
+
         return _batchSize <= 1
             ? ExecuteItemsPerRowAsync(items, transaction, token)
             : ExecuteItemsBatchedAsync(items, transaction, token);
