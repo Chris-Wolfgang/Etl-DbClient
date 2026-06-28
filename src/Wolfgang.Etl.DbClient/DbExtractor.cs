@@ -354,6 +354,40 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// Optional override for the parameter set passed to Dapper. Setting this
+    /// property takes precedence over any <c>IDictionary&lt;string,object&gt;</c>
+    /// supplied via the constructor — useful when the command is a stored
+    /// procedure with <c>OUT</c> / <c>INOUT</c> parameters that need to be
+    /// declared with <see cref="ParameterDirection"/> values Dapper can't
+    /// infer from a plain dictionary.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Caller-owned: the extractor never clones it. After
+    /// <c>ExtractAsync</c> completes, read output values via
+    /// <c>Parameters.Get&lt;T&gt;("@name")</c>.
+    /// </para>
+    /// <para>
+    /// Example:
+    /// <code>
+    /// var p = new DynamicParameters();
+    /// p.Add("@CustomerId", 42);
+    /// p.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+    /// var extractor = new DbExtractor&lt;Order&gt;(conn, "usp_GetOrdersForCustomer")
+    /// {
+    ///     CommandType = CommandType.StoredProcedure,
+    ///     Parameters = p
+    /// };
+    /// var orders = await extractor.ExtractAsync().ToListAsync();
+    /// var total = p.Get&lt;int&gt;("@TotalCount");
+    /// </code>
+    /// </para>
+    /// </remarks>
+    public DynamicParameters? Parameters { get; set; }
+
+
+
+    /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
     /// the total record count, which is then reported via <c>DbReport.TotalItemCount</c>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
@@ -503,7 +537,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         try
         {
-            var param = _dynamicParameters;
+            var param = Parameters ?? _dynamicParameters;
 
             if (TotalCountQuery != null)
             {
@@ -571,7 +605,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         var sanitized = SanitizeCommandTextForCount(_commandText);
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
-        var param = _dynamicParameters;
+        var param = Parameters ?? _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>(
             new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token));
     }
