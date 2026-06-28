@@ -850,6 +850,93 @@ public class DbLoaderTests
 
 
 
+    // ------------------------------------------------------------------
+    // BatchCommitSize (#22)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void BatchCommitSize_defaults_to_zero()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(0, loader.BatchCommitSize);
+    }
+
+
+
+    [Fact]
+    public void BatchCommitSize_when_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.BatchCommitSize = -1);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchCommitSize_inserts_all_records()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 3
+        };
+
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+        // 10 rows split into chunks of 3 (3+3+3+1) — every chunk commits
+        // independently. End state: all 10 rows persisted.
+        Assert.Equal(10, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(10, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchCommitSize_preserves_earlier_chunks_on_late_failure()
+    {
+        // Create a fresh in-memory DB with a small enough table to fail on the
+        // 7th insert (NOT NULL constraint on first_name). Records 1-6 should
+        // survive in two committed chunks of 3; record 7 fails and rolls back
+        // its own (partial) chunk.
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var records = CreateTestRecords(6).Concat(new[]
+        {
+            new PersonRecord { FirstName = null!, LastName = "Bad", Age = 99 }
+        });
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 3
+        };
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>
+        (
+            async () => await loader.LoadAsync(records.ToAsyncEnumerable())
+        );
+
+        // The first 2 chunks of 3 each committed before the failure; the 3rd
+        // chunk (containing the bad record) rolled back.
+        Assert.Equal(6, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
     [Fact]
     public async Task LoadAsync_when_IsDryRun_is_true_and_BatchSize_is_set_does_not_flush_batches()
     {

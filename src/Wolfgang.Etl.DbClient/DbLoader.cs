@@ -378,6 +378,53 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
     /// <summary>
+    /// Commit the auto-managed transaction every N successfully-loaded rows.
+    /// Defaults to <c>0</c>, meaning "commit only once at the end of the load"
+    /// (the v0.4.0 behavior). Larger values let very long loads survive a
+    /// mid-flight failure with most of the work persisted.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only takes effect when the loader manages the transaction (i.e. the
+    /// caller did NOT pass a <c>DbTransaction</c> to the constructor) AND
+    /// <see cref="BatchSize"/> is <c>1</c>. With a caller-supplied transaction
+    /// the loader never commits, so this knob has no effect; with
+    /// <c>BatchSize &gt; 1</c> the per-batch commit boundary is the
+    /// <see cref="BatchSize"/>'s own batch, which we currently don't subdivide.
+    /// </para>
+    /// <para>
+    /// Trade-off: a partial-progress failure with <c>BatchCommitSize &gt; 0</c>
+    /// leaves earlier committed batches in the destination. You lose all-or-
+    /// nothing semantics in exchange for resumability and lower undo-log
+    /// pressure on the database.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public int BatchCommitSize
+    {
+        get => _batchCommitSize;
+        set
+        {
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "BatchCommitSize cannot be negative. Use 0 for 'commit only at end'."
+                );
+            }
+            _batchCommitSize = value;
+        }
+    }
+
+    private int _batchCommitSize;
+
+
+
+    /// <summary>
     /// Number of records sent per <c>ExecuteAsync</c> call. Defaults to <c>1</c>
     /// (one round-trip per record). Larger values pass an <c>IEnumerable&lt;TRecord&gt;</c>
     /// to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
@@ -522,6 +569,23 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         CancellationToken token
     )
     {
+        if (_batchCommitSize == 0 || _batchSize > 1)
+        {
+            // Single-transaction path: BatchCommitSize == 0 (commit only at
+            // end) OR BatchSize > 1 (per-execute batching uses its own
+            // commit boundary, not subdivided here).
+            await LoadWithAutoTransactionSingleAsync(items, token).ConfigureAwait(false);
+            return;
+        }
+
+        // Chunked-commit path: BatchCommitSize > 0 AND BatchSize == 1.
+        await LoadWithAutoTransactionChunkedAsync(items, token).ConfigureAwait(false);
+    }
+
+
+
+    private async Task LoadWithAutoTransactionSingleAsync(IAsyncEnumerable<TRecord> items, CancellationToken token)
+    {
         var transaction = await BeginAutoTransactionAsync(token).ConfigureAwait(false);
 
         try
@@ -538,6 +602,52 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         {
             await DisposeTransactionAsync(transaction).ConfigureAwait(false);
         }
+    }
+
+
+
+    private async Task LoadWithAutoTransactionChunkedAsync(IAsyncEnumerable<TRecord> items, CancellationToken token)
+    {
+        // Materialize up to BatchCommitSize items at a time, then run each
+        // chunk through the single-transaction path. A failure rolls back
+        // ONLY the current chunk; previously-committed chunks survive.
+        var enumerator = items.GetAsyncEnumerator(token);
+        try
+        {
+            while (true)
+            {
+                var chunk = new List<TRecord>(_batchCommitSize);
+                while (chunk.Count < _batchCommitSize && await enumerator.MoveNextAsync().ConfigureAwait(false))
+                {
+                    chunk.Add(enumerator.Current);
+                }
+
+                if (chunk.Count == 0)
+                {
+                    break;
+                }
+
+                await LoadWithAutoTransactionSingleAsync(AsAsyncEnumerable(chunk), token).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            await enumerator.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+
+
+    // Local IAsyncEnumerable adapter over a materialized List<T>. Used by the
+    // chunked-commit path; avoiding the System.Linq.Async extension keeps the
+    // src/ project dependency-free of that package.
+    private static async IAsyncEnumerable<TRecord> AsAsyncEnumerable(List<TRecord> source)
+    {
+        foreach (var item in source)
+        {
+            yield return item;
+        }
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
 

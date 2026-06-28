@@ -1,4 +1,6 @@
 #nullable enable
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.get -> int
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CurrentErrorCount.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.set -> void
