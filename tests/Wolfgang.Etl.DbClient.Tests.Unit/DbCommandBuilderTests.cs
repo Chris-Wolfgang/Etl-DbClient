@@ -1,3 +1,5 @@
+// ReSharper disable UnusedMember.Local -- test fixture types' properties are reflected over by DbCommandBuilder.BuildInsert / BuildUpdate / BuildSelect
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;

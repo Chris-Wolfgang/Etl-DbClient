@@ -1,3 +1,5 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
+
 using System;
 
 namespace Wolfgang.Etl.DbClient;

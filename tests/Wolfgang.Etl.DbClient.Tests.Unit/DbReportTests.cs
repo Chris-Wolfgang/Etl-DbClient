@@ -67,6 +67,6 @@ public class DbReportTests
         var report = new DbReport(10, 2, "SELECT 1", 500);
         var str = report.ToString();
 
-        Assert.Contains("SELECT 1", str, System.StringComparison.Ordinal);
+        Assert.Contains("SELECT 1", str, StringComparison.Ordinal);
     }
 }

@@ -305,7 +305,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // semantics, if needed, only have to flip in one place).
     private int? CommandTimeoutSeconds => _commandTimeout.HasValue
         ? (int)_commandTimeout.Value.TotalSeconds
-        : (int?)null;
+        : null;
 
 
 
