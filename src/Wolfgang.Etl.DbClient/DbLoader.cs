@@ -302,6 +302,82 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
     /// <summary>
+    /// How the loader reacts when a single row's <c>ExecuteAsync</c> throws.
+    /// Defaults to <see cref="RowErrorHandling.Abort"/>, which preserves the
+    /// v0.4.0 behavior (first failure rolls back the transaction and
+    /// propagates).
+    /// </summary>
+    /// <remarks>
+    /// <see cref="RowErrorHandling.Skip"/> only takes effect on the
+    /// per-record path (<see cref="BatchSize"/> == 1, the default). A failed
+    /// batch cannot be safely attributed to a single row without per-item
+    /// retry, so the load still aborts even in Skip mode when
+    /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
+    /// </remarks>
+    public RowErrorHandling ErrorHandling { get; set; } = RowErrorHandling.Abort;
+
+
+
+    /// <summary>
+    /// Maximum number of row-level failures the loader will tolerate before
+    /// aborting the load with an <see cref="InvalidOperationException"/>
+    /// whose <see cref="Exception.InnerException"/> is the last underlying
+    /// row failure. Defaults to <c>0</c>, meaning "unlimited" (every failure
+    /// is reported via <see cref="RowFailed"/> and processing continues).
+    /// </summary>
+    /// <remarks>
+    /// Only consulted when <see cref="ErrorHandling"/> is
+    /// <see cref="RowErrorHandling.Skip"/>.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public int MaxErrorCount
+    {
+        get => _maxErrorCount;
+        set
+        {
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "MaxErrorCount cannot be negative. Use 0 for unlimited."
+                );
+            }
+            _maxErrorCount = value;
+        }
+    }
+
+    private int _maxErrorCount;
+
+
+
+    /// <summary>
+    /// Number of rows that have failed to load so far (incremented for every
+    /// <see cref="RowErrorHandling.Skip"/>-handled exception). Resets to 0
+    /// at the start of each <c>LoadAsync</c> call.
+    /// </summary>
+    public int CurrentErrorCount { get; private set; }
+
+
+
+    /// <summary>
+    /// Raised once per row that fails when <see cref="ErrorHandling"/> is
+    /// <see cref="RowErrorHandling.Skip"/>. The handler receives the failing
+    /// record, the underlying exception, and the row's 1-based item index.
+    /// </summary>
+    /// <remarks>
+    /// Typical use: capture the failing record into a dead-letter store. The
+    /// handler is invoked synchronously inside the load loop, so a slow
+    /// handler will slow the entire load.
+    /// </remarks>
+    public event EventHandler<RowFailedEventArgs<TRecord>>? RowFailed;
+
+
+
+    /// <summary>
     /// Number of records sent per <c>ExecuteAsync</c> call. Defaults to <c>1</c>
     /// (one round-trip per record). Larger values pass an <c>IEnumerable&lt;TRecord&gt;</c>
     /// to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
@@ -397,6 +473,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     )
     {
         _stopwatch.Restart();
+        CurrentErrorCount = 0;
         LogLoadingStarted();
 
         // Owned-connection ctor path: open before the first execute, dispose at
@@ -519,24 +596,69 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 continue;
             }
 
-            if (!IsDryRun)
+            if (!IsDryRun && !await TryExecuteItemAsync(item, transaction, token).ConfigureAwait(false))
             {
-                await _connection.ExecuteAsync
-                (
-                    new CommandDefinition
-                    (
-                        _commandText,
-                        item,
-                        transaction,
-                        CommandTimeoutSeconds,
-                        CommandType,
-                        cancellationToken: token
-                    )
-                ).ConfigureAwait(false);
+                continue;
             }
 
             IncrementCurrentItemCount();
             LogDebugRecordLoaded();
+        }
+    }
+
+
+
+    /// <summary>
+    /// Per-row ExecuteAsync wrapper. Returns <see langword="true"/> when the
+    /// row succeeded (or threw in <see cref="RowErrorHandling.Abort"/> mode —
+    /// then the exception propagates and the return value isn't observed);
+    /// <see langword="false"/> when the row failed and was skipped under
+    /// <see cref="RowErrorHandling.Skip"/>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// <see cref="MaxErrorCount"/> was reached after this row's failure in
+    /// <see cref="RowErrorHandling.Skip"/> mode.
+    /// </exception>
+    private async Task<bool> TryExecuteItemAsync(TRecord item, DbTransaction? transaction, CancellationToken token)
+    {
+        try
+        {
+            await _connection.ExecuteAsync
+            (
+                new CommandDefinition
+                (
+                    _commandText,
+                    item,
+                    transaction,
+                    CommandTimeoutSeconds,
+                    CommandType,
+                    cancellationToken: token
+                )
+            ).ConfigureAwait(false);
+            return true;
+        }
+        catch (Exception ex) when
+        (
+            ErrorHandling == RowErrorHandling.Skip
+            && ex is not OperationCanceledException
+        )
+        {
+            CurrentErrorCount++;
+            var itemIndex = CurrentItemCount + CurrentSkippedItemCount + CurrentErrorCount;
+            RowFailed?.Invoke(this, new RowFailedEventArgs<TRecord>(item, ex, itemIndex));
+            LogRowErrorSkipped(ex, itemIndex);
+
+            if (_maxErrorCount > 0 && CurrentErrorCount >= _maxErrorCount)
+            {
+                throw new InvalidOperationException
+                (
+                    $"DbLoader.MaxErrorCount ({_maxErrorCount}) exceeded. " +
+                    $"Last failure on item index {itemIndex}; see inner exception.",
+                    ex
+                );
+            }
+
+            return false;
         }
     }
 
@@ -796,6 +918,24 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 "Skipping item ({SkippedCount}/{SkipItemCount})",
                 CurrentSkippedItemCount,
                 SkipItemCount
+            );
+        }
+    }
+
+
+
+    private void LogRowErrorSkipped(Exception ex, long itemIndex)
+    {
+        if (_logger.IsEnabled(LogLevel.Warning))
+        {
+            _logger.LogWarning
+            (
+                ex,
+                "Row {ItemIndex} failed and was skipped ({ErrorCount} errors so far). " +
+                "Configured ErrorHandling=Skip; MaxErrorCount={MaxErrorCount}",
+                itemIndex,
+                CurrentErrorCount,
+                _maxErrorCount
             );
         }
     }
