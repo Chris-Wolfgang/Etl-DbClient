@@ -5,6 +5,9 @@
 
 using System.ComponentModel;
 
+// ReSharper disable once CheckNamespace -- this type MUST live in
+// System.Runtime.CompilerServices for the C# compiler to recognize it as the
+// init-setter marker, regardless of the folder layout under the project root.
 namespace System.Runtime.CompilerServices
 {
     [EditorBrowsable(EditorBrowsableState.Never)]

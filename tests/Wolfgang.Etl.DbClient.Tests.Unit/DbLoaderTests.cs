@@ -73,7 +73,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord>(conn, (string)null!)
+            () => new DbLoader<PersonRecord>(conn, null!)
         );
     }
 
@@ -651,7 +651,7 @@ public class DbLoaderTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "INSERT INTO People (first_name) VALUES (@FirstName)")
+            () => new DbLoader<PersonRecord>(null!, "Data Source=:memory:", "INSERT INTO People (first_name) VALUES (@FirstName)")
         );
     }
 
@@ -673,7 +673,7 @@ public class DbLoaderTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", (string)null!)
+            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", null!)
         );
     }
 

@@ -1,4 +1,3 @@
-using Wolfgang.Etl.Abstractions;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;

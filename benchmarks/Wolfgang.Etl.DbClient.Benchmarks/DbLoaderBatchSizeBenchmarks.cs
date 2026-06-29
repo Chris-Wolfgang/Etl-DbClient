@@ -6,8 +6,8 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.DbClient;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
@@ -21,6 +21,7 @@ namespace Wolfgang.Etl.DbClient.Benchmarks;
 public class DbLoaderBatchSizeBenchmarks : IDisposable
 {
     [Table("benchmark_people")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     public class BenchmarkPerson
     {
         [Key]

@@ -66,7 +66,7 @@ internal static class TestDb
         using var cmd = connection.CreateCommand();
         cmd.CommandText = $"SELECT COUNT(*) FROM {table}";
         var result = await cmd.ExecuteScalarAsync();
-        return System.Convert.ToInt32(result, CultureInfo.InvariantCulture);
+        return Convert.ToInt32(result, CultureInfo.InvariantCulture);
     }
 
 

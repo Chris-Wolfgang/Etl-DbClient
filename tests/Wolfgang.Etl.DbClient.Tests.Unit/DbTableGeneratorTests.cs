@@ -1,5 +1,5 @@
 using Dapper;
-using Wolfgang.Etl.DbClient;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
@@ -7,8 +7,14 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 // Test fixtures live OUTSIDE the test class so the source generator picks
 // them up at compile time. The generator emits a partial with `public const
 // string Insert` and `public static void Bind(DynamicParameters, TRecord)`.
+//
+// UsedImplicitly: source-generator-emitted code reads these properties via
+// `record.FirstName` etc; the tests only verify the generated SQL string.
+// ReSharper has no visibility into the generator's output at static-analysis
+// time, so without this marker every fixture property looks unused.
 
 [DbTable("people")]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedPerson
 {
     public string FirstName { get; init; } = string.Empty;
@@ -19,6 +25,7 @@ public partial record GeneratedPerson
 
 
 [DbTable("orders")]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedOrder
 {
     [DbColumn("order_id")]

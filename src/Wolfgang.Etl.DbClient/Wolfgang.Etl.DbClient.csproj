@@ -79,6 +79,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
     <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.15.0" />

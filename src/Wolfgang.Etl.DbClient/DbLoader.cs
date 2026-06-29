@@ -256,7 +256,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
     private int? CommandTimeoutSeconds => _commandTimeout.HasValue
         ? (int)_commandTimeout.Value.TotalSeconds
-        : (int?)null;
+        : null;
 
 
 
@@ -1156,7 +1156,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 #pragma warning disable CA1849, VSTHRD103
         transaction.Dispose();
 #pragma warning restore CA1849, VSTHRD103
-        return System.Threading.Tasks.Task.CompletedTask;
+        return Task.CompletedTask;
 #endif
     }
 
@@ -1169,7 +1169,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 #else
         _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         var transaction = _connection.BeginTransaction();
-        await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask.ConfigureAwait(false);
 #endif
         LogDebugTransactionCreated();
         return transaction;
@@ -1184,7 +1184,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 #else
         _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         transaction.Commit();
-        await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask.ConfigureAwait(false);
 #endif
         LogDebugTransactionCommitted();
     }
@@ -1207,7 +1207,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 #else
             _ = token; // Suppress unused parameter warning — token is used in the #if branch above
             transaction.Rollback();
-            await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
+            await Task.CompletedTask.ConfigureAwait(false);
 #endif
             LogDebugTransactionRolledBack();
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using Wolfgang.Etl.DbClient;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
@@ -12,6 +12,7 @@ namespace Wolfgang.Etl.DbClient.Benchmarks;
 /// Selected by <c>ETL_DBCLIENT_BENCHMARK_RDBMS</c> — defaults to in-memory SQLite.
 /// </summary>
 [MemoryDiagnoser]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public class LoaderBenchmarks : IDisposable
 {
     private DbConnection _connection = null!;
