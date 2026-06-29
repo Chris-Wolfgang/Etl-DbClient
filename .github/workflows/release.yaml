@@ -98,11 +98,12 @@ jobs:
       - name: Run multi-framework tests with coverage
         shell: pwsh
         run: |
-          # Exclude *.Tests.Integration.* — those need Docker / Testcontainers,
-          # which the release runner doesn't provide. The integration matrix is
-          # exercised by pr.yaml's test-integration job (with proper services:
-          # blocks per RDBMS) on every PR, so release-time re-validation isn't
-          # adding signal. Match the per-language SDK extensions (cs / vb / fs).
+          # Exclude *.Tests.Integration.* from THIS Windows job — it runs the
+          # unit suite only. Integration tests need Testcontainers (Linux), and
+          # are gated by the dedicated test-integration matrix job below
+          # (publish-nuget needs:[…, test-integration-all]) so a release still
+          # can't ship if any provider's integration suite is red.
+          # Match the per-language SDK extensions (cs / vb / fs).
           $testProjects = Get-ChildItem -Path './tests' -Recurse -Include '*Test*.csproj', '*Test*.vbproj', '*Test*.fsproj' |
             Where-Object { $_.Name -notmatch '\.Tests\.Integration\.(cs|vb|fs)proj$' }
 
@@ -568,10 +569,102 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-  # Publish to NuGet (only if validation passed)
+  # ============================================================================
+  # RDBMS INTEGRATION (release-time gate) — closes the gap flagged in #206.
+  # Mirrors pr.yaml's test-integration matrix but runs against the released
+  # tag's commit instead of a PR head. Testcontainers (Linux only) — sqlite
+  # included so a single matrix shape covers every supported provider.
+  # ============================================================================
+  test-integration:
+    name: "Integration / ${{ matrix.rdbms }} (${{ matrix.tfm }})"
+    needs: validate-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        rdbms: [sqlserver, postgres, mysql, mariadb, sqlite]
+        tfm: [net8.0, net10.0]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Locate integration project
+        id: locate
+        shell: bash
+        run: |
+          # Match all three project extensions so a future VB/F# rewrite is found.
+          proj=$(find ./tests -type f \
+            \( -name "*.Tests.Integration.csproj" \
+            -o -name "*.Tests.Integration.vbproj" \
+            -o -name "*.Tests.Integration.fsproj" \) \
+            | head -n1)
+          if [ -z "$proj" ]; then
+            echo "ℹ️  No integration project found — skipping."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Integration project: $proj"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "project=$proj" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
+        if: steps.locate.outputs.found == 'true'
+        run: |
+          dotnet test "${{ steps.locate.outputs.project }}" \
+            --configuration Release \
+            --framework ${{ matrix.tfm }} \
+            --filter "Category=${{ matrix.rdbms }}" \
+            -p:TreatWarningsAsErrors=true \
+            --logger "console;verbosity=normal" \
+            --logger "trx;LogFileName=integration-${{ matrix.rdbms }}-${{ matrix.tfm }}.trx" \
+            --results-directory "./TestResults-Integration"
+
+      - name: Upload integration test results
+        if: always() && steps.locate.outputs.found == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-integration-${{ matrix.rdbms }}-${{ matrix.tfm }}-trx
+          path: TestResults-Integration/
+
+  # ============================================================================
+  # INTEGRATION AGGREGATOR (release-time)
+  # Single stable job that rolls the matrix into one pass/fail signal — same
+  # pattern as pr.yaml's test-integration-all. publish-nuget needs THIS job,
+  # so the matrix can grow / change TFMs without re-wiring the publish gate.
+  # ============================================================================
+  test-integration-all:
+    name: "Integration (all)"
+    needs: test-integration
+    runs-on: ubuntu-latest
+    if: always()
+    env:
+      INTEGRATION_RESULT: ${{ needs.test-integration.result }}
+    steps:
+      - name: Check matrix result
+        run: |
+          echo "test-integration = $INTEGRATION_RESULT"
+          if [ "$INTEGRATION_RESULT" = "success" ]; then
+            echo "✅ Integration aggregator passes (all cells succeeded)"
+            exit 0
+          fi
+          echo "❌ Integration aggregator FAILS — release gate blocks the publish."
+          exit 1
+
+  # Publish to NuGet (only if validation + integration passed)
   publish-nuget:
     name: Publish to NuGet.org
-    needs: pack-and-validate
+    needs: [pack-and-validate, test-integration-all]
     if: needs.pack-and-validate.outputs.has-packages == 'true'
     runs-on: windows-latest
     steps:
