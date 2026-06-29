@@ -1,6 +1,5 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
-
 using System.ComponentModel.DataAnnotations.Schema;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
@@ -10,6 +9,7 @@ namespace Wolfgang.Etl.DbClient.Benchmarks;
 /// avoid Postgres' unquoted-folding behaviour.
 /// </summary>
 [Table("contract_items")]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public class BenchmarkRecord
 {
     [Column("name")]

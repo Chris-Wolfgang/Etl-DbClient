@@ -1,6 +1,5 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
-
 using System;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient;
 
@@ -8,6 +7,12 @@ namespace Wolfgang.Etl.DbClient;
 /// Payload for <c>DbLoader{TRecord}.RowFailed</c>. Fires once per row that
 /// failed to load when <c>ErrorHandling</c> is <see cref="RowErrorHandling.Skip"/>.
 /// </summary>
+/// <remarks>
+/// <c>[PublicAPI]</c> marks Record / Exception / ItemIndex as consumed by
+/// downstream NuGet event-handler implementations — ReSharper has no
+/// visibility into those external readers.
+/// </remarks>
+[PublicAPI]
 public sealed class RowFailedEventArgs<TRecord> : EventArgs
 {
     /// <summary>

@@ -1,5 +1,3 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,6 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
@@ -22,6 +21,7 @@ namespace Wolfgang.Etl.DbClient.Benchmarks;
 public class DbLoaderBatchSizeBenchmarks : IDisposable
 {
     [Table("benchmark_people")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     public class BenchmarkPerson
     {
         [Key]

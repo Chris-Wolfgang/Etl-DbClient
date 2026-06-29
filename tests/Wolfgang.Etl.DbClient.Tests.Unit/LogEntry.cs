@@ -1,11 +1,14 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
-
 using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
+// UsedImplicitly: Exception is read by xUnit's failure output formatter when a
+// test asserts on a captured LogEntry; ReSharper sees only the LogEntry
+// construction site, not the formatter's property access.
 [ExcludeFromCodeCoverage]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 internal sealed class LogEntry
 {
     public LogEntry(LogLevel level, string message, Exception? exception)

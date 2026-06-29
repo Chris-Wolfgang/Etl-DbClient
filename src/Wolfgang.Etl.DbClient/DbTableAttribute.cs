@@ -1,6 +1,5 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
-
 using System;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient;
 
@@ -25,6 +24,7 @@ namespace Wolfgang.Etl.DbClient;
 /// </para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
+[PublicAPI]
 public sealed class DbTableAttribute : Attribute
 {
     /// <summary>

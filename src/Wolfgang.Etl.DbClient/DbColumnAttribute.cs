@@ -1,6 +1,5 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global -- consumed by Dapper / PublicAPI consumers via reflection (not visible to static analysis)
-
 using System;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient;
 
@@ -10,7 +9,13 @@ namespace Wolfgang.Etl.DbClient;
 /// the property name, or marks it as <see cref="Skip"/>ped from the
 /// generated SQL.
 /// </summary>
+/// <remarks>
+/// <c>[PublicAPI]</c> marks the attribute and its members as consumed by
+/// downstream NuGet consumers + the DbTableGenerator source generator —
+/// ReSharper has no visibility into those external/generated readers.
+/// </remarks>
 [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+[PublicAPI]
 public sealed class DbColumnAttribute : Attribute
 {
     /// <summary>

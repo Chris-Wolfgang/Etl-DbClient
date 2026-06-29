@@ -144,7 +144,7 @@ public class DbExtractorTests
     [Fact]
     public async Task ExtractAsync_with_parameters_filters_correctly()
     {
-        using var conn = await TestDb.CreateConnectionWithDataAsync(5);
+        using var conn = await TestDb.CreateConnectionWithDataAsync();
         var extractor = new DbExtractor<PersonRecord>
         (
             conn,
@@ -195,7 +195,7 @@ public class DbExtractorTests
     [Fact]
     public async Task ExtractAsync_when_SkipItemCount_is_set_skips_rows()
     {
-        using var conn = await TestDb.CreateConnectionWithDataAsync(5);
+        using var conn = await TestDb.CreateConnectionWithDataAsync();
         var extractor = new DbExtractor<PersonRecord>
         (
             conn,
@@ -214,7 +214,7 @@ public class DbExtractorTests
     [Fact]
     public async Task ExtractAsync_when_MaximumItemCount_is_set_stops_early()
     {
-        using var conn = await TestDb.CreateConnectionWithDataAsync(5);
+        using var conn = await TestDb.CreateConnectionWithDataAsync();
         var extractor = new DbExtractor<PersonRecord>
         (
             conn,
@@ -323,7 +323,7 @@ public class DbExtractorTests
     [Fact]
     public async Task TotalCountQuery_using_default_with_parameterized_query_returns_filtered_count()
     {
-        using var conn = await TestDb.CreateConnectionWithDataAsync(5);
+        using var conn = await TestDb.CreateConnectionWithDataAsync();
         var extractor = new DbExtractor<PersonRecord>
         (
             conn,
@@ -500,7 +500,7 @@ public class DbExtractorTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbExtractor<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "SELECT 1")
+            () => new DbExtractor<PersonRecord>(null!, "Data Source=:memory:", "SELECT 1")
         );
     }
 
@@ -705,7 +705,7 @@ public class DbExtractorTests
 
         // Build a DynamicParameters with a single input parameter; bind it
         // into a parameterized WHERE.
-        var p = new Dapper.DynamicParameters();
+        var p = new DynamicParameters();
         p.Add("@Age", 25);
 
         var extractor = new DbExtractor<PersonRecord>
@@ -732,7 +732,7 @@ public class DbExtractorTests
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
 
         var dictParams = new Dictionary<string, object> { ["@Age"] = 28 };
-        var p = new Dapper.DynamicParameters();
+        var p = new DynamicParameters();
         p.Add("@Age", 22); // overrides the dictionary value
 
         var extractor = new DbExtractor<PersonRecord>
