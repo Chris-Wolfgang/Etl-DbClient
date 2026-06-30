@@ -731,7 +731,7 @@ public class DbExtractorTests
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
 
-        var dictParams = new Dictionary<string, object> { ["@Age"] = 28 };
+        var dictParams = new Dictionary<string, object>(StringComparer.Ordinal) { ["@Age"] = 28 };
         var p = new DynamicParameters();
         p.Add("@Age", 22); // overrides the dictionary value
 
