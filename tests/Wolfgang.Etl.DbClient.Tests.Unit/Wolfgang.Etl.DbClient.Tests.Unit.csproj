@@ -12,11 +12,23 @@
          is on GHSA-2m69-gcr7-jv3q with no patched version available yet. Same
          treatment as benchmarks/.../*.csproj and Tests.Integration. Test
          assembly is never published; impact limited to local + CI runs. -->
-    <NoWarn>$(NoWarn);MA0004;S1144;S6966;NU1903</NoWarn>
+    <!-- RS0016 / RS0037: PublicApiAnalyzers fires on members emitted by the
+         DbTableGenerator source generator into this test project (the
+         [DbTable]-decorated fixtures GeneratedPerson / GeneratedOrder gain
+         a public `Insert` const + `Bind` helper). This assembly is never
+         packaged — PublicAPI.txt contract doesn't apply. Same justification
+         as the SourceGenerator project's local .editorconfig. -->
+    <NoWarn>$(NoWarn);MA0004;S1144;S6966;NU1903;RS0016;RS0037</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient\Wolfgang.Etl.DbClient.csproj" />
+    <!-- Source generator pulled in as analyzer so [DbTable] decorated records
+         in this test project trigger the generator at compile time. -->
+    <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient.SourceGenerator\Wolfgang.Etl.DbClient.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
   </ItemGroup>
 
   <!-- net462; net47; net471; net472; net48; net481 -->
@@ -104,13 +116,14 @@
 
   <!-- Shared dependencies (all TFMs) -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.7" />
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
-    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.7.0" />
-    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.6.0" />
+    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.9.0" />
+    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.9.0" />
   </ItemGroup>
 
   <!-- Copy native SQLite DLL to output for .NET Framework (no RID-based probing) -->

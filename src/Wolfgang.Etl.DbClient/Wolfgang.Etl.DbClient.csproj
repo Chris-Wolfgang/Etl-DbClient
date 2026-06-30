@@ -25,7 +25,7 @@
                                   <Version>; set explicitly here so it's
                                   discoverable in a metadata dump.
          ===================================================================== -->
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>$([System.Text.RegularExpressions.Regex]::Replace("$(Version)", "[-+].*$", "")).0</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
@@ -71,18 +71,38 @@
     prevent NuGet from resolving an older transitive version — no runtime assembly is copied.
   -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0' OR '$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.13.0" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.15.0" />
   </ItemGroup>
+
+  <!-- Source generator: built alongside the runtime, packed into the same
+       NuGet under analyzers/dotnet/cs. PrivateAssets=all so consumers don't
+       transitively reference the generator project. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Wolfgang.Etl.DbClient.SourceGenerator\Wolfgang.Etl.DbClient.SourceGenerator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="PackSourceGenerator" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="..\Wolfgang.Etl.DbClient.SourceGenerator\bin\$(Configuration)\netstandard2.0\Wolfgang.Etl.DbClient.SourceGenerator.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false" />
+    </ItemGroup>
+  </Target>
 
   <!-- Analyzer PackageReferences are centralized in Directory.Build.props -->
 

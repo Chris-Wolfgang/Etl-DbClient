@@ -5,11 +5,11 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 [ExcludeFromCodeCoverage]
 public class ContractRecord
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
 
 
-    public int Value { get; set; }
+    public int Value { get; init; }
 
 
 
@@ -26,9 +26,12 @@ public class ContractRecord
 #if NETCOREAPP2_1_OR_GREATER || NET5_0_OR_GREATER
         return HashCode.Combine(Name, Value);
 #else
+        // Name is non-nullable per its declaration, so no null check needed —
+        // ReSharper's ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        // flagged the previous `Name != null` ternary as dead.
         unchecked
         {
-            return (Name != null ? StringComparer.Ordinal.GetHashCode(Name) : 0) * 397 ^ Value.GetHashCode();
+            return StringComparer.Ordinal.GetHashCode(Name) * 397 ^ Value.GetHashCode();
         }
 #endif
     }

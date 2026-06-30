@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using Wolfgang.Etl.Abstractions;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;

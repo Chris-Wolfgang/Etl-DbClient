@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
@@ -9,10 +10,17 @@ public class DbCommandBuilderTests
 {
     // ------------------------------------------------------------------
     // Test types
+    //
+    // Each private inner class below is fed to DbCommandBuilder.BuildInsert<T>() /
+    // BuildUpdate<T>() / BuildSelect<T>(), which uses reflection over T's
+    // public properties. ReSharper has no visibility into those reflective
+    // reads, so every property looks unused — [UsedImplicitly] with
+    // ImplicitUseTargetFlags.WithMembers documents the reflection contract.
     // ------------------------------------------------------------------
 
     [ExcludeFromCodeCoverage]
     [Table("Customers")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class CustomerRecord
     {
         [Key]
@@ -34,6 +42,7 @@ public class DbCommandBuilderTests
 
     [ExcludeFromCodeCoverage]
     [Table("Orders")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class CompositeKeyRecord
     {
         [Key]
@@ -51,6 +60,7 @@ public class DbCommandBuilderTests
 
 
     [ExcludeFromCodeCoverage]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class NoTableRecord
     {
     }
@@ -59,6 +69,7 @@ public class DbCommandBuilderTests
 
     [ExcludeFromCodeCoverage]
     [Table("Items")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class NoKeyRecord
     {
         [Column("item_name")]
@@ -72,6 +83,7 @@ public class DbCommandBuilderTests
 
     [ExcludeFromCodeCoverage]
     [Table("AllNotMapped")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class AllNotMappedRecord
     {
         [NotMapped]
@@ -85,6 +97,7 @@ public class DbCommandBuilderTests
 
     [ExcludeFromCodeCoverage]
     [Table("AllIdentity")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class AllIdentityKeysRecord
     {
         [Key]
@@ -97,6 +110,7 @@ public class DbCommandBuilderTests
 
     [ExcludeFromCodeCoverage]
     [Table("AllKeysOnly")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class AllKeysOnlyRecord
     {
         [Key]
@@ -112,6 +126,7 @@ public class DbCommandBuilderTests
 
     [ExcludeFromCodeCoverage]
     [Table("NotMappedKey")]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     private class NotMappedKeyRecord
     {
         [Key]

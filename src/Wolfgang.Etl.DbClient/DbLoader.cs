@@ -47,7 +47,7 @@ namespace Wolfgang.Etl.DbClient;
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
-public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
+public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     where TRecord : notnull
 {
     // ------------------------------------------------------------------
@@ -256,7 +256,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
     private int? CommandTimeoutSeconds => _commandTimeout.HasValue
         ? (int)_commandTimeout.Value.TotalSeconds
-        : (int?)null;
+        : null;
 
 
 
@@ -268,6 +268,244 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
     /// </summary>
     public CommandType CommandType { get; set; } = CommandType.Text;
+
+
+
+    /// <summary>
+    /// When <see langword="true"/>, the loader opens the connection before the
+    /// first command runs and closes it after the load ends. The connection
+    /// is NOT disposed — it's returned to the pool for reuse, which plays
+    /// better with connection-pool lifetime in web apps and hosted services.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default <see langword="false"/> preserves the v0.4.0 behavior: the
+    /// caller is responsible for opening the connection before calling
+    /// <c>LoadAsync</c>.
+    /// </para>
+    /// <para>
+    /// Ignored on the owned-connection ctor path (the
+    /// <c>(DbProviderFactory, connectionString, …)</c> overload). That path
+    /// always manages and disposes the connection because it created it.
+    /// </para>
+    /// <para>
+    /// If the connection is already open when <c>LoadAsync</c> starts, it's
+    /// left open — the loader only closes connections it itself opened.
+    /// </para>
+    /// </remarks>
+    public bool ManageConnection { get; set; }
+
+
+
+    /// <summary>
+    /// When greater than <c>1</c>, the loader replaces N per-row
+    /// <c>INSERT</c>s with a single multi-row <c>INSERT … VALUES (…), (…), …</c>
+    /// statement. The single biggest single-line perf win available
+    /// without provider-specific bulk APIs.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Contract on <c>CommandText</c>: it MUST end with the literal token
+    /// <c>VALUES</c> followed by a parenthesized parameter template such as
+    /// <c>(@FirstName, @LastName, @Age)</c>. The loader extracts that
+    /// template, replicates it once per row in the batch with suffixed
+    /// parameter names (<c>@FirstName_0</c>, <c>@FirstName_1</c>, …), and
+    /// rebinds each row's properties to its slot via reflection.
+    /// </para>
+    /// <para>
+    /// Database parameter limits apply — SQL Server caps at 2,100 params per
+    /// command, SQLite at 999, MySQL much higher. Choose
+    /// <c>InsertBatchSize</c> so that <c>InsertBatchSize × columns</c> stays
+    /// under your provider's limit.
+    /// </para>
+    /// <para>
+    /// Default <c>1</c> preserves the v0.4.0 behavior (one statement per row,
+    /// or N statements bundled via <see cref="BatchSize"/>).
+    /// </para>
+    /// <para>
+    /// Mutually exclusive with <see cref="BatchSize"/> &gt; <c>1</c> — when
+    /// both are set, <c>InsertBatchSize</c> wins because it generates a
+    /// single statement per chunk instead of N. Mutually exclusive with
+    /// <c>IsDryRun</c> = <see langword="true"/> (IsDryRun short-circuits
+    /// before SQL generation) and with stored-procedure
+    /// <see cref="CommandType"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is less than <c>1</c>.
+    /// </exception>
+    public int InsertBatchSize
+    {
+        get => _insertBatchSize;
+        set
+        {
+            if (value < 1)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "InsertBatchSize must be at least 1."
+                );
+            }
+            _insertBatchSize = value;
+        }
+    }
+
+    private int _insertBatchSize = 1;
+
+
+
+    /// <summary>
+    /// When <see langword="true"/>, the loader runs the full pipeline —
+    /// enumerates the source, evaluates <c>SkipItemCount</c> /
+    /// <c>MaximumItemCount</c>, increments progress counters, fires the
+    /// progress-timer callback, and emits all the usual log messages — but
+    /// **skips the actual <c>ExecuteAsync</c> call**. The database is not
+    /// modified.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Useful for validating an ETL pipeline (source feed, mapping, batching,
+    /// throttling) against production without writing anything, or for
+    /// estimating how long a write would take.
+    /// </para>
+    /// <para>
+    /// The auto-managed-transaction path still <c>BeginTransaction</c> /
+    /// <c>Commit</c>s — those are connection-level operations and are needed
+    /// for the open/dispose lifecycle. They have no effect on the database
+    /// because no writes happen inside the transaction.
+    /// </para>
+    /// <para>
+    /// Default <see langword="false"/> preserves the prior behavior. This is
+    /// the implementation of <see cref="ISupportDryRun.IsDryRun"/> from
+    /// Wolfgang.Etl.Abstractions 0.15.0+.
+    /// </para>
+    /// </remarks>
+    public bool IsDryRun { get; set; }
+
+
+
+    /// <summary>
+    /// How the loader reacts when a single row's <c>ExecuteAsync</c> throws.
+    /// Defaults to <see cref="RowErrorHandling.Abort"/>, which preserves the
+    /// v0.4.0 behavior (first failure rolls back the transaction and
+    /// propagates).
+    /// </summary>
+    /// <remarks>
+    /// <see cref="RowErrorHandling.Skip"/> only takes effect on the
+    /// per-record path (<see cref="BatchSize"/> == 1, the default). A failed
+    /// batch cannot be safely attributed to a single row without per-item
+    /// retry, so the load still aborts even in Skip mode when
+    /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
+    /// </remarks>
+    public RowErrorHandling ErrorHandling { get; set; } = RowErrorHandling.Abort;
+
+
+
+    /// <summary>
+    /// Maximum number of row-level failures the loader will tolerate before
+    /// aborting the load with an <see cref="InvalidOperationException"/>
+    /// whose <see cref="Exception.InnerException"/> is the last underlying
+    /// row failure. Defaults to <c>0</c>, meaning "unlimited" (every failure
+    /// is reported via <see cref="RowFailed"/> and processing continues).
+    /// </summary>
+    /// <remarks>
+    /// Only consulted when <see cref="ErrorHandling"/> is
+    /// <see cref="RowErrorHandling.Skip"/>.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public int MaxErrorCount
+    {
+        get => _maxErrorCount;
+        set
+        {
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "MaxErrorCount cannot be negative. Use 0 for unlimited."
+                );
+            }
+            _maxErrorCount = value;
+        }
+    }
+
+    private int _maxErrorCount;
+
+
+
+    /// <summary>
+    /// Number of rows that have failed to load so far (incremented for every
+    /// <see cref="RowErrorHandling.Skip"/>-handled exception). Resets to 0
+    /// at the start of each <c>LoadAsync</c> call.
+    /// </summary>
+    public int CurrentErrorCount { get; private set; }
+
+
+
+    /// <summary>
+    /// Raised once per row that fails when <see cref="ErrorHandling"/> is
+    /// <see cref="RowErrorHandling.Skip"/>. The handler receives the failing
+    /// record, the underlying exception, and the row's 1-based item index.
+    /// </summary>
+    /// <remarks>
+    /// Typical use: capture the failing record into a dead-letter store. The
+    /// handler is invoked synchronously inside the load loop, so a slow
+    /// handler will slow the entire load.
+    /// </remarks>
+    public event EventHandler<RowFailedEventArgs<TRecord>>? RowFailed;
+
+
+
+    /// <summary>
+    /// Commit the auto-managed transaction every N successfully-loaded rows.
+    /// Defaults to <c>0</c>, meaning "commit only once at the end of the load"
+    /// (the v0.4.0 behavior). Larger values let very long loads survive a
+    /// mid-flight failure with most of the work persisted.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only takes effect when the loader manages the transaction (i.e. the
+    /// caller did NOT pass a <c>DbTransaction</c> to the constructor) AND
+    /// <see cref="BatchSize"/> is <c>1</c>. With a caller-supplied transaction
+    /// the loader never commits, so this knob has no effect; with
+    /// <c>BatchSize &gt; 1</c> the per-batch commit boundary is the
+    /// <see cref="BatchSize"/>'s own batch, which we currently don't subdivide.
+    /// </para>
+    /// <para>
+    /// Trade-off: a partial-progress failure with <c>BatchCommitSize &gt; 0</c>
+    /// leaves earlier committed batches in the destination. You lose all-or-
+    /// nothing semantics in exchange for resumability and lower undo-log
+    /// pressure on the database.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public int BatchCommitSize
+    {
+        get => _batchCommitSize;
+        set
+        {
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "BatchCommitSize cannot be negative. Use 0 for 'commit only at end'."
+                );
+            }
+            _batchCommitSize = value;
+        }
+    }
+
+    private int _batchCommitSize;
 
 
 
@@ -367,14 +605,18 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     )
     {
         _stopwatch.Restart();
+        CurrentErrorCount = 0;
         LogLoadingStarted();
 
         // Owned-connection ctor path: open before the first execute, dispose at
-        // the end. Wrapped in try/finally so the connection is released even
-        // when LoadWith*Async throws (the caller's exception still propagates).
-        if (_ownsConnection && _connection.State != ConnectionState.Open)
+        // the end. ManageConnection=true path: open before, CLOSE (don't dispose)
+        // after. Wrapped in try/finally so the connection is released even when
+        // LoadWith*Async throws (the caller's exception still propagates).
+        var openedHere = false;
+        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
+            openedHere = true;
         }
 
         try
@@ -400,6 +642,15 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 _connection.Dispose();
 #endif
             }
+            else if (openedHere)
+            {
+#if NET5_0_OR_GREATER
+                await _connection.CloseAsync().ConfigureAwait(false);
+#else
+                _connection.Close();
+                await Task.CompletedTask.ConfigureAwait(false);
+#endif
+            }
         }
     }
 
@@ -414,6 +665,23 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         IAsyncEnumerable<TRecord> items,
         CancellationToken token
     )
+    {
+        if (_batchCommitSize == 0 || _batchSize > 1)
+        {
+            // Single-transaction path: BatchCommitSize == 0 (commit only at
+            // end) OR BatchSize > 1 (per-execute batching uses its own
+            // commit boundary, not subdivided here).
+            await LoadWithAutoTransactionSingleAsync(items, token).ConfigureAwait(false);
+            return;
+        }
+
+        // Chunked-commit path: BatchCommitSize > 0 AND BatchSize == 1.
+        await LoadWithAutoTransactionChunkedAsync(items, token).ConfigureAwait(false);
+    }
+
+
+
+    private async Task LoadWithAutoTransactionSingleAsync(IAsyncEnumerable<TRecord> items, CancellationToken token)
     {
         var transaction = await BeginAutoTransactionAsync(token).ConfigureAwait(false);
 
@@ -431,6 +699,248 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         {
             await DisposeTransactionAsync(transaction).ConfigureAwait(false);
         }
+    }
+
+
+
+    private async Task LoadWithAutoTransactionChunkedAsync(IAsyncEnumerable<TRecord> items, CancellationToken token)
+    {
+        // Materialize up to BatchCommitSize items at a time, then run each
+        // chunk through the single-transaction path. A failure rolls back
+        // ONLY the current chunk; previously-committed chunks survive.
+        var enumerator = items.GetAsyncEnumerator(token);
+        try
+        {
+            while (true)
+            {
+                var chunk = new List<TRecord>(_batchCommitSize);
+                while (chunk.Count < _batchCommitSize && await enumerator.MoveNextAsync().ConfigureAwait(false))
+                {
+                    chunk.Add(enumerator.Current);
+                }
+
+                if (chunk.Count == 0)
+                {
+                    break;
+                }
+
+                await LoadWithAutoTransactionSingleAsync(AsAsyncEnumerable(chunk), token).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            await enumerator.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+
+
+    // Local IAsyncEnumerable adapter over a materialized List<T>. Used by the
+    // chunked-commit path; avoiding the System.Linq.Async extension keeps the
+    // src/ project dependency-free of that package.
+    //
+    // VSTHRD200: the rule wants methods returning "awaitable" types to end with
+    // "Async". IAsyncEnumerable<T> is NOT directly awaitable — callers use
+    // `await foreach`, not `await`. Renaming to `AsAsyncEnumerableAsync` would
+    // be double-"Async" noise and inconsistent with the BCL convention
+    // (`Enumerable.ToAsyncEnumerable`, `AsyncEnumerable.Create`, etc.).
+#pragma warning disable VSTHRD200
+    private static async IAsyncEnumerable<TRecord> AsAsyncEnumerable(List<TRecord> source)
+#pragma warning restore VSTHRD200
+    {
+        foreach (var item in source)
+        {
+            yield return item;
+        }
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+
+
+    private async Task ExecuteItemsMultiRowInsertAsync
+    (
+        IAsyncEnumerable<TRecord> items,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        var prefix = ExtractInsertPrefix(_commandText, out var template);
+        var paramNames = ExtractTemplateParamNames(template);
+        var properties = GetMappedProperties(paramNames);
+
+        var buffer = new List<TRecord>(_insertBatchSize);
+        await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
+        {
+            token.ThrowIfCancellationRequested();
+
+            if (CurrentItemCount + buffer.Count >= MaximumItemCount)
+            {
+                LogDebugMaxReached();
+                break;
+            }
+
+            if (CurrentSkippedItemCount < SkipItemCount)
+            {
+                IncrementCurrentSkippedItemCount();
+                LogDebugItemSkipped();
+                continue;
+            }
+
+            buffer.Add(item);
+
+            if (buffer.Count >= _insertBatchSize)
+            {
+                await FlushMultiRowInsertAsync(prefix, template, paramNames, properties, buffer, transaction, token).ConfigureAwait(false);
+                buffer.Clear();
+            }
+        }
+
+        if (buffer.Count > 0)
+        {
+            await FlushMultiRowInsertAsync(prefix, template, paramNames, properties, buffer, transaction, token).ConfigureAwait(false);
+        }
+    }
+
+
+
+    private async Task FlushMultiRowInsertAsync
+    (
+        string prefix,
+        string template,
+        IReadOnlyList<string> paramNames,
+        IReadOnlyList<System.Reflection.PropertyInfo> properties,
+        List<TRecord> batch,
+        DbTransaction? transaction,
+        CancellationToken token
+    )
+    {
+        if (IsDryRun)
+        {
+            foreach (var _ in batch)
+            {
+                IncrementCurrentItemCount();
+                LogDebugRecordLoaded();
+            }
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder(prefix.Length + batch.Count * (template.Length + 8));
+        sb.Append(prefix);
+
+        var dp = new DynamicParameters();
+        for (var i = 0; i < batch.Count; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+
+            var rowTemplate = template;
+            for (var p = 0; p < paramNames.Count; p++)
+            {
+                var original = "@" + paramNames[p];
+                var suffixed = original + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                rowTemplate = rowTemplate.Replace(original, suffixed);
+                dp.Add(suffixed, properties[p].GetValue(batch[i]));
+            }
+            sb.Append(rowTemplate);
+        }
+
+        await _connection.ExecuteAsync
+        (
+            new CommandDefinition(sb.ToString(), dp, transaction, CommandTimeoutSeconds, CommandType.Text, cancellationToken: token)
+        ).ConfigureAwait(false);
+
+        foreach (var _ in batch)
+        {
+            IncrementCurrentItemCount();
+            LogDebugRecordLoaded();
+        }
+    }
+
+
+
+    private static string ExtractInsertPrefix(string commandText, out string template)
+    {
+        var idx = commandText.LastIndexOf("VALUES", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+        {
+            throw new InvalidOperationException
+            (
+                "InsertBatchSize > 1 requires CommandText to contain 'VALUES (template)'. " +
+                $"CommandText was: {commandText}"
+            );
+        }
+
+        var afterValues = commandText.Substring(idx + "VALUES".Length).Trim();
+        if (afterValues.Length < 2 || afterValues[0] != '(' || afterValues[afterValues.Length - 1] != ')')
+        {
+            throw new InvalidOperationException
+            (
+                "InsertBatchSize > 1 requires the VALUES clause to be a single parenthesized " +
+                "parameter template such as '(@A, @B, @C)'. Got: " + afterValues
+            );
+        }
+
+        template = afterValues;
+        return commandText.Substring(0, idx + "VALUES".Length) + " ";
+    }
+
+
+
+    private static IReadOnlyList<string> ExtractTemplateParamNames(string template)
+    {
+        // `while` rather than `for` — the loop intentionally jumps the cursor past
+        // the matched parameter name in one step, which Sonar's S127 flags as
+        // "loop counter mutated in body" when the cursor is a for-loop variable.
+        var names = new List<string>();
+        var i = 0;
+        while (i < template.Length)
+        {
+            if (template[i] != '@')
+            {
+                i++;
+                continue;
+            }
+            var start = i + 1;
+            var end = start;
+            while (end < template.Length && (char.IsLetterOrDigit(template[end]) || template[end] == '_'))
+            {
+                end++;
+            }
+            if (end > start)
+            {
+                names.Add(template.Substring(start, end - start));
+            }
+            i = end;
+        }
+        return names;
+    }
+
+
+
+    private static IReadOnlyList<System.Reflection.PropertyInfo> GetMappedProperties(IReadOnlyList<string> paramNames)
+    {
+        var props = typeof(TRecord).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var byName = new Dictionary<string, System.Reflection.PropertyInfo>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in props)
+        {
+            byName[p.Name] = p;
+        }
+
+        var result = new System.Reflection.PropertyInfo[paramNames.Count];
+        for (var i = 0; i < paramNames.Count; i++)
+        {
+            if (!byName.TryGetValue(paramNames[i], out var info))
+            {
+                throw new InvalidOperationException
+                (
+                    $"InsertBatchSize > 1: TRecord '{typeof(TRecord).Name}' has no public property matching parameter '@{paramNames[i]}'."
+                );
+            }
+            result[i] = info;
+        }
+        return result;
     }
 
 
@@ -458,6 +968,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         CancellationToken token
     )
     {
+        if (_insertBatchSize > 1)
+        {
+            return ExecuteItemsMultiRowInsertAsync(items, transaction, token);
+        }
+
         return _batchSize <= 1
             ? ExecuteItemsPerRowAsync(items, transaction, token)
             : ExecuteItemsBatchedAsync(items, transaction, token);
@@ -489,6 +1004,33 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 continue;
             }
 
+            if (!IsDryRun && !await TryExecuteItemAsync(item, transaction, token).ConfigureAwait(false))
+            {
+                continue;
+            }
+
+            IncrementCurrentItemCount();
+            LogDebugRecordLoaded();
+        }
+    }
+
+
+
+    /// <summary>
+    /// Per-row ExecuteAsync wrapper. Returns <see langword="true"/> when the
+    /// row succeeded (or threw in <see cref="RowErrorHandling.Abort"/> mode —
+    /// then the exception propagates and the return value isn't observed);
+    /// <see langword="false"/> when the row failed and was skipped under
+    /// <see cref="RowErrorHandling.Skip"/>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// <see cref="MaxErrorCount"/> was reached after this row's failure in
+    /// <see cref="RowErrorHandling.Skip"/> mode.
+    /// </exception>
+    private async Task<bool> TryExecuteItemAsync(TRecord item, DbTransaction? transaction, CancellationToken token)
+    {
+        try
+        {
             await _connection.ExecuteAsync
             (
                 new CommandDefinition
@@ -501,9 +1043,30 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                     cancellationToken: token
                 )
             ).ConfigureAwait(false);
+            return true;
+        }
+        catch (Exception ex) when
+        (
+            ErrorHandling == RowErrorHandling.Skip
+            && ex is not OperationCanceledException
+        )
+        {
+            CurrentErrorCount++;
+            var itemIndex = CurrentItemCount + CurrentSkippedItemCount + CurrentErrorCount;
+            RowFailed?.Invoke(this, new RowFailedEventArgs<TRecord>(item, ex, itemIndex));
+            LogRowErrorSkipped(ex, itemIndex);
 
-            IncrementCurrentItemCount();
-            LogDebugRecordLoaded();
+            if (_maxErrorCount > 0 && CurrentErrorCount >= _maxErrorCount)
+            {
+                throw new InvalidOperationException
+                (
+                    $"DbLoader.MaxErrorCount ({_maxErrorCount}) exceeded. " +
+                    $"Last failure on item index {itemIndex}; see inner exception.",
+                    ex
+                );
+            }
+
+            return false;
         }
     }
 
@@ -566,18 +1129,21 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         CancellationToken token
     )
     {
-        await _connection.ExecuteAsync
-        (
-            new CommandDefinition
+        if (!IsDryRun)
+        {
+            await _connection.ExecuteAsync
             (
-                _commandText,
-                batch,
-                transaction,
-                CommandTimeoutSeconds,
-                CommandType,
-                cancellationToken: token
-            )
-        ).ConfigureAwait(false);
+                new CommandDefinition
+                (
+                    _commandText,
+                    batch,
+                    transaction,
+                    CommandTimeoutSeconds,
+                    CommandType,
+                    cancellationToken: token
+                )
+            ).ConfigureAwait(false);
+        }
 
         for (var i = 0; i < batch.Count; i++)
         {
@@ -598,7 +1164,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #pragma warning disable CA1849, VSTHRD103
         transaction.Dispose();
 #pragma warning restore CA1849, VSTHRD103
-        return System.Threading.Tasks.Task.CompletedTask;
+        return Task.CompletedTask;
 #endif
     }
 
@@ -611,7 +1177,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #else
         _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         var transaction = _connection.BeginTransaction();
-        await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask.ConfigureAwait(false);
 #endif
         LogDebugTransactionCreated();
         return transaction;
@@ -626,7 +1192,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #else
         _ = token; // Suppress unused parameter warning — token is used in the #if branch above
         transaction.Commit();
-        await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask.ConfigureAwait(false);
 #endif
         LogDebugTransactionCommitted();
     }
@@ -649,7 +1215,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 #else
             _ = token; // Suppress unused parameter warning — token is used in the #if branch above
             transaction.Rollback();
-            await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
+            await Task.CompletedTask.ConfigureAwait(false);
 #endif
             LogDebugTransactionRolledBack();
         }
@@ -760,6 +1326,24 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 "Skipping item ({SkippedCount}/{SkipItemCount})",
                 CurrentSkippedItemCount,
                 SkipItemCount
+            );
+        }
+    }
+
+
+
+    private void LogRowErrorSkipped(Exception ex, long itemIndex)
+    {
+        if (_logger.IsEnabled(LogLevel.Warning))
+        {
+            _logger.LogWarning
+            (
+                ex,
+                "Row {ItemIndex} failed and was skipped ({ErrorCount} errors so far). " +
+                "Configured ErrorHandling=Skip; MaxErrorCount={MaxErrorCount}",
+                itemIndex,
+                CurrentErrorCount,
+                _maxErrorCount
             );
         }
     }

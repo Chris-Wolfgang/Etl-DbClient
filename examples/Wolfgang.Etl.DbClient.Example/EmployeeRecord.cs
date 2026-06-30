@@ -1,5 +1,8 @@
+using JetBrains.Annotations;
+
 namespace Wolfgang.Etl.DbClient.Example;
 
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public class EmployeeRecord
 {
     public int Id { get; set; }

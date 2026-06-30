@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
@@ -8,6 +9,7 @@ namespace Wolfgang.Etl.DbClient.Benchmarks;
 /// avoid Postgres' unquoted-folding behaviour.
 /// </summary>
 [Table("contract_items")]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public class BenchmarkRecord
 {
     [Column("name")]

@@ -305,7 +305,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // semantics, if needed, only have to flip in one place).
     private int? CommandTimeoutSeconds => _commandTimeout.HasValue
         ? (int)_commandTimeout.Value.TotalSeconds
-        : (int?)null;
+        : null;
 
 
 
@@ -326,8 +326,115 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// When <see langword="true"/>, the extractor opens the connection before
+    /// the first command runs and closes it after the enumeration ends. The
+    /// connection is NOT disposed — it's returned to the pool for reuse,
+    /// which plays better with connection-pool lifetime in web apps and
+    /// hosted services.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default <see langword="false"/> preserves the v0.4.0 behavior: the
+    /// caller is responsible for opening the connection before calling
+    /// <c>ExtractAsync</c>.
+    /// </para>
+    /// <para>
+    /// Ignored on the owned-connection ctor path (the
+    /// <c>(DbProviderFactory, connectionString, …)</c> overload). That path
+    /// always manages and disposes the connection because it created it.
+    /// </para>
+    /// <para>
+    /// If the connection is already open when <c>ExtractAsync</c> starts,
+    /// it's left open — the extractor only closes connections it itself
+    /// opened.
+    /// </para>
+    /// </remarks>
+    public bool ManageConnection { get; set; }
+
+
+
+    /// <summary>
+    /// Optional override for the parameter set passed to Dapper. Setting this
+    /// property takes precedence over any <c>IDictionary&lt;string,object&gt;</c>
+    /// supplied via the constructor — useful when the command is a stored
+    /// procedure with <c>OUT</c> / <c>INOUT</c> parameters that need to be
+    /// declared with <see cref="ParameterDirection"/> values Dapper can't
+    /// infer from a plain dictionary.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Caller-owned: the extractor never clones it. After
+    /// <c>ExtractAsync</c> completes, read output values via
+    /// <c>Parameters.Get&lt;T&gt;("@name")</c>.
+    /// </para>
+    /// <para>
+    /// Example:
+    /// <code>
+    /// var p = new DynamicParameters();
+    /// p.Add("@CustomerId", 42);
+    /// p.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+    /// var extractor = new DbExtractor&lt;Order&gt;(conn, "usp_GetOrdersForCustomer")
+    /// {
+    ///     CommandType = CommandType.StoredProcedure,
+    ///     Parameters = p
+    /// };
+    /// var orders = await extractor.ExtractAsync().ToListAsync();
+    /// var total = p.Get&lt;int&gt;("@TotalCount");
+    /// </code>
+    /// </para>
+    /// </remarks>
+    public DynamicParameters? Parameters { get; set; }
+
+
+
+    /// <summary>
+    /// When both <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are
+    /// set, the extractor appends <see cref="PagingClauseTemplate"/> to the
+    /// command text before sending it. Default <see langword="null"/> disables
+    /// server-side paging (the v0.4.0 behavior — the full result set comes
+    /// back and <c>SkipItemCount</c>/<c>MaximumItemCount</c> filter
+    /// client-side).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use server-side paging for very large tables where streaming
+    /// everything to the client is wasteful. SQL Server requires an
+    /// <c>ORDER BY</c> in the command text for paging to be deterministic;
+    /// SQLite, PostgreSQL, and MySQL don't require it but you should still
+    /// include one — without a stable order, page contents drift.
+    /// </para>
+    /// </remarks>
+    public long? ServerOffset { get; set; }
+
+
+
+    /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
+    public long? ServerLimit { get; set; }
+
+
+
+    /// <summary>
+    /// SQL fragment appended to the command text when both
+    /// <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are set.
+    /// Bound as Dapper parameters <c>@PageOffset</c> and <c>@PageLimit</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Defaults to <c>LIMIT @PageLimit OFFSET @PageOffset</c> — the SQLite /
+    /// PostgreSQL / MySQL syntax.
+    /// </para>
+    /// <para>
+    /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
+    /// (and ensure the base SQL ends with an <c>ORDER BY</c>).
+    /// </para>
+    /// </remarks>
+    public string PagingClauseTemplate { get; set; } = "LIMIT @PageLimit OFFSET @PageOffset";
+
+
+
+    /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
-    /// the total record count, which is then reported via <see cref="DbReport.TotalItemCount"/>.
+    /// the total record count, which is then reported via <see cref="Report.TotalItemCount"/>.
     /// Assign <see cref="DefaultTotalCountQuery"/> to use the library's built-in
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).
@@ -348,6 +455,67 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// it inside a derived table. Use a custom <see cref="TotalCountQuery"/> in that case.
     /// </remarks>
     public Func<CancellationToken, Task<int>> DefaultTotalCountQuery => ExecuteDefaultTotalCountQueryAsync;
+
+
+
+    /// <summary>
+    /// Runs the configured <see cref="TotalCountQuery"/> (or the built-in
+    /// <see cref="DefaultTotalCountQuery"/> if none is assigned) and returns
+    /// the result. Useful when the caller wants the total count without
+    /// actually streaming the rows — for example, sizing a progress bar
+    /// before kicking off the extract.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the count query.</param>
+    /// <returns>The row count reported by the underlying query.</returns>
+    /// <remarks>
+    /// <para>
+    /// Doesn't mutate any state on the extractor — does not touch
+    /// <c>DbReport.TotalItemCount</c>, the stopwatch, or any of the
+    /// progress counters. Safe to call any number of times before, during
+    /// (different cancellation token), or after an <c>ExtractAsync</c>.
+    /// </para>
+    /// <para>
+    /// Opens the connection on the owned-connection ctor path before running
+    /// the query and disposes it after — same lifecycle as a full extraction.
+    /// </para>
+    /// </remarks>
+    public async Task<int> CountAsync(CancellationToken cancellationToken = default)
+    {
+        var query = TotalCountQuery ?? DefaultTotalCountQuery;
+        var needsOpen = (_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open;
+
+        if (!needsOpen)
+        {
+            return await query(cancellationToken).ConfigureAwait(false);
+        }
+
+        await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return await query(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (_ownsConnection)
+            {
+#if NET5_0_OR_GREATER
+                await _connection.DisposeAsync().ConfigureAwait(false);
+#else
+                _connection.Dispose();
+#endif
+            }
+            else
+            {
+#if NET5_0_OR_GREATER
+                await _connection.CloseAsync().ConfigureAwait(false);
+#else
+                _connection.Close();
+                await Task.CompletedTask.ConfigureAwait(false);
+#endif
+            }
+        }
+    }
 
 
 
@@ -401,16 +569,20 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         LogExtractionStarted();
 
         // Owned-connection ctor path: open before the first query, dispose after.
+        // ManageConnection=true path: open before the first query, CLOSE (don't
+        // dispose) after — connection returns to the pool, caller keeps it.
         // try/finally in an async iterator is OK in C# 8+; the iterator runtime
         // routes break/exception through the finally on Dispose.
-        if (_ownsConnection && _connection.State != ConnectionState.Open)
+        var openedHere = false;
+        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
+            openedHere = true;
         }
 
         try
         {
-            var param = _dynamicParameters;
+            ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
 
             if (TotalCountQuery != null)
             {
@@ -419,7 +591,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
             long rowIndex = 0;
 
-            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(_commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
+            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
             {
                 token.ThrowIfCancellationRequested();
                 rowIndex++;
@@ -455,6 +627,16 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 _connection.Dispose();
 #endif
             }
+            else if (openedHere)
+            {
+                // ManageConnection path — close (do NOT dispose; caller owns it).
+#if NET5_0_OR_GREATER
+                await _connection.CloseAsync().ConfigureAwait(false);
+#else
+                _connection.Close();
+                await Task.CompletedTask.ConfigureAwait(false);
+#endif
+            }
         }
     }
 
@@ -468,9 +650,41 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         var sanitized = SanitizeCommandTextForCount(_commandText);
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
-        var param = _dynamicParameters;
+        var param = Parameters ?? _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>(
             new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token));
+    }
+
+
+
+    /// <summary>
+    /// If <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are both
+    /// set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
+    /// (returned via <paramref name="pagedCommandText"/>) and add
+    /// <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set (returned
+    /// via <paramref name="pagedParam"/>). Otherwise returns the inputs
+    /// unchanged.
+    /// </summary>
+    /// <remarks>
+    /// out parameters instead of a tuple — net462 doesn't ship
+    /// <c>System.ValueTuple</c> in the base targeting pack and we avoid the
+    /// extra package reference.
+    /// </remarks>
+    private void ApplyServerPaging(string commandText, DynamicParameters? param, out string pagedCommandText, out DynamicParameters? pagedParam)
+    {
+        if (!ServerOffset.HasValue || !ServerLimit.HasValue)
+        {
+            pagedCommandText = commandText;
+            pagedParam = param;
+            return;
+        }
+
+        var pagingParam = param ?? new DynamicParameters();
+        pagingParam.Add("@PageOffset", ServerOffset.Value);
+        pagingParam.Add("@PageLimit", ServerLimit.Value);
+
+        pagedCommandText = commandText + " " + PagingClauseTemplate;
+        pagedParam = pagingParam;
     }
 
 

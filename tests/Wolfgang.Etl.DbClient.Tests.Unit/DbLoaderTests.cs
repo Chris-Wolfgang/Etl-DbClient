@@ -73,7 +73,7 @@ public class DbLoaderTests
         using var conn = TestDb.CreateConnection();
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord>(conn, (string)null!)
+            () => new DbLoader<PersonRecord>(conn, null!)
         );
     }
 
@@ -651,7 +651,7 @@ public class DbLoaderTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord>((System.Data.Common.DbProviderFactory)null!, "Data Source=:memory:", "INSERT INTO People (first_name) VALUES (@FirstName)")
+            () => new DbLoader<PersonRecord>(null!, "Data Source=:memory:", "INSERT INTO People (first_name) VALUES (@FirstName)")
         );
     }
 
@@ -673,7 +673,431 @@ public class DbLoaderTests
     {
         Assert.Throws<ArgumentNullException>
         (
-            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", (string)null!)
+            () => new DbLoader<PersonRecord>(Microsoft.Data.Sqlite.SqliteFactory.Instance, "Data Source=:memory:", null!)
         );
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // IsDryRun (#21)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void IsDryRun_defaults_to_false()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.False(loader.IsDryRun);
+    }
+
+
+
+    [Fact]
+    public void IsDryRun_set_and_get_roundtrips()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        loader.IsDryRun = true;
+
+        Assert.True(loader.IsDryRun);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_IsDryRun_is_true_does_not_write_to_database()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            IsDryRun = true
+        };
+
+        await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable());
+
+        // Pipeline ran end-to-end (counter incremented for every record) but
+        // the DB is untouched.
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(5, loader.CurrentItemCount);
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // RowErrorHandling (#24)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ErrorHandling_defaults_to_Abort()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(RowErrorHandling.Abort, loader.ErrorHandling);
+    }
+
+
+
+    [Fact]
+    public void MaxErrorCount_defaults_to_zero()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(0, loader.MaxErrorCount);
+    }
+
+
+
+    [Fact]
+    public void MaxErrorCount_when_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.MaxErrorCount = -1);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_in_Skip_mode_continues_past_failing_rows()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        // 5 valid records; constraint-violation SQL targets the `age` column
+        // with a fixed non-existent column to force per-row failures.
+        // Use a SQL that ALWAYS fails to verify Skip semantics cleanly.
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, no_such_column) VALUES (@FirstName, @Age)"
+        )
+        {
+            ErrorHandling = RowErrorHandling.Skip
+        };
+
+        var failures = new List<long>();
+        loader.RowFailed += (_, args) => failures.Add(args.ItemIndex);
+
+        await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable());
+
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));     // every row failed
+        Assert.Equal(0, loader.CurrentItemCount);               // none "loaded"
+        Assert.Equal(5, loader.CurrentErrorCount);              // all five captured
+        Assert.Equal(new long[] { 1, 2, 3, 4, 5 }, failures);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_in_Skip_mode_aborts_when_MaxErrorCount_is_reached()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, no_such_column) VALUES (@FirstName, @Age)"
+        )
+        {
+            ErrorHandling = RowErrorHandling.Skip,
+            MaxErrorCount = 3
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            async () => await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable())
+        );
+
+        Assert.Contains("MaxErrorCount", ex.Message, StringComparison.Ordinal);
+        Assert.NotNull(ex.InnerException);
+        Assert.Equal(3, loader.CurrentErrorCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_in_Abort_mode_propagates_the_first_failure()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, no_such_column) VALUES (@FirstName, @Age)"
+        );
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>
+        (
+            async () => await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable())
+        );
+
+        Assert.Equal(0, loader.CurrentErrorCount); // never tracked in Abort mode
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // InsertBatchSize / multi-row INSERT (#30)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void InsertBatchSize_defaults_to_one()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(1, loader.InsertBatchSize);
+    }
+
+
+
+    [Fact]
+    public void InsertBatchSize_when_less_than_one_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.InsertBatchSize = 0);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_writes_one_multi_row_statement_per_chunk()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            InsertBatchSize = 4
+        };
+
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+        // All 10 rows landed (4 + 4 + 2 trailing chunk).
+        Assert.Equal(10, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(10, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_and_partial_final_chunk_inserts_all_rows()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            InsertBatchSize = 100   // larger than the source — single partial chunk
+        };
+
+        await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
+
+        Assert.Equal(7, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_when_CommandText_missing_VALUES_throws_InvalidOperationException()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "UPDATE People SET age = @Age WHERE first_name = @FirstName"
+        )
+        {
+            InsertBatchSize = 5
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            async () => await loader.LoadAsync(CreateTestRecords(3).ToAsyncEnumerable())
+        );
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // ManageConnection (#31)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void ManageConnection_defaults_to_false()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.False(loader.ManageConnection);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_ManageConnection_is_true_opens_a_closed_connection_and_closes_it_after()
+    {
+        // Shared-cache in-memory SQLite so a Close()→Open() cycle preserves
+        // the table (plain :memory: drops it).
+        var connString = $"Data Source=mc_loader_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+        using var keeper = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        await keeper.OpenAsync();
+        await TestDb.CreateEmptyTableAsync(keeper);
+
+        using var conn = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            ManageConnection = true
+        };
+
+        await loader.LoadAsync(CreateTestRecords(4).ToAsyncEnumerable());
+
+        Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+        // Re-open and verify the 4 rows landed AND the connection wasn't disposed.
+        await conn.OpenAsync();
+        Assert.Equal(4, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // BatchCommitSize (#22)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void BatchCommitSize_defaults_to_zero()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Equal(0, loader.BatchCommitSize);
+    }
+
+
+
+    [Fact]
+    public void BatchCommitSize_when_negative_throws_ArgumentOutOfRangeException()
+    {
+        using var conn = TestDb.CreateConnection();
+        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => loader.BatchCommitSize = -1);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchCommitSize_inserts_all_records()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 3
+        };
+
+        await loader.LoadAsync(CreateTestRecords(10).ToAsyncEnumerable());
+
+        // 10 rows split into chunks of 3 (3+3+3+1) — every chunk commits
+        // independently. End state: all 10 rows persisted.
+        Assert.Equal(10, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(10, loader.CurrentItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_with_BatchCommitSize_preserves_earlier_chunks_on_late_failure()
+    {
+        // Create a fresh in-memory DB with a small enough table to fail on the
+        // 7th insert (NOT NULL constraint on first_name). Records 1-6 should
+        // survive in two committed chunks of 3; record 7 fails and rolls back
+        // its own (partial) chunk.
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var records = CreateTestRecords(6).Concat(new[]
+        {
+            new PersonRecord { FirstName = null!, LastName = "Bad", Age = 99 }
+        });
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 3
+        };
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>
+        (
+            async () => await loader.LoadAsync(records.ToAsyncEnumerable())
+        );
+
+        // The first 2 chunks of 3 each committed before the failure; the 3rd
+        // chunk (containing the bad record) rolled back.
+        Assert.Equal(6, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_IsDryRun_is_true_and_BatchSize_is_set_does_not_flush_batches()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            IsDryRun = true,
+            BatchSize = 3
+        };
+
+        await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
+
+        Assert.Equal(0, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(7, loader.CurrentItemCount);
     }
 }

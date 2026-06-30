@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using BenchmarkDotNet.Attributes;
-using Wolfgang.Etl.DbClient;
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 

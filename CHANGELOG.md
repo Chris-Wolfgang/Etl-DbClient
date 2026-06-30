@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — robustness + extractor ergonomics + source generator
+
+### Added — DbLoader robustness
+- `IsDryRun` ([#21](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/21)) — when `true`, the loader runs the full pipeline (enumerate, evaluate skip/max, increment counters, fire progress) but skips both `ExecuteAsync` call sites (per-row + batched). The DB is not modified. Implements `ISupportDryRun` from Abstractions 0.15.0.
+- `ErrorHandling` ([#24](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/24)) — new `RowErrorHandling` enum (`Abort` default, `Skip`). In `Skip` mode the per-row catch fires a new `RowFailed` event (`EventHandler<RowFailedEventArgs<TRecord>>`), advances `CurrentErrorCount`, and continues. `MaxErrorCount` caps the threshold; `OperationCanceledException` always propagates. Per-row path only — batched mode still aborts.
+- `BatchCommitSize` ([#22](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/22)) — commit every N successfully-loaded rows in auto-managed-transaction mode. Failures roll back only the current chunk; previously-committed chunks survive. Trades all-or-nothing semantics for resumability + lower undo-log pressure.
+- `InsertBatchSize` ([#30](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/30)) — replaces N per-row `INSERT`s with a single multi-row `INSERT … VALUES (…), (…), …` statement per chunk. Requires `CommandText` to end with `VALUES (template)`; properties bound by reflection via case-insensitive name match. Mutually exclusive with `BatchSize > 1`, `IsDryRun`, stored-procedure `CommandType`.
+
+### Added — Extractor ergonomics
+- `CountAsync(CancellationToken)` ([#32](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/32)) — runs the configured `TotalCountQuery` (or default) and returns the row count without streaming. Side-effect-free on extractor state.
+- `Parameters` (`DynamicParameters?`) ([#27](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/27)) — opt-in override of the dictionary-built parameters. Useful for stored procedures with OUT / INOUT parameters that need explicit `ParameterDirection`. Both data and default-count queries honor the override.
+- `ServerOffset` / `ServerLimit` (`long?`) + `PagingClauseTemplate` ([#33](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/33)) — server-side paging via configurable clause template. Default `LIMIT @PageLimit OFFSET @PageOffset` fits SQLite/Postgres/MySQL; SQL Server users set the OFFSET/FETCH form. Engages only when both `ServerOffset` and `ServerLimit` are non-null.
+
+### Added — Connection lifecycle
+- `ManageConnection` on both `DbExtractor` and `DbLoader` ([#31](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/31)) — when `true`, opens a closed connection before the first command and **closes (not disposes)** it after. The connection returns to the pool. Already-open connections are left open. Ignored on the owned-connection ctor path (which still disposes).
+
+### Added — Source generator
+- New project **`Wolfgang.Etl.DbClient.SourceGenerator`** ([refs #23](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/23)) — `netstandard2.0`, `IIncrementalGenerator`, packed into the runtime NuGet under `analyzers/dotnet/cs` so it ships transparently to consumers.
+- New public attributes `[DbTable("name")]` and `[DbColumn("col", Skip = bool)]`.
+- For every `partial class`/`partial record` decorated with `[DbTable]`, the generator emits a partial with `public const string Insert = "INSERT INTO … VALUES (…)";` and a reflection-free `public static void Bind(DynamicParameters, T record)` helper. `Update` / `Delete` / `Select` + `DbLoader` / `DbExtractor` wire-up tracked as follow-up.
+
+### Dependency bumps
+- `Wolfgang.Etl.Abstractions` 0.13.0 → **0.15.0** — introduces `ISupportDryRun` interface; `Report.TotalItemCount` moved to base (`DbReport` now inherits it instead of declaring locally).
+- `Wolfgang.Etl.TestKit` 0.7.0 → **0.9.0**, `Wolfgang.Etl.TestKit.Xunit` 0.6.0 → **0.9.0**.
+- `Microsoft.Bcl.AsyncInterfaces` 10.0.5 → **10.0.9** (TestKit 0.9.0 floor).
+
+### CI / release hardening
+- **`release.yaml` integration-test gate** ([#206](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/206)) — added a 5×2 RDBMS × TFM matrix (sqlserver / postgres / mysql / mariadb / sqlite × net8.0 / net10.0) + aggregator job between `pack-and-validate` and `publish-nuget`. Closes the gap where a release could ship while the integration suite was red.
+
+### Code quality
+- **InspectCode hygiene** ([refs #202](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/202)) — first canonical pass on this repo. Real bug fixes: `AccessToDisposedClosure` in a test (TotalCountQuery captured a `using var conn`), `S127` loop-counter mutation in `ExtractTemplateParamNames`. Code-quality cleanups: redundant `?.` on non-null benchmark `Dispose` receivers, redundant casts/qualifiers/usings, always-true nullable-API checks, `NonReadonlyMemberInGetHashCode` on fixtures (converted to `init`). Reflection-consumed surfaces now carry `[PublicAPI]` (src) or `[UsedImplicitly]` (benchmarks/examples/tests) from `JetBrains.Annotations` to document why ReSharper can't see consumers — replacing the broader `// ReSharper disable` comment approach. `jb inspectcode` clean (0 findings, 0 errors).
+
+### Breaking
+- **Removed**: `DbReport.TotalItemCount` (locally declared) — the property is now inherited from `Report` (Abstractions 0.14+ moved it to the base). Callers reading `report.TotalItemCount` continue to work via inheritance lookup; recompilation against Abstractions 0.15+ may be needed for tightly-coupled consumers.
+
 ## [0.4.0] — production-readiness knobs
 
 ### Added
@@ -15,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DbExtractor<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload. The extractor creates the connection via the supplied `DbProviderFactory`, opens it lazily before the first command, and disposes it when extraction completes (or throws). Saves callers the `using var conn = …; await conn.OpenAsync();` boilerplate for one-off scenarios.
 - `DbLoader<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload with the same semantics (open lazily, dispose at end). Defaults to auto-managed transaction.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.4.0
 
 ## [0.3.0] — code-review pass + integration-test surface

@@ -84,9 +84,6 @@ public record DbReport : Report
 
 
 
-    /// <summary>
-    /// The total number of records available for extraction, or <c>null</c> if
-    /// <see cref="DbExtractor{TRecord}.TotalCountQuery"/> was not set.
-    /// </summary>
-    public int? TotalItemCount { get; }
+    // TotalItemCount is inherited from Report (Wolfgang.Etl.Abstractions 0.14+).
+    // Assigned via the inherited setter inside the constructor.
 }

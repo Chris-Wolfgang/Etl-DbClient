@@ -13,12 +13,12 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration;
 public sealed class ContractItem : IEquatable<ContractItem>
 {
     [Column("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
 
 
     [Column("value")]
-    public int Value { get; set; }
+    public int Value { get; init; }
 
 
 

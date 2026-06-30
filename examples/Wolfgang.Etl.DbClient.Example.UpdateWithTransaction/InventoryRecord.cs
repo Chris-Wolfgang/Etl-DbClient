@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient.Example.UpdateWithTransaction;
 
 [Table("Inventory")]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public class InventoryRecord
 {
     [Key]
