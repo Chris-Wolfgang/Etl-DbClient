@@ -738,7 +738,15 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     // Local IAsyncEnumerable adapter over a materialized List<T>. Used by the
     // chunked-commit path; avoiding the System.Linq.Async extension keeps the
     // src/ project dependency-free of that package.
+    //
+    // VSTHRD200: the rule wants methods returning "awaitable" types to end with
+    // "Async". IAsyncEnumerable<T> is NOT directly awaitable — callers use
+    // `await foreach`, not `await`. Renaming to `AsAsyncEnumerableAsync` would
+    // be double-"Async" noise and inconsistent with the BCL convention
+    // (`Enumerable.ToAsyncEnumerable`, `AsyncEnumerable.Create`, etc.).
+#pragma warning disable VSTHRD200
     private static async IAsyncEnumerable<TRecord> AsAsyncEnumerable(List<TRecord> source)
+#pragma warning restore VSTHRD200
     {
         foreach (var item in source)
         {
