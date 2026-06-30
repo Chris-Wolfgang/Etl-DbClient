@@ -12,7 +12,13 @@
          is on GHSA-2m69-gcr7-jv3q with no patched version available yet. Same
          treatment as benchmarks/.../*.csproj and Tests.Integration. Test
          assembly is never published; impact limited to local + CI runs. -->
-    <NoWarn>$(NoWarn);MA0004;S1144;S6966;NU1903</NoWarn>
+    <!-- RS0016 / RS0037: PublicApiAnalyzers fires on members emitted by the
+         DbTableGenerator source generator into this test project (the
+         [DbTable]-decorated fixtures GeneratedPerson / GeneratedOrder gain
+         a public `Insert` const + `Bind` helper). This assembly is never
+         packaged — PublicAPI.txt contract doesn't apply. Same justification
+         as the SourceGenerator project's local .editorconfig. -->
+    <NoWarn>$(NoWarn);MA0004;S1144;S6966;NU1903;RS0016;RS0037</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
