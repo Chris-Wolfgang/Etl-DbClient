@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.4.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbReport.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbReport%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/main/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbReport.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbReport%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,7 +75,7 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_DbReport" data-uid="Wolfgang.Etl.DbClient.DbReport" class="text-break">
-Class DbReport  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L11"><i class="bi bi-code-slash"></i></a>
+Class DbReport  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbReport.cs/#L11"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -141,6 +141,24 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
       <span class="xref">Report.CurrentItemCount</span>
     </div>
     <div>
+      <span class="xref">Report.StartedAt</span>
+    </div>
+    <div>
+      <span class="xref">Report.Elapsed</span>
+    </div>
+    <div>
+      <span class="xref">Report.TotalItemCount</span>
+    </div>
+    <div>
+      <span class="xref">Report.ItemsPerSecond</span>
+    </div>
+    <div>
+      <span class="xref">Report.PercentComplete</span>
+    </div>
+    <div>
+      <span class="xref">Report.EstimatedRemaining</span>
+    </div>
+    <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
     </div>
     <div>
@@ -167,7 +185,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport__ctor_System_Int32_System_Int32_System_String_System_Int64_System_Nullable_System_Int32__" data-uid="Wolfgang.Etl.DbClient.DbReport.#ctor(System.Int32,System.Int32,System.String,System.Int64,System.Nullable{System.Int32})">
   DbReport(int, int, string, long, int?)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L48"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbReport.cs/#L48"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a> snapshot.</p>
@@ -217,7 +235,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport_CommandText" data-uid="Wolfgang.Etl.DbClient.DbReport.CommandText">
   CommandText
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L76"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbReport.cs/#L76"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The SQL command text being executed. Never null — always assigned by the constructor.</p>
@@ -249,7 +267,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport_CurrentSkippedItemCount" data-uid="Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount">
   CurrentSkippedItemCount
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L69"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbReport.cs/#L69"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The number of records skipped so far.</p>
@@ -281,7 +299,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
   <h3 id="Wolfgang_Etl_DbClient_DbReport_ElapsedMilliseconds" data-uid="Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds">
   ElapsedMilliseconds
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L83"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbReport.cs/#L83"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The wall clock time in milliseconds since the operation started.</p>
@@ -309,44 +327,11 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 
 
 
-  <a id="Wolfgang_Etl_DbClient_DbReport_TotalItemCount_" data-uid="Wolfgang.Etl.DbClient.DbReport.TotalItemCount*"></a>
-
-  <h3 id="Wolfgang_Etl_DbClient_DbReport_TotalItemCount" data-uid="Wolfgang.Etl.DbClient.DbReport.TotalItemCount">
-  TotalItemCount
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L91"><i class="bi bi-code-slash"></i></a>
-  </h3>
-
-  <div class="markdown level1 summary"><p>The total number of records available for extraction, or <code>null</code> if
-<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_TotalCountQuery">TotalCountQuery</a> was not set.</p>
-</div>
-  <div class="markdown level1 conceptual"></div>
-
-  <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public int? TotalItemCount { get; }</code></pre>
-  </div>
-
-
-
-
-
-  <h4 class="section">Property Value</h4>
-  <dl class="parameters">
-    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a>?</dt>
-    <dd></dd>
-  </dl>
-
-
-
-
-
-
-
-
 
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.4.0/src/Wolfgang.Etl.DbClient/DbReport.cs/#L11" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/src/Wolfgang.Etl.DbClient/DbReport.cs/#L11" class="edit-link">Edit this page</a>
         </div>
 
 
@@ -362,7 +347,7 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
     <footer class="border-top text-secondary">
       <div class="container-xxl">
         <div class="flex-fill">
-          Made with DocFX
+          Made with DocFX <script>(function(){var r='/';if(window.location.hostname.endsWith('.github.io')){var s=window.location.pathname.split('/').filter(Boolean);if(s.length)r='/'+s[0]+'/';}var t=document.createElement('script');t.src=r+'public/version-picker.js';t.async=true;document.head.appendChild(t);})();</script>
         </div>
       </div>
     </footer>

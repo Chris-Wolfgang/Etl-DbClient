@@ -36,6 +36,20 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbColumnAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbColumnAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbColumnAttribute",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbColumnAttribute.yml\" sourcestartlinenumber=\"1\">Optional per-property override for a <xref href=\"Wolfgang.Etl.DbClient.DbTableAttribute\" data-throw-if-not-resolved=\"false\"></xref>-decorated\nrecord. Maps the annotated property to a column whose name differs from\nthe property name, or marks it as <xref href=\"Wolfgang.Etl.DbClient.DbColumnAttribute.Skip\" data-throw-if-not-resolved=\"false\"></xref>ped from the\ngenerated SQL.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/Wolfgang.Etl.DbClient.DbExtractor-1.yml",
       "output": {
         ".html": {
@@ -75,6 +89,48 @@
       "IsMRef": true,
       "Title": "Wolfgang.Etl.DbClient.DbReport",
       "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbReport.yml\" sourcestartlinenumber=\"1\">Progress report for ADO.NET extraction and loading operations.\nExtends the base <xref href=\"Wolfgang.Etl.Abstractions.Report\" data-throw-if-not-resolved=\"false\"></xref> with database-specific context.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbTableAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbTableAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbTableAttribute",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbTableAttribute.yml\" sourcestartlinenumber=\"1\">Marks a record / class as mapping to a database table. Triggers the\nWolfgang.Etl.DbClient source generator to emit a partial class with\nreflection-free <code>Insert</code> SQL + parameter-binding helpers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.RowErrorHandling.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.RowErrorHandling.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.RowErrorHandling",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.RowErrorHandling.yml\" sourcestartlinenumber=\"1\">Controls how <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref> reacts when a single row's\n<code>ExecuteAsync</code> call throws.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.RowFailedEventArgs-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.RowFailedEventArgs-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.RowFailedEventArgs-1.yml\" sourcestartlinenumber=\"1\">Payload for <code>DbLoader{TRecord}.RowFailed</code>. Fires once per row that\nfailed to load when <code>ErrorHandling</code> is <xref href=\"Wolfgang.Etl.DbClient.RowErrorHandling.Skip\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
     },
     {
       "type": "ManagedReference",
