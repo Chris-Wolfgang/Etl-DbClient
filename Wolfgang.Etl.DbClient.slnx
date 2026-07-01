@@ -48,6 +48,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj" />
+    <Project Path="src/Wolfgang.Etl.DbClient.SourceGenerator/Wolfgang.Etl.DbClient.SourceGenerator.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj" />
