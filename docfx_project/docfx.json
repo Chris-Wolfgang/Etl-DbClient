@@ -7,6 +7,9 @@
           "files": [
             "src/**/*.csproj"
           ],
+          "exclude": [
+            "src/Wolfgang.Etl.DbClient.SourceGenerator/**"
+          ],
           "src": "../"
         }
       ],
