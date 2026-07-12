@@ -176,8 +176,21 @@ When adding new configuration files that control code quality or security:
 3. Test that the file is correctly fetched from main branch.
 4. Update this documentation.
 
+## OSSF Scorecard
+
+`.github/workflows/scorecard.yaml` runs the OpenSSF Scorecard on a weekly schedule + on push to `main`. It scores repository *configuration* (branch protection, pinned dependencies, dangerous-workflow patterns, permission scoping, ...) against ~20 best practices and publishes SARIF to the Security tab.
+
+- **Public dashboard**: https://scorecard.dev/viewer/?uri=github.com/Chris-Wolfgang/Etl-DbClient (badge in README.md).
+- **Baseline**: to be captured once the first run publishes (this PR's first `push:main` after merge). Update this section with the initial score + a list of intentionally accepted findings.
+- **Score floor**: **7.5**. If a scheduled or push run drops the score below 7.5:
+  1. The maintainer investigates the specific check(s) that regressed.
+  2. If the regression is intentional (e.g. a new third-party action we accept without SHA-pin), add it to the accepted-findings list here with a one-line rationale, and note the score-floor drop in the next CHANGELOG entry.
+  3. If unintentional, fix and re-run — do not lower the floor.
+- **Related**: Complementary to CodeQL (source code SAST) and `zizmor` / `actionlint` (workflow YAML security). Refs [#152](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/152).
+
 ## References
 
 - [GitHub Actions Security Hardening](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
 - [Keeping your GitHub Actions secure](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions)
 - [Understanding pull_request_target](https://securitylab.github.com/research/github-actions-preventing-pwn-requests/)
+- [OSSF Scorecard checks](https://github.com/ossf/scorecard/blob/main/docs/checks.md)
