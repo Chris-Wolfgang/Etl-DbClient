@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.6.0] - 2026-07-06
+
+Feature-rich release: dry-run mode, source-generator scaffolding, batching + paging + connection lifecycle knobs, plus a broad InspectCode fix pass.
+
+### Added
+
+- **IsDryRun mode for `DbLoader`** — validate pipelines without writing to the target DB. Requires Abstractions 0.15.0 (#21).
+- **`DbLoader.BatchCommitSize`** — chunked transactional commits during long loads (#22).
+- **Row-level error handling on `DbLoader`** — continue-on-error / stop-on-error policies with per-row failure callbacks (#24).
+- **`DbExtractor.CountAsync()`** convenience method for pre-flight sizing (#32).
+- **`ManageConnection` on `DbExtractor` and `DbLoader`** — opt-in library-owned connection lifecycle (#31).
+- **`DbExtractor.Parameters` property** — output-parameter support for stored procedures (#27).
+- **Server-side paging on `DbExtractor`** — `ServerOffset` + `ServerLimit` + `PagingClauseTemplate` for streaming large tables without buffering (plus optional `TotalCountQuery` for pre-flight sizing) (#33).
+- **Multi-row `INSERT` batching on `DbLoader`** — SQL Server / PostgreSQL / MySQL / MariaDB batch-insert paths (#30).
+- **Source generator scaffolding** for compile-time SQL generation from `DbTableAttribute` / `DbColumnAttribute` — the generator DLL ships embedded in the main package under `analyzers/dotnet/cs` (#23).
+
+### Changed
+
+- Bumped `Wolfgang.Etl.Abstractions` to `0.15.0` and `Wolfgang.Etl.TestKit.Xunit` to `0.10.0`.
+- Silenced non-applicable analyzer rules on the SourceGenerator project (RS1036 / RS2008 / NU1701) — quieter analyzer set for source-gen code (#213).
+- Suppressed VSTHRD200 on the `AsAsyncEnumerable` adapter (#213).
+
+### Fixed
+
+- Real-bug findings from the InspectCode audit (#202 follow-up).
+- Remaining InspectCode findings via actual source changes rather than suppressions (#202 follow-up).
+- Replaced file-scope ReSharper disables with documented JetBrains annotations (#202 follow-up).
 ## [0.5.0] — robustness + extractor ergonomics + source generator
 
 ### Added — DbLoader robustness
@@ -50,7 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DbExtractor<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload. The extractor creates the connection via the supplied `DbProviderFactory`, opens it lazily before the first command, and disposes it when extraction completes (or throws). Saves callers the `using var conn = …; await conn.OpenAsync();` boilerplate for one-off scenarios.
 - `DbLoader<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload with the same semantics (open lazily, dispose at end). Defaults to auto-managed transaction.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.4.0
 

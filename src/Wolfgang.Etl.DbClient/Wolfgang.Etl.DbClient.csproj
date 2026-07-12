@@ -25,7 +25,7 @@
                                   <Version>; set explicitly here so it's
                                   discoverable in a metadata dump.
          ===================================================================== -->
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>$([System.Text.RegularExpressions.Regex]::Replace("$(Version)", "[-+].*$", "")).0</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
