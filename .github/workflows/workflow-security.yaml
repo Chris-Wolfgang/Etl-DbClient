@@ -1,0 +1,84 @@
+# Workflow YAML security audit — zizmor + actionlint.
+#
+# CodeQL scans source code. This workflow scans the GitHub Actions
+# YAML *itself* for security defects that source-code SAST can't see:
+#   - untrusted-input injection into run: blocks
+#   - missing / overly-permissive permissions: blocks
+#   - secrets leaking via expression-context expansion
+#   - third-party actions not pinned by SHA
+#
+# zizmor: security-focused static analysis (rules focus on threat model).
+# actionlint: syntax + typing + common-mistake linting (broader, less deep).
+# The two are complementary — running both covers rule sets neither
+# tool covers alone.
+#
+# Refs #153.
+
+name: Workflow security audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".zizmor.yml"
+      - ".github/actionlint.yaml"
+      - ".github/workflows/workflow-security.yaml"
+  push:
+    branches: [main, vNext]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  # Manual trigger for full re-scan (e.g. after tightening the config).
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to code-scanning.
+      security-events: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
+        with:
+          # Gate on high-severity findings; medium / low surface in
+          # Code Scanning but don't block the PR.
+          min-severity: high
+          # Config lives in .zizmor.yml at the repo root (see below).
+
+      - name: Upload SARIF to code-scanning
+        uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f7b4bf65d80d # v3.28.10
+        if: always()
+        with:
+          sarif_file: results.sarif
+          category: zizmor
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run actionlint
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+        with:
+          # PR annotations (::error / ::warning file=…) are emitted by
+          # actionlint's default GitHub Actions matcher.
+          fail-on-error: true
+          # actionlint config lives in .github/actionlint.yaml (see below).
