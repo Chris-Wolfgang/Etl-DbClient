@@ -1,0 +1,18 @@
+# ApiCompat suppression file.
+#
+# Records intentional ABI-breaking changes that ApiCompat would
+# otherwise flag as compat failures. Additions require:
+#
+# 1. A MAJOR version bump (SemVer forbids ABI breaks in PATCH/MINOR).
+# 2. A migration guide under docs/migrations/ (see docs/migrations/README.md).
+# 3. An ADR under docs/adr/ if the break reflects a design decision.
+#
+# Format (one per line):
+#   <diagnostic-id>|<left-signature>|<right-signature>
+# e.g.:
+#   CP0002|M:Wolfgang.Etl.DbClient.DbLoader.LoadAsync|
+#
+# Full syntax:
+#   https://learn.microsoft.com/en-us/dotnet/fundamentals/apicompat/
+#
+# Empty baseline — no intentional breaks recorded yet.
