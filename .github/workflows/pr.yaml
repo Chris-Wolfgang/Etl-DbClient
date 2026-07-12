@@ -235,19 +235,42 @@ jobs:
 
           missing=()
           # `git ls-files 'src/**/*.csproj'` returns forward-slashed paths on
-          # all platforms; slnx/sln files use forward slashes too.
+          # all platforms.
+          #
+          # Match semantics matter: solution-level `dotnet build` follows only
+          # <Project Path="…"/> entries in .slnx (or GUID lines in classic .sln).
+          # A csproj referenced as <File Path="…"/> (a solution item) is NOT
+          # built by the solution. So for .slnx we must match on the Project
+          # element specifically — a bare grep on the path would let a
+          # solution-items-only reference pass this guardrail while
+          # release.yaml's Pack step still skips the project.
           while IFS= read -r csproj; do
-            # git ls-files always emits forward-slashed paths. .slnx entries
-            # use forward slashes, but classic .sln GUID lines often use
-            # backslashes (`src\Foo\Foo.csproj`). Check both encodings so a
-            # repo with a legacy .sln at the root isn't a false positive.
+            # git ls-files always emits forward-slashed paths. Classic .sln
+            # GUID lines often use backslashes (`src\Foo\Foo.csproj`) — the
+            # generic check below handles both encodings for .sln.
             csproj_bs="${csproj//\//\\}"
             found=0
             for sln in "${slns[@]}"; do
-              if grep -qF "$csproj" "$sln" || grep -qF "$csproj_bs" "$sln"; then
-                found=1
-                break
-              fi
+              case "$sln" in
+                *.slnx)
+                  # .slnx: require the specific <Project Path="…"/> element.
+                  # Match either quoted attribute style; ignore whitespace
+                  # variance around the equals sign.
+                  if grep -qE "<Project[[:space:]]+Path[[:space:]]*=[[:space:]]*[\"']${csproj//\//\\/}[\"']" "$sln"; then
+                    found=1
+                    break
+                  fi
+                  ;;
+                *.sln)
+                  # Classic .sln: GUID `Project(...) = "Name", "path", "{GUID}"`
+                  # lines carry the path. Substring match is safe because .sln
+                  # doesn't have a "solution items" analogue of <File Path=…>.
+                  if grep -qF "$csproj" "$sln" || grep -qF "$csproj_bs" "$sln"; then
+                    found=1
+                    break
+                  fi
+                  ;;
+              esac
             done
             if [ "$found" -eq 0 ]; then
               missing+=("$csproj")
