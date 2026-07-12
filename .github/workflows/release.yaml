@@ -674,6 +674,9 @@ jobs:
     needs: [pack-and-validate, test-integration-all]
     if: needs.pack-and-validate.outputs.has-packages == 'true'
     runs-on: windows-latest
+    permissions:
+      id-token: write   # required for OIDC token issuance to nuget.org
+      contents: read
     steps:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -694,7 +697,7 @@ jobs:
           path: ./packages
 
       - name: NuGet login (OIDC → temporary API key)
-        uses: NuGet/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
         id: nuget-login
         with:
           user: Chris-Wolfgang
