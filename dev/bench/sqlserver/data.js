@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783821300707,
+  "lastUpdate": 1783861068512,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlserver)": [
@@ -288,6 +288,48 @@ window.BENCHMARK_DATA = {
             "value": 3476574.5109375,
             "unit": "ns",
             "range": "± 36333.88910931545"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "91fb4aa99e6307a82c78674ee1b343ddd3e45755",
+          "message": "Merge pull request #228 from Chris-Wolfgang/chore/nuget-trusted-publishing\n\nci(release): switch to NuGet Trusted Publishing (OIDC)",
+          "timestamp": "2026-07-12T08:23:51-04:00",
+          "tree_id": "664d560bbbfc2c200eb2e2ed847139f353642527",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/91fb4aa99e6307a82c78674ee1b343ddd3e45755"
+        },
+        "date": 1783861067034,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 390469.94200721156,
+            "unit": "ns",
+            "range": "± 1937.6982054947498"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 793279.5231584822,
+            "unit": "ns",
+            "range": "± 4877.620927715769"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 4581071.507211538,
+            "unit": "ns",
+            "range": "± 37990.93194899802"
           }
         ]
       }
