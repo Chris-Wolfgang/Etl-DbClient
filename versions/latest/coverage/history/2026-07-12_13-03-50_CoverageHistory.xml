@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<coverage version="1.0" date="2026-07-12_12-43-23" tag="">
+<coverage version="1.0" date="2026-07-12_13-03-50" tag="">
   <assembly name="Wolfgang.Etl.DbClient">
     <class name="Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper" coveredlines="31" coverablelines="32" totallines="120" coveredbranches="17" totalbranches="18" coveredcodeelements="4" fullcoveredcodeelements="3" totalcodeelements="4" />
     <class name="Wolfgang.Etl.DbClient.DbClientOptions" coveredlines="1" coverablelines="1" totallines="58" coveredbranches="0" totalbranches="0" coveredcodeelements="1" fullcoveredcodeelements="1" totalcodeelements="1" />
