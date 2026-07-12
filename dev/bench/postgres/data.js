@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782161733357,
+  "lastUpdate": 1783821438226,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (postgres)": [
@@ -246,6 +246,48 @@ window.BENCHMARK_DATA = {
             "value": 6463987.340104166,
             "unit": "ns",
             "range": "± 28892.74994649662"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "314ba6c43f00049a4e5793b21a93a40fd1bfd36b",
+          "message": "Merge pull request #227 from Chris-Wolfgang/chore/release-v0.6.0\n\nchore: release v0.6.0 (MINOR — IsDryRun + source-gen + batching + paging)",
+          "timestamp": "2026-07-11T20:53:18-04:00",
+          "tree_id": "82b2087fec4bd96fb7a23b5a568a507e6a7d8d16",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/314ba6c43f00049a4e5793b21a93a40fd1bfd36b"
+        },
+        "date": 1783821436246,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 2929000.5658854167,
+            "unit": "ns",
+            "range": "± 12819.749805022306"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 3253837.8450520835,
+            "unit": "ns",
+            "range": "± 14953.672132826385"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 6814587.0453125,
+            "unit": "ns",
+            "range": "± 44221.410960977664"
           }
         ]
       }
