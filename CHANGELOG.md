@@ -31,7 +31,7 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 - **`DbExtractor.CountAsync()`** convenience method for pre-flight sizing (#32).
 - **`ManageConnection` on `DbExtractor` and `DbLoader`** — opt-in library-owned connection lifecycle (#31).
 - **`DbExtractor.Parameters` property** — output-parameter support for stored procedures (#27).
-- **Server-side paging on `DbExtractor`** — `PageSize` + `MaxPages` for streaming large tables without buffering (#33).
+- **Server-side paging on `DbExtractor`** — `ServerOffset` + `ServerLimit` + `PagingClauseTemplate` for streaming large tables without buffering (plus optional `TotalCountQuery` for pre-flight sizing) (#33).
 - **Multi-row `INSERT` batching on `DbLoader`** — SQL Server / PostgreSQL / MySQL / MariaDB batch-insert paths (#30).
 - **Source generator scaffolding** for compile-time SQL generation from `DbTableAttribute` / `DbColumnAttribute` — the generator DLL ships embedded in the main package under `analyzers/dotnet/cs` (#23).
 
