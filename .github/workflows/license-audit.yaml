@@ -1,0 +1,83 @@
+# License audit for transitive dependencies.
+#
+# Dependabot tracks dependency versions and CVE alerts but does NOT
+# check licenses. A new transitive dependency under an incompatible
+# license (GPL, AGPL, OSL, BSL, ...) silently leaks into a work
+# distributed under MIT — real procurement / legal exposure for
+# downstream consumers.
+#
+# Tool: `nuget-license` (dotnet global tool). Enumerates every
+# transitive NuGet package, captures its declared license, fails
+# the run on anything outside the allowlist below.
+#
+# Allowlist source: .github/license-allowlist.json
+#
+# Refs #148.
+
+name: License audit
+
+on:
+  pull_request:
+    paths:
+      - "**/*.csproj"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - ".github/license-allowlist.json"
+      - ".github/workflows/license-audit.yaml"
+  push:
+    branches: [main]
+  # Nightly scan catches newly-published transitive updates
+  # (packages we don't control the version of).
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj
+
+      - name: Install nuget-license
+        run: dotnet tool install --global nuget-license
+
+      - name: Load allowlist
+        id: allowlist
+        run: |
+          # Flatten JSON array to a comma-separated list for the CLI.
+          list=$(jq -r '.allowed | join(",")' .github/license-allowlist.json)
+          echo "types=$list" >> "$GITHUB_OUTPUT"
+
+      - name: Run audit (fail on non-allowlisted)
+        run: |
+          nuget-license \
+            --input src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
+            --allowed-license-types ${{ steps.allowlist.outputs.types }} \
+            --output JsonPretty \
+            --file-output license-report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: license-report
+          path: license-report.json
+          retention-days: 30

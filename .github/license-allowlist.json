@@ -1,0 +1,12 @@
+{
+  "$comment": "Allowlisted SPDX license identifiers for direct + transitive NuGet dependencies. Adding to this list requires reviewer sign-off. See docs/LICENSE-AUDIT.md for policy.",
+  "allowed": [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "MS-PL",
+    "Microsoft.NETCore.Platforms",
+    "0BSD"
+  ]
+}
