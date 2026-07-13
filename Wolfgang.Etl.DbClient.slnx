@@ -45,6 +45,7 @@
     <Project Path="examples/Wolfgang.Etl.DbClient.Example/Wolfgang.Etl.DbClient.Example.csproj" />
     <Project Path="examples/Wolfgang.Etl.DbClient.Example.AutoSql/Wolfgang.Etl.DbClient.Example.AutoSql.csproj" />
     <Project Path="examples/Wolfgang.Etl.DbClient.Example.UpdateWithTransaction/Wolfgang.Etl.DbClient.Example.UpdateWithTransaction.csproj" />
+    <Project Path="examples/Wolfgang.Etl.DbClient.Example.AotSmoke/Wolfgang.Etl.DbClient.Example.AotSmoke.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj" />
