@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+
+    <!-- The point of this project. Surface trim + AOT warnings at
+         publish time so we know which library surfaces (Dapper
+         reflection, attribute discovery, generic instantiation) will
+         break for a consumer with <PublishAot>true</PublishAot>. -->
+    <PublishAot>true</PublishAot>
+    <PublishTrimmed>true</PublishTrimmed>
+    <IsAotCompatible>true</IsAotCompatible>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+
+    <!-- Don't fail the local build on trim/AOT warnings — the aot-smoke
+         workflow captures them and reports; the workflow is
+         informational (see .github/workflows/aot-smoke.yaml comments). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 (transitive via Microsoft.Data.Sqlite)
+         is on GHSA-2m69-gcr7-jv3q with no patched version. Same treatment as
+         the other example projects. This assembly is never published; impact
+         limited to local + CI runs. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient\Wolfgang.Etl.DbClient.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
+    <!-- Microsoft.Data.Sqlite for a real DbConnection to hand to the
+         extractor / loader — no external service needed. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+  </ItemGroup>
+
+</Project>
