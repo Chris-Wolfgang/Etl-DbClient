@@ -23,12 +23,12 @@ namespace Wolfgang.Etl.DbClient.Example.AotSmoke;
 
 // Widget's getters are read by Dapper's reflection-driven row
 // materializer inside DbExtractor.ExtractAsync — invisible to
-// static analysis. `[UsedImplicitly(WithMembers)]` matches the
-// convention the rest of this repo uses for reflection-consumed
-// surfaces (see: DbClient's own [PublicAPI]/[UsedImplicitly]
-// annotations landed in #211).
+// static analysis. Match the 2-arg form the rest of this repo
+// uses for reflection-consumed surfaces (see EmployeeRecord,
+// ProductRecord, InventoryRecord, BenchmarkRecord, and DbClient's
+// own [PublicAPI]/[UsedImplicitly] annotations landed in #211).
 [DbTable("widget")]
-[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public record Widget
 {
     [DbColumn("id")]
