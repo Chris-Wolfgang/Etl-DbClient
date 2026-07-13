@@ -14,11 +14,9 @@
 // aot-smoke workflow file.
 
 using System;
-using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.DbClient;
 
 namespace Wolfgang.Etl.DbClient.Example.AotSmoke;
 
