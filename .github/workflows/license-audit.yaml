@@ -32,8 +32,6 @@ on:
     - cron: "17 4 * * *"
   workflow_dispatch:
 
-permissions: read-all
-
 jobs:
   audit:
     name: Audit
@@ -67,10 +65,14 @@ jobs:
           echo "types=$list" >> "$GITHUB_OUTPUT"
 
       - name: Run audit (fail on non-allowlisted)
+        env:
+          ALLOWED_LICENSES: ${{ steps.allowlist.outputs.types }}
         run: |
+          # Pass the allowlist via env + quoted expansion so an entry
+          # containing whitespace can't split into additional CLI args.
           nuget-license \
             --input src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
-            --allowed-license-types ${{ steps.allowlist.outputs.types }} \
+            --allowed-license-types "$ALLOWED_LICENSES" \
             --output JsonPretty \
             --file-output license-report.json
 

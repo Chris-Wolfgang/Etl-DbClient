@@ -34,11 +34,11 @@ Requires reviewer sign-off in the same PR. The PR description must include:
 2. **Why the license is acceptable** for a library distributed under MIT — link the license text and a one-line risk assessment.
 3. **Whether attribution requirements** apply (e.g. copyleft-adjacent licenses that require notice preservation). If so, add the notice to `THIRD-PARTY-NOTICES.md`.
 
-Copyleft (GPL / LGPL / AGPL), source-restrictive (OSL, EPL), and non-OSI (BSL, PolyForm, SSPL) licenses will not be accepted.
+Copyleft licenses will not be accepted. This covers the strong-copyleft family (GPL / LGPL / AGPL) and also the weak-copyleft licenses that still impose source-availability obligations on distribution (EPL, OSL, MPL). Non-OSI source-available licenses (BSL, PolyForm, SSPL) are likewise rejected.
 
 ## `THIRD-PARTY-NOTICES.md`
 
-Follow-up work: auto-generate `THIRD-PARTY-NOTICES.md` from `license-report.json` at release time and pack it into the NuGet under `THIRD-PARTY-NOTICES.md`. Tracked as a scope of [#148](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/148).
+Follow-up work: auto-generate `THIRD-PARTY-NOTICES.md` from `license-report.json` at release time and pack it into the NuGet. Tracked separately in [#239](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/239) so it doesn't get orphaned when this PR closes [#148](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/148).
 
 ## Baseline
 
