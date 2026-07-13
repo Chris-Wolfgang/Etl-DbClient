@@ -4,8 +4,9 @@
 # otherwise flag as compat failures. Additions require:
 #
 # 1. A MAJOR version bump (SemVer forbids ABI breaks in PATCH/MINOR).
-# 2. A migration guide under docs/migrations/ (see docs/migrations/README.md).
-# 3. An ADR under docs/adr/ if the break reflects a design decision.
+# 2. A migration guide under docs/migrations/ (convention: #149).
+# 3. An ADR under docs/adr/ if the break reflects a design decision
+#    (convention: #150).
 #
 # Format (one per line):
 #   <diagnostic-id>|<left-signature>|<right-signature>

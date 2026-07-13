@@ -694,7 +694,7 @@ jobs:
             10.0.x
 
       - name: Download packed artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: nuget-packages
           path: ./packages
@@ -705,28 +705,38 @@ jobs:
       - name: Run ApiCompat
         id: apicompat
         shell: bash
+        env:
+          PKG_ID: Wolfgang.Etl.DbClient
         run: |
           set -euo pipefail
-          # Determine package id + version from the freshly-packed .nupkg
-          new_nupkg=$(ls packages/Wolfgang.Etl.DbClient.*.nupkg | grep -v '.symbols.nupkg' | head -1)
+
+          # Determine package id + version from the freshly-packed .nupkg.
+          # Use find (not `ls <glob>`) so an empty match returns cleanly
+          # instead of tripping `set -e` before the friendly diagnostic.
+          new_nupkg=$(find packages -maxdepth 1 -name "${PKG_ID}.*.nupkg" ! -name '*.symbols.nupkg' | head -1)
           if [ -z "$new_nupkg" ]; then
             echo "❌ No runtime .nupkg in ./packages"
-            ls -la packages/
+            ls -la packages/ || true
             exit 1
           fi
           fname=$(basename "$new_nupkg" .nupkg)
-          # Wolfgang.Etl.DbClient.<major>.<minor>.<patch>[-suffix] → strip the id prefix
-          new_version=${fname#Wolfgang.Etl.DbClient.}
-          echo "New package: Wolfgang.Etl.DbClient@$new_version"
+          # <PKG_ID>.<major>.<minor>.<patch>[-suffix] → strip the id prefix
+          new_version=${fname#${PKG_ID}.}
+          echo "New package: ${PKG_ID}@$new_version"
 
           # Look up the previous stable version from nuget.org (excludes the
-          # version we're about to publish + any pre-release tags).
-          prev_version=$(curl -sSf \
-            "https://api.nuget.org/v3-flatcontainer/wolfgang.etl.dbclient/index.json" \
-            | jq -r --arg new "$new_version" '.versions
-              | map(select(test("-") | not))
-              | map(select(. != $new))
-              | .[-1] // empty')
+          # version we're about to publish + any pre-release tags). Parse
+          # with python3 — guaranteed on ubuntu-latest and doesn't depend
+          # on `jq` staying on the runner image.
+          pkg_lc=$(printf '%s' "$PKG_ID" | tr '[:upper:]' '[:lower:]')
+          prev_version=$(
+            curl -sSf "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/index.json" \
+            | NEW_VERSION="$new_version" python3 -c 'import json,os,sys
+data=json.load(sys.stdin)
+new=os.environ["NEW_VERSION"]
+stable=[v for v in data.get("versions",[]) if "-" not in v and v!=new]
+print(stable[-1] if stable else "")'
+          )
 
           if [ -z "$prev_version" ]; then
             echo "ℹ️  No prior stable version on nuget.org — first release or first stable. Skipping compat check."
@@ -740,7 +750,7 @@ jobs:
           # Download previous nupkg
           mkdir -p prev
           curl -sSfL \
-            "https://api.nuget.org/v3-flatcontainer/wolfgang.etl.dbclient/$prev_version/wolfgang.etl.dbclient.$prev_version.nupkg" \
+            "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/$prev_version/${pkg_lc}.$prev_version.nupkg" \
             -o "prev/prev.nupkg"
 
           # Extract both nupkgs
