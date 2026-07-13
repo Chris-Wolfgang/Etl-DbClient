@@ -1,0 +1,72 @@
+# OSSF Scorecard — automated security-posture scoring.
+#
+# Scores the *repo configuration* (branch protection, signed commits,
+# pinned dependencies, dangerous-workflow patterns, ...) not the code.
+# Complementary to CodeQL (which scans source code) and zizmor
+# (workflow-YAML security).
+#
+# Publishes SARIF to the GitHub Security tab so findings appear
+# alongside CodeQL alerts. Also publishes to the public OpenSSF
+# dashboard once the scan runs on main and enables the badge in
+# README.md.
+#
+# Refs #152. Canonical form from https://github.com/ossf/scorecard-action.
+
+name: OSSF Scorecard
+
+on:
+  # Weekly schedule catches drift when nothing else has changed.
+  schedule:
+    - cron: "38 5 * * 2"  # Tuesday 05:38 UTC — arbitrary off-peak slot
+  # Score every merge into the default branch.
+  push:
+    branches: [main]
+  # Manual trigger for one-off score checks / debugging.
+  workflow_dispatch:
+
+# Least-privilege default: read-only for everything, per-job elevation below.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to the code-scanning API.
+      security-events: write
+      # Required for OIDC-based publishing to the OpenSSF dashboard.
+      id-token: write
+      # Required to read repository content and settings for scoring.
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Publishes results to the OpenSSF public dashboard so the badge
+          # in README.md resolves. Requires the repo to be public (this repo is).
+          publish_results: true
+
+      # Upload as an artifact so the SARIF is retrievable even if the
+      # code-scanning upload later fails (e.g. quota, transient API).
+      - name: Upload SARIF as artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 5
+
+      # Publish SARIF to the Security tab. Failures here are non-blocking —
+      # the artifact upload above is the fallback for retrieval.
+      - name: Upload SARIF to code-scanning
+        uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f7b4bf65d80d # v3.28.10
+        with:
+          sarif_file: results.sarif

@@ -5,6 +5,7 @@ Extractors and Loaders for working with SQL databases using ADO.NET
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-Multi--Targeted-purple.svg)](https://dotnet.microsoft.com/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/Chris-Wolfgang/Etl-DbClient)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Chris-Wolfgang/Etl-DbClient/badge)](https://scorecard.dev/viewer/?uri=github.com/Chris-Wolfgang/Etl-DbClient)
 
 ---
 
