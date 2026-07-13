@@ -16,11 +16,19 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 
 namespace Wolfgang.Etl.DbClient.Example.AotSmoke;
 
+// Widget's getters are read by Dapper's reflection-driven row
+// materializer inside DbExtractor.ExtractAsync — invisible to
+// static analysis. Match the 2-arg form the rest of this repo
+// uses for reflection-consumed surfaces (see EmployeeRecord,
+// ProductRecord, InventoryRecord, BenchmarkRecord, and DbClient's
+// own [PublicAPI]/[UsedImplicitly] annotations landed in #211).
 [DbTable("widget")]
+[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public record Widget
 {
     [DbColumn("id")]
