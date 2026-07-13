@@ -209,6 +209,95 @@ jobs:
             echo "ℹ️  No .NET project files found - skipping .NET build and test jobs"
           fi
 
+      - name: Verify src/ csprojs are in the solution
+        # Guards against the class of drift that hit v0.5.0's release: a new
+        # csproj was added under src/ (the source generator) but never added
+        # to the .slnx / .sln file. Per-project `dotnet test` invocations
+        # still triggered its ProjectReference chain, so PR CI never noticed;
+        # but the release pipeline's solution-level `dotnet build` didn't
+        # include it, and the runtime csproj's `PackSourceGenerator` target
+        # failed to find its bin/Release/ output — blocking the release.
+        #
+        # Detection: for every src/**/*.csproj, verify the .slnx or .sln
+        # (if present) references it by path. If a solution file exists and
+        # a src csproj isn't listed, fail with the specific missing entry.
+        # Repos without a solution file (or with everything already listed)
+        # pass unconditionally.
+        shell: bash
+        run: |
+          shopt -s nullglob
+          slns=( *.slnx *.sln )
+          if [ ${#slns[@]} -eq 0 ]; then
+            echo "ℹ️  No solution file at repo root - skipping solution-consistency check."
+            exit 0
+          fi
+          echo "Checking solution files: ${slns[*]}"
+
+          missing=()
+          # `git ls-files 'src/**/*.csproj'` returns forward-slashed paths on
+          # all platforms.
+          #
+          # Match semantics matter: solution-level `dotnet build` follows only
+          # <Project Path="…"/> entries in .slnx (or GUID lines in classic .sln).
+          # A csproj referenced as <File Path="…"/> (a solution item) is NOT
+          # built by the solution. So for .slnx we must match on the Project
+          # element specifically — a bare grep on the path would let a
+          # solution-items-only reference pass this guardrail while
+          # release.yaml's Pack step still skips the project.
+          while IFS= read -r csproj; do
+            # git ls-files always emits forward-slashed paths. Classic .sln
+            # GUID lines often use backslashes (`src\Foo\Foo.csproj`) — the
+            # generic check below handles both encodings for .sln.
+            csproj_bs="${csproj//\//\\}"
+            found=0
+            for sln in "${slns[@]}"; do
+              case "$sln" in
+                *.slnx)
+                  # .slnx: require the specific <Project Path="…"/> element.
+                  # Match either quoted attribute style; ignore whitespace
+                  # variance around the equals sign.
+                  if grep -qE "<Project[[:space:]]+Path[[:space:]]*=[[:space:]]*[\"']${csproj//\//\\/}[\"']" "$sln"; then
+                    found=1
+                    break
+                  fi
+                  ;;
+                *.sln)
+                  # Classic .sln: GUID `Project(...) = "Name", "path", "{GUID}"`
+                  # lines carry the path. Substring match is safe because .sln
+                  # doesn't have a "solution items" analogue of <File Path=…>.
+                  if grep -qF "$csproj" "$sln" || grep -qF "$csproj_bs" "$sln"; then
+                    found=1
+                    break
+                  fi
+                  ;;
+              esac
+            done
+            if [ "$found" -eq 0 ]; then
+              missing+=("$csproj")
+            fi
+          done < <(git ls-files 'src/**/*.csproj' 'src/*.csproj')
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo ""
+            echo "❌ SOLUTION CONSISTENCY FAILURE"
+            echo ""
+            echo "The following src/**/*.csproj files are NOT referenced by any solution file:"
+            for m in "${missing[@]}"; do
+              echo "  - $m"
+            done
+            echo ""
+            echo "This breaks solution-level \`dotnet build\` (which release.yaml relies on"
+            echo "for Pack & Validate), even though per-project \`dotnet test\` still works."
+            echo ""
+            echo "Fix: add the missing project(s) to the solution:"
+            for sln in "${slns[@]}"; do
+              echo "  dotnet sln $sln add ${missing[*]}"
+              break  # only suggest the first sln
+            done
+            exit 1
+          fi
+          echo "✅ All src csprojs are referenced by a solution file - solution-level builds will include them."
+
   # ============================================================================
   # DETECTION: Classify changed paths (code vs workflows vs docs-only)
   # ----------------------------------------------------------------------------
