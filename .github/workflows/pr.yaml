@@ -217,9 +217,13 @@ jobs:
   # surfaces in Code Scanning but doesn't fail (gated by --severity=WARNING
   # filter). Tune the noise floor via .DotSettings at the repo root.
   # ============================================================================
+  # DbClient-specific: runs on windows-latest (not the canonical
+  # ubuntu-latest) because the repo targets net4x TFMs (net462/net472/
+  # net48/net481) which are Windows-only — a solution-level `dotnet
+  # build` on Linux would fail before InspectCode had a chance to run.
   inspectcode:
     name: "ReSharper InspectCode"
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: detect-projects
     if: github.repository != 'Chris-Wolfgang/repo-template' && needs.detect-projects.outputs.has-projects == 'true'
     timeout-minutes: 20
@@ -229,15 +233,61 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.0
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/head
           persist-credentials: false
 
+      # Rehydrate trusted config from main so a PR can't loosen
+      # analyzer rules and then get a clean InspectCode pass. Same
+      # threat model + Dependabot exemption as the test jobs above.
+      - name: Fetch trusted configuration files from main branch
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
+        shell: pwsh
+        run: |
+          Write-Host "Fetching configuration files from main branch to prevent malicious overrides..."
+
+          git fetch origin main:main-branch
+
+          $configFiles = @(
+            ".editorconfig",
+            "Directory.Build.props",
+            "Directory.Build.targets",
+            "BannedSymbols.txt"
+          )
+
+          foreach ($configFile in $configFiles) {
+            git cat-file -e "main-branch:$configFile" 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "  ✓ Copying $configFile from main branch"
+              git show "main-branch:$configFile" | Out-File -FilePath $configFile -Encoding UTF8NoBOM -NoNewline
+            } else {
+              Write-Host "  ℹ️  $configFile not found in main branch, skipping"
+            }
+          }
+
+          $globPatterns = @("*.globalconfig", "*.ruleset", ".github/workflows/*.yml", ".github/workflows/*.yaml")
+          foreach ($pattern in $globPatterns) {
+            $files = git ls-tree -r --name-only main-branch | Select-String -Pattern $pattern.Replace("*", ".*")
+            foreach ($file in $files) {
+              if ($file) {
+                Write-Host "  ✓ Copying $file from main branch"
+                $dir = Split-Path -Parent $file
+                if ($dir) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+                git show "main-branch:$file" | Out-File -FilePath $file -Encoding UTF8NoBOM -NoNewline
+              }
+            }
+          }
+
+          Write-Host ""
+          Write-Host "✅ Configuration files secured - using versions from main branch"
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Restore + Build (Release)
         run: |
@@ -247,41 +297,48 @@ jobs:
       - name: Install JetBrains.ReSharper.GlobalTools
         run: dotnet tool install -g JetBrains.ReSharper.GlobalTools
 
+      # Everything below stays in pwsh so `jb` (a dotnet global tool)
+      # is on PATH via the pwsh session that installed it, and we
+      # avoid depending on `jq` being present in Git Bash on
+      # windows-latest.
       - name: Run InspectCode
+        shell: pwsh
         run: |
-          # Find a solution to inspect. Prefer .slnx (new format) then .sln.
-          # InspectCode requires SOMETHING solution-shaped — fail loudly if neither exists.
-          SLN=$(ls *.slnx 2>/dev/null | head -n1)
-          if [ -z "$SLN" ]; then
-            SLN=$(ls *.sln 2>/dev/null | head -n1)
-          fi
-          if [ -z "$SLN" ]; then
-            echo "::error::No .slnx or .sln found at repo root — InspectCode needs one to run."
+          # Prefer .slnx (new format), fall back to .sln. Fail loudly if neither.
+          $sln = (Get-ChildItem -Filter '*.slnx' -File | Select-Object -First 1).Name
+          if (-not $sln) {
+            $sln = (Get-ChildItem -Filter '*.sln' -File | Select-Object -First 1).Name
+          }
+          if (-not $sln) {
+            Write-Host "::error::No .slnx or .sln found at repo root — InspectCode needs one to run."
             exit 1
-          fi
-          echo "Inspecting: $SLN"
-          jb inspectcode "$SLN" \
-            --output=inspect.sarif \
-            --format=sarif \
-            --severity=WARNING \
+          }
+          Write-Host "Inspecting: $sln"
+          jb inspectcode $sln `
+            --output=inspect.sarif `
+            --format=sarif `
+            --severity=WARNING `
             --no-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload SARIF to Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: inspect.sarif
 
       - name: Gate on error-severity findings
+        shell: pwsh
         run: |
           # SARIF level=error fails the job; warnings still upload (visible in
-          # Security → Code scanning) but don't gate merge — raise to `error`
-          # later when the noise floor is acceptable.
-          count=$(jq '[.runs[].results[] | select(.level=="error")] | length' inspect.sarif)
-          if [ "$count" -gt 0 ]; then
-            echo "::error::$count InspectCode error-severity finding(s) — see Security → Code scanning"
+          # Security → Code scanning) but don't gate merge.
+          $sarif = Get-Content -Raw -Path inspect.sarif | ConvertFrom-Json
+          $errors = @($sarif.runs | ForEach-Object { $_.results } | Where-Object { $_.level -eq 'error' })
+          $count = $errors.Count
+          if ($count -gt 0) {
+            Write-Host "::error::$count InspectCode error-severity finding(s) — see Security → Code scanning"
             exit 1
-          fi
-          echo "✅ No error-severity InspectCode findings."
+          }
+          Write-Host "✅ No error-severity InspectCode findings."
 
 
   # ============================================================================
