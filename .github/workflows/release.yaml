@@ -668,10 +668,126 @@ jobs:
           echo "❌ Integration aggregator FAILS — release gate blocks the publish."
           exit 1
 
-  # Publish to NuGet (only if validation + integration passed)
+  # ABI compatibility gate: for a PATCH/MINOR release, break the build
+  # if the new package's public surface is binary-incompatible with the
+  # last version on nuget.org. MAJOR releases record intentional breaks
+  # in compat-suppressions.txt (checked in) so they don't recur silently.
+  # Refs #136.
+  api-compat:
+    name: ApiCompat vs last NuGet
+    needs: pack-and-validate
+    if: needs.pack-and-validate.outputs.has-packages == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Install ApiCompat tool
+        run: dotnet tool install --global Microsoft.DotNet.ApiCompat.Tool
+
+      - name: Run ApiCompat
+        id: apicompat
+        shell: bash
+        env:
+          PKG_ID: Wolfgang.Etl.DbClient
+        run: |
+          set -euo pipefail
+
+          # Determine package id + version from the freshly-packed .nupkg.
+          # Use find (not `ls <glob>`) so an empty match returns cleanly
+          # instead of tripping `set -e` before the friendly diagnostic.
+          new_nupkg=$(find packages -maxdepth 1 -name "${PKG_ID}.*.nupkg" ! -name '*.symbols.nupkg' | head -1)
+          if [ -z "$new_nupkg" ]; then
+            echo "❌ No runtime .nupkg in ./packages"
+            ls -la packages/ || true
+            exit 1
+          fi
+          fname=$(basename "$new_nupkg" .nupkg)
+          # <PKG_ID>.<major>.<minor>.<patch>[-suffix] → strip the id prefix
+          new_version=${fname#${PKG_ID}.}
+          echo "New package: ${PKG_ID}@$new_version"
+
+          # Look up the previous stable version from nuget.org (excludes the
+          # version we're about to publish + any pre-release tags). Parse
+          # with python3 — guaranteed on ubuntu-latest and doesn't depend
+          # on `jq` staying on the runner image.
+          pkg_lc=$(printf '%s' "$PKG_ID" | tr '[:upper:]' '[:lower:]')
+          prev_version=$(
+            curl -sSf "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/index.json" \
+            | NEW_VERSION="$new_version" python3 -c 'import json,os,sys
+data=json.load(sys.stdin)
+new=os.environ["NEW_VERSION"]
+stable=[v for v in data.get("versions",[]) if "-" not in v and v!=new]
+print(stable[-1] if stable else "")'
+          )
+
+          if [ -z "$prev_version" ]; then
+            echo "ℹ️  No prior stable version on nuget.org — first release or first stable. Skipping compat check."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Previous stable: Wolfgang.Etl.DbClient@$prev_version"
+          echo "prev-version=$prev_version" >> "$GITHUB_OUTPUT"
+
+          # Download previous nupkg
+          mkdir -p prev
+          curl -sSfL \
+            "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/$prev_version/${pkg_lc}.$prev_version.nupkg" \
+            -o "prev/prev.nupkg"
+
+          # Extract both nupkgs
+          unzip -q "$new_nupkg" -d new
+          unzip -q "prev/prev.nupkg" -d prev/pkg
+
+          # Compare per TFM. All TFMs the package declares must be
+          # binary-compatible with the same TFM in the previous version
+          # (unless suppressed in compat-suppressions.txt or this is a
+          # MAJOR bump — the workflow doesn't distinguish; suppressions
+          # are the escape hatch).
+          suppression_arg=""
+          if [ -f compat-suppressions.txt ]; then
+            suppression_arg="--suppression-file compat-suppressions.txt"
+          fi
+
+          exit_code=0
+          for new_dll in $(find new/lib -name Wolfgang.Etl.DbClient.dll); do
+            tfm=$(basename "$(dirname "$new_dll")")
+            prev_dll="prev/pkg/lib/$tfm/Wolfgang.Etl.DbClient.dll"
+            if [ ! -f "$prev_dll" ]; then
+              echo "ℹ️  TFM $tfm is new in this release (no previous DLL) — skipping."
+              continue
+            fi
+            echo ""
+            echo "🔍 ApiCompat: $tfm"
+            if ! apicompat --left "$prev_dll" --right "$new_dll" $suppression_arg; then
+              echo "❌ ApiCompat FAILED for $tfm"
+              exit_code=1
+            fi
+          done
+          exit $exit_code
+
+  # Publish to NuGet (only if validation + integration + api-compat passed)
   publish-nuget:
     name: Publish to NuGet.org
-    needs: [pack-and-validate, test-integration-all]
+    needs: [pack-and-validate, test-integration-all, api-compat]
     if: needs.pack-and-validate.outputs.has-packages == 'true'
     runs-on: windows-latest
     permissions:
