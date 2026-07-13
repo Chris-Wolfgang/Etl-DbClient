@@ -17,22 +17,26 @@
 name: Workflow security audit
 
 on:
-  pull_request:
+  # pull_request_target (not pull_request) so a PR that modifies workflow
+  # YAML cannot also modify *this* audit workflow and run the weakened
+  # version — the audit always runs from the base branch's copy. Matches
+  # the pattern pr.yaml uses. Both jobs check out the PR head explicitly
+  # so they scan the proposed changes.
+  pull_request_target:
     paths:
       - ".github/workflows/**"
       - ".github/actions/**"
       - ".zizmor.yml"
       - ".github/actionlint.yaml"
-      - ".github/workflows/workflow-security.yaml"
   push:
     branches: [main, vNext]
     paths:
       - ".github/workflows/**"
       - ".github/actions/**"
+      - ".zizmor.yml"
+      - ".github/actionlint.yaml"
   # Manual trigger for full re-scan (e.g. after tightening the config).
   workflow_dispatch:
-
-permissions: read-all
 
 jobs:
   zizmor:
@@ -47,6 +51,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          # Under pull_request_target the default ref is the base branch;
+          # scan the PR's proposed content explicitly.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Run zizmor
@@ -73,6 +80,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Run actionlint
