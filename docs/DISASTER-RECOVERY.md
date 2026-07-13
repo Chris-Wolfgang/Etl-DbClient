@@ -37,7 +37,13 @@ Work through this checklist to size the incident before acting further.
 - [ ] **Any new collaborators / outside-collaborators added?**
 - [ ] **Any changes to branch rulesets / repository ruleset actors?**
 
-Preserve evidence: `gh api "repos/Chris-Wolfgang/Etl-DbClient/audit-log?phrase=action:repo.*" > /tmp/audit-<timestamp>.json` before making further changes.
+Preserve evidence before making further changes. GitHub does **not** expose a `repos/{owner}/{repo}/audit-log` endpoint — audit logs are only available at these tiers:
+
+- **User account** (this account today): https://github.com/settings/security-log — export via the "Export" button. There is no REST endpoint for personal-account audit logs.
+- **Organization-owned repos**: `gh api "/orgs/{org}/audit-log" > /tmp/audit-<timestamp>.json` (requires org owner or an admin PAT).
+- **Enterprise**: `gh api "/enterprises/{enterprise}/audit-log" …`.
+
+Also capture the per-repo `events` feed (public activity — force-pushes, workflow runs, branch changes) as a supplementary record: `gh api repos/Chris-Wolfgang/Etl-DbClient/events > /tmp/events-<timestamp>.json`.
 
 ---
 
@@ -119,4 +125,4 @@ version range.
 
 ## Fleet note
 
-This runbook lives in Etl-DbClient. Per [#151](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/151) acceptance criteria the canonical version should live in `repo-template` and sync to every repo. That fleet-canonicalization is a separate follow-up.
+This runbook lives in Etl-DbClient. Per [#151](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/151) acceptance criteria the canonical version should live in `repo-template` and sync to every downstream Wolfgang.* repo. That fleet canonicalization is tracked separately at [Chris-Wolfgang/repo-template#430](https://github.com/Chris-Wolfgang/repo-template/issues/430) so the work doesn't get orphaned when #151 closes.
