@@ -784,10 +784,77 @@ print(stable[-1] if stable else "")'
           done
           exit $exit_code
 
-  # Publish to NuGet (only if validation + integration + api-compat passed)
+  # SourceLink structural gate — verifies the freshly-packed .snupkg carries
+  # a portable PDB for every runtime TFM so consumers get F11-into-source
+  # after publish. Full-format (Windows-only) PDBs are an immediate fail —
+  # SourceLink is portable-PDB only. Refs #144.
+  sourcelink-snupkg:
+    name: SourceLink structural verify (.snupkg)
+    needs: pack-and-validate
+    if: needs.pack-and-validate.outputs.has-packages == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Verify .snupkg carries portable PDBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          snupkgs=$(find packages -maxdepth 1 -name 'Wolfgang.Etl.DbClient.*.snupkg' || true)
+          if [ -z "$snupkgs" ]; then
+            echo "❌ No .snupkg in ./packages — SourceLink verification cannot run."
+            ls -la packages/ || true
+            exit 1
+          fi
+
+          fail=0
+          for snupkg in $snupkgs; do
+            echo "::group::$snupkg"
+            work=$(mktemp -d)
+            unzip -q "$snupkg" -d "$work"
+
+            # Every runtime TFM MUST have a PDB under lib/<tfm>/. Missing
+            # entries mean SymbolPackageFormat/IncludeSymbols got misconfigured
+            # somewhere upstream — consumers on that TFM would fall back to
+            # decompiled placeholders in the debugger.
+            pdbs=$(find "$work/lib" -name 'Wolfgang.Etl.DbClient.pdb' | sort)
+            if [ -z "$pdbs" ]; then
+              echo "::error::No PDBs found under $snupkg / lib/*/"
+              fail=1
+              echo "::endgroup::"
+              continue
+            fi
+
+            for pdb in $pdbs; do
+              tfm=$(basename "$(dirname "$pdb")")
+              # Portable-PDB magic = 'B','S','J','B' (0x42 0x53 0x4A 0x42)
+              # in the first 4 bytes. Full-format Windows PDBs start with
+              # "Microsoft C/C++ MSF 7.00" — an immediate fail.
+              magic=$(head -c 4 "$pdb" | od -An -tx1 | tr -d ' \n')
+              if [ "$magic" != "42534a42" ]; then
+                echo "::error::PDB is NOT portable (magic=0x$magic, expected 42534A42) — TFM $tfm"
+                fail=1
+              else
+                echo "✅ $tfm — portable PDB (magic BSJB)"
+              fi
+            done
+
+            echo "::endgroup::"
+            rm -rf "$work"
+          done
+
+          exit $fail
+
+  # Publish to NuGet (only if validation + integration + api-compat + sourcelink passed)
   publish-nuget:
     name: Publish to NuGet.org
-    needs: [pack-and-validate, test-integration-all, api-compat]
+    needs: [pack-and-validate, test-integration-all, api-compat, sourcelink-snupkg]
     if: needs.pack-and-validate.outputs.has-packages == 'true'
     runs-on: windows-latest
     permissions:
@@ -851,6 +918,84 @@ print(stable[-1] if stable else "")'
           Write-Host "==========================================" -ForegroundColor Green
           Write-Host "✅ All packages published to NuGet.org" -ForegroundColor Green
           Write-Host "==========================================" -ForegroundColor Green
+
+  # SourceLink post-publish smoke — after publish-nuget succeeds, poll the
+  # NuGet symbol server for the just-uploaded PDB. Uses dotnet-symbol which
+  # implements the SSQP protocol + follows the debug-directory signature
+  # in the DLL to compute the correct URL. Retries with backoff — the
+  # NuGet symbol server ingests .snupkg content on a delay measured in
+  # minutes (typical 5–30). Refs #144.
+  sourcelink-symbol-server-smoke:
+    name: SourceLink symbol-server smoke (post-publish)
+    needs: publish-nuget
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Install dotnet-symbol
+        run: dotnet tool install --global dotnet-symbol
+
+      - name: Extract a representative DLL from the packed .nupkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          nupkg=$(find packages -maxdepth 1 -name 'Wolfgang.Etl.DbClient.*.nupkg' ! -name '*.symbols.nupkg' | head -1)
+          if [ -z "$nupkg" ]; then
+            echo "::error::No runtime .nupkg to probe."
+            exit 1
+          fi
+          mkdir -p probe
+          unzip -q "$nupkg" -d probe
+          # Grab the net10.0 DLL if present, otherwise any TFM.
+          dll=$(find probe/lib -name 'Wolfgang.Etl.DbClient.dll' | sort | tail -1)
+          if [ -z "$dll" ]; then
+            echo "::error::No runtime DLL in the packed .nupkg."
+            find probe/lib -type f | head
+            exit 1
+          fi
+          echo "PROBE_DLL=$dll" >> "$GITHUB_ENV"
+          echo "Probing symbols for: $dll"
+
+      - name: Poll symbol server for published PDB (retry with backoff)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$PATH:$HOME/.dotnet/tools"
+
+          # nuget.org's symbol server URL (SSQP endpoint). dotnet-symbol
+          # defaults to msdl.microsoft.com — override to hit nuget.org.
+          server='https://symbols.nuget.org/download/symbols/'
+
+          # Retry loop: NuGet symbol ingestion is typically 5–30 min. Poll
+          # every 60s for up to 30 min, then fail.
+          out=$(mktemp -d)
+          attempts=30
+          for i in $(seq 1 "$attempts"); do
+            echo "Attempt $i/$attempts — dotnet-symbol from $server"
+            if dotnet-symbol --symbols --server-path "$server" --output "$out" "$PROBE_DLL"; then
+              # Success if a PDB actually landed in the output dir.
+              if find "$out" -name '*.pdb' | grep -q .; then
+                echo "✅ Symbol server served the PDB on attempt $i."
+                exit 0
+              fi
+            fi
+            echo "  not-yet — sleeping 60s"
+            sleep 60
+          done
+
+          echo "::error::Symbol server did not serve the published PDB after $((attempts*60))s of polling."
+          exit 1
 
   # Build and deploy versioned documentation via the shared docfx workflow
   # Note: reusable workflow jobs called via `uses:` do not require `runs-on` in the caller
