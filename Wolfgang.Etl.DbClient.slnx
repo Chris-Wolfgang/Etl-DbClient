@@ -55,6 +55,7 @@
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj" />
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Integration/Wolfgang.Etl.DbClient.Tests.Integration.csproj" />
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.DocExamples/Wolfgang.Etl.DbClient.Tests.DocExamples.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.SourceLink/Wolfgang.Etl.DbClient.Tests.SourceLink.csproj" />
   </Folder>
 </Solution>
 
