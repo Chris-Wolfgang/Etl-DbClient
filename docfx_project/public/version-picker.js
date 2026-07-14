@@ -49,11 +49,13 @@
     }
 
     function renderPicker(versions) {
-        // Detect the currently-viewed version from the URL. Defaults to
-        // 'latest' — the user landed on the site root or a page that
-        // isn't under /versions/<v>/, so the picker treats them as being
-        // on the latest-alias page.
-        var currentVersion = 'latest';
+        // Detect the currently-viewed version strictly from the URL: only
+        // pages under /versions/<v>/ get a currentVersion; every other
+        // path (site root, the redirect stub, docfx-serve non-versioned
+        // preview) leaves it null. That way the "include latest" check
+        // below fires only on /versions/latest/ specifically — nowhere
+        // else — and no option gets .selected on non-versioned pages.
+        var currentVersion = null;
         var m = window.location.pathname.match(/\/versions\/([^\/]+)(?:\/|$)/);
         if (m) {
             currentVersion = m[1];
