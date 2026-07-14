@@ -89,9 +89,12 @@ public sealed class DocExamplesTests
     // Extraction
 
     // Matches XML-doc <code> blocks that appear inside `///` comment lines.
+    // - Opening tag may have attributes (e.g. `<code language="csharp">`).
+    // - Closing `</code>` may sit on either a `///`-prefixed line (multi-line
+    //   block) or on the same line as the opening tag (single-line block).
     // Non-greedy body match to handle multiple blocks per file.
     private static readonly Regex CodeBlockRegex = new(
-        @"///\s*<code>(?<body>.*?)///\s*</code>",
+        @"///\s*<code(?:\s[^>]*)?>(?<body>.*?)</code>",
         RegexOptions.Singleline | RegexOptions.Compiled);
 
     private static IEnumerable<(int Line, string Snippet)> ExtractCodeBlocks(string source)
@@ -101,18 +104,22 @@ public sealed class DocExamplesTests
             var line = source.Take(m.Index).Count(c => c == '\n') + 1;
             var raw = m.Groups["body"].Value;
 
-            // Strip the leading `///` (and optional single space) from every line;
-            // XML entities that C# would trip on (`&lt;`, `&gt;`, `&amp;`) get
-            // un-escaped so the snippet parses as real C#.
+            // Strip the leading `///` (and optional single space) from every
+            // line. Only strip when the *trimmed* line starts with `///` — a
+            // bare IndexOf would corrupt snippets that contain `///` later on
+            // the line (e.g. inside a string literal).
+            // Un-escape XML entities that C# would otherwise trip on so the
+            // snippet parses as real C#.
             var lines = raw.Split('\n');
             var stripped = new StringBuilder();
             foreach (var l in lines)
             {
                 var t = l.TrimEnd('\r');
-                var slashIdx = t.IndexOf("///", StringComparison.Ordinal);
-                if (slashIdx >= 0)
+                var leadingWhitespace = t.Length - t.TrimStart().Length;
+                if (leadingWhitespace <= t.Length - 3 &&
+                    t.AsSpan(leadingWhitespace).StartsWith("///"))
                 {
-                    t = t[(slashIdx + 3)..];
+                    t = t[(leadingWhitespace + 3)..];
                     if (t.StartsWith(' '))
                     {
                         t = t[1..];
@@ -167,7 +174,12 @@ internal static class Harness
 {
     public static string Wrap(string file, int line, string snippet)
     {
-        var className = "Snippet_" + Math.Abs(HashCode.Combine(file, line));
+        // HashCode.Combine can return int.MinValue, and Math.Abs(int.MinValue)
+        // returns int.MinValue on the default runtime — the class name would
+        // become `Snippet_-2147483648`, which won't parse. Format as an
+        // unsigned hex so every possible hash produces a valid identifier.
+        var hash = (uint)HashCode.Combine(file, line);
+        var className = $"Snippet_{hash:X8}";
         var sb = new StringBuilder();
         sb.AppendLine("#pragma warning disable CS8321  // Local function never used");
         sb.AppendLine("#pragma warning disable CS0219  // Variable assigned but never used");
@@ -250,8 +262,11 @@ internal static class Harness
         }
 
         // 2. Everything in the test host's output directory — picks up the
-        //    runtime csproj + Dapper + System.Linq.Async that TPA doesn't
-        //    duplicate.
+        //    runtime csproj (Wolfgang.Etl.DbClient.dll) and Dapper that TPA
+        //    doesn't duplicate. IAsyncEnumerable.ToListAsync comes from the
+        //    net10 BCL via TPA, not from System.Linq.Async — the csproj
+        //    deliberately omits that package to avoid extension-method
+        //    ambiguity.
         foreach (var dll in Directory.EnumerateFiles(AppContext.BaseDirectory, "*.dll"))
         {
             Add(dll);
