@@ -19,9 +19,14 @@ downstream `.NET` repo in the fleet.
 | `/<repo>/versions/latest/` (or any version) | Real DocFX docs render. The header shows a `<select>` between the app title and the theme toggle, populated from `versions.json` and pre-selecting whichever version the current URL is under. |
 | Pick a different version in the dropdown | Browser navigates to `/<repo>/versions/<picked>/` |
 
-The "latest" alias is filtered out of the dropdown (redundant — the
-highest-numbered `v*` row already represents latest); `versions.json`
-still includes it so external links / scripts can resolve it.
+The "latest" alias is filtered out of the dropdown on every version-specific
+page — the highest-numbered `v*` row already represents latest, so surfacing
+both is redundant. The **exception** is `/versions/latest/` itself: on that
+page the picker DOES include the `latest` row so it has an option to
+pre-select. Without the exception the dropdown would render with nothing
+selected and the reader would have no visual cue for which version they are
+viewing. `versions.json` still includes `latest` regardless so external links
+/ scripts can resolve it.
 
 ---
 
