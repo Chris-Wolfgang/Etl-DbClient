@@ -1,85 +1,98 @@
-# License audit for transitive dependencies.
-#
-# Dependabot tracks dependency versions and CVE alerts but does NOT
-# check licenses. A new transitive dependency under an incompatible
-# license (GPL, AGPL, OSL, BSL, ...) silently leaks into a work
-# distributed under MIT — real procurement / legal exposure for
-# downstream consumers.
-#
-# Tool: `nuget-license` (dotnet global tool). Enumerates every
-# transitive NuGet package, captures its declared license, fails
-# the run on anything outside the allowlist below.
-#
-# Allowlist source: .github/license-allowlist.json
-#
-# Refs #148.
-
 name: License audit
+
+# Audits the licenses of the shipped packages' transitive dependencies against
+# an allowlist, and generates THIRD-PARTY-NOTICES.md attribution. Dev-only
+# tooling (analyzers / SourceLink / framework shims — all PrivateAssets, never
+# shipped) is filtered out via .github/license/packages-filter.json. Fails the
+# run if a runtime dependency carries a license outside the allowlist.
 
 on:
   pull_request:
     paths:
-      - "**/*.csproj"
-      - "Directory.Build.props"
-      - "Directory.Packages.props"
-      - ".github/license-allowlist.json"
-      - ".github/workflows/license-audit.yaml"
+      - '**/*.csproj'
+      - 'Directory.Build.props'
+      - '.github/license/**'
+      - '.github/workflows/license-audit.yaml'
   push:
-    branches: [main]
-  # Nightly scan catches newly-published transitive updates
-  # (packages we don't control the version of).
+    branches: [ main, vNext ]
   schedule:
-    - cron: "17 4 * * *"
-  workflow_dispatch:
+    - cron: '15 6 * * 1'   # Mondays 06:15 UTC
+
+permissions:
+  contents: read
 
 jobs:
-  audit:
-    name: Audit
+  license-audit:
+    name: Audit dependency licenses
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           persist-credentials: false
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+      - name: Set up .NET
+        # 7.0.x (EOL) is installed only because the dotnet-project-licenses tool
+        # targets net7.0; the runner image no longer ships it, so the tool fails
+        # to launch without an explicit install. Do not remove.
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: |
+            7.0.x
             8.0.x
             10.0.x
 
-      - name: Restore
-        run: dotnet restore src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj
+      - name: Install dotnet-project-licenses
+        run: dotnet tool install --global dotnet-project-licenses --version 2.7.1
 
-      - name: Install nuget-license
-        run: dotnet tool install --global nuget-license
+      - name: Restore (populates project.assets.json)
+        run: dotnet restore
 
-      - name: Build allowlist file for nuget-license
+      - name: Audit licenses + generate notices
+        shell: bash
         run: |
-          # nuget-license 4.x wants --allowed-license-types to point at a
-          # JSON file containing a raw array like ["MIT", "Apache-2.0"] —
-          # NOT a comma-separated string (that was the v3 form). Read the
-          # canonical allowlist (.github/license-allowlist.json has a wrapper
-          # object) and emit the raw array the tool wants.
-          jq '.allowed' .github/license-allowlist.json > allowed-licenses.json
-          echo "Allowlist ($(jq 'length' allowed-licenses.json) entries):"
-          cat allowed-licenses.json
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          projects=(
+            src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj
+          )
+          {
+            echo "# Third-party notices"
+            echo
+            echo "Licenses of the transitive runtime dependencies of the shipped"
+            echo "\`Wolfgang.Etl.DbClient\` package. Dev-only tooling (analyzers,"
+            echo "SourceLink, framework shims) is excluded — it is never distributed."
+            echo
+          } > THIRD-PARTY-NOTICES.md
 
-      - name: Run audit (fail on non-allowlisted)
-        run: |
-          nuget-license \
-            --input src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
-            --allowed-license-types allowed-licenses.json \
-            --output JsonPretty \
-            --file-output license-report.json
+          fail=0
+          for proj in "${projects[@]}"; do
+            name=$(basename "$proj" .csproj)
+            echo "::group::License audit — $name"
+            if ! dotnet-project-licenses \
+                --input "$proj" \
+                --use-project-assets-json -t \
+                --packages-filter .github/license/packages-filter.json \
+                --licenseurl-to-license-mappings .github/license/licenseurl-mappings.json \
+                --allowed-license-types .github/license/allowed-licenses.json \
+                --outfile "notices-$name.md" --md
+            then
+              echo "::error::Disallowed license in $name — see the log above."
+              fail=1
+            fi
+            echo "::endgroup::"
+            {
+              echo "## $name"
+              echo
+              cat "notices-$name.md" 2>/dev/null || true
+              echo
+            } >> THIRD-PARTY-NOTICES.md
+          done
+          exit $fail
 
-      - name: Upload report
+      - name: Upload notices
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: license-report
-          path: license-report.json
+          name: third-party-notices
+          path: THIRD-PARTY-NOTICES.md
           retention-days: 30

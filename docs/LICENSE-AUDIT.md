@@ -2,21 +2,23 @@
 
 ## Why
 
-Dependabot tracks dependency *versions* (and CVE alerts). It does not check the *licenses* of transitive dependencies. A new transitive dependency with an incompatible license (GPL, AGPL, OSL, BSL) would silently leak into a derivative work distributed under MIT — a real procurement / legal exposure for downstream consumers of `Wolfgang.Etl.DbClient`.
+Dependabot tracks dependency *versions* (and CVE alerts). It does not check the *licenses* of transitive dependencies. A new transitive dependency with an incompatible license (GPL, AGPL, OSL, BSL) would silently leak into a work distributed under MIT — real procurement / legal exposure for downstream consumers of `Wolfgang.Etl.DbClient`.
 
 ## What runs
 
-`.github/workflows/license-audit.yaml` runs on every PR that touches a csproj / `Directory.Build.props` / `Directory.Packages.props` / the allowlist itself, on push to `main`, and nightly at 04:17 UTC (catches transitive updates we don't control).
+`.github/workflows/license-audit.yaml` runs on every PR that touches a csproj / `Directory.Build.props` / the config files under `.github/license/`, on push to `main` and `vNext`, and weekly Mondays at 06:15 UTC (catches transitive updates we don't control).
 
-Tool: `nuget-license` (dotnet global tool). Enumerates every transitive package under `src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj`, reads its declared license, fails the run if any package's license is not in the allowlist below. The full report is uploaded as an artifact (`license-report`) for 30 days.
+Tool: [`dotnet-project-licenses`](https://github.com/tomchavakis/nuget-license) v2.7.1 (a mature fork of `nuget-license` with `--packages-filter` + `--licenseurl-to-license-mappings` support). Enumerates every transitive package under `src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj`, applies the config below, and fails the run if any *shipped-in-the-runtime* dependency carries a license outside the allowlist. The generated `THIRD-PARTY-NOTICES.md` is uploaded as the `third-party-notices` artifact for 30 days.
 
-## Allowlist
+## Config files
 
-Source of truth: [`.github/license-allowlist.json`](../.github/license-allowlist.json).
+Three files under `.github/license/`:
 
-Currently accepted:
+### `allowed-licenses.json`
 
-| SPDX identifier | Notes |
+The SPDX-identifier allowlist. Currently accepted:
+
+| Identifier | Notes |
 |---|---|
 | `MIT` | Standard permissive. |
 | `Apache-2.0` | Standard permissive; includes patent grant. |
@@ -24,27 +26,40 @@ Currently accepted:
 | `BSD-3-Clause` | Standard permissive; no-endorsement clause. |
 | `MS-PL` | Microsoft Public License — permissive; used by some MS OSS. |
 | `0BSD` | Public-domain equivalent; used by some SPDX-normalised metadata. |
-| `Microsoft.NETCore.Platforms` | Placeholder ID nuget-license emits for a Microsoft package whose license URL points at `dotnet/runtime`. Effectively MIT. |
+| `MICROSOFT-DISTRIBUTABLE-CODE` | Pseudo-ID for Microsoft's "aka.ms/deprecateLicenseUrl" boilerplate on framework packages. Effectively MIT-equivalent for redistribution. |
+| `MICROSOFT-DOTNET-LIBRARY` | Pseudo-ID for Microsoft's `fwlink/329770` library license — applies to `NETStandard.Library` shims. Effectively MIT-equivalent. |
 
-## Adding an entry
+### `packages-filter.json`
+
+Package IDs excluded from the audit entirely. These are **dev-only tooling** — analyzers, source-link generators, PublicApiAnalyzers, VS threading analyzers, `NETStandard.Library`, framework shims. Every one is a `PrivateAssets="all"` reference in `Directory.Build.props` or a similar shims csproj — nothing here ships in the runtime NuGet, so its license does not affect downstream consumers.
+
+Adding a package to this list requires the same rationale as adding to the allowlist: confirm the package is `PrivateAssets="all"` or otherwise never distributed, note the reason in the PR description.
+
+### `licenseurl-mappings.json`
+
+Maps well-known license URLs to SPDX (or pseudo-SPDX) identifiers, for packages that ship a `<licenseUrl>` instead of a `<licenseExpression>` in their `.nuspec`. Covers `aka.ms/deprecateLicenseUrl`, `fwlink/329770`, xunit's Apache-2.0 raw URL, the FsCheck BSD-3 URL, etc.
+
+## Adding an entry to the allowlist
 
 Requires reviewer sign-off in the same PR. The PR description must include:
 
 1. **Which dependency** requires the new license (direct or transitive; if transitive, which direct dep pulls it in).
 2. **Why the license is acceptable** for a library distributed under MIT — link the license text and a one-line risk assessment.
-3. **Whether attribution requirements** apply (e.g. copyleft-adjacent licenses that require notice preservation). If so, add the notice to `THIRD-PARTY-NOTICES.md`.
+3. **Whether attribution requirements** apply. If so, confirm the generated `THIRD-PARTY-NOTICES.md` covers them.
 
 Copyleft licenses will not be accepted. This covers the strong-copyleft family (GPL / LGPL / AGPL) and also the weak-copyleft licenses that still impose source-availability obligations on distribution (EPL, OSL, MPL). Non-OSI source-available licenses (BSL, PolyForm, SSPL) are likewise rejected.
 
-## `THIRD-PARTY-NOTICES.md`
-
-Follow-up work: auto-generate `THIRD-PARTY-NOTICES.md` from `license-report.json` at release time and pack it into the NuGet. Tracked separately in [#239](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/239) so it doesn't get orphaned when this PR closes [#148](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/148).
-
 ## Baseline
 
-The first run's `license-report.json` is the baseline. If any current transitive package fails the initial audit, the fix is to either:
+The workflow's first successful run establishes the baseline via `THIRD-PARTY-NOTICES.md`. If a current transitive package fails audit, the fix is one of:
 
-1. Confirm the license is genuinely acceptable and add it to the allowlist per the rules above; or
-2. Replace the dependency with a permissively-licensed alternative.
+1. Genuinely acceptable license → add to `allowed-licenses.json` per the rules above.
+2. `PrivateAssets="all"` dev-tooling → add to `packages-filter.json` with rationale.
+3. Well-known package with URL-only license metadata → add to `licenseurl-mappings.json`.
+4. Otherwise → replace the dependency with a permissively-licensed alternative.
+
+## `THIRD-PARTY-NOTICES.md`
+
+Auto-generated by this workflow on every run — the `third-party-notices` artifact contains the current-branch notices. When packaging a release, the release workflow can pull the artifact and include the file in the NuGet root; that closes the loop originally tracked in [#239](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/239).
 
 Refs [#148](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/148).
