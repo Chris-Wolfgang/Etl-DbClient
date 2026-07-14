@@ -57,22 +57,22 @@ jobs:
       - name: Install nuget-license
         run: dotnet tool install --global nuget-license
 
-      - name: Load allowlist
-        id: allowlist
+      - name: Build allowlist file for nuget-license
         run: |
-          # Flatten JSON array to a comma-separated list for the CLI.
-          list=$(jq -r '.allowed | join(",")' .github/license-allowlist.json)
-          echo "types=$list" >> "$GITHUB_OUTPUT"
+          # nuget-license 4.x wants --allowed-license-types to point at a
+          # JSON file containing a raw array like ["MIT", "Apache-2.0"] —
+          # NOT a comma-separated string (that was the v3 form). Read the
+          # canonical allowlist (.github/license-allowlist.json has a wrapper
+          # object) and emit the raw array the tool wants.
+          jq '.allowed' .github/license-allowlist.json > allowed-licenses.json
+          echo "Allowlist ($(jq 'length' allowed-licenses.json) entries):"
+          cat allowed-licenses.json
 
       - name: Run audit (fail on non-allowlisted)
-        env:
-          ALLOWED_LICENSES: ${{ steps.allowlist.outputs.types }}
         run: |
-          # Pass the allowlist via env + quoted expansion so an entry
-          # containing whitespace can't split into additional CLI args.
           nuget-license \
             --input src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
-            --allowed-license-types "$ALLOWED_LICENSES" \
+            --allowed-license-types allowed-licenses.json \
             --output JsonPretty \
             --file-output license-report.json
 
