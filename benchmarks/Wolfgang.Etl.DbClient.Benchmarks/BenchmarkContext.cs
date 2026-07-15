@@ -105,6 +105,13 @@ public static class BenchmarkContext
     private static async Task ExecuteAsync(DbConnection connection, string sql, CancellationToken cancellationToken)
     {
         using var cmd = connection.CreateCommand();
+        // nosemgrep: csharp.lang.security.sqli.csharp-sqli.csharp-sqli
+        // `sql` is always a compile-time string literal chosen by the switch
+        // in EnsureSchemaAsync (see line 55–69). No user input reaches this
+        // path — the whole benchmarks project runs against a fixture DB
+        // seeded from constants. Suppressing the SQLi rule on this line
+        // rather than rewriting the DDL as parameterized queries (which
+        // most databases don't accept for CREATE / DROP TABLE anyway).
         cmd.CommandText = sql;
         await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
