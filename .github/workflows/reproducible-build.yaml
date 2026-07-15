@@ -58,6 +58,9 @@ jobs:
         # Only the runtime src csproj — reproducibility is a claim about
         # SHIPPED binaries. Test + example projects don't ship and don't
         # need to reproduce byte-for-byte.
+        # shell: bash on both OSes so backslash line-continuations parse
+        # (default shell on windows-latest is pwsh, which needs backticks).
+        shell: bash
         run: |
           dotnet restore src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj
           dotnet build src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
