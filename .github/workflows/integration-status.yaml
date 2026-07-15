@@ -162,9 +162,9 @@ jobs:
           for rdbms in sqlserver postgres mysql mariadb cockroachdb sqlite; do
             aggregate="passing"
             color="brightgreen"
-            for file in _status/${rdbms}__*.txt; do
+            for file in "_status/${rdbms}"__*.txt; do
               [ -f "$file" ] || continue
-              outcome=$(cat "$file" | tr -d '[:space:]')
+              outcome=$(tr -d '[:space:]' < "$file")
               echo "  ${rdbms} → $(basename "$file" .txt): $outcome"
               case "$outcome" in
                 success)   ;;
