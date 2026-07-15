@@ -101,8 +101,10 @@ jobs:
       - name: Summarize trim / AOT warnings
         if: always()
         run: |
-          echo "## AOT + trim smoke — warning summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## AOT + trim smoke — warning summary"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
           if [ ! -f publish.log ]; then
             echo "publish step produced no log — likely errored before running dotnet." >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -110,23 +112,29 @@ jobs:
           il2_count=$(grep -c "warning IL2" publish.log || true)
           il3_count=$(grep -c "warning IL3" publish.log || true)
           aot_count=$(grep -c "warning AOT" publish.log || true)
-          echo "| Category | Count |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Trim (IL2xxx) | $il2_count |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Single-file (IL3xxx) | $il3_count |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| AOT (AOT0xxx) | $aot_count |" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "| Category | Count |"
+            echo "|---|---|"
+            echo "| Trim (IL2xxx) | $il2_count |"
+            echo "| Single-file (IL3xxx) | $il3_count |"
+            echo "| AOT (AOT0xxx) | $aot_count |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
           if [ "$il2_count" -gt 0 ] || [ "$il3_count" -gt 0 ] || [ "$aot_count" -gt 0 ]; then
-            echo "<details><summary>First 20 warnings</summary>" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            grep -E "warning (IL[23]|AOT)" publish.log | head -20 >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "<details><summary>First 20 warnings</summary>"
+              echo ""
+              echo '```'
+              grep -E "warning (IL[23]|AOT)" publish.log | head -20
+              echo '```'
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Gate mode**: non-blocking (informational). See workflow header for the plan to move to blocking." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo ""
+            echo "**Gate mode**: non-blocking (informational). See workflow header for the plan to move to blocking."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # Only meaningful if publish actually succeeded — otherwise
       # skip cleanly instead of failing.

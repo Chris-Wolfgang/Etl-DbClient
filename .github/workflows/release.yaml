@@ -729,13 +729,13 @@ jobs:
           # with python3 — guaranteed on ubuntu-latest and doesn't depend
           # on `jq` staying on the runner image.
           pkg_lc=$(printf '%s' "$PKG_ID" | tr '[:upper:]' '[:lower:]')
+          # One-liner python so the YAML block scalar isn't broken by the
+          # embedded newlines a multi-line `python3 -c '...'` needs.
+          # actionlint's YAML parser is strict about outdented lines
+          # inside `run: |` blocks.
           prev_version=$(
             curl -sSf "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/index.json" \
-            | NEW_VERSION="$new_version" python3 -c 'import json,os,sys
-data=json.load(sys.stdin)
-new=os.environ["NEW_VERSION"]
-stable=[v for v in data.get("versions",[]) if "-" not in v and v!=new]
-print(stable[-1] if stable else "")'
+              | NEW_VERSION="$new_version" python3 -c 'import json, os, sys; d=json.load(sys.stdin); n=os.environ["NEW_VERSION"]; s=[v for v in d.get("versions", []) if "-" not in v and v!=n]; print(s[-1] if s else "")'
           )
 
           if [ -z "$prev_version" ]; then
