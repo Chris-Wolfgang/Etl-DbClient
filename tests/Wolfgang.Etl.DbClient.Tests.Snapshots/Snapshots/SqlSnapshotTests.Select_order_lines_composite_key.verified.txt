@@ -1,0 +1,1 @@
+﻿SELECT order_id AS OrderId, line_no AS LineNo, sku AS Sku, qty AS Qty FROM order_lines
