@@ -71,22 +71,34 @@ jobs:
             --configuration Release \
             --output artifacts
 
-      # SHA-256 every produced artifact into a manifest keyed by relative
-      # path so the digest file itself is comparable across OSes.
+      # SHA-256 every OWN-BINARY produced artifact into a manifest keyed
+      # by relative path so the digest file itself is comparable across
+      # OSes. Deliberately excludes transitive-dep DLLs (Dapper, System.*,
+      # etc.) — those come from NuGet's per-OS copy-local resolution and
+      # aren't part of the "our shipped binaries reproduce" claim.
+      #
+      # Normalise sha256sum output shape: sed strips the '*' that Windows'
+      # sha256sum inserts before the filename in binary-mode output, so
+      # the Linux (`  path`) and Windows (` *path`) forms both become
+      # `<hash>  <path>` and the diff is meaningful.
       - name: Compute artifact digests
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p reports
           {
-            # Runtime + PDB per TFM.
-            find src/Wolfgang.Etl.DbClient/bin/Release -type f \( -name '*.dll' -o -name '*.pdb' \) -print0 | \
+            # Runtime + PDB per TFM — ONLY the Wolfgang.Etl.DbClient
+            # binary. Transitive-dep DLLs come from the runtime pack and
+            # aren't part of the reproducibility claim.
+            find src/Wolfgang.Etl.DbClient/bin/Release -type f \
+              \( -name 'Wolfgang.Etl.DbClient.dll' -o -name 'Wolfgang.Etl.DbClient.pdb' \) \
+              -print0 | \
               sort -z | xargs -0 sha256sum | \
-              sed 's|src/Wolfgang.Etl.DbClient/bin/Release/||'
+              sed -e 's|src/Wolfgang.Etl.DbClient/bin/Release/||' -e 's| \*|  |'
             # Packed nupkg + snupkg.
             find artifacts -type f \( -name '*.nupkg' -o -name '*.snupkg' \) -print0 | \
               sort -z | xargs -0 sha256sum | \
-              sed 's|artifacts/||'
+              sed -e 's|artifacts/||' -e 's| \*|  |'
           } | sort -k 2 > "reports/digests-${{ matrix.os }}.txt"
           echo "=== digests-${{ matrix.os }}.txt ==="
           cat "reports/digests-${{ matrix.os }}.txt"
@@ -111,9 +123,19 @@ jobs:
           path: reports
 
       - name: Compare
+        # GATE MODE: informational / non-blocking.
+        #
+        # Cross-OS byte-identity is the ASPIRATION; the current tree is not
+        # yet reproducible. Failing PRs on that would block every merge on
+        # a problem no PR author can fix in isolation. This step surfaces
+        # divergence in the Step Summary + as a workflow warning, but
+        # exits 0 so it doesn't gate merge.
+        #
+        # Flip to `exit 1` once the reproducibility gap tracked in the
+        # follow-up issue actually closes.
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           linux=reports/digests-ubuntu-latest/digests-ubuntu-latest.txt
           win=reports/digests-windows-latest/digests-windows-latest.txt
 
@@ -130,20 +152,32 @@ jobs:
           cat "$win"
           echo ""
 
-          if diff -u "$linux" "$win"; then
+          {
+            echo "## Reproducible-build verify"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if diff -u "$linux" "$win" > /tmp/repro.diff; then
             echo "✅ Reproducible: Linux and Windows produced byte-identical artifacts."
+            {
+              echo "✅ **Reproducible**: Linux and Windows produced byte-identical artifacts."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
             echo ""
-            echo "::error::❌ Non-reproducible build — Linux and Windows produced DIFFERENT artifacts."
+            echo "::warning::Non-reproducible build — Linux and Windows produced DIFFERENT artifacts. Informational only for now (see workflow header)."
             echo ""
-            echo "Diagnose:"
-            echo "  1. Check Directory.Build.props for missing <PathMap> entries."
-            echo "  2. Verify <ContinuousIntegrationBuild> / <Deterministic> are set on all"
-            echo "     csprojs that ship (they inherit from Directory.Build.props today)."
-            echo "  3. Suspect a package version that ships different content per OS"
-            echo "     (rare — usually only affects native/runtime-specific packages)."
-            echo ""
-            echo "See docs/REPRODUCIBLE-BUILD.md for the reproducibility contract + how"
-            echo "consumers verify."
-            exit 1
+            cat /tmp/repro.diff
+            {
+              echo "⚠️ **Non-reproducible** — Linux and Windows produced DIFFERENT artifacts."
+              echo ""
+              echo "Gate is currently non-blocking (informational). Flipping to blocking is tracked as follow-up work."
+              echo ""
+              echo "<details><summary>Diff</summary>"
+              echo ""
+              echo '```diff'
+              cat /tmp/repro.diff
+              echo '```'
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi

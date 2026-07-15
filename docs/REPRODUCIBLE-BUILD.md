@@ -25,9 +25,15 @@ Set in `Directory.Build.props` and inherited by every csproj that ships:
 `.github/workflows/reproducible-build.yaml` runs on every PR that touches `src/**`, `Directory.Build.*`, or the workflow itself. It:
 
 1. Builds `src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj` on **`ubuntu-latest`** and **`windows-latest`** in parallel — same source, same SDK version, different OS.
-2. Computes `sha256sum` over every produced `.dll` / `.pdb` / `.nupkg` / `.snupkg`, sorted by relative path so the manifests are diffable.
-3. Uploads each manifest as an artifact for 30 days.
-4. `diff -u`s the two manifests. Any per-file digest divergence fails the PR with a diagnostic.
+2. Computes `sha256sum` over the **produced own-binary artifacts** (`Wolfgang.Etl.DbClient.dll` + `.pdb` per TFM, plus the packed `.nupkg` / `.snupkg`). Transitive-dep DLLs from the runtime pack are deliberately excluded — those aren't part of this repo's reproducibility claim.
+3. Uploads each per-OS manifest as an artifact for 30 days.
+4. `diff -u`s the two manifests. The result is posted to the Step Summary tab.
+
+### Gate mode: informational (non-blocking) today
+
+The current tree isn't yet reproducible cross-OS — the deterministic knobs above are necessary but not sufficient. The Compare step reports divergence as a workflow warning + Step Summary section, but exits 0 so it doesn't block merges.
+
+The follow-up work to close the gap and flip the gate to blocking is tracked in [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255) (candidate causes: PathMap coverage, SDK-emitted AssemblyMetadata attributes, source-generator file ordering, `.nupkg` zip-format determinism).
 
 ## Verify a released build yourself
 
