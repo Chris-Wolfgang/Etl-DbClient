@@ -720,8 +720,10 @@ jobs:
             exit 1
           fi
           fname=$(basename "$new_nupkg" .nupkg)
-          # <PKG_ID>.<major>.<minor>.<patch>[-suffix] → strip the id prefix
-          new_version=${fname#${PKG_ID}.}
+          # <PKG_ID>.<major>.<minor>.<patch>[-suffix] → strip the id prefix.
+          # Quote the pattern expansion inside ${var#...} so shellcheck's
+          # SC2295 is satisfied (unquoted, it would be treated as a glob).
+          new_version=${fname#"${PKG_ID}."}
           echo "New package: ${PKG_ID}@$new_version"
 
           # Look up the previous stable version from nuget.org (excludes the
@@ -762,13 +764,18 @@ jobs:
           # (unless suppressed in compat-suppressions.txt or this is a
           # MAJOR bump — the workflow doesn't distinguish; suppressions
           # are the escape hatch).
-          suppression_arg=""
+          # Array so the individual flag + path stay as separate arguments
+          # when expanded (shellcheck SC2086 — string interpolation would
+          # word-split incorrectly if either token ever contained whitespace).
+          suppression_args=()
           if [ -f compat-suppressions.txt ]; then
-            suppression_arg="--suppression-file compat-suppressions.txt"
+            suppression_args=(--suppression-file compat-suppressions.txt)
           fi
 
+          # `while read` (not `for x in $(find ...)`) so filenames with
+          # spaces or newlines don't wordsplit (shellcheck SC2044).
           exit_code=0
-          for new_dll in $(find new/lib -name Wolfgang.Etl.DbClient.dll); do
+          while IFS= read -r -d '' new_dll; do
             tfm=$(basename "$(dirname "$new_dll")")
             prev_dll="prev/pkg/lib/$tfm/Wolfgang.Etl.DbClient.dll"
             if [ ! -f "$prev_dll" ]; then
@@ -777,11 +784,11 @@ jobs:
             fi
             echo ""
             echo "🔍 ApiCompat: $tfm"
-            if ! apicompat --left "$prev_dll" --right "$new_dll" $suppression_arg; then
+            if ! apicompat --left "$prev_dll" --right "$new_dll" "${suppression_args[@]}"; then
               echo "❌ ApiCompat FAILED for $tfm"
               exit_code=1
             fi
-          done
+          done < <(find new/lib -name Wolfgang.Etl.DbClient.dll -print0)
           exit $exit_code
 
   # SourceLink structural gate — verifies the freshly-packed .snupkg carries
