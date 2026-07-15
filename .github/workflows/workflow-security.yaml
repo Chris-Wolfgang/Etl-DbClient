@@ -17,12 +17,14 @@
 name: Workflow security audit
 
 on:
-  # pull_request_target (not pull_request) so a PR that modifies workflow
-  # YAML cannot also modify *this* audit workflow and run the weakened
-  # version — the audit always runs from the base branch's copy. Matches
-  # the pattern pr.yaml uses. Both jobs check out the PR head explicitly
-  # so they scan the proposed changes.
-  pull_request_target:
+  # pull_request (not pull_request_target). Neither zizmor nor actionlint
+  # execute PR-authored code — they parse YAML and emit findings. A PR
+  # that modifies this workflow to disable itself is caught by the
+  # branch-protection ruleset: both jobs' check names ("zizmor",
+  # "actionlint") are required, so their absence blocks merge.
+  # Matches the pr.yaml + aot-smoke.yaml migration off the
+  # pull-request-target-code-checkout anti-pattern (refs #131 / #257).
+  pull_request:
     paths:
       - ".github/workflows/**"
       - ".github/actions/**"
@@ -51,9 +53,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          # Under pull_request_target the default ref is the base branch;
-          # scan the PR's proposed content explicitly.
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Run zizmor
@@ -63,13 +62,10 @@ jobs:
           # Code Scanning but don't block the PR.
           min-severity: high
           # Config lives in .zizmor.yml at the repo root (see below).
-
-      - name: Upload SARIF to code-scanning
-        uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f7b4bf65d80d # v3.28.10
-        if: always()
-        with:
-          sarif_file: results.sarif
-          category: zizmor
+          # The zizmor action uploads SARIF to Code Scanning internally
+          # — no separate upload step needed. An earlier version of this
+          # workflow duplicated the upload and failed because it looked
+          # for a `results.sarif` path the action doesn't produce.
 
   actionlint:
     name: actionlint
@@ -80,7 +76,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Run actionlint

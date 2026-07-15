@@ -57,6 +57,16 @@ jobs:
         #   p/owasp-top-ten      — OWASP Top-10 categories
         #   p/security-audit     — cross-language security-audit set
         #   p/secrets            — hard-coded credentials / API keys
+        #
+        # No rule exclusions today. The previous rule-wide exclusion of
+        # yaml.github-actions.security.pull-request-target-code-checkout
+        # was removed after migrating pr.yaml, workflow-security.yaml,
+        # and aot-smoke.yaml from `pull_request_target` to `pull_request`
+        # (refs #131 / #257). If a future workflow needs
+        # `pull_request_target`, the rule should re-fire and force the
+        # author to think through mitigations rather than being silently
+        # ignored.
+        #
         # Gate: `--severity=ERROR --error` fails the run on error-severity
         # findings only. Warning + info findings still upload to Code
         # Scanning (visible in Security tab) but don't block merge.
