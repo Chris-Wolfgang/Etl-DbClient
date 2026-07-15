@@ -58,28 +58,14 @@ jobs:
         #   p/security-audit     — cross-language security-audit set
         #   p/secrets            — hard-coded credentials / API keys
         #
-        # Excluded rule (with rationale):
-        #   yaml.github-actions.security.pull-request-target-code-checkout
-        #     — fires on every pull_request_target job that checks out
-        #     the PR's head SHA. We do this deliberately: the workflow
-        #     YAML is served from the base branch (the security property
-        #     pull_request_target provides), but each job needs to build
-        #     / test / analyze the PR's actual code.
-        #
-        #     Mitigations Semgrep can't see:
-        #       * `permissions: contents: read` at the workflow level —
-        #         GITHUB_TOKEN handed to checked-out code is read-only.
-        #       * `persist-credentials: false` on every checkout — no
-        #         token written to .git/config.
-        #       * No secrets exposed to steps that run PR-authored code.
-        #       * `Fetch trusted configuration files from main branch`
-        #         step overwrites .editorconfig / Directory.Build.props /
-        #         BannedSymbols / ruleset / workflow YAMLs with the base
-        #         copies before build, so a PR can't relax analyzers.
-        #
-        #     Threat model documented at docs/WORKFLOW_SECURITY.md.
-        #     Rule-scoped exclusion, not a wholesale downgrade — every
-        #     other error-severity finding still blocks.
+        # No rule exclusions today. The previous rule-wide exclusion of
+        # yaml.github-actions.security.pull-request-target-code-checkout
+        # was removed after migrating pr.yaml, workflow-security.yaml,
+        # and aot-smoke.yaml from `pull_request_target` to `pull_request`
+        # (refs #131 / #257). If a future workflow needs
+        # `pull_request_target`, the rule should re-fire and force the
+        # author to think through mitigations rather than being silently
+        # ignored.
         #
         # Gate: `--severity=ERROR --error` fails the run on error-severity
         # findings only. Warning + info findings still upload to Code
@@ -91,7 +77,6 @@ jobs:
             --config=p/owasp-top-ten \
             --config=p/security-audit \
             --config=p/secrets \
-            --exclude-rule=yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout \
             --sarif \
             --output=semgrep.sarif \
             --severity=ERROR \

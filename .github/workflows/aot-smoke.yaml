@@ -32,7 +32,16 @@
 name: AOT + trim smoke
 
 on:
-  pull_request_target:
+  # pull_request (not pull_request_target): this job runs PR code
+  # (`dotnet publish` on the AotSmoke example, then executes the
+  # published binary). Running PR code in the elevated
+  # pull_request_target context is the exact anti-pattern the
+  # Semgrep pull-request-target-code-checkout rule flags. This
+  # workflow is a build-and-run job: a PR that disables it would be
+  # visible in the PR diff, and the branch-protection rule requires
+  # this check by name before merge, so a PR can't silently drop it.
+  # pull_request is the correct trigger here.
+  pull_request:
     paths:
       - "src/**"
       - "examples/Wolfgang.Etl.DbClient.Example.AotSmoke/**"
@@ -56,9 +65,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          # pull_request_target defaults to base; scan the proposed
-          # content explicitly.
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # pull_request already checks out the PR HEAD by default;
+          # persist-credentials stays false to keep the token off disk.
           persist-credentials: false
 
       - name: Setup .NET
