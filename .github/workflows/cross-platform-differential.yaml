@@ -1,0 +1,219 @@
+# Cross-platform / multi-arch differential.
+#
+# pr.yaml's staged tests verify the suite PASSES on Linux / Windows / macOS.
+# This workflow verifies it passes the SAME WAY — that no platform silently
+# executes a different set of tests or hits different assertions than the
+# others. Also brings ARM64 (previously unverified) into the matrix.
+#
+# The value: line-ending handling, culture-sensitive sorts, file-system
+# case sensitivity, and timing-dependent assertions can all diverge silently
+# per platform. A diff of the (test-name, outcome) tuples across four
+# platform+arch cells catches those before merge.
+#
+# Refs #139.
+
+name: Cross-platform differential
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "Directory.Build.props"
+      - ".github/workflows/cross-platform-differential.yaml"
+  push:
+    branches: [main, vNext]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "Directory.Build.props"
+      - ".github/workflows/cross-platform-differential.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test on ${{ matrix.label }}
+    strategy:
+      # Run every cell so the diff step has every manifest to compare
+      # against even when one platform breaks.
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            label: linux-x64
+          - runner: ubuntu-24.04-arm
+            label: linux-arm64
+          - runner: macos-latest
+            label: macos-arm64
+          - runner: windows-latest
+            label: windows-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          # net10.0 is enough for the differential. Older TFMs are already
+          # covered per-platform by pr.yaml's Stage 1/2/3 matrix; running
+          # them again here would only add noise (each TFM produces its
+          # own test-run manifest and the diff would need per-TFM
+          # partitioning). net10.0 is the sharpest signal for cross-
+          # platform behavioural divergence.
+          dotnet-version: 10.0.x
+
+      - name: Restore + Build (Release, net10.0)
+        shell: bash
+        run: |
+          dotnet restore tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj
+          dotnet build tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj \
+            --no-restore \
+            --configuration Release \
+            --framework net10.0
+
+      - name: Run tests (net10.0, TRX logger)
+        shell: bash
+        run: |
+          dotnet test tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj \
+            --no-build \
+            --configuration Release \
+            --framework net10.0 \
+            --logger "trx;LogFileName=tests.trx" \
+            --results-directory ./results
+
+      - name: Extract normalised (name, outcome) manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Read the TRX and emit a sorted `<name>\t<outcome>` manifest.
+          # We deliberately drop per-run noise (durations, machine names,
+          # timestamps, GUIDs, adapter versions) so the diff sees only
+          # what actually varies with platform behaviour.
+          trx=$(find ./results -name 'tests.trx' | head -1)
+          if [ -z "$trx" ]; then
+            echo "::error::No TRX produced by dotnet test."
+            find ./results -type f
+            exit 1
+          fi
+          mkdir -p manifests
+          python3 - <<'PY' "$trx" "manifests/${{ matrix.label }}.tsv"
+          import sys, xml.etree.ElementTree as ET
+          trx_path, out_path = sys.argv[1], sys.argv[2]
+          tree = ET.parse(trx_path)
+          ns = {'t': 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010'}
+          rows = []
+          for r in tree.iter('{http://microsoft.com/schemas/VisualStudio/TeamTest/2010}UnitTestResult'):
+              name = r.get('testName') or ''
+              outcome = r.get('outcome') or ''
+              rows.append(f"{name}\t{outcome}")
+          rows.sort()
+          with open(out_path, 'w', encoding='utf-8', newline='\n') as fp:
+              fp.write("\n".join(rows) + ("\n" if rows else ""))
+          print(f"{len(rows)} test result rows -> {out_path}")
+          PY
+
+      - name: Upload manifest
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: manifest-${{ matrix.label }}
+          path: manifests/${{ matrix.label }}.tsv
+          retention-days: 30
+
+  compare:
+    name: Diff manifests across platforms
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download all manifests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: manifests
+          pattern: manifest-*
+          merge-multiple: false
+
+      - name: Diff across the four cells
+        shell: bash
+        run: |
+          set -uo pipefail
+          # actions/download-artifact places each artifact under
+          # manifests/<artifact-name>/<file>. Normalise into flat
+          # manifests/<label>.tsv for the diff.
+          shopt -s nullglob
+          for dir in manifests/manifest-*/; do
+            label=$(basename "$dir" | sed 's/^manifest-//')
+            src=$(find "$dir" -type f | head -1)
+            if [ -n "$src" ]; then
+              cp "$src" "manifests/$label.tsv"
+            fi
+          done
+
+          cells=(linux-x64 linux-arm64 macos-arm64 windows-x64)
+          missing=0
+          for c in "${cells[@]}"; do
+            if [ ! -f "manifests/$c.tsv" ]; then
+              echo "::warning::Manifest missing for cell: $c (build likely failed on that runner)."
+              missing=1
+            fi
+          done
+
+          {
+            echo "## Cross-platform differential"
+            echo ""
+            echo "| Cell | Rows |"
+            echo "|---|---|"
+            for c in "${cells[@]}"; do
+              if [ -f "manifests/$c.tsv" ]; then
+                echo "| $c | $(wc -l < "manifests/$c.tsv") |"
+              else
+                echo "| $c | (missing) |"
+              fi
+            done
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Pairwise diff — every present manifest against linux-x64 as
+          # the baseline. Emit the diff in the Step Summary + fail the
+          # job on any divergence.
+          baseline="manifests/linux-x64.tsv"
+          if [ ! -f "$baseline" ]; then
+            echo "::error::linux-x64 baseline manifest missing — can't diff."
+            exit 1
+          fi
+
+          any_diff=0
+          for c in linux-arm64 macos-arm64 windows-x64; do
+            other="manifests/$c.tsv"
+            [ -f "$other" ] || continue
+            if diff -u "$baseline" "$other" > "/tmp/$c.diff"; then
+              echo "✅ $c matches linux-x64 baseline."
+            else
+              any_diff=1
+              echo "::warning::$c diverges from linux-x64 baseline — see Step Summary."
+              {
+                echo "### ❌ $c vs linux-x64"
+                echo ""
+                echo '```diff'
+                cat "/tmp/$c.diff"
+                echo '```'
+                echo ""
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          if [ "$any_diff" -eq 1 ] || [ "$missing" -eq 1 ]; then
+            echo ""
+            echo "❌ Cross-platform differential FAILED — at least one cell diverges from the linux-x64 baseline or is missing."
+            echo "Fix: investigate whether the divergent test is legitimately platform-specific (add a Skip attribute + tag) or a real cross-platform bug."
+            exit 1
+          fi
+
+          echo "✅ All present cells match the linux-x64 baseline."
