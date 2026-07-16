@@ -116,7 +116,7 @@ jobs:
           rows.sort()
           with open(out_path, 'w', encoding='utf-8', newline='\n') as fp:
               fp.write("\n".join(rows) + ("\n" if rows else ""))
-          print(f"{len(rows)} test result rows → {out_path}")
+          print(f"{len(rows)} test result rows -> {out_path}")
           PY
 
       - name: Upload manifest
