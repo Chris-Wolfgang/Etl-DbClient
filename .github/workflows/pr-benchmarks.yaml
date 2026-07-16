@@ -63,15 +63,20 @@ jobs:
       # out ref. Save the result JSON before switching to HEAD.
       - name: Run benchmarks on base (merge-base with target branch)
         shell: bash
+        # Pass `${{ ... }}` values via env, not inline into the run
+        # script. Inline expansion is Actions-side (before bash even
+        # runs), so a base-branch name containing shell metacharacters
+        # would inject. zizmor flags this as template-injection.
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           set -euo pipefail
           # Merge-base: the last commit both HEAD and the target branch
           # share. Comparing against merge-base (not `base~1`) means we
           # compare only the PR's own commits, not accidental rebases /
           # base movement.
-          base_ref="${{ github.event.pull_request.base.ref }}"
-          git fetch origin "$base_ref" --depth=100
-          mb=$(git merge-base "origin/$base_ref" HEAD)
+          git fetch origin "$BASE_REF" --depth=100
+          mb=$(git merge-base "origin/$BASE_REF" HEAD)
           echo "Base merge-base SHA: $mb"
           git checkout "$mb"
           mkdir -p bench/base
@@ -84,9 +89,11 @@ jobs:
 
       - name: Run benchmarks on PR HEAD
         shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          git checkout ${{ github.event.pull_request.head.sha }}
+          git checkout "$HEAD_SHA"
           mkdir -p bench/head
           dotnet run --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks \
             -c Release -- \
