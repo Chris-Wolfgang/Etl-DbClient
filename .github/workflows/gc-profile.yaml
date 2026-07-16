@@ -102,11 +102,17 @@ jobs:
 
       - name: Summarise into Step Summary
         if: always()
+        # Pass the duration through env (not inline expansion) so a
+        # workflow_dispatch input with shell metacharacters can't inject
+        # into this script. Zizmor flags the inline form as
+        # template-injection.
+        env:
+          DURATION_SECONDS: ${{ inputs.duration_seconds || '600' }}
         run: |
           {
             echo "## GC / allocation profile"
             echo ""
-            echo "Duration: **${{ inputs.duration_seconds || '600' }}s**"
+            echo "Duration: **${DURATION_SECONDS}s**"
             echo ""
             echo "### Workload progress (last 20 lines)"
             echo ""
