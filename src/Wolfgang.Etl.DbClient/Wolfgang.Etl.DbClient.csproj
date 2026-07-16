@@ -49,6 +49,7 @@
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Unit" />
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Snapshots" />
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Fuzz" />
+    <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Concurrency" />
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Benchmarks" />
   </ItemGroup>
 
