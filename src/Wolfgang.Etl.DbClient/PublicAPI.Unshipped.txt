@@ -1,1 +1,3 @@
 #nullable enable
+Wolfgang.Etl.DbClient.DbKeyAttribute
+Wolfgang.Etl.DbClient.DbKeyAttribute.DbKeyAttribute() -> void

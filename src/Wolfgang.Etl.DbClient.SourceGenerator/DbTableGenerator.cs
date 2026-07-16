@@ -19,18 +19,25 @@ namespace Wolfgang.Etl.DbClient.SourceGenerator;
 ///         <c>col AS Property</c> when the column and property names
 ///         differ (matching runtime <c>DbCommandBuilder.BuildSelect</c>)
 ///         </description></item>
+///   <item><description><c>public const string Update</c> — an
+///         <c>UPDATE … SET … WHERE …</c> whose SET covers every non-key
+///         column and whose WHERE covers every <c>[DbKey]</c> property.
+///         Emitted only when the type has at least one <c>[DbKey]</c>
+///         property AND at least one non-key mapped column.</description></item>
+///   <item><description><c>public const string Delete</c> — a
+///         <c>DELETE FROM … WHERE …</c> whose WHERE covers every
+///         <c>[DbKey]</c> property. Emitted only when the type has at
+///         least one <c>[DbKey]</c> property.</description></item>
 ///   <item><description><c>public static void Bind(Dapper.DynamicParameters
 ///         parameters, T record)</c> — reflection-free binder</description></item>
 /// </list>
-///
-/// Update / Delete are still TODO — they need a <c>[DbKey]</c> attribute
-/// (or key-inference rule) before an emit target is well-defined.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class DbTableGenerator : IIncrementalGenerator
 {
     private const string DbTableAttributeFullName = "Wolfgang.Etl.DbClient.DbTableAttribute";
     private const string DbColumnAttributeFullName = "Wolfgang.Etl.DbClient.DbColumnAttribute";
+    private const string DbKeyAttributeFullName = "Wolfgang.Etl.DbClient.DbKeyAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -101,7 +108,10 @@ public sealed class DbTableGenerator : IIncrementalGenerator
                 continue;
             }
 
-            columns.Add(new ColumnModel(member.Name, columnName));
+            var isKey = member.GetAttributes().Any(a =>
+                a.AttributeClass?.ToDisplayString() == DbKeyAttributeFullName);
+
+            columns.Add(new ColumnModel(member.Name, columnName, isKey));
         }
 
         if (columns.Count == 0)
@@ -164,6 +174,43 @@ public sealed class DbTableGenerator : IIncrementalGenerator
           .AppendLine("\";");
         sb.AppendLine();
 
+        // Update / Delete SQL constants — emitted only when the type has
+        // at least one [DbKey] property. Update additionally needs at
+        // least one non-key column to have anything to SET.
+        var keyColumns = model.Columns.Where(c => c.IsKey).ToList();
+        var setColumns = model.Columns.Where(c => !c.IsKey).ToList();
+
+        if (keyColumns.Count > 0)
+        {
+            var whereClause = string.Join
+            (
+                " AND ",
+                keyColumns.Select(c => c.ColumnName + " = @" + c.PropertyName)
+            );
+
+            if (setColumns.Count > 0)
+            {
+                var setClause = string.Join
+                (
+                    ", ",
+                    setColumns.Select(c => c.ColumnName + " = @" + c.PropertyName)
+                );
+
+                sb.Append("    public const string Update = \"UPDATE ")
+                  .Append(model.TableName)
+                  .Append(" SET ").Append(setClause)
+                  .Append(" WHERE ").Append(whereClause)
+                  .AppendLine("\";");
+                sb.AppendLine();
+            }
+
+            sb.Append("    public const string Delete = \"DELETE FROM ")
+              .Append(model.TableName)
+              .Append(" WHERE ").Append(whereClause)
+              .AppendLine("\";");
+            sb.AppendLine();
+        }
+
         // Bind helper — reflection-free DynamicParameters population.
         sb.AppendLine("    /// <summary>");
         sb.AppendLine("    /// Reflection-free Dapper parameter binder generated for this record.");
@@ -195,5 +242,5 @@ public sealed class DbTableGenerator : IIncrementalGenerator
 
 
 
-    private sealed record ColumnModel(string PropertyName, string ColumnName);
+    private sealed record ColumnModel(string PropertyName, string ColumnName, bool IsKey);
 }
