@@ -31,3 +31,35 @@ Facts a maintainer would need at 2am if the release identity is compromised. Gen
 - **Owner**: @Chris-Wolfgang.
 - **Downstream consumers**: none known inside the Wolfgang.* org at time of writing; the package is public on nuget.org, so unknown downstream consumers may exist. Re-check via `dotnet-outdated`, GitHub code-search, and the NuGet package's `Used By` dependents list before communicating during an incident.
 - **Package coordinates for unlisting**: `Wolfgang.Etl.DbClient` on nuget.org — https://www.nuget.org/packages/Wolfgang.Etl.DbClient/.
+
+## Supply-chain verification (consumer-side)
+
+Every published `Wolfgang.Etl.DbClient` NuGet has:
+
+1. **A CycloneDX SBOM** (`Wolfgang.Etl.DbClient.bom.json`) attached to the GitHub Release, listing every direct + transitive dependency at release time.
+2. **A SLSA-3 build provenance attestation** signed by Sigstore's keyless CA using GitHub's OIDC identity. The attestation proves the `.nupkg` + `.snupkg` were built by `.github/workflows/release.yaml` at a specific commit SHA — no local build was substituted, no bit was flipped between build and publish.
+
+To verify a package you downloaded from nuget.org actually came from this repo's release pipeline:
+
+```bash
+# 1. Download the package from nuget.org (or your local NuGet feed).
+curl -sSL -o Wolfgang.Etl.DbClient.<version>.nupkg \
+  "https://api.nuget.org/v3-flatcontainer/wolfgang.etl.dbclient/<version>/wolfgang.etl.dbclient.<version>.nupkg"
+
+# 2. Verify the SLSA attestation.
+gh attestation verify Wolfgang.Etl.DbClient.<version>.nupkg \
+  --owner Chris-Wolfgang \
+  --repo Etl-DbClient
+```
+
+The `gh attestation verify` command:
+- Fetches the attestation from Sigstore's public transparency log.
+- Confirms the attestation was signed by `Chris-Wolfgang/Etl-DbClient`'s OIDC identity (GitHub-verified, unforgeable).
+- Confirms the workflow was `.github/workflows/release.yaml`.
+- Confirms the artifact's SHA-256 matches the one recorded at build time.
+
+Any mismatch = the file you downloaded didn't come from a legitimate release, or was tampered with in transit / on your local cache.
+
+For the SBOM, download the `Wolfgang.Etl.DbClient.bom.json` asset from the GitHub Release and validate with any CycloneDX-aware SBOM tooling (`cyclonedx-cli`, Grype, Trivy, GitHub's Dependency Graph, etc.).
+
+Refs [#138](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/138).
