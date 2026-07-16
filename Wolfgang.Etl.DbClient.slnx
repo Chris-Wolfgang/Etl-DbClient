@@ -61,6 +61,7 @@
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.SourceLink/Wolfgang.Etl.DbClient.Tests.SourceLink.csproj" />
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Snapshots/Wolfgang.Etl.DbClient.Tests.Snapshots.csproj" />
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Fuzz/Wolfgang.Etl.DbClient.Tests.Fuzz.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Concurrency/Wolfgang.Etl.DbClient.Tests.Concurrency.csproj" />
   </Folder>
 </Solution>
 
