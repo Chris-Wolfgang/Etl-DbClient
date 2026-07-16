@@ -14,11 +14,17 @@ namespace Wolfgang.Etl.DbClient.SourceGenerator;
 /// <list type="bullet">
 ///   <item><description><c>public const string Insert</c> — the canonical
 ///         <c>INSERT</c> SQL for the table</description></item>
+///   <item><description><c>public const string Select</c> — a
+///         <c>SELECT</c> covering every mapped column, aliasing
+///         <c>col AS Property</c> when the column and property names
+///         differ (matching runtime <c>DbCommandBuilder.BuildSelect</c>)
+///         </description></item>
 ///   <item><description><c>public static void Bind(Dapper.DynamicParameters
 ///         parameters, T record)</c> — reflection-free binder</description></item>
 /// </list>
 ///
-/// First v0.5.0 cut — Update / Delete / Select are TODO.
+/// Update / Delete are still TODO — they need a <c>[DbKey]</c> attribute
+/// (or key-inference rule) before an emit target is well-defined.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class DbTableGenerator : IIncrementalGenerator
@@ -136,6 +142,26 @@ public sealed class DbTableGenerator : IIncrementalGenerator
         sb.Append("    public const string Insert = \"INSERT INTO ")
           .Append(model.TableName)
           .Append(" (").Append(colList).Append(") VALUES (").Append(paramList).AppendLine(")\";");
+        sb.AppendLine();
+
+        // Select SQL constant. Alias `col AS Property` only when the
+        // column and property names differ — the runtime
+        // DbCommandBuilder.BuildSelect follows the same rule, so the
+        // generated + reflection paths produce identical strings and
+        // consumers can cut over to the generator without a wire-level
+        // behaviour change.
+        var selectList = string.Join
+        (
+            ", ",
+            model.Columns.Select(c => string.Equals(c.ColumnName, c.PropertyName, System.StringComparison.Ordinal)
+                ? c.ColumnName
+                : c.ColumnName + " AS " + c.PropertyName)
+        );
+        sb.Append("    public const string Select = \"SELECT ")
+          .Append(selectList)
+          .Append(" FROM ")
+          .Append(model.TableName)
+          .AppendLine("\";");
         sb.AppendLine();
 
         // Bind helper — reflection-free DynamicParameters population.

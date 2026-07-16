@@ -77,6 +77,40 @@ public class DbTableGeneratorTests
 
 
     [Fact]
+    public void Generator_emits_Select_const_using_property_names()
+    {
+        var sql = GeneratedPerson.Select;
+
+        // No [DbColumn] overrides on GeneratedPerson — column name equals
+        // property name for every field, so BuildSelect's aliasing rule
+        // (alias only on name mismatch) collapses to a plain column list.
+        Assert.Equal
+        (
+            "SELECT FirstName, LastName, Age FROM people",
+            sql
+        );
+    }
+
+
+
+    [Fact]
+    public void Generator_emits_Select_const_with_column_aliasing_when_names_differ()
+    {
+        var sql = GeneratedOrder.Select;
+
+        // Audit is Skip=true → absent. OrderId + Customer carry [DbColumn]
+        // overrides so BuildSelect aliases `col AS Property`. Total has
+        // no override — matches property name, no alias.
+        Assert.Equal
+        (
+            "SELECT order_id AS OrderId, customer_name AS Customer, Total FROM orders",
+            sql
+        );
+    }
+
+
+
+    [Fact]
     public void Generator_emits_reflection_free_Bind_helper()
     {
         var p = new DynamicParameters();
