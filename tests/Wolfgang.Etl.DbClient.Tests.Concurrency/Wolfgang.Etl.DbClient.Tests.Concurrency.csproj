@@ -28,6 +28,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Coyote" Version="1.7.11" />
     <PackageReference Include="Microsoft.Coyote.Test" Version="1.7.11" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
   </ItemGroup>
 
