@@ -105,6 +105,11 @@ public static class BenchmarkContext
     private static async Task ExecuteAsync(DbConnection connection, string sql, CancellationToken cancellationToken)
     {
         using var cmd = connection.CreateCommand();
+        // nosemgrep: csharp.lang.security.sqli.csharp-sqli.csharp-sqli
+        // The `sql` argument is only ever a fixture-built string constant
+        // authored by the benchmark harness (CREATE TABLE / INSERT / etc.).
+        // No user input touches this path — it exists so the benchmark can
+        // seed a DB before measuring the library's own SQL execution.
         cmd.CommandText = sql;
         await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }

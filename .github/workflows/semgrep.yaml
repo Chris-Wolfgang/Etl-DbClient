@@ -80,7 +80,7 @@ jobs:
             --config=p/owasp-top-ten \
             --config=p/security-audit \
             --config=p/secrets \
-            --exclude-rule=yaml.github-actions.security.pull-request-target-code-checkout \
+            --exclude-rule=yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout \
             --sarif \
             --output=semgrep.sarif \
             --severity=ERROR \
