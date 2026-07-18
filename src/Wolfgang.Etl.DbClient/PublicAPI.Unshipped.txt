@@ -1,3 +1,6 @@
 #nullable enable
+static Wolfgang.Etl.DbClient.DbSchemaValidator.Validate<TRecord>(System.Data.Common.DbConnection! connection) -> void
+static Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync<TRecord>(System.Data.Common.DbConnection! connection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Wolfgang.Etl.DbClient.DbSchemaValidator
 Wolfgang.Etl.DbClient.DbKeyAttribute
 Wolfgang.Etl.DbClient.DbKeyAttribute.DbKeyAttribute() -> void
