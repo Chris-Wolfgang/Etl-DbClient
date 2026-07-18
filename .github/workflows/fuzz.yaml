@@ -165,9 +165,7 @@ jobs:
               echo "CsCheck auto-shrinks failing cases. The counter-example should be visible near the end of the log below. Reproduce locally with:"
               echo ""
               echo '```'
-              echo 'CsCheck_Iterations=100000 CsCheck_Timeout=1800000 \'
-              echo '  dotnet test tests/Wolfgang.Etl.DbClient.Tests.Fuzz \'
-              echo '  --configuration Release --filter Category=Fuzz'
+              echo 'CsCheck_Iterations=100000 CsCheck_Timeout=1800000 dotnet test tests/Wolfgang.Etl.DbClient.Tests.Fuzz --configuration Release --filter Category=Fuzz'
               echo '```'
               echo ""
               echo "Close this issue once the property is fixed — the next scheduled failure re-opens a new one automatically."
