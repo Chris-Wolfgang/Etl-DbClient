@@ -6,3 +6,5 @@ Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart.get -> bool
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart.get -> bool
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart.set -> void
+Wolfgang.Etl.DbClient.DbKeyAttribute
+Wolfgang.Etl.DbClient.DbKeyAttribute.DbKeyAttribute() -> void
