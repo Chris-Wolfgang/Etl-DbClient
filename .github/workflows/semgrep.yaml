@@ -1,0 +1,95 @@
+# Semgrep — SAST layer complementary to CodeQL.
+#
+# CodeQL (`codeql.yaml`) is our OSS-grade baseline. Semgrep adds a second
+# scanner with different rule packs (community C# taint, security-audit,
+# secrets, owasp-top-ten) — the goal is OVERLAPPING signal, not replacing
+# CodeQL. When both agree a finding is real, confidence is higher; when
+# only one flags it, it's usually a false positive worth documenting.
+#
+# Semgrep is free for public repos with no account required. Enterprise
+# SAST (Snyk, Veracode, Fortify, SonarQube Cloud, Checkmarx) is a project-
+# level budget decision — see #131 for that discussion; this workflow is
+# the free-tier baseline.
+#
+# Refs #131.
+
+name: Semgrep SAST
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'examples/**'
+      - '.github/workflows/semgrep.yaml'
+  push:
+    branches: [main, vNext]
+    paths:
+      - 'src/**'
+      - '.github/workflows/semgrep.yaml'
+  schedule:
+    # Weekly Wed 05:37 UTC — catches new rule releases against unchanged code.
+    - cron: '37 5 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # required to upload SARIF to Code Scanning
+
+jobs:
+  semgrep:
+    name: Semgrep scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install semgrep (from PyPI, no account required)
+        run: |
+          python -m pip install --user --upgrade "semgrep>=1.0"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run Semgrep with the community C# security rulepacks
+        # Rule packs cover:
+        #   p/csharp             — general C# lint + security patterns
+        #   p/owasp-top-ten      — OWASP Top-10 categories
+        #   p/security-audit     — cross-language security-audit set
+        #   p/secrets            — hard-coded credentials / API keys
+        #
+        # Temporary exclusion of
+        # `yaml.github-actions.security.pull-request-target-code-checkout`.
+        # vNext already migrated pr.yaml, workflow-security.yaml, and
+        # aot-smoke.yaml off `pull_request_target` — but that migration
+        # hasn't reached main yet (this PR ships the vNext workflows to
+        # main so workflow_dispatch works; the pr.yaml migration itself
+        # is a separate main-facing PR). Without the exclusion, this
+        # workflow would fail on main's still-existing `pull_request_target`
+        # sites and block every PR until the migration lands. Drop the
+        # `--exclude-rule` line when main's pr.yaml + workflow-security.yaml
+        # + aot-smoke.yaml carry the migration too.
+        #
+        # Gate: `--severity=ERROR --error` fails the run on error-severity
+        # findings only. Warning + info findings still upload to Code
+        # Scanning (visible in Security tab) but don't block merge.
+        run: |
+          set -euo pipefail
+          semgrep scan \
+            --config=p/csharp \
+            --config=p/owasp-top-ten \
+            --config=p/security-audit \
+            --config=p/secrets \
+            --exclude-rule=yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout \
+            --sarif \
+            --output=semgrep.sarif \
+            --severity=ERROR \
+            --error \
+            --metrics=off
+
+      - name: Upload SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f7b4bf65d80d # v3.28.10
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep

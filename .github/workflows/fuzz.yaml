@@ -1,0 +1,104 @@
+# Continuous property-based fuzz.
+#
+# The Tests.Fuzz project runs in the per-PR unit sweep at CsCheck's
+# default case count (100 iterations, size 100). That's the short
+# version — good enough to catch a regression, not enough to exercise
+# a shape a real consumer would hit once every million rows. This
+# workflow runs the same properties at a much larger case count on a
+# weekly cron: 100,000 iterations per property with a 30-minute
+# global time budget.
+#
+# Failing cases: CsCheck auto-shrinks and prints the counter-example
+# to test output. The workflow logs are captured as an artifact for
+# post-mortem. Automated issue-filing on failure is a follow-up
+# (needs a strategy for duplicate-detection so a rerun doesn't spam).
+#
+# Refs #129.
+
+name: Fuzz
+
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: "CsCheck case count per property (default 100000)"
+        required: false
+        default: "100000"
+        type: string
+  schedule:
+    # Weekly Saturday 04:00 UTC — outside the Stryker (Sunday 06:00) +
+    # gc-profile (Sunday 07:00) window so all three don't pile up on
+    # the runner pool.
+    - cron: '0 4 * * 6'
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: Continuous fuzz (${{ inputs.iterations || '100000' }} iters)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      # Guard so the scheduled Saturday 04:00 UTC run on main no-ops when
+      # Tests.Fuzz isn't yet on the checked-out ref. Tests.Fuzz lives on
+      # vNext and hasn't merged to main; the guard becomes a no-op once
+      # it has and this block can be dropped.
+      - name: Detect Tests.Fuzz
+        id: check
+        shell: bash
+        run: |
+          if [ -f tests/Wolfgang.Etl.DbClient.Tests.Fuzz/Wolfgang.Etl.DbClient.Tests.Fuzz.csproj ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Tests.Fuzz project not present on this ref — skipping fuzz suite. Merge vNext to main to enable."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup .NET
+        if: steps.check.outputs.found == 'true'
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore + Build Tests.Fuzz (Release)
+        if: steps.check.outputs.found == 'true'
+        run: |
+          dotnet restore tests/Wolfgang.Etl.DbClient.Tests.Fuzz/Wolfgang.Etl.DbClient.Tests.Fuzz.csproj
+          dotnet build tests/Wolfgang.Etl.DbClient.Tests.Fuzz/Wolfgang.Etl.DbClient.Tests.Fuzz.csproj \
+            --no-restore \
+            --configuration Release
+
+      - name: Run fuzz suite
+        if: steps.check.outputs.found == 'true'
+        # CsCheck reads its iteration budget from CsCheck_Iterations at
+        # runtime (the alternative — hardcoding in the source — would
+        # require rebuilding to change the case count). The scheduled
+        # value lives here so a maintainer can bump it without touching
+        # C#.
+        env:
+          CsCheck_Iterations: ${{ inputs.iterations || '100000' }}
+          CsCheck_Timeout: "1800000"    # 30 min per property
+        run: |
+          mkdir -p reports
+          dotnet test tests/Wolfgang.Etl.DbClient.Tests.Fuzz/Wolfgang.Etl.DbClient.Tests.Fuzz.csproj \
+            --no-build \
+            --configuration Release \
+            --filter 'Category=Fuzz' \
+            --logger "console;verbosity=detailed" \
+            --logger "trx;LogFileName=fuzz.trx" \
+            --results-directory reports/ \
+            2>&1 | tee reports/fuzz.log
+
+      - name: Upload fuzz reports
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: fuzz-reports
+          path: reports/
+          retention-days: 60

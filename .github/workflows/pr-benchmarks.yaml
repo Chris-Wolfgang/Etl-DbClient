@@ -1,0 +1,221 @@
+# Per-PR benchmark delta.
+#
+# benchmarks.yaml graphs the BDN trend on push (backward-looking:
+# regressions surface AFTER they merge). This workflow is the
+# forward-looking signal: run the same benchmarks on the PR's HEAD and
+# on the merge-base with the target branch, compute per-benchmark
+# deltas, and post a table comment on the PR.
+#
+# Scope: only the DB-free benchmarks (ColumnAttributeTypeMapper,
+# DbCommandBuilder). Extractor / Loader / DbLoaderBatchSize require a
+# real RDBMS via Testcontainers and take too long to run per-PR;
+# they're covered by the tagged benchmarks.yaml run.
+#
+# Gate: informational today. Every PR gets a delta comment;
+# threshold-based failure (e.g. "> 20% slower or > 50% more allocs
+# blocks unless labeled perf-impact-acknowledged") is a follow-up —
+# once we have a few PR runs to size normal noise.
+#
+# Refs #154.
+
+name: PR benchmarks delta
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "benchmarks/**"
+      - "Directory.Build.props"
+      - ".github/workflows/pr-benchmarks.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write   # required to post / edit the PR comment
+
+concurrency:
+  # A push to the PR should replace an in-flight benchmark run —
+  # per-PR data doesn't need to accumulate.
+  group: pr-benchmarks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    name: Benchmark PR HEAD vs base
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout PR HEAD (with base branch)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # fetch-depth: 0 so we have the base branch locally for the
+          # merge-base checkout below.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      # Run benchmarks on the merge-base with the target branch first
+      # so any state the benchmark run mutates is scoped to the checked-
+      # out ref. Save the result JSON before switching to HEAD.
+      - name: Run benchmarks on base (merge-base with target branch)
+        shell: bash
+        # Pass `${{ ... }}` values via env, not inline into the run
+        # script. Inline expansion is Actions-side (before bash even
+        # runs), so a base-branch name containing shell metacharacters
+        # would inject. zizmor flags this as template-injection.
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          # Merge-base: the last commit both HEAD and the target branch
+          # share. Comparing against merge-base (not `base~1`) means we
+          # compare only the PR's own commits, not accidental rebases /
+          # base movement.
+          git fetch origin "$BASE_REF" --depth=100
+          mb=$(git merge-base "origin/$BASE_REF" HEAD)
+          echo "Base merge-base SHA: $mb"
+          git checkout "$mb"
+          mkdir -p bench/base
+          dotnet run --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks \
+            -c Release -- \
+            --filter '*ColumnAttributeTypeMapperBenchmarks*|*DbCommandBuilderBenchmarks*' \
+            --job Short \
+            --exporters json \
+            --artifacts bench/base
+
+      - name: Run benchmarks on PR HEAD
+        shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git checkout "$HEAD_SHA"
+          mkdir -p bench/head
+          dotnet run --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks \
+            -c Release -- \
+            --filter '*ColumnAttributeTypeMapperBenchmarks*|*DbCommandBuilderBenchmarks*' \
+            --job Short \
+            --exporters json \
+            --artifacts bench/head
+
+      - name: Compute per-benchmark delta
+        id: delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          # BDN emits one *-report.json per benchmark class under
+          # <artifacts>/results/. Merge the class-level reports into a
+          # single (name, meanNs, allocBytes) map per side, then diff.
+          python3 - <<'PY' > delta.md
+          import glob, json, os, sys
+
+          def load(root):
+              out = {}
+              for path in glob.glob(f"{root}/results/*-report.json"):
+                  with open(path, encoding="utf-8") as fp:
+                      d = json.load(fp)
+                  for b in d.get("Benchmarks", []):
+                      # FullName includes the type + method + parameter case.
+                      name = b.get("FullName") or b.get("DisplayInfo") or ""
+                      stats = b.get("Statistics") or {}
+                      mem = b.get("Memory") or {}
+                      out[name] = {
+                          "meanNs": stats.get("Mean"),
+                          "allocBytes": mem.get("BytesAllocatedPerOperation"),
+                      }
+              return out
+
+          base = load("bench/base")
+          head = load("bench/head")
+
+          all_names = sorted(set(base) | set(head))
+
+          def fmt_ns(v):
+              if v is None: return "—"
+              if v < 1_000: return f"{v:.1f} ns"
+              if v < 1_000_000: return f"{v/1_000:.2f} µs"
+              return f"{v/1_000_000:.2f} ms"
+
+          def fmt_bytes(v):
+              if v is None: return "—"
+              if v == 0: return "0 B"
+              if v < 1024: return f"{v:.0f} B"
+              return f"{v/1024:.2f} KB"
+
+          def pct(new, old):
+              if new is None or old is None or old == 0: return "—"
+              d = (new - old) / old * 100
+              sign = "+" if d >= 0 else ""
+              return f"{sign}{d:.1f}%"
+
+          rows = []
+          for n in all_names:
+              b = base.get(n, {})
+              h = head.get(n, {})
+              rows.append((
+                  n,
+                  fmt_ns(b.get("meanNs")),
+                  fmt_ns(h.get("meanNs")),
+                  pct(h.get("meanNs"), b.get("meanNs")),
+                  fmt_bytes(b.get("allocBytes")),
+                  fmt_bytes(h.get("allocBytes")),
+                  pct(h.get("allocBytes"), b.get("allocBytes")),
+              ))
+
+          def esc(s):
+              return str(s).replace("|", "\\|")
+
+          # Short display name — drop the assembly / namespace prefix.
+          def short(n):
+              return n.rsplit(".", 1)[-1]
+
+          print("<!-- pr-benchmarks-delta -->")
+          print("## PR benchmark delta")
+          print()
+          if not rows:
+              print("_No benchmarks ran on either side._")
+          else:
+              print("| Benchmark | Base mean | HEAD mean | Δ mean | Base alloc | HEAD alloc | Δ alloc |")
+              print("|---|---|---|---|---|---|---|")
+              for r in rows:
+                  print("| " + " | ".join([esc(short(r[0]))] + [esc(x) for x in r[1:]]) + " |")
+              print()
+              print("_Job: Short (fast, ~5% variance). Filter: `*ColumnAttributeTypeMapper*|*DbCommandBuilder*` — DB-free benchmarks only. Gate mode: informational; see `#154` for threshold-gate follow-up._")
+          PY
+          echo "---delta.md---"
+          cat delta.md
+
+      - name: Comment (or update) on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Marker comment lets us find and edit our own previous comment
+          # instead of appending a fresh one on every push.
+          MARKER='<!-- pr-benchmarks-delta -->'
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -1)
+          if [ -n "$existing" ]; then
+            echo "Updating existing comment $existing"
+            gh api "repos/$REPO/issues/comments/$existing" \
+              -X PATCH \
+              -F body=@delta.md
+          else
+            echo "Creating new comment"
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file delta.md
+          fi
+
+      - name: Upload raw BDN outputs
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: pr-benchmarks-raw
+          path: bench/
+          retention-days: 30
