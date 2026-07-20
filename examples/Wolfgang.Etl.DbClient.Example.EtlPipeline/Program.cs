@@ -181,7 +181,12 @@ Console.WriteLine("Done.");
 
 static async Task<long> CountAsync(SqliteConnection conn, string table)
 {
+    // `table` is only ever a hard-coded table name from this example's own
+    // Main body ("PaidOrders" / "OrdersPage"). No user input reaches this
+    // path — it's a two-line row-count helper for the example's console
+    // output, not a query builder.
     using var cmd = conn.CreateCommand();
+    // nosemgrep: csharp.lang.security.sqli.csharp-sqli.csharp-sqli
     cmd.CommandText = $"SELECT COUNT(*) FROM {table};";
     var raw = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
     return Convert.ToInt64(raw, System.Globalization.CultureInfo.InvariantCulture);
