@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783860952433,
+  "lastUpdate": 1784554846768,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlite)": [
@@ -330,6 +330,48 @@ window.BENCHMARK_DATA = {
             "value": 5816124.758413462,
             "unit": "ns",
             "range": "± 8069.265180687061"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3dc4e6b24c973fc0e20a25589091ca101ea9068e",
+          "message": "Merge pull request #274 from Chris-Wolfgang/ci/sourcelink-verify\n\nci: add SourceLink verification workflow",
+          "timestamp": "2026-07-18T16:41:33-04:00",
+          "tree_id": "77949d86a6daea94dfaaf0517724650a810bcc75",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/3dc4e6b24c973fc0e20a25589091ca101ea9068e"
+        },
+        "date": 1784554845333,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 62908.15815617488,
+            "unit": "ns",
+            "range": "± 148.03403259029875"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 591741.5734675481,
+            "unit": "ns",
+            "range": "± 1137.3013987387944"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 5779467.881696428,
+            "unit": "ns",
+            "range": "± 19665.66568060843"
           }
         ]
       }
