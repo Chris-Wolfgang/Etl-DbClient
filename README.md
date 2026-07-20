@@ -85,6 +85,43 @@ public class EmployeeRecord
 
 ---
 
+## 🔗 Fluent EtlPipeline chain (v0.7.0+)
+
+For end-to-end pipelines that read from a database and write somewhere else (another
+DB, a JSON file, a CSV, etc.), the class-named factories over
+[`EtlPipeline`](https://chris-wolfgang.github.io/Etl-DbClient/docs/etl-pipeline.html)
+compose cleanly with the sibling packages in the ETL family:
+
+```csharp
+// Same-database ETL: filter with server-side paging, then reload
+await EtlPipeline
+    .Create()
+    .DbExtractor<Invoice>(sourceConn, "SELECT * FROM Invoices WHERE Status = @Status")
+    .Parameters(new DynamicParameters(new { Status = "paid" }))
+    .ServerOffset(0)
+    .ServerLimit(1000)
+    .DbLoader<Invoice>(destConn, "INSERT INTO PaidInvoices (Id, Total) VALUES (@Id, @Total)")
+    .RunAsync();
+
+// Cross-package: SQL query → JSONL file (needs Wolfgang.Etl.Json)
+await EtlPipeline
+    .Create()
+    .DbExtractor<Person>(conn, "SELECT * FROM People WHERE Active = 1")
+    .JsonLineLoader<Person>("people.jsonl")
+    .RunAsync();
+```
+
+The `DbExtractor<T>` / `DbLoader<T>` factories return builder types with fluent
+setters for every knob on the underlying extractor and loader (paging,
+`CommandType`, `ManageConnection`, `Parameters`, `TotalCountQuery`,
+`ErrorHandling`); the chain transitions into the plain `IEtlPipeline<T>` on the
+first operator or terminator call. See
+[docs/etl-pipeline.md](docfx_project/docs/etl-pipeline.md) for the full surface
+and the [Example.EtlPipeline](examples/Wolfgang.Etl.DbClient.Example.EtlPipeline/)
+runnable project.
+
+---
+
 ## ✨ Features
 
 | Feature | Description |
