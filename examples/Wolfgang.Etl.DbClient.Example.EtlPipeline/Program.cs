@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
@@ -65,7 +66,7 @@ await EtlPipeline
     .RunAsync()
     .ConfigureAwait(false);
 
-Console.WriteLine($"   paid orders copied: {await CountAsync(dest, "SELECT COUNT(*) FROM PaidOrders;").ConfigureAwait(false)}");
+Console.WriteLine($"   paid orders copied: {await dest.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM PaidOrders;").ConfigureAwait(false)}");
 
 
 // -----------------------------------------------------------------
@@ -91,7 +92,7 @@ await EtlPipeline
     .RunAsync()
     .ConfigureAwait(false);
 
-Console.WriteLine($"   rows on page: {await CountAsync(page, "SELECT COUNT(*) FROM OrdersPage;").ConfigureAwait(false)}");
+Console.WriteLine($"   rows on page: {await page.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM OrdersPage;").ConfigureAwait(false)}");
 
 
 // -----------------------------------------------------------------
@@ -143,7 +144,7 @@ await EtlPipeline
     .RunAsync()
     .ConfigureAwait(false);
 
-Console.WriteLine($"   total rows in dest: {await CountAsync(dest, "SELECT COUNT(*) FROM PaidOrders;").ConfigureAwait(false)} (row 3 was pre-existing; the rest landed)");
+Console.WriteLine($"   total rows in dest: {await dest.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM PaidOrders;").ConfigureAwait(false)} (row 3 was pre-existing; the rest landed)");
 
 
 // -----------------------------------------------------------------
@@ -176,21 +177,8 @@ Console.WriteLine("Done.");
 
 
 // -----------------------------------------------------------------
-// Helpers
+// Types
 // -----------------------------------------------------------------
-
-static async Task<long> CountAsync(SqliteConnection conn, string sql)
-{
-    // Callers pass a compile-time SQL literal, e.g.
-    // `CountAsync(conn, "SELECT COUNT(*) FROM PaidOrders;")`. No
-    // interpolation on a parameter, no user input — Semgrep sees this
-    // as a fixed string ExecuteScalar, not a formatted-SQL sink.
-    using var cmd = conn.CreateCommand();
-    cmd.CommandText = sql;
-    var raw = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
-    return Convert.ToInt64(raw, System.Globalization.CultureInfo.InvariantCulture);
-}
-
 
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 internal sealed class Order
