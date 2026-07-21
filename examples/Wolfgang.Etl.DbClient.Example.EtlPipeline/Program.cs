@@ -65,7 +65,7 @@ await EtlPipeline
     .RunAsync()
     .ConfigureAwait(false);
 
-Console.WriteLine($"   paid orders copied: {await CountAsync(dest, "PaidOrders").ConfigureAwait(false)}");
+Console.WriteLine($"   paid orders copied: {await CountAsync(dest, "SELECT COUNT(*) FROM PaidOrders;").ConfigureAwait(false)}");
 
 
 // -----------------------------------------------------------------
@@ -91,7 +91,7 @@ await EtlPipeline
     .RunAsync()
     .ConfigureAwait(false);
 
-Console.WriteLine($"   rows on page: {await CountAsync(page, "OrdersPage").ConfigureAwait(false)}");
+Console.WriteLine($"   rows on page: {await CountAsync(page, "SELECT COUNT(*) FROM OrdersPage;").ConfigureAwait(false)}");
 
 
 // -----------------------------------------------------------------
@@ -143,7 +143,7 @@ await EtlPipeline
     .RunAsync()
     .ConfigureAwait(false);
 
-Console.WriteLine($"   total rows in dest: {await CountAsync(dest, "PaidOrders").ConfigureAwait(false)} (row 3 was pre-existing; the rest landed)");
+Console.WriteLine($"   total rows in dest: {await CountAsync(dest, "SELECT COUNT(*) FROM PaidOrders;").ConfigureAwait(false)} (row 3 was pre-existing; the rest landed)");
 
 
 // -----------------------------------------------------------------
@@ -179,15 +179,14 @@ Console.WriteLine("Done.");
 // Helpers
 // -----------------------------------------------------------------
 
-static async Task<long> CountAsync(SqliteConnection conn, string table)
+static async Task<long> CountAsync(SqliteConnection conn, string sql)
 {
-    // `table` is only ever a hard-coded table name from this example's own
-    // Main body ("PaidOrders" / "OrdersPage"). No user input reaches this
-    // path — it's a two-line row-count helper for the example's console
-    // output, not a query builder.
+    // Callers pass a compile-time SQL literal, e.g.
+    // `CountAsync(conn, "SELECT COUNT(*) FROM PaidOrders;")`. No
+    // interpolation on a parameter, no user input — Semgrep sees this
+    // as a fixed string ExecuteScalar, not a formatted-SQL sink.
     using var cmd = conn.CreateCommand();
-    // nosemgrep: csharp.lang.security.sqli.csharp-sqli.csharp-sqli
-    cmd.CommandText = $"SELECT COUNT(*) FROM {table};";
+    cmd.CommandText = sql;
     var raw = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
     return Convert.ToInt64(raw, System.Globalization.CultureInfo.InvariantCulture);
 }
