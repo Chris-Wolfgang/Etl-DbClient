@@ -1,0 +1,157 @@
+# AOT / trim publish smoke test.
+#
+# Publishes examples/Wolfgang.Etl.DbClient.Example.AotSmoke with
+# <PublishAot>true</PublishAot> + <PublishTrimmed>true</PublishTrimmed>
+# and runs the resulting native binary. Surfaces IL2xxx / AOT0xxx /
+# IL3xxx warnings so we know which library surfaces the trimmer /
+# AOT compiler can't see through.
+#
+# Status: INFORMATIONAL / NON-BLOCKING today.
+#
+# Rationale: DbClient's runtime path is built on Dapper 2.1.66,
+# which currently has known trim/AOT gaps that no consumer can
+# annotate around from outside the library. Failing the PR gate
+# would block every merge on issues we can't fix without either
+# (a) a Dapper upgrade that lands its own AOT annotations, or
+# (b) rewriting the reflection paths in DbClient to something
+# trim-friendly (source-generator-driven — partially in progress
+# via #23). Until then, this workflow captures the warning-list
+# and surfaces it as a PR annotation so we can track direction of
+# travel without blocking merges.
+#
+# Blocking-mode plan:
+#   1. Land the source-generator (#23) UPDATE/DELETE/SELECT + Bind
+#      wire-up so reflection is optional at consumer opt-in.
+#   2. Consume Dapper release that ships trim annotations.
+#   3. Flip `continue-on-error` to false and enforce a max IL2xxx
+#      warning count via `--verbosity minimal` grep, as a
+#      regression gate.
+#
+# Refs #143.
+
+name: AOT + trim smoke
+
+on:
+  # pull_request (not pull_request_target): this job runs PR code
+  # (`dotnet publish` on the AotSmoke example, then executes the
+  # published binary). Running PR code in the elevated
+  # pull_request_target context is the exact anti-pattern the
+  # Semgrep pull-request-target-code-checkout rule flags. This
+  # workflow is a build-and-run job: a PR that disables it would be
+  # visible in the PR diff, and the branch-protection rule requires
+  # this check by name before merge, so a PR can't silently drop it.
+  # pull_request is the correct trigger here.
+  pull_request:
+    paths:
+      - "src/**"
+      - "examples/Wolfgang.Etl.DbClient.Example.AotSmoke/**"
+      - ".github/workflows/aot-smoke.yaml"
+  push:
+    branches: [main, vNext]
+    paths:
+      - "src/**"
+      - "examples/Wolfgang.Etl.DbClient.Example.AotSmoke/**"
+      - ".github/workflows/aot-smoke.yaml"
+  workflow_dispatch:
+
+jobs:
+  aot-smoke:
+    name: PublishAot + PublishTrimmed
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # pull_request already checks out the PR HEAD by default;
+          # persist-credentials stays false to keep the token off disk.
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore examples/Wolfgang.Etl.DbClient.Example.AotSmoke/Wolfgang.Etl.DbClient.Example.AotSmoke.csproj
+
+      # Non-blocking (see file header). Captures full trim/AOT
+      # warning output so we can trend and eventually gate.
+      - name: Publish (PublishAot + PublishTrimmed)
+        id: publish
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p publish
+          dotnet publish \
+            examples/Wolfgang.Etl.DbClient.Example.AotSmoke/Wolfgang.Etl.DbClient.Example.AotSmoke.csproj \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained true \
+            --output publish \
+            -p:PublishAot=true \
+            -p:PublishTrimmed=true \
+            -p:TrimmerSingleWarn=false \
+            2>&1 | tee publish.log
+
+      - name: Summarize trim / AOT warnings
+        if: always()
+        run: |
+          {
+            echo "## AOT + trim smoke — warning summary"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -f publish.log ]; then
+            echo "publish step produced no log — likely errored before running dotnet." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          il2_count=$(grep -c "warning IL2" publish.log || true)
+          il3_count=$(grep -c "warning IL3" publish.log || true)
+          aot_count=$(grep -c "warning AOT" publish.log || true)
+          {
+            echo "| Category | Count |"
+            echo "|---|---|"
+            echo "| Trim (IL2xxx) | $il2_count |"
+            echo "| Single-file (IL3xxx) | $il3_count |"
+            echo "| AOT (AOT0xxx) | $aot_count |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$il2_count" -gt 0 ] || [ "$il3_count" -gt 0 ] || [ "$aot_count" -gt 0 ]; then
+            {
+              echo "<details><summary>First 20 warnings</summary>"
+              echo ""
+              echo '```'
+              grep -E "warning (IL[23]|AOT)" publish.log | head -20
+              echo '```'
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            echo ""
+            echo "**Gate mode**: non-blocking (informational). See workflow header for the plan to move to blocking."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Only meaningful if publish actually succeeded — otherwise
+      # skip cleanly instead of failing.
+      - name: Run the AOT-published binary
+        if: steps.publish.outcome == 'success'
+        run: |
+          bin=publish/Wolfgang.Etl.DbClient.Example.AotSmoke
+          if [ ! -x "$bin" ]; then
+            echo "::warning::AOT-published binary not found at $bin — publish output layout may have changed."
+            exit 0
+          fi
+          "$bin"
+
+      - name: Upload publish log
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: aot-smoke-publish-log
+          path: publish.log
+          retention-days: 30

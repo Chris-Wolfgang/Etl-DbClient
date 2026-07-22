@@ -26,7 +26,7 @@ jobs:
     if: github.repository != 'Chris-Wolfgang/repo-template'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -85,7 +85,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
         with:
           dotnet-version: |
             3.1.x
@@ -347,7 +347,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-coverage
           path: CoverageReport/
@@ -361,12 +361,12 @@ jobs:
       has-packages: ${{ steps.check-packages.outputs.has-packages }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
         with:
           dotnet-version: |
             3.1.x
@@ -569,7 +569,7 @@ jobs:
 
 
       - name: Upload NuGet packages
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: nuget-packages
           path: ./nuget-packages/
@@ -595,12 +595,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
         with:
           dotnet-version: |
             8.0.x
@@ -639,7 +639,7 @@ jobs:
 
       - name: Upload integration test results
         if: always() && steps.locate.outputs.found == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-integration-${{ matrix.rdbms }}-${{ matrix.tfm }}-trx
           path: TestResults-Integration/
@@ -668,10 +668,200 @@ jobs:
           echo "❌ Integration aggregator FAILS — release gate blocks the publish."
           exit 1
 
-  # Publish to NuGet (only if validation + integration passed)
+  # ABI compatibility gate: for a PATCH/MINOR release, break the build
+  # if the new package's public surface is binary-incompatible with the
+  # last version on nuget.org. MAJOR releases record intentional breaks
+  # in compat-suppressions.txt (checked in) so they don't recur silently.
+  # Refs #136.
+  api-compat:
+    name: ApiCompat vs last NuGet
+    needs: pack-and-validate
+    if: needs.pack-and-validate.outputs.has-packages == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Install ApiCompat tool
+        run: dotnet tool install --global Microsoft.DotNet.ApiCompat.Tool
+
+      - name: Run ApiCompat
+        id: apicompat
+        shell: bash
+        env:
+          PKG_ID: Wolfgang.Etl.DbClient
+        run: |
+          set -euo pipefail
+
+          # Determine package id + version from the freshly-packed .nupkg.
+          # Use find (not `ls <glob>`) so an empty match returns cleanly
+          # instead of tripping `set -e` before the friendly diagnostic.
+          new_nupkg=$(find packages -maxdepth 1 -name "${PKG_ID}.*.nupkg" ! -name '*.symbols.nupkg' | head -1)
+          if [ -z "$new_nupkg" ]; then
+            echo "❌ No runtime .nupkg in ./packages"
+            ls -la packages/ || true
+            exit 1
+          fi
+          fname=$(basename "$new_nupkg" .nupkg)
+          # <PKG_ID>.<major>.<minor>.<patch>[-suffix] → strip the id prefix.
+          # Quote the pattern expansion inside ${var#...} so shellcheck's
+          # SC2295 is satisfied (unquoted, it would be treated as a glob).
+          new_version=${fname#"${PKG_ID}."}
+          echo "New package: ${PKG_ID}@$new_version"
+
+          # Look up the previous stable version from nuget.org (excludes the
+          # version we're about to publish + any pre-release tags). Parse
+          # with python3 — guaranteed on ubuntu-latest and doesn't depend
+          # on `jq` staying on the runner image.
+          pkg_lc=$(printf '%s' "$PKG_ID" | tr '[:upper:]' '[:lower:]')
+          # One-liner python so the YAML block scalar isn't broken by the
+          # embedded newlines a multi-line `python3 -c '...'` needs.
+          # actionlint's YAML parser is strict about outdented lines
+          # inside `run: |` blocks.
+          prev_version=$(
+            curl -sSf "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/index.json" \
+              | NEW_VERSION="$new_version" python3 -c 'import json, os, sys; d=json.load(sys.stdin); n=os.environ["NEW_VERSION"]; s=[v for v in d.get("versions", []) if "-" not in v and v!=n]; print(s[-1] if s else "")'
+          )
+
+          if [ -z "$prev_version" ]; then
+            echo "ℹ️  No prior stable version on nuget.org — first release or first stable. Skipping compat check."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Previous stable: Wolfgang.Etl.DbClient@$prev_version"
+          echo "prev-version=$prev_version" >> "$GITHUB_OUTPUT"
+
+          # Download previous nupkg
+          mkdir -p prev
+          curl -sSfL \
+            "https://api.nuget.org/v3-flatcontainer/${pkg_lc}/$prev_version/${pkg_lc}.$prev_version.nupkg" \
+            -o "prev/prev.nupkg"
+
+          # Extract both nupkgs
+          unzip -q "$new_nupkg" -d new
+          unzip -q "prev/prev.nupkg" -d prev/pkg
+
+          # Compare per TFM. All TFMs the package declares must be
+          # binary-compatible with the same TFM in the previous version
+          # (unless suppressed in compat-suppressions.txt or this is a
+          # MAJOR bump — the workflow doesn't distinguish; suppressions
+          # are the escape hatch).
+          # Array so the individual flag + path stay as separate arguments
+          # when expanded (shellcheck SC2086 — string interpolation would
+          # word-split incorrectly if either token ever contained whitespace).
+          suppression_args=()
+          if [ -f compat-suppressions.txt ]; then
+            suppression_args=(--suppression-file compat-suppressions.txt)
+          fi
+
+          # `while read` (not `for x in $(find ...)`) so filenames with
+          # spaces or newlines don't wordsplit (shellcheck SC2044).
+          exit_code=0
+          while IFS= read -r -d '' new_dll; do
+            tfm=$(basename "$(dirname "$new_dll")")
+            prev_dll="prev/pkg/lib/$tfm/Wolfgang.Etl.DbClient.dll"
+            if [ ! -f "$prev_dll" ]; then
+              echo "ℹ️  TFM $tfm is new in this release (no previous DLL) — skipping."
+              continue
+            fi
+            echo ""
+            echo "🔍 ApiCompat: $tfm"
+            if ! apicompat --left "$prev_dll" --right "$new_dll" "${suppression_args[@]}"; then
+              echo "❌ ApiCompat FAILED for $tfm"
+              exit_code=1
+            fi
+          done < <(find new/lib -name Wolfgang.Etl.DbClient.dll -print0)
+          exit $exit_code
+
+  # SourceLink structural gate — verifies the freshly-packed .snupkg carries
+  # a portable PDB for every runtime TFM so consumers get F11-into-source
+  # after publish. Full-format (Windows-only) PDBs are an immediate fail —
+  # SourceLink is portable-PDB only. Refs #144.
+  sourcelink-snupkg:
+    name: SourceLink structural verify (.snupkg)
+    needs: pack-and-validate
+    if: needs.pack-and-validate.outputs.has-packages == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Verify .snupkg carries portable PDBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          snupkgs=$(find packages -maxdepth 1 -name 'Wolfgang.Etl.DbClient.*.snupkg' || true)
+          if [ -z "$snupkgs" ]; then
+            echo "❌ No .snupkg in ./packages — SourceLink verification cannot run."
+            ls -la packages/ || true
+            exit 1
+          fi
+
+          fail=0
+          for snupkg in $snupkgs; do
+            echo "::group::$snupkg"
+            work=$(mktemp -d)
+            unzip -q "$snupkg" -d "$work"
+
+            # Every runtime TFM MUST have a PDB under lib/<tfm>/. Missing
+            # entries mean SymbolPackageFormat/IncludeSymbols got misconfigured
+            # somewhere upstream — consumers on that TFM would fall back to
+            # decompiled placeholders in the debugger.
+            pdbs=$(find "$work/lib" -name 'Wolfgang.Etl.DbClient.pdb' | sort)
+            if [ -z "$pdbs" ]; then
+              echo "::error::No PDBs found under $snupkg / lib/*/"
+              fail=1
+              echo "::endgroup::"
+              continue
+            fi
+
+            for pdb in $pdbs; do
+              tfm=$(basename "$(dirname "$pdb")")
+              # Portable-PDB magic = 'B','S','J','B' (0x42 0x53 0x4A 0x42)
+              # in the first 4 bytes. Full-format Windows PDBs start with
+              # "Microsoft C/C++ MSF 7.00" — an immediate fail.
+              magic=$(head -c 4 "$pdb" | od -An -tx1 | tr -d ' \n')
+              if [ "$magic" != "42534a42" ]; then
+                echo "::error::PDB is NOT portable (magic=0x$magic, expected 42534A42) — TFM $tfm"
+                fail=1
+              else
+                echo "✅ $tfm — portable PDB (magic BSJB)"
+              fi
+            done
+
+            echo "::endgroup::"
+            rm -rf "$work"
+          done
+
+          exit $fail
+
+  # Publish to NuGet (only if validation + integration + api-compat + sourcelink passed)
   publish-nuget:
     name: Publish to NuGet.org
-    needs: [pack-and-validate, test-integration-all]
+    needs: [pack-and-validate, test-integration-all, api-compat, sourcelink-snupkg]
     if: needs.pack-and-validate.outputs.has-packages == 'true'
     runs-on: windows-latest
     permissions:
@@ -679,7 +869,7 @@ jobs:
       contents: read
     steps:
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
         with:
           dotnet-version: |
             3.1.x
@@ -691,7 +881,7 @@ jobs:
             10.0.x
 
       - name: Download packages
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: nuget-packages
           path: ./packages
@@ -736,6 +926,84 @@ jobs:
           Write-Host "✅ All packages published to NuGet.org" -ForegroundColor Green
           Write-Host "==========================================" -ForegroundColor Green
 
+  # SourceLink post-publish smoke — after publish-nuget succeeds, poll the
+  # NuGet symbol server for the just-uploaded PDB. Uses dotnet-symbol which
+  # implements the SSQP protocol + follows the debug-directory signature
+  # in the DLL to compute the correct URL. Retries with backoff — the
+  # NuGet symbol server ingests .snupkg content on a delay measured in
+  # minutes (typical 5–30). Refs #144.
+  sourcelink-symbol-server-smoke:
+    name: SourceLink symbol-server smoke (post-publish)
+    needs: publish-nuget
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Install dotnet-symbol
+        run: dotnet tool install --global dotnet-symbol
+
+      - name: Extract a representative DLL from the packed .nupkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          nupkg=$(find packages -maxdepth 1 -name 'Wolfgang.Etl.DbClient.*.nupkg' ! -name '*.symbols.nupkg' | head -1)
+          if [ -z "$nupkg" ]; then
+            echo "::error::No runtime .nupkg to probe."
+            exit 1
+          fi
+          mkdir -p probe
+          unzip -q "$nupkg" -d probe
+          # Grab the net10.0 DLL if present, otherwise any TFM.
+          dll=$(find probe/lib -name 'Wolfgang.Etl.DbClient.dll' | sort | tail -1)
+          if [ -z "$dll" ]; then
+            echo "::error::No runtime DLL in the packed .nupkg."
+            find probe/lib -type f | head
+            exit 1
+          fi
+          echo "PROBE_DLL=$dll" >> "$GITHUB_ENV"
+          echo "Probing symbols for: $dll"
+
+      - name: Poll symbol server for published PDB (retry with backoff)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$PATH:$HOME/.dotnet/tools"
+
+          # nuget.org's symbol server URL (SSQP endpoint). dotnet-symbol
+          # defaults to msdl.microsoft.com — override to hit nuget.org.
+          server='https://symbols.nuget.org/download/symbols/'
+
+          # Retry loop: NuGet symbol ingestion is typically 5–30 min. Poll
+          # every 60s for up to 30 min, then fail.
+          out=$(mktemp -d)
+          attempts=30
+          for i in $(seq 1 "$attempts"); do
+            echo "Attempt $i/$attempts — dotnet-symbol from $server"
+            if dotnet-symbol --symbols --server-path "$server" --output "$out" "$PROBE_DLL"; then
+              # Success if a PDB actually landed in the output dir.
+              if find "$out" -name '*.pdb' | grep -q .; then
+                echo "✅ Symbol server served the PDB on attempt $i."
+                exit 0
+              fi
+            fi
+            echo "  not-yet — sleeping 60s"
+            sleep 60
+          done
+
+          echo "::error::Symbol server did not serve the published PDB after $((attempts*60))s of polling."
+          exit 1
+
   # Build and deploy versioned documentation via the shared docfx workflow
   # Note: reusable workflow jobs called via `uses:` do not require `runs-on` in the caller
   trigger-docs:
@@ -747,6 +1015,35 @@ jobs:
     with:
       version: ${{ github.event.release.tag_name }}
 
+  # SLSA build provenance attestation — proves the .nupkg / .snupkg
+  # attached to the Release were built by THIS workflow at THIS commit,
+  # signed via GitHub's OIDC identity with Sigstore's keyless CA.
+  # Consumers can verify with `gh attestation verify <.nupkg> --owner
+  # Chris-Wolfgang --repo Etl-DbClient` (see SECURITY.md).
+  # Refs #138.
+  attest-build-provenance:
+    name: Attest build provenance (SLSA)
+    needs: [pack-and-validate, publish-nuget]
+    if: needs.pack-and-validate.outputs.has-packages == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC token for Sigstore keyless signing
+      contents: read
+      attestations: write   # required to write attestation to the repo
+    steps:
+      - name: Download packed artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: nuget-packages
+          path: ./packages
+
+      - name: Attest .nupkg / .snupkg provenance
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v3.0.0
+        with:
+          subject-path: |
+            packages/*.nupkg
+            packages/*.snupkg
+
   # Attach NuGet packages and coverage report to the GitHub Release page
   update-release-artifacts:
     name: Attach Artifacts to Release
@@ -757,13 +1054,13 @@ jobs:
       contents: write  # Required to upload assets to the GitHub Release
     steps:
       - name: Download NuGet packages artifact
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: nuget-packages
           path: ./nuget-packages
 
       - name: Download coverage report artifact
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: release-coverage
           path: ./release-coverage
@@ -772,7 +1069,7 @@ jobs:
         run: zip -r release-coverage.zip ./release-coverage
 
       - name: Attach artifacts to release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228  # v3.0.2
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
         with:
           tag_name: ${{ github.event.release.tag_name }}
           files: |

@@ -38,30 +38,12 @@ jobs:
         with:
           persist-credentials: false
 
-      # Guard so this workflow (present on main so workflow_dispatch works)
-      # doesn't fail its scheduled run when the checked-out ref pre-dates
-      # the Tests.Concurrency project — that project lives on vNext and
-      # hasn't merged to main yet. Once vNext → main, the guard is a
-      # no-op (the directory always exists) and this comment can go.
-      - name: Detect Tests.Concurrency
-        id: check
-        shell: bash
-        run: |
-          if [ -f tests/Wolfgang.Etl.DbClient.Tests.Concurrency/Wolfgang.Etl.DbClient.Tests.Concurrency.csproj ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::Tests.Concurrency project not present on this ref — skipping Coyote suite. Merge vNext to main to enable."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Setup .NET
-        if: steps.check.outputs.found == 'true'
         uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
         with:
           dotnet-version: 10.0.x
 
       - name: Restore + Build (Release)
-        if: steps.check.outputs.found == 'true'
         run: |
           dotnet restore tests/Wolfgang.Etl.DbClient.Tests.Concurrency/Wolfgang.Etl.DbClient.Tests.Concurrency.csproj
           dotnet build tests/Wolfgang.Etl.DbClient.Tests.Concurrency/Wolfgang.Etl.DbClient.Tests.Concurrency.csproj \
@@ -69,7 +51,6 @@ jobs:
             --configuration Release
 
       - name: Run Coyote concurrency suite
-        if: steps.check.outputs.found == 'true'
         # Iteration count is read from an env var at test time; runtime-
         # configurable without a rebuild.
         env:
