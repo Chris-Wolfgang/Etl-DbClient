@@ -19,6 +19,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.7.0] - 2026-07-20
+
+Additive release. New runtime schema-validation type, opt-in
+extractor/loader property that wires it in, `[DbKey]` attribute + full
+Update/Delete source-generator emit, and a fluent `EtlPipeline` chain
+surface over `DbExtractor` / `DbLoader`.
+
+### Added
+
+- **`DbSchemaValidator.Validate<TRecord>` + `ValidateAsync<TRecord>`** —
+  provider-agnostic pre-flight schema check via
+  `SELECT * FROM <table> WHERE 1 = 0`. Error message names both the
+  missing columns AND the columns the table actually has, so
+  copy-paste typos surface at the top of a batch instead of mid-loop
+  (#20).
+- **`DbExtractor<T>.ValidateSchemaOnStart` / `DbLoader<T>.ValidateSchemaOnStart`**
+  — opt-in bool that runs `DbSchemaValidator.ValidateAsync` before
+  reading / writing the first row. Default `false`; adds a single
+  zero-row round-trip when enabled (#20).
+- **`[DbKey]` attribute + source-generator `Update` / `Delete` const
+  emit** — completes source-generator CRUD (`Insert` / `Select` /
+  `Update` / `Delete` + `Bind`). Composite keys preserve declaration
+  order in the WHERE clause; `Update` emitted only when the type has
+  ≥ 1 `[DbKey]` AND ≥ 1 non-key column; `Delete` emitted only when the
+  type has ≥ 1 `[DbKey]` (#23).
+- **Fluent `EtlPipeline` chain surface** — `DbExtractor<T>(…)` and
+  `DbLoader<T>(…)` extension methods on `EtlPipeline` /
+  `IEtlPipeline<T>`, returning `IDbExtractorBuilder<T>` /
+  `IDbLoaderBuilder<T>` with fluent setters that mirror every
+  configurable property on the underlying extractor / loader
+  (`CommandType`, `ManageConnection`, `Parameters`, `ServerOffset`,
+  `ServerLimit`, `PagingClauseTemplate`, `TotalCountQuery`,
+  `ErrorHandling`). Composes cleanly with sibling ETL packages
+  (JSON, CSV, FixedWidth, Transformers). Requires
+  `Wolfgang.Etl.Abstractions` 0.16.0 (#280).
+- **`docs/HOT-PATH-ALLOCATION.md`** — snapshot explaining why DbClient
+  intentionally has no zero-alloc guards (Dapper + ADO.NET +
+  `IAsyncEnumerable` state machines allocate by contract) (#147).
+- **`docs/etl-pipeline.md`** — full reference for the EtlPipeline
+  chain surface + `examples/Wolfgang.Etl.DbClient.Example.EtlPipeline/`
+  runnable console app (#280).
+
+### Changed
+
+- Bumped `Wolfgang.Etl.Abstractions` to `0.16.0`.
+
 ## [0.6.0] - 2026-07-06
 
 Feature-rich release: dry-run mode, source-generator scaffolding, batching + paging + connection lifecycle knobs, plus a broad InspectCode fix pass.
