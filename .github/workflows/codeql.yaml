@@ -31,7 +31,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         persist-credentials: false
 
@@ -77,13 +77,13 @@ jobs:
 
     - name: Initialize CodeQL
       if: steps.check-csharp.outputs.has-csharp == 'true'
-      uses: github/codeql-action/init@v4
+      uses: github/codeql-action/init@e4c79b4e9ebfe577d446333c2e31ed81079e7b03 # v4
       with:
         languages: ${{ matrix.language }}
 
     - name: Setup .NET
       if: steps.check-csharp.outputs.has-csharp == 'true'
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
       with:
         dotnet-version: '10.0.x'
 
@@ -128,7 +128,7 @@ jobs:
     - name: Perform CodeQL Analysis
       id: perform-codeql-analysis
       if: steps.check-csharp.outputs.has-csharp == 'true'
-      uses: github/codeql-action/analyze@v4
+      uses: github/codeql-action/analyze@e4c79b4e9ebfe577d446333c2e31ed81079e7b03 # v4
       with:
         category: "/language:${{matrix.language}}"
 
