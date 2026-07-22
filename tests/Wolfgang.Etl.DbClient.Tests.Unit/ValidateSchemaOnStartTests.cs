@@ -80,11 +80,11 @@ public class ValidateSchemaOnStartTests
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            await foreach (var _ in sut.ExtractAsync().ConfigureAwait(false))
+            await foreach (var _ in sut.ExtractAsync())
             {
                 Assert.Fail("Validator should have thrown before yielding any row.");
             }
-        }).ConfigureAwait(false);
+        });
 
         Assert.Contains("does_not_exist", ex.Message, StringComparison.Ordinal);
         Assert.Equal(0, sut.CurrentItemCount);
@@ -102,7 +102,7 @@ public class ValidateSchemaOnStartTests
         };
 
         var rows = new List<Widget>();
-        await foreach (var row in sut.ExtractAsync().ConfigureAwait(false))
+        await foreach (var row in sut.ExtractAsync())
         {
             rows.Add(row);
         }
@@ -141,13 +141,13 @@ public class ValidateSchemaOnStartTests
         });
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await sut.LoadAsync(items).ConfigureAwait(false)).ConfigureAwait(false);
+            await sut.LoadAsync(items));
 
         Assert.Contains("does_not_exist", ex.Message, StringComparison.Ordinal);
 
         using var count = conn.CreateCommand();
         count.CommandText = "SELECT COUNT(*) FROM widget";
-        var after = Convert.ToInt64(count.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+        var after = Convert.ToInt64(await count.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture);
         Assert.Equal(2L, after);
     }
 
@@ -169,11 +169,11 @@ public class ValidateSchemaOnStartTests
         await sut.LoadAsync(ToAsync(new[]
         {
             new Widget { Id = 10, Name = "x", Price = 9m },
-        })).ConfigureAwait(false);
+        }));
 
         using var count = conn.CreateCommand();
         count.CommandText = "SELECT COUNT(*) FROM widget";
-        var after = Convert.ToInt64(count.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+        var after = Convert.ToInt64(await count.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture);
         Assert.Equal(3L, after);
     }
 

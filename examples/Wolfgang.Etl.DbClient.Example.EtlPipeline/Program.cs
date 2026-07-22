@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.DbClient;
+using Wolfgang.Etl.DbClient.Example.EtlPipeline;
 
 // ---------------------------------------------------------------
 // Example: fluent EtlPipeline chain over DbExtractor / DbLoader (#280)
@@ -180,10 +181,13 @@ Console.WriteLine("Done.");
 // Types
 // -----------------------------------------------------------------
 
-[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
-internal sealed class Order
+namespace Wolfgang.Etl.DbClient.Example.EtlPipeline
 {
-    public int Id { get; set; }
-    public string Customer { get; set; } = "";
-    public double Total { get; set; }
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
+    internal sealed class Order
+    {
+        public int Id { get; set; }
+        public string Customer { get; set; } = "";
+        public double Total { get; set; }
+    }
 }

@@ -23,6 +23,13 @@
 // serialisation invariantly. If that ever changes, document the new
 // culture-sensitive API here + note the accepted risk.
 
+// S125: the culture-bullet comments above (`//   tr-TR — dotted / dotless I…`
+// etc.) trip SonarAnalyzer's commented-out-code heuristic because a locale
+// tag followed by punctuation reads to it like a C# identifier + operator.
+// The comments are legitimate prose — silencing the rule for this file
+// rather than mangling the header to satisfy the heuristic.
+#pragma warning disable S125
+
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -89,8 +96,8 @@ public class CultureInvarianceTests
     public async Task Extract_roundtrips_decimal_and_datetime_under_hostile_culture(string cultureName)
     {
         using var _ = new CultureScope(cultureName);
-        await using var conn = TestDb.CreateConnection();
-        await using (var seed = conn.CreateCommand())
+        using var conn = TestDb.CreateConnection();
+        using (var seed = conn.CreateCommand())
         {
             seed.CommandText = @"
                 CREATE TABLE Widget (Id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Price REAL NOT NULL, CreatedUtc TEXT NOT NULL);
@@ -127,8 +134,8 @@ public class CultureInvarianceTests
     public async Task Load_persists_decimal_and_datetime_under_hostile_culture(string cultureName)
     {
         using var _ = new CultureScope(cultureName);
-        await using var conn = TestDb.CreateConnection();
-        await using (var create = conn.CreateCommand())
+        using var conn = TestDb.CreateConnection();
+        using (var create = conn.CreateCommand())
         {
             create.CommandText = "CREATE TABLE Widget (Id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Price REAL NOT NULL, CreatedUtc TEXT NOT NULL);";
             await create.ExecuteNonQueryAsync();
@@ -152,9 +159,9 @@ public class CultureInvarianceTests
         // extractor so any culture-injected error the LOAD path introduces
         // is caught here rather than being masked by a matching bug in
         // the read side.
-        await using var readBack = conn.CreateCommand();
+        using var readBack = conn.CreateCommand();
         readBack.CommandText = "SELECT Price FROM Widget ORDER BY Id";
-        await using var reader = await readBack.ExecuteReaderAsync();
+        using var reader = await readBack.ExecuteReaderAsync();
         Assert.True(await reader.ReadAsync());
         Assert.Equal(1.25m, Convert.ToDecimal(reader.GetValue(0), CultureInfo.InvariantCulture));
         Assert.True(await reader.ReadAsync());

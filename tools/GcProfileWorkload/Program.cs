@@ -19,6 +19,7 @@ using System.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
+using Wolfgang.Etl.DbClient.Tools.GcProfileWorkload;
 
 const int rowsPerBatch = 5_000;
 var durationSeconds = ParseDuration(args);
@@ -87,8 +88,8 @@ Console.WriteLine($"[gc-workload] Peak working set: {Environment.WorkingSet / 10
 
 static int ParseDuration(string[] args)
 {
-    if (args.Length > 0 && int.TryParse(args[0], out var s) && s > 0) return s;
-    if (int.TryParse(Environment.GetEnvironmentVariable("GC_WORKLOAD_SECONDS"), out var envs) && envs > 0) return envs;
+    if (args.Length > 0 && int.TryParse(args[0], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var s) && s > 0) return s;
+    if (int.TryParse(Environment.GetEnvironmentVariable("GC_WORKLOAD_SECONDS"), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var envs) && envs > 0) return envs;
     return 600; // 10 minutes default per #142 AC.
 }
 
@@ -124,10 +125,13 @@ static async IAsyncEnumerable<Widget> GenerateBatch(int count)
     }
 }
 
-[UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
-internal sealed class Widget
+namespace Wolfgang.Etl.DbClient.Tools.GcProfileWorkload
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
+    internal sealed class Widget
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+    }
 }

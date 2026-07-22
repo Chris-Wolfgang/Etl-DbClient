@@ -88,7 +88,7 @@ public class EtlPipelineDbClientExtensionsTests
             .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
             .RunAsync()
-            .ConfigureAwait(false);
+            ;
 
         Assert.Equal(3L, CountRows(dest, "dest"));
     }
@@ -110,7 +110,7 @@ public class EtlPipelineDbClientExtensionsTests
             .ServerLimit(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
             .RunAsync()
-            .ConfigureAwait(false);
+            ;
 
         Assert.Equal(2L, CountRows(dest, "dest"));
 
@@ -132,8 +132,7 @@ public class EtlPipelineDbClientExtensionsTests
         await foreach (var w in EtlPipeline
             .Create()
             .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
-            .AsAsyncEnumerable()
-            .ConfigureAwait(false))
+            .AsAsyncEnumerable())
         {
             collected.Add(w);
         }
@@ -172,7 +171,7 @@ public class EtlPipelineDbClientExtensionsTests
             .DbLoader(loader)
             .ErrorHandling(RowErrorHandling.Skip)
             .RunAsync()
-            .ConfigureAwait(false);
+            ;
 
         // 3 rows total: rows 1 and 3 succeeded, row 2 was the pre-existing one.
         Assert.Equal(3L, CountRows(dest, "dest"));
@@ -199,7 +198,7 @@ public class EtlPipelineDbClientExtensionsTests
             .ServerLimit(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
             .RunAsync()
-            .ConfigureAwait(false);
+            ;
 
         // Setter on the builder mutated the caller's extractor.
         Assert.Equal(0L, extractor.ServerOffset);
