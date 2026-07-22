@@ -1,0 +1,87 @@
+# Workflow YAML security audit — zizmor + actionlint.
+#
+# CodeQL scans source code. This workflow scans the GitHub Actions
+# YAML *itself* for security defects that source-code SAST can't see:
+#   - untrusted-input injection into run: blocks
+#   - missing / overly-permissive permissions: blocks
+#   - secrets leaking via expression-context expansion
+#   - third-party actions not pinned by SHA
+#
+# zizmor: security-focused static analysis (rules focus on threat model).
+# actionlint: syntax + typing + common-mistake linting (broader, less deep).
+# The two are complementary — running both covers rule sets neither
+# tool covers alone.
+#
+# Refs #153.
+
+name: Workflow security audit
+
+on:
+  # pull_request (not pull_request_target). Neither zizmor nor actionlint
+  # execute PR-authored code — they parse YAML and emit findings. A PR
+  # that modifies this workflow to disable itself is caught by the
+  # branch-protection ruleset: both jobs' check names ("zizmor",
+  # "actionlint") are required, so their absence blocks merge.
+  # Matches the pr.yaml + aot-smoke.yaml migration off the
+  # pull-request-target-code-checkout anti-pattern (refs #131 / #257).
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".zizmor.yml"
+      - ".github/actionlint.yaml"
+  push:
+    branches: [main, vNext]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".zizmor.yml"
+      - ".github/actionlint.yaml"
+  # Manual trigger for full re-scan (e.g. after tightening the config).
+  workflow_dispatch:
+
+jobs:
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to code-scanning.
+      security-events: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
+        with:
+          # Gate on high-severity findings; medium / low surface in
+          # Code Scanning but don't block the PR.
+          min-severity: high
+          # Config lives in .zizmor.yml at the repo root (see below).
+          # The zizmor action uploads SARIF to Code Scanning internally
+          # — no separate upload step needed. An earlier version of this
+          # workflow duplicated the upload and failed because it looked
+          # for a `results.sarif` path the action doesn't produce.
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run actionlint
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+        with:
+          # PR annotations (::error / ::warning file=…) are emitted by
+          # actionlint's default GitHub Actions matcher.
+          fail-on-error: true
+          # actionlint config lives in .github/actionlint.yaml (see below).
