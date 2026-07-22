@@ -41,10 +41,15 @@
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Wolfgang.Etl.DbClient.Benchmarks/Wolfgang.Etl.DbClient.Benchmarks.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/GcProfileWorkload/GcProfileWorkload.csproj" />
+  </Folder>
   <Folder Name="/examples/">
     <Project Path="examples/Wolfgang.Etl.DbClient.Example/Wolfgang.Etl.DbClient.Example.csproj" />
     <Project Path="examples/Wolfgang.Etl.DbClient.Example.AutoSql/Wolfgang.Etl.DbClient.Example.AutoSql.csproj" />
     <Project Path="examples/Wolfgang.Etl.DbClient.Example.UpdateWithTransaction/Wolfgang.Etl.DbClient.Example.UpdateWithTransaction.csproj" />
+    <Project Path="examples/Wolfgang.Etl.DbClient.Example.AotSmoke/Wolfgang.Etl.DbClient.Example.AotSmoke.csproj" />
+    <Project Path="examples/Wolfgang.Etl.DbClient.Example.EtlPipeline/Wolfgang.Etl.DbClient.Example.EtlPipeline.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj" />
@@ -53,6 +58,11 @@
   <Folder Name="/tests/">
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj" />
     <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Integration/Wolfgang.Etl.DbClient.Tests.Integration.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.DocExamples/Wolfgang.Etl.DbClient.Tests.DocExamples.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.SourceLink/Wolfgang.Etl.DbClient.Tests.SourceLink.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Snapshots/Wolfgang.Etl.DbClient.Tests.Snapshots.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Fuzz/Wolfgang.Etl.DbClient.Tests.Fuzz.csproj" />
+    <Project Path="tests/Wolfgang.Etl.DbClient.Tests.Concurrency/Wolfgang.Etl.DbClient.Tests.Concurrency.csproj" />
   </Folder>
 </Solution>
 

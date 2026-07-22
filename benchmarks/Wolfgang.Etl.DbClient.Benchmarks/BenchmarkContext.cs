@@ -104,11 +104,15 @@ public static class BenchmarkContext
 
     private static async Task ExecuteAsync(DbConnection connection, string sql, CancellationToken cancellationToken)
     {
-        // The `sql` argument is only ever a fixture-built string constant
-        // authored by the benchmark harness (CREATE TABLE / INSERT / etc.).
-        // No user input touches this path — it exists so the benchmark can
-        // seed a DB before measuring the library's own SQL execution.
         using var cmd = connection.CreateCommand();
+        // `sql` is always a compile-time string literal chosen by the switch
+        // in EnsureSchemaAsync (see line 55–69). No user input reaches this
+        // path — the whole benchmarks project runs against a fixture DB
+        // seeded from constants. Parameterized queries would be the right fix
+        // if the SQL were user-derived, but most databases don't accept
+        // parameters for CREATE / DROP TABLE anyway. The nosemgrep comment
+        // must sit IMMEDIATELY BEFORE the flagged assignment (with no other
+        // content between) for Semgrep to apply the suppression.
         // nosemgrep: csharp.lang.security.sqli.csharp-sqli.csharp-sqli
         cmd.CommandText = sql;
         await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);

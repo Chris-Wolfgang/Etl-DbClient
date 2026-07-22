@@ -1,0 +1,14 @@
+# zizmor configuration.
+# https://docs.zizmor.sh/configuration/
+#
+# Baseline: no suppressions yet. Add rules here only when the finding
+# is intentional and documented (why the risk is accepted).
+#
+# Format for a suppression:
+#   rules:
+#     <rule-id>:
+#       ignore:
+#         - <path>:<line>:<optional-symbol>  # reason: <one line>
+#
+# See https://docs.zizmor.sh/audits/ for the rule catalog.
+rules: {}
