@@ -137,15 +137,13 @@ typically a single fixture class plus a matrix entry in `pr.yaml` and `benchmark
 
 ---
 
-## 🎯 Target Frameworks
+## 🎯 Supported Frameworks
 
-| Framework | Versions |
-|-----------|----------|
-| .NET Framework | .NET 4.6.2, .NET 4.7.2, .NET 4.8, .NET 4.8.1 |
-| .NET Standard | .NET Standard 2.0 |
-| .NET | .NET 5.0, .NET 6.0, .NET 7.0, .NET 8.0, .NET 9.0, .NET 10.0 |
+This library targets:
 
----
+- **.NET Framework:** 4.6.2
+
+See the [NuGet package page](https://www.nuget.org/packages/Wolfgang.Etl.DbClient/) for the authoritative per-TFM compatibility matrix.
 
 ## 🔍 Code Quality & Static Analysis
 
