@@ -44,6 +44,9 @@
   <Folder Name="/tools/">
     <Project Path="tools/GcProfileWorkload/GcProfileWorkload.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj" />
+  </Folder>
   <Folder Name="/examples/">
     <Project Path="examples/Wolfgang.Etl.DbClient.Example/Wolfgang.Etl.DbClient.Example.csproj" />
     <Project Path="examples/Wolfgang.Etl.DbClient.Example.AutoSql/Wolfgang.Etl.DbClient.Example.AutoSql.csproj" />
