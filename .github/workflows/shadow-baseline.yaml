@@ -1,0 +1,184 @@
+# Shadow-testing baseline capture — writes per-OS metrics from the Shadow
+# Consumer sample to gh-pages under `dev/shadow/<os>.json` on every push
+# to main. The regression-gate follow-up PR fetches from those JSONs at
+# PR time and fails the run when a metric regresses beyond threshold.
+#
+# Separate from `shadow.yaml` (weekly cron + workflow_dispatch, ad-hoc
+# runs) so the "record the golden" and "watch the trend" workflows have
+# distinct triggers and permissions. This workflow needs `contents:
+# write` for the gh-pages push; shadow.yaml stays least-privilege.
+#
+# Follows the same commit-and-retry-on-non-fast-forward pattern
+# integration-status.yaml uses, since benchmarks.yaml / docfx.yaml /
+# integration-status.yaml can all push to gh-pages concurrently.
+#
+# Refs #130.
+
+name: Shadow baseline → gh-pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/**'
+      - '.github/workflows/shadow-baseline.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # push metrics JSON to gh-pages
+
+concurrency:
+  group: shadow-baseline
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # MEASURE: run the sample per OS and upload the metrics JSON as an artifact
+  # ============================================================================
+  measure:
+    name: "Measure baseline (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Detect Shadow Consumer sample
+        id: check
+        shell: bash
+        run: |
+          if [ -f samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Shadow Consumer sample not present — skipping baseline capture."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup .NET
+        if: steps.check.outputs.found == 'true'
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore + Build sample (Release)
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        run: |
+          dotnet restore samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj
+          dotnet build samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj \
+            --no-restore \
+            --configuration Release
+
+      - name: Run sample + capture tagged metrics
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        env:
+          BASELINE_OS: ${{ matrix.os }}
+          BASELINE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          dotnet run --project samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj \
+            --configuration Release \
+            --no-build \
+            1> out/metrics.json
+
+          # Tag with runner + commit metadata so the regression-gate
+          # follow-up can look up the right baseline record deterministically.
+          jq --arg os "$BASELINE_OS" \
+             --arg sha "$BASELINE_SHA" \
+             --arg capturedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+             '. + {os: $os, sha: $sha, capturedAt: $capturedAt, kind: "baseline"}' \
+             out/metrics.json > "out/${BASELINE_OS}.json"
+          rm out/metrics.json
+          echo "=== out/${BASELINE_OS}.json ==="
+          cat "out/${BASELINE_OS}.json"
+
+      - name: Upload measured metrics
+        if: steps.check.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: shadow-baseline-${{ matrix.os }}
+          path: out/
+
+
+  # ============================================================================
+  # PUBLISH: pull all per-OS JSONs into gh-pages under dev/shadow/
+  # ============================================================================
+  publish:
+    name: "Publish baselines to gh-pages"
+    runs-on: ubuntu-latest
+    needs: measure
+    # Skip the publish job on the template repo — it doesn't have gh-pages
+    # provisioned. Matches the integration-status.yaml guard.
+    if: always() && github.repository != 'Chris-Wolfgang/repo-template'
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: gh-pages
+          persist-credentials: false
+
+      - name: Download all baseline artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: _baselines
+          pattern: shadow-baseline-*
+          merge-multiple: true
+
+      - name: Move baselines into dev/shadow/
+        shell: bash
+        run: |
+          mkdir -p dev/shadow
+          if [ -d _baselines ]; then
+            for f in _baselines/*.json; do
+              [ -f "$f" ] || continue
+              cp "$f" "dev/shadow/$(basename "$f")"
+              echo "✓ staged dev/shadow/$(basename "$f")"
+            done
+          else
+            echo "::notice::No baseline artifacts to publish (measure job may have skipped)."
+            exit 0
+          fi
+          ls -la dev/shadow/
+
+      - name: Commit + push baselines
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          git add dev/shadow/
+          if git diff --cached --quiet; then
+            echo "No baseline changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(shadow): update baseline metrics for ${GITHUB_SHA::7}"
+
+          # Retry on non-fast-forward — benchmarks.yaml / docfx.yaml /
+          # integration-status.yaml can also push to gh-pages concurrently.
+          # Each writer touches a distinct subdir (dev/shadow vs dev/status
+          # vs dev/bench/<rdbms> vs the docs root), so rebase is always
+          # conflict-free.
+          for attempt in 1 2 3 4 5; do
+            if git push origin gh-pages; then
+              echo "Pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "Push failed on attempt $attempt — fetching + rebasing"
+            git fetch origin gh-pages
+            git rebase origin/gh-pages
+          done
+
+          echo "::error::Failed to push to gh-pages after 5 attempts"
+          exit 1
