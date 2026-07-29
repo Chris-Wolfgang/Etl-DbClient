@@ -117,13 +117,13 @@
   <!-- Shared dependencies (all TFMs) -->
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.10" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
-    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.9.0" />
-    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.9.0" />
+    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.13.0" />
+    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.13.0" />
   </ItemGroup>
 
   <!-- Copy native SQLite DLL to output for .NET Framework (no RID-based probing) -->
