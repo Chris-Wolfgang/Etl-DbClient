@@ -1,0 +1,71 @@
+<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+
+	<!--
+	  ReSharper InspectCode noise-floor profile.
+
+	  Goal: 0 noise findings on a clean main, so the first finding after the
+	  inspectcode job lands is always actionable. Rules below are silenced
+	  because the existing Roslyn analyzer stack (.editorconfig + Roslynator +
+	  Meziantou + SonarAnalyzer + AsyncFixer + VS.Threading + BannedApiAnalyzers
+	  + PublicApiAnalyzers) already governs them; reporting them again is
+	  duplicate noise.
+
+	  Mirrors the fleet-canonical starter profile from ETL-FixedWidth and
+	  Extensions-Logging-Data with one repo-specific addition: `.CSharpErrors`,
+	  see the block below.
+	-->
+
+	<!-- Naming — owned by IDE1006 + .editorconfig naming rules -->
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=InconsistentNaming/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+
+	<!-- Formatting / style — owned by .editorconfig + Roslynator -->
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=RedundantUsingDirective/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ArrangeThisQualifier/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ArrangeRedundantParentheses/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=BuiltInTypeReferenceStyle/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=RedundantNameQualifier/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+
+	<!-- Public-surface "unused" noise — a library's public API is unused within
+	     its own assembly by definition; the public surface is governed by
+	     PublicApiAnalyzers (PublicAPI.*.txt), not by InspectCode. -->
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedMember_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedType_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=UnusedAutoPropertyAccessor_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=MemberCanBePrivate_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ClassNeverInstantiated_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=AutoPropertyCanBeMadeGetOnly_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+
+	<!--
+	  .CSharpErrors — silenced repo-wide.
+
+	  This is InspectCode's meta-category for "the ReSharper C# language service
+	  produced a compiler-style error during analysis." In a repo where
+	  `dotnet build` is green (enforced by the earlier PR stages that gate this
+	  job), every hit here is by definition a ReSharper language-service
+	  limitation, not a real compilation error — Roslyn already resolved the
+	  code that ReSharper can't.
+
+	  Two concrete cases in this repo:
+
+	  1. Source-generator-emitted symbols. `DbTableGenerator` emits
+	     `public const string Insert / Select / Update / Delete` and a static
+	     `Bind` helper onto every `[DbTable]`-decorated partial. Roslyn sees
+	     them via the incremental-generator pipeline; ReSharper 2026.1.4's
+	     language service reports "Cannot resolve symbol 'Insert'" etc. on
+	     every consumer test in `DbTableGeneratorTests.cs`.
+
+	  2. `Assert.Equal` overload resolution on xUnit 2.9+. ReSharper 2026.1.4
+	     treats the newer `Equal(ReadOnlySpan<char>, ReadOnlySpan<char>)` +
+	     `Equal<T>(IEnumerable<T>, IEnumerable<T>)` overloads as competing
+	     candidates on `Assert.Equal(string, string)` calls, reports
+	     "Ambiguous invocation". Roslyn picks the direct `Equal(string?, string?)`
+	     overload cleanly.
+
+	  Suppressing at the category level (rather than per-file) so a future
+	  new false-positive in the same class doesn't require another suppression
+	  round-trip. Revisit when the JetBrains 2026.2 GA lands — both
+	  false-positive classes are candidates for engine fixes there.
+	-->
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=CSharpErrors/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+
+</wpf:ResourceDictionary>
