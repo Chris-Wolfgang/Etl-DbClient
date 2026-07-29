@@ -157,14 +157,14 @@ public class DbSchemaValidatorTests
     [Fact]
     public async Task ValidateAsync_when_all_mapped_columns_exist_returns_normally()
     {
-        await using var conn = CreateSeededConnection();
+        using var conn = CreateSeededConnection();
         await DbSchemaValidator.ValidateAsync<Widget>(conn);
     }
 
     [Fact]
     public async Task ValidateAsync_when_column_missing_throws()
     {
-        await using var conn = CreateSeededConnection();
+        using var conn = CreateSeededConnection();
         await Assert.ThrowsAsync<InvalidOperationException>
         (
             () => DbSchemaValidator.ValidateAsync<WidgetWithExtraColumn>(conn)
@@ -174,7 +174,7 @@ public class DbSchemaValidatorTests
     [Fact]
     public async Task ValidateAsync_honours_cancellation()
     {
-        await using var conn = CreateSeededConnection();
+        using var conn = CreateSeededConnection();
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         await Assert.ThrowsAsync<OperationCanceledException>
