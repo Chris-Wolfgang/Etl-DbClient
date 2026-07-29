@@ -1,0 +1,294 @@
+# Shadow-testing regression gate — closes #130 (final of the stack).
+#
+# Runs the Shadow Consumer sample on PRs touching src/ or samples/, per
+# OS, and compares the resulting metrics against the baseline captured on
+# gh-pages by shadow-baseline.yaml (last recorded on push to main).
+#
+# Fails the workflow when a metric regresses beyond a per-metric threshold
+# (defaults per #130 AC: 20% latency, 50% allocations). Files a
+# `shadow-regression` issue on scheduled runs — same duplicate-detection
+# pattern as the fuzz-failure workflow (#275): comment on the open one if
+# it exists, otherwise create a new one. On pull_request runs, we don't
+# file an issue (the failing check already surfaces on the PR).
+#
+# Baseline lookup URL:
+#   https://chris-wolfgang.github.io/Etl-DbClient/dev/shadow/<os>.json
+#
+# Refs #130.
+
+name: Shadow regression gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/**'
+      - '.github/workflows/shadow-regression.yaml'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail on any regression, even below threshold (for local threshold-tuning)"
+        required: false
+        default: "false"
+        type: string
+
+permissions:
+  contents: read
+  issues: write   # for the auto-issue step on workflow_dispatch failures
+
+concurrency:
+  group: shadow-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: "Regression gate (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      # Guard so the workflow no-ops if the sample project isn't on
+      # the checked-out ref. Same pattern as shadow.yaml / shadow-baseline.yaml.
+      - name: Detect Shadow Consumer sample
+        id: check
+        shell: bash
+        run: |
+          if [ -f samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Shadow Consumer sample not present — skipping regression gate."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup .NET
+        if: steps.check.outputs.found == 'true'
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore + Build sample (Release)
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        run: |
+          dotnet restore samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj
+          dotnet build samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj \
+            --no-restore \
+            --configuration Release
+
+      - name: Run sample + capture current metrics
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          dotnet run --project samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj \
+            --configuration Release \
+            --no-build \
+            1> reports/current.json \
+            2> reports/shadow.log
+          echo "=== current.json ==="
+          cat reports/current.json
+
+      - name: Fetch baseline from gh-pages
+        id: fetch-baseline
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        env:
+          BASELINE_OS: ${{ matrix.os }}
+        run: |
+          set -euo pipefail
+          url="https://chris-wolfgang.github.io/Etl-DbClient/dev/shadow/${BASELINE_OS}.json"
+          echo "Fetching baseline from ${url}"
+          if curl -fsSL "${url}" -o reports/baseline.json; then
+            echo "baseline_present=true" >> "$GITHUB_OUTPUT"
+            echo "=== baseline.json ==="
+            cat reports/baseline.json
+          else
+            echo "::notice::No baseline recorded on gh-pages yet for ${BASELINE_OS}. The regression gate is a no-op until shadow-baseline.yaml has written one; skip is expected on the first PR."
+            echo "baseline_present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compare metrics + gate
+        if: steps.check.outputs.found == 'true' && steps.fetch-baseline.outputs.baseline_present == 'true'
+        id: compare
+        shell: bash
+        env:
+          STRICT: ${{ inputs.strict || 'false' }}
+        run: |
+          set -euo pipefail
+          # Thresholds: per #130 AC (20% latency, 50% allocations).
+          # gen1/gen2 collections are noisier — allow doubling.
+          # rowsPerSecond is the throughput inverse of elapsedMs; failing
+          # on both would be redundant, so gate ONLY elapsedMs on latency.
+          python3 - <<'PY'
+          import json, os, sys
+
+          strict = os.environ.get("STRICT", "false").lower() == "true"
+
+          with open("reports/current.json") as f:  cur = json.load(f)
+          with open("reports/baseline.json") as f: base = json.load(f)
+
+          # metric -> (direction, threshold_frac)
+          #   direction: "up" means values > baseline are worse; "down" means values < baseline are worse.
+          #   threshold_frac: allowed delta beyond baseline (0.20 = 20%).
+          rules = {
+              "elapsedMs":         ("up",   0.20),
+              "allocatedBytes":    ("up",   0.50),
+              "bytesPerRow":       ("up",   0.50),
+              "gen0Collections":   ("up",   0.50),
+              "gen1Collections":   ("up",   1.00),
+              "gen2Collections":   ("up",   1.00),
+          }
+
+          rows = []
+          any_regress = False
+          for m, (direction, thresh) in rules.items():
+              b = base.get(m)
+              c = cur.get(m)
+              if b is None or c is None:
+                  rows.append((m, "-", "-", "-", "missing"))
+                  continue
+              # Skip zero-baseline rules for gen1/gen2 (noise on tiny values).
+              if b == 0:
+                  rows.append((m, b, c, "-", "baseline=0 → skipped"))
+                  continue
+              delta = (c - b) / b if direction == "up" else (b - c) / b
+              limit = thresh
+              status = "ok"
+              if delta > limit:
+                  status = f"REGRESS Δ={delta*100:.1f}% (>{limit*100:.0f}%)"
+                  any_regress = True
+              elif strict and delta > 0:
+                  status = f"drift Δ={delta*100:.1f}% (strict)"
+                  any_regress = True
+              rows.append((m, b, c, f"{delta*100:+.1f}%", status))
+
+          print(f"{'metric':<20} {'baseline':>15} {'current':>15} {'delta':>10}  status")
+          print("-" * 78)
+          for m, b, c, d, s in rows:
+              print(f"{m:<20} {str(b):>15} {str(c):>15} {str(d):>10}  {s}")
+
+          if any_regress:
+              print("::error::One or more metrics regressed beyond threshold.")
+              # Emit machine-readable summary for the issue-filing step.
+              with open("reports/regression-summary.txt", "w") as f:
+                  f.write(f"{'metric':<20} {'baseline':>15} {'current':>15} {'delta':>10}  status\n")
+                  f.write("-" * 78 + "\n")
+                  for m, b, c, d, s in rows:
+                      f.write(f"{m:<20} {str(b):>15} {str(c):>15} {str(d):>10}  {s}\n")
+              sys.exit(1)
+          PY
+
+      - name: Emit summary to Step Summary
+        if: always() && steps.check.outputs.found == 'true'
+        shell: bash
+        run: |
+          {
+            echo "### Shadow regression gate — \`${{ matrix.os }}\`"
+            echo ""
+            if [ -f reports/regression-summary.txt ]; then
+              echo '```'
+              cat reports/regression-summary.txt
+              echo '```'
+            elif [ -f reports/current.json ]; then
+              echo "Current metrics:"
+              echo '```json'
+              cat reports/current.json
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload regression artifacts
+        if: always() && steps.check.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: shadow-regression-${{ matrix.os }}
+          path: reports/
+          retention-days: 60
+
+      # ------------------------------------------------------------------
+      # Auto-issue on regression during workflow_dispatch runs.
+      #
+      # We only file for workflow_dispatch — pull_request failures already
+      # surface on the PR itself, and auto-filing there would spam.
+      # ------------------------------------------------------------------
+      - name: File / comment shadow-regression issue
+        if: |
+          steps.check.outputs.found == 'true'
+          && steps.compare.outcome == 'failure'
+          && github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          OS: ${{ matrix.os }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          summary=""
+          if [ -f reports/regression-summary.txt ]; then
+            summary=$(cat reports/regression-summary.txt)
+          fi
+
+          existing=$(gh issue list \
+            --repo "$GITHUB_REPOSITORY" \
+            --state open \
+            --label shadow-regression \
+            --json number \
+            --limit 1 \
+            --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            echo "Existing shadow-regression issue #$existing — commenting."
+            {
+              echo "Additional regression on scheduled shadow run (\`$OS\`)."
+              echo ""
+              echo "- Run: $RUN_URL"
+              echo "- Artifact: \`shadow-regression-$OS\` on the run above (retention 60 days)"
+              echo ""
+              echo "<details><summary>Comparison table</summary>"
+              echo ""
+              echo '```'
+              printf '%s\n' "$summary"
+              echo '```'
+              echo ""
+              echo "</details>"
+            } > /tmp/shadow-comment.md
+            gh issue comment "$existing" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body-file /tmp/shadow-comment.md
+          else
+            echo "No open shadow-regression issue — filing a new one."
+            {
+              echo "The shadow-testing gate detected a regression on \`$OS\`."
+              echo ""
+              echo "- Run: $RUN_URL"
+              echo "- Baseline source: \`https://chris-wolfgang.github.io/Etl-DbClient/dev/shadow/$OS.json\`"
+              echo "- Artifact: \`shadow-regression-$OS\` on the run above (retention 60 days)"
+              echo ""
+              echo "Thresholds are documented in \`.github/workflows/shadow-regression.yaml\` and were set to defaults per #130's AC: 20% latency, 50% allocations, 50% gen0, 100% gen1/gen2 (noisier)."
+              echo ""
+              echo "Close this issue once the regression is either accepted (bump baseline via a manual \`workflow_dispatch\` on shadow-baseline.yaml) or resolved (fix the perf regression). The next scheduled regression on the same OS re-opens a fresh one automatically."
+              echo ""
+              echo "<details><summary>Comparison table</summary>"
+              echo ""
+              echo '```'
+              printf '%s\n' "$summary"
+              echo '```'
+              echo ""
+              echo "</details>"
+            } > /tmp/shadow-issue.md
+            gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Shadow regression on $OS — see gate output" \
+              --label shadow-regression \
+              --body-file /tmp/shadow-issue.md
+          fi
