@@ -1068,6 +1068,51 @@ jobs:
       - name: Zip coverage report
         run: zip -r release-coverage.zip ./release-coverage
 
+      # Reproducible-build manifest (#155). Publishes one JSON per release
+      # containing the sha256 of every .nupkg / .snupkg that shipped in
+      # this release, plus enough metadata (version, commit sha, released-at
+      # timestamp) for a third-party reproducer to look up "what should I
+      # get if I rebuild from source at this tag?" without having to
+      # download the actual package first. The manifest gets attached as
+      # a release asset alongside the packages themselves.
+      #
+      # Consumer-side verification recipe is in `docs/REPRODUCIBLE-BUILD.md`.
+      - name: Write reproducible-build manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ github.event.release.tag_name }}"
+          sha="${{ github.sha }}"
+          released_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          artifacts_json="["
+          first=1
+          for f in ./nuget-packages/*.nupkg ./nuget-packages/*.snupkg; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f")
+            hash=$(sha256sum "$f" | awk '{print $1}')
+            size=$(stat -c '%s' "$f")
+            if [ "$first" = "1" ]; then first=0; else artifacts_json+=","; fi
+            artifacts_json+=$(printf '\n    {"name": "%s", "sha256": "%s", "size": %d}' "$name" "$hash" "$size")
+          done
+          artifacts_json+="\n  ]"
+
+          {
+            echo '{'
+            echo '  "schemaVersion": 1,'
+            echo "  \"package\": \"Wolfgang.Etl.DbClient\","
+            echo "  \"tag\": \"${tag}\","
+            echo "  \"commitSha\": \"${sha}\","
+            echo "  \"releasedAt\": \"${released_at}\","
+            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
+            echo "  \"instructions\": \"https://github.com/${GITHUB_REPOSITORY}/blob/main/docs/REPRODUCIBLE-BUILD.md\","
+            printf '  "artifacts": %b\n' "$artifacts_json"
+            echo '}'
+          } > reproducible-build-manifest.json
+
+          echo "=== reproducible-build-manifest.json ==="
+          cat reproducible-build-manifest.json
+
       - name: Attach artifacts to release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228  # v3.0.2
         with:
@@ -1076,4 +1121,5 @@ jobs:
             ./nuget-packages/*.nupkg
             ./nuget-packages/*.bom.json
             release-coverage.zip
+            reproducible-build-manifest.json
 
