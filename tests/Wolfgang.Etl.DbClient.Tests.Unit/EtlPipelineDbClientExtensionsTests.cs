@@ -116,9 +116,9 @@ public class EtlPipelineDbClientExtensionsTests
 
         using var check = dest.CreateCommand();
         check.CommandText = "SELECT Id FROM dest ORDER BY Id;";
-        using var reader = check.ExecuteReader();
-        Assert.True(reader.Read()); Assert.Equal(2L, reader.GetInt64(0));
-        Assert.True(reader.Read()); Assert.Equal(3L, reader.GetInt64(0));
+        using var reader = await check.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync()); Assert.Equal(2L, reader.GetInt64(0));
+        Assert.True(await reader.ReadAsync()); Assert.Equal(3L, reader.GetInt64(0));
     }
 
 
@@ -156,7 +156,7 @@ public class EtlPipelineDbClientExtensionsTests
         using (var seed = dest.CreateCommand())
         {
             seed.CommandText = "INSERT INTO dest (Id, Name) VALUES (2, 'pre-existing');";
-            seed.ExecuteNonQuery();
+            await seed.ExecuteNonQueryAsync();
         }
 
         var extractor = new DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id");

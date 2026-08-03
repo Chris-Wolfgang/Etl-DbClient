@@ -1,3 +1,11 @@
+// S125: the culture-bullet comments below (`//   tr-TR — dotted / dotless I…`
+// etc.) trip SonarAnalyzer's commented-out-code heuristic because a locale
+// tag followed by punctuation reads to it like a C# identifier + operator.
+// The comments are legitimate prose — silencing the rule for this file at
+// the top rather than mangling the header to satisfy the heuristic. The
+// pragma MUST precede the flagged comment lines to take effect.
+#pragma warning disable S125
+
 // Culture-invariance gate — exercises the extractor + loader end-to-end
 // under a matrix of hostile CultureInfo values so a future regression that
 // swaps `StringComparer.Ordinal` for a culture-sensitive comparer, uses
@@ -22,13 +30,6 @@
 // uses StringComparer.Ordinal(IgnoreCase), and Dapper handles value
 // serialisation invariantly. If that ever changes, document the new
 // culture-sensitive API here + note the accepted risk.
-
-// S125: the culture-bullet comments above (`//   tr-TR — dotted / dotless I…`
-// etc.) trip SonarAnalyzer's commented-out-code heuristic because a locale
-// tag followed by punctuation reads to it like a C# identifier + operator.
-// The comments are legitimate prose — silencing the rule for this file
-// rather than mangling the header to satisfy the heuristic.
-#pragma warning disable S125
 
 using System.Data;
 using System.Diagnostics.CodeAnalysis;

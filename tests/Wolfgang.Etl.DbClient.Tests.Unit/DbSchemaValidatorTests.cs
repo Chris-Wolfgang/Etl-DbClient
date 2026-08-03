@@ -176,7 +176,12 @@ public class DbSchemaValidatorTests
     {
         using var conn = CreateSeededConnection();
         using var cts = new CancellationTokenSource();
+        // VSTHRD103: CancelAsync is .NET 8+; sync Cancel is fine here
+        // because CancellationTokenSource.Cancel just flips the token
+        // state — no blocking I/O.
+#pragma warning disable VSTHRD103
         cts.Cancel();
+#pragma warning restore VSTHRD103
         await Assert.ThrowsAsync<OperationCanceledException>
         (
             () => DbSchemaValidator.ValidateAsync<Widget>(conn, cts.Token)
