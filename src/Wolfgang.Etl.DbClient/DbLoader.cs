@@ -63,9 +63,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     private readonly DbTransaction? _callerTransaction;
     private readonly bool _ownsTransaction;
     private readonly ILogger _logger;
-    private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
-    private int _progressTimerWired;
     private int _batchSize = 1;
 
 
@@ -184,26 +182,6 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         _connection = conn;
         _ownsConnection = true;
         _ownsTransaction = true;  // auto-managed transaction inside the owned connection
-        _logger = logger ?? (ILogger)NullLogger.Instance;
-    }
-
-
-
-    /// <summary>
-    /// Internal constructor for timer injection (testing).
-    /// </summary>
-    internal DbLoader
-    (
-        DbConnection connection,
-        string commandText,
-        IProgressTimer timer,
-        ILogger<DbLoader<TRecord>>? logger = null
-    )
-    {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _ownsTransaction = true;
-        _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
@@ -591,26 +569,6 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// Returns a snapshot progress report. Visible to the test assembly via InternalsVisibleTo.
     /// </summary>
     internal DbReport GetProgressReport() => CreateProgressReport();
-
-
-
-    /// <inheritdoc/>
-    protected override IProgressTimer CreateProgressTimer(IProgress<DbReport> progress)
-    {
-        if (_progressTimer != null)
-        {
-            // Atomic 0 → 1 transition. Matches DbExtractor's pattern and prevents
-            // double-subscription if CreateProgressTimer is ever called concurrently.
-            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-            {
-                _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-            }
-
-            return _progressTimer;
-        }
-
-        return base.CreateProgressTimer(progress);
-    }
 
 
 

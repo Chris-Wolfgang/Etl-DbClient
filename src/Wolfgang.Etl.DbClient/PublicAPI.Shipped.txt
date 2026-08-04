@@ -73,10 +73,8 @@ Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.Record.get -> TRecord
 Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.RowFailedEventArgs(TRecord record, System.Exception! exception, long itemIndex) -> void
 Wolfgang.Etl.DbClient.WriteMode
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
-override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport!>! progress) -> Wolfgang.Etl.Abstractions.IProgressTimer!
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ExtractWorkerAsync(System.Threading.CancellationToken token) -> System.Collections.Generic.IAsyncEnumerable<TRecord>!
 override Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
-override Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport!>! progress) -> Wolfgang.Etl.Abstractions.IProgressTimer!
 override Wolfgang.Etl.DbClient.DbLoader<TRecord>.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable<TRecord>! items, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
 static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.get -> bool
 static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.set -> void

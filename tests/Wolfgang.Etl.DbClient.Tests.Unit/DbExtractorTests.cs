@@ -1,5 +1,4 @@
 using Dapper;
-using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
@@ -41,20 +40,6 @@ public class DbExtractorTests
 
     /// <inheritdoc/>
     protected override IReadOnlyList<ContractRecord> CreateExpectedItems() => ExpectedItems;
-
-
-
-    /// <inheritdoc/>
-    protected override DbExtractor<ContractRecord> CreateSutWithTimer(IProgressTimer timer)
-    {
-        var conn = TestDb.CreateContractConnection(5);
-        return new DbExtractor<ContractRecord>
-        (
-            conn,
-            "SELECT Name, Value FROM ContractItems ORDER BY Value",
-            timer
-        );
-    }
 
 
     // ------------------------------------------------------------------
