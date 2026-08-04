@@ -122,8 +122,8 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
-    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.13.0" />
-    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.13.0" />
+    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.22.0" />
+    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.22.0" />
   </ItemGroup>
 
   <!-- Copy native SQLite DLL to output for .NET Framework (no RID-based probing) -->
