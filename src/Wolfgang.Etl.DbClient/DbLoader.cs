@@ -585,6 +585,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         CancellationToken token
     )
     {
+        // TestKit 0.22 contract: a pre-cancelled token must yield zero rows.
+        // netfx / netcoreapp3.1 Dapper can otherwise materialise one row first.
+        token.ThrowIfCancellationRequested();
         _stopwatch.Restart();
         CurrentErrorCount = 0;
         LogLoadingStarted();
