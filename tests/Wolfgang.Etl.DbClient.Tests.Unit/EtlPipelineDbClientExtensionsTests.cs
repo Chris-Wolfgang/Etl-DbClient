@@ -244,4 +244,181 @@ public class EtlPipelineDbClientExtensionsTests
         Assert.Throws<System.ArgumentNullException>(() =>
             stage.DbLoader<Widget>((DbLoader<Widget>)null!));
     }
+
+
+
+    // ------------------------------------------------------------------
+    // DbExtractorBuilder<T> setter coverage — every fluent-setter forwards
+    // to the underlying DbExtractor. Uses the "existing-instance" overload
+    // so the assertion can read the extractor's own state after the chain.
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Extractor_builder_CommandType_setter_forwards_to_extractor()
+    {
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "usp_get_widgets");
+        Assert.Equal(CommandType.Text, extractor.CommandType);
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .CommandType(CommandType.StoredProcedure);
+
+        Assert.Equal(CommandType.StoredProcedure, extractor.CommandType);
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_ManageConnection_setter_forwards_to_extractor()
+    {
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "SELECT 1");
+        Assert.False(extractor.ManageConnection);
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .ManageConnection(true);
+
+        Assert.True(extractor.ManageConnection);
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_Parameters_setter_forwards_to_extractor()
+    {
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "SELECT 1");
+        var p = new Dapper.DynamicParameters();
+        p.Add("@Id", 42);
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .Parameters(p);
+
+        Assert.Same(p, extractor.Parameters);
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_Parameters_null_throws_ArgumentNullException()
+    {
+        using var src = CreateSourceWithRows(1);
+        var builder = EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT 1");
+
+        Assert.Throws<System.ArgumentNullException>(() => builder.Parameters(null!));
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_PagingClauseTemplate_setter_forwards_to_extractor()
+    {
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "SELECT 1");
+        const string sqlServer = "OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY";
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .PagingClauseTemplate(sqlServer);
+
+        Assert.Equal(sqlServer, extractor.PagingClauseTemplate);
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_PagingClauseTemplate_null_throws_ArgumentNullException()
+    {
+        using var src = CreateSourceWithRows(1);
+        var builder = EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT 1");
+
+        Assert.Throws<System.ArgumentNullException>(() => builder.PagingClauseTemplate(null!));
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_TotalCountQuery_setter_forwards_to_extractor()
+    {
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "SELECT 1");
+        Func<CancellationToken, Task<int>> customCount = _ => Task.FromResult(99);
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .TotalCountQuery(customCount);
+
+        Assert.Same(customCount, extractor.TotalCountQuery);
+    }
+
+
+
+    [Fact]
+    public void Extractor_builder_TotalCountQuery_null_throws_ArgumentNullException()
+    {
+        using var src = CreateSourceWithRows(1);
+        var builder = EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT 1");
+
+        Assert.Throws<System.ArgumentNullException>(() => builder.TotalCountQuery(null!));
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // DbLoaderBuilder<T> setter coverage
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task Loader_builder_CommandType_setter_forwards_to_loader()
+    {
+        using var src = CreateSourceWithRows(1);
+        using var dest = CreateEmptyDestination();
+        var loader = new DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)");
+        Assert.Equal(CommandType.Text, loader.CommandType);
+
+        // Set via builder BEFORE RunAsync — the sink reads it at run time.
+        var chain = EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source")
+            .DbLoader(loader)
+            .CommandType(CommandType.Text);
+
+        await chain.RunAsync();
+
+        Assert.Equal(CommandType.Text, loader.CommandType);
+    }
+
+
+
+    [Fact]
+    public async Task Loader_builder_ManageConnection_setter_forwards_to_loader()
+    {
+        using var src = CreateSourceWithRows(1);
+        using var dest = CreateEmptyDestination();
+        var loader = new DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)");
+        Assert.False(loader.ManageConnection);
+
+        await EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source")
+            .DbLoader(loader)
+            .ManageConnection(false)
+            .RunAsync();
+
+        Assert.False(loader.ManageConnection);
+    }
 }

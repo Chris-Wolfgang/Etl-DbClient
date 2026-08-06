@@ -53,6 +53,15 @@ public class DbSchemaValidatorTests
         [Column("does_not_exist")] public string Ghost { get; set; } = "";
     }
 
+    [ExcludeFromCodeCoverage]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
+    [Table("widget")]
+    public sealed class AllNotMapped
+    {
+        [NotMapped] public int Id { get; set; }
+        [NotMapped] public string Name { get; set; } = "";
+    }
+
     private static SqliteConnection CreateSeededConnection()
     {
         var conn = new SqliteConnection("Data Source=:memory:");
@@ -185,6 +194,72 @@ public class DbSchemaValidatorTests
         await Assert.ThrowsAsync<OperationCanceledException>
         (
             () => DbSchemaValidator.ValidateAsync<Widget>(conn, cts.Token)
+        );
+    }
+
+
+
+    [Fact]
+    public void Validate_when_type_has_no_mapped_columns_throws()
+    {
+        using var conn = CreateSeededConnection();
+        var ex = Assert.Throws<InvalidOperationException>
+        (
+            () => DbSchemaValidator.Validate<AllNotMapped>(conn)
+        );
+        Assert.Contains
+        (
+            "declares no mapped columns",
+            ex.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+
+
+    [Fact]
+    public async Task ValidateAsync_null_connection_throws_ArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>
+        (
+            () => DbSchemaValidator.ValidateAsync<Widget>(null!)
+        );
+    }
+
+
+
+    [Fact]
+    public async Task ValidateAsync_when_type_has_no_table_attribute_throws()
+    {
+        using var conn = CreateSeededConnection();
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            () => DbSchemaValidator.ValidateAsync<WithoutTable>(conn)
+        );
+        Assert.Contains
+        (
+            "does not have a [Table] attribute",
+            ex.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+
+
+    [Fact]
+    public async Task ValidateAsync_when_table_missing_throws_with_table_name()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        await conn.OpenAsync();
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>
+        (
+            () => DbSchemaValidator.ValidateAsync<Widget>(conn)
+        );
+        Assert.Contains
+        (
+            "table 'widget'",
+            ex.Message,
+            StringComparison.Ordinal
         );
     }
 }
