@@ -93,9 +93,15 @@ public sealed class DocExamplesTests
     // - Closing `</code>` may sit on either a `///`-prefixed line (multi-line
     //   block) or on the same line as the opening tag (single-line block).
     // Non-greedy body match to handle multiple blocks per file.
+    // MA0009: bounded compile-time timeout defeats a ReDoS-style pathological
+    // input. 1 s is orders of magnitude beyond a legitimate XML-doc block
+    // match — a match that takes longer is by definition pathological, and
+    // the test framework will surface it as a RegexMatchTimeoutException
+    // rather than hanging the test run.
     private static readonly Regex CodeBlockRegex = new(
         @"///\s*<code(?:\s[^>]*)?>(?<body>.*?)</code>",
-        RegexOptions.Singleline | RegexOptions.Compiled);
+        RegexOptions.Singleline | RegexOptions.Compiled,
+        TimeSpan.FromSeconds(1));
 
     private static IEnumerable<(int Line, string Snippet)> ExtractCodeBlocks(string source)
     {

@@ -28,6 +28,13 @@ using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 using Xunit;
 
+// VSTHRD002: `Task.WaitAll` inside a `RunUnderCoyote(Action)` body is
+// intentional — the Coyote scheduler drives the exploration in a
+// synchronous body delegate. Rewriting these joins as `await` would
+// pull them out of the Coyote-controlled scheduler. Same pattern in
+// all *ConcurrencyTests.cs files in this project.
+#pragma warning disable VSTHRD002
+
 namespace Wolfgang.Etl.DbClient.Tests.Concurrency;
 
 [ExcludeFromCodeCoverage]

@@ -25,8 +25,28 @@
     <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 (transitive via Microsoft.Data.Sqlite)
          is on GHSA-2m69-gcr7-jv3q with no patched version. Same treatment as
          the other example projects. This assembly is never published; impact
-         limited to local + CI runs. -->
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
+         limited to local + CI runs.
+
+         The rest of this NoWarn list is analyzer noise scoped ONLY to this
+         smoke-test example, not the library. The example is a single-file
+         Program.cs whose sole purpose is to exercise the AOT publish path —
+         the library-level style rules don't add value here and demanding
+         them would fragment the smoke reader for no readability win:
+
+         MA0004  — Task.ConfigureAwait(false) on every await. This is an
+                   application entrypoint; ConfigureAwait matters for
+                   library code, not a top-level console `Main`.
+         MA0048  — file name must match type name. Multiple record types
+                   live inside Program.cs because it's a self-contained
+                   demo — splitting them into 5 files would obscure the
+                   thing the example is documenting.
+         MA0051  — method length. Main is deliberately long-form for
+                   readability of the demo flow, not a candidate for
+                   refactoring.
+         VSTHRD200 — "Async" suffix on methods returning awaitable types.
+                   A local helper inside Program.cs isn't part of a
+                   consumer API surface. -->
+    <NoWarn>$(NoWarn);NU1903;MA0004;MA0048;MA0051;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

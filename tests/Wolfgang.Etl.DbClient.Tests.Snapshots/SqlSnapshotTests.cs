@@ -77,8 +77,12 @@ public class SqlSnapshotTests
 {
     // Redirect Verify's snapshot files into a Snapshots/ subfolder to
     // match #140's AC. Configured once via ModuleInitializer.
+    //
+    // Internal (not public) so xUnit1013 doesn't flag it as an unmarked
+    // test method. [ModuleInitializer] works with any accessibility
+    // as long as the method is static, returns void, and takes no args.
     [ModuleInitializer]
-    public static void Init() => Verifier.DerivePathInfo(
+    internal static void Init() => Verifier.DerivePathInfo(
         (sourceFile, _, type, method) =>
             new PathInfo(
                 directory: Path.Combine(Path.GetDirectoryName(sourceFile) ?? ".", "Snapshots"),
