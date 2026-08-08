@@ -445,9 +445,9 @@ public class EtlPipelineDbClientExtensionsTests
 
     private sealed class IdentityTransformWithCancellation : ITransformWithCancellationAsync<Widget, Widget>
     {
-        public async IAsyncEnumerable<Widget> TransformAsync(IAsyncEnumerable<Widget> source, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<Widget> TransformAsync(IAsyncEnumerable<Widget> source, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token)
         {
-            await foreach (var w in source.WithCancellation(cancellationToken))
+            await foreach (var w in source.WithCancellation(token))
             {
                 yield return w;
             }
@@ -457,7 +457,7 @@ public class EtlPipelineDbClientExtensionsTests
         // The bare overload just forwards to the cancellation-aware one with
         // CancellationToken.None.
         public IAsyncEnumerable<Widget> TransformAsync(IAsyncEnumerable<Widget> source)
-            => TransformAsync(source, default);
+            => TransformAsync(source, CancellationToken.None);
     }
 
 
