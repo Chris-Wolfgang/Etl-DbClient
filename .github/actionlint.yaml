@@ -1,0 +1,12 @@
+# actionlint configuration.
+# https://github.com/rhysd/actionlint/blob/main/docs/config.md
+#
+# Baseline: allow the self-hosted / matrix labels used elsewhere in
+# the fleet. No suppressions yet.
+self-hosted-runner:
+  # Recognised labels for `runs-on:` on top of the GitHub-hosted set.
+  labels: []
+
+# Uncomment to disable specific rules once a baseline finding is
+# confirmed intentional. Prefer fixing the finding over suppressing it.
+# config-variables: []

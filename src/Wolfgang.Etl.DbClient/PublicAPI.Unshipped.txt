@@ -1,1 +1,27 @@
 #nullable enable
+static Wolfgang.Etl.DbClient.DbSchemaValidator.Validate<TRecord>(System.Data.Common.DbConnection! connection) -> void
+static Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync<TRecord>(System.Data.Common.DbConnection! connection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Wolfgang.Etl.DbClient.DbSchemaValidator
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart.get -> bool
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart.set -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart.get -> bool
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart.set -> void
+Wolfgang.Etl.DbClient.DbKeyAttribute
+Wolfgang.Etl.DbClient.DbKeyAttribute.DbKeyAttribute() -> void
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.CommandType(System.Data.CommandType commandType) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ManageConnection(bool manage) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.Parameters(Dapper.DynamicParameters! parameters) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerOffset(long? offset) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerLimit(long? limit) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string! template) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.TotalCountQuery(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>! countQuery) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.CommandType(System.Data.CommandType commandType) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ManageConnection(bool manage) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ErrorHandling(Wolfgang.Etl.DbClient.RowErrorHandling handling) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(this Wolfgang.Etl.Abstractions.EtlPipeline! pipeline, System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(this Wolfgang.Etl.Abstractions.EtlPipeline! pipeline, Wolfgang.Etl.DbClient.DbExtractor<T>! extractor) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(this Wolfgang.Etl.Abstractions.IEtlPipeline<T>! pipeline, System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(this Wolfgang.Etl.Abstractions.IEtlPipeline<T>! pipeline, Wolfgang.Etl.DbClient.DbLoader<T>! loader) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!

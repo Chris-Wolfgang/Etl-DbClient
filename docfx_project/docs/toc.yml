@@ -4,5 +4,7 @@
   href: introduction.md
 - name: Getting Started
   href: getting-started.md
+- name: Fluent EtlPipeline chain
+  href: etl-pipeline.md
 - name: Project website
   href: 'https://github.com/Chris-Wolfgang/Etl-DbClient'

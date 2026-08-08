@@ -354,6 +354,30 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
+    /// When <see langword="true"/>, the extractor calls
+    /// <see cref="DbSchemaValidator.ValidateAsync{TRecord}(System.Data.Common.DbConnection, System.Threading.CancellationToken)"/>
+    /// before the first row is fetched. If the mapped
+    /// <c>[Table]</c>/<c>[Column]</c> names don't match the database,
+    /// the extractor throws <see cref="InvalidOperationException"/>
+    /// before touching production data.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default: <see langword="false"/>. Opting in adds a single
+    /// zero-row round-trip at the top of each <c>ExtractAsync</c>
+    /// call — negligible compared to a real extract, but not free.
+    /// Use it in a first-run smoke path or a health check, not
+    /// inside every loop iteration on a per-message pipeline.
+    /// </para>
+    /// <para>
+    /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
+    /// </para>
+    /// </remarks>
+    public bool ValidateSchemaOnStart { get; set; }
+
+
+
+    /// <summary>
     /// Optional override for the parameter set passed to Dapper. Setting this
     /// property takes precedence over any <c>IDictionary&lt;string,object&gt;</c>
     /// supplied via the constructor — useful when the command is a stored
@@ -582,6 +606,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         try
         {
+            if (ValidateSchemaOnStart)
+            {
+                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
+            }
+
             ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
 
             if (TotalCountQuery != null)

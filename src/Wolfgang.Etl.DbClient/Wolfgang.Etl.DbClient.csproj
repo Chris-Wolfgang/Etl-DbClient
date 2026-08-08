@@ -25,7 +25,7 @@
                                   <Version>; set explicitly here so it's
                                   discoverable in a metadata dump.
          ===================================================================== -->
-    <Version>0.6.0</Version>
+    <Version>0.7.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>$([System.Text.RegularExpressions.Regex]::Replace("$(Version)", "[-+].*$", "")).0</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
@@ -47,6 +47,9 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Unit" />
+    <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Snapshots" />
+    <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Fuzz" />
+    <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Concurrency" />
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Benchmarks" />
   </ItemGroup>
 
@@ -82,7 +85,7 @@
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.15.0" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.16.0" />
   </ItemGroup>
 
   <!-- Source generator: built alongside the runtime, packed into the same

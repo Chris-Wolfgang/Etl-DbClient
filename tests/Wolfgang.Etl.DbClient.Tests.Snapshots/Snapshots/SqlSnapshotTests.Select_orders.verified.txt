@@ -1,0 +1,1 @@
+﻿SELECT id AS Id, customer_id AS CustomerId, total AS Total, placed_utc AS PlacedUtc FROM orders

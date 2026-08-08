@@ -3,7 +3,6 @@
 // pre-release scan; this file brings them above the per-assembly gate without
 // changing production behavior.
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;

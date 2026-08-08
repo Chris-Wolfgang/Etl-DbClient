@@ -298,6 +298,29 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
     /// <summary>
+    /// When <see langword="true"/>, the loader calls
+    /// <see cref="DbSchemaValidator.ValidateAsync{TRecord}(System.Data.Common.DbConnection, System.Threading.CancellationToken)"/>
+    /// before the first row is written. If the mapped
+    /// <c>[Table]</c>/<c>[Column]</c> names don't match the database,
+    /// the loader throws <see cref="InvalidOperationException"/>
+    /// before writing anything.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default: <see langword="false"/>. Opting in adds a single
+    /// zero-row round-trip at the top of each <c>LoadAsync</c>
+    /// call. Cheap for batch jobs, avoid on hot per-message
+    /// pipelines.
+    /// </para>
+    /// <para>
+    /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
+    /// </para>
+    /// </remarks>
+    public bool ValidateSchemaOnStart { get; set; }
+
+
+
+    /// <summary>
     /// When greater than <c>1</c>, the loader replaces N per-row
     /// <c>INSERT</c>s with a single multi-row <c>INSERT … VALUES (…), (…), …</c>
     /// statement. The single biggest single-line perf win available
@@ -621,6 +644,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
         try
         {
+            if (ValidateSchemaOnStart)
+            {
+                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
+            }
+
             if (_ownsTransaction)
             {
                 await LoadWithAutoTransactionAsync(items, token).ConfigureAwait(false);
