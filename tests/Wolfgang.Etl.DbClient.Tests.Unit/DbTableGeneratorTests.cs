@@ -126,7 +126,7 @@ public class DbTableGeneratorTests
     {
         var sql = Sql<GeneratedPerson>("Insert");
 
-        Assert.Equal<string>
+        Assert.Equal
         (
             "INSERT INTO people (FirstName, LastName, Age) VALUES (@FirstName, @LastName, @Age)",
             sql!
@@ -142,7 +142,7 @@ public class DbTableGeneratorTests
 
         // Audit is Skip=true → absent. OrderId and Customer carry their
         // DbColumn override names; Total uses the property name.
-        Assert.Equal<string>
+        Assert.Equal
         (
             "INSERT INTO orders (order_id, customer_name, Total) VALUES (@OrderId, @Customer, @Total)",
             sql!
@@ -159,7 +159,7 @@ public class DbTableGeneratorTests
         // No [DbColumn] overrides on GeneratedPerson — column name equals
         // property name for every field, so BuildSelect's aliasing rule
         // (alias only on name mismatch) collapses to a plain column list.
-        Assert.Equal<string>
+        Assert.Equal
         (
             "SELECT FirstName, LastName, Age FROM people",
             sql!
@@ -176,7 +176,7 @@ public class DbTableGeneratorTests
         // Audit is Skip=true → absent. OrderId + Customer carry [DbColumn]
         // overrides so BuildSelect aliases `col AS Property`. Total has
         // no override — matches property name, no alias.
-        Assert.Equal<string>
+        Assert.Equal
         (
             "SELECT order_id AS OrderId, customer_name AS Customer, Total FROM orders",
             sql!
@@ -192,7 +192,7 @@ public class DbTableGeneratorTests
 
         // SET covers every non-key column; WHERE uses the single [DbKey]
         // with its [DbColumn] override.
-        Assert.Equal<string>
+        Assert.Equal
         (
             "UPDATE widgets SET Name = @Name, Price = @Price WHERE widget_id = @Id",
             sql!
@@ -206,7 +206,7 @@ public class DbTableGeneratorTests
     {
         var sql = Sql<GeneratedOrderLine>("Update");
 
-        Assert.Equal<string>
+        Assert.Equal
         (
             "UPDATE order_lines SET Sku = @Sku, Quantity = @Quantity WHERE order_id = @OrderId AND line_no = @LineNumber",
             sql!
@@ -220,7 +220,7 @@ public class DbTableGeneratorTests
     {
         var sql = Sql<GeneratedWidget>("Delete");
 
-        Assert.Equal<string>
+        Assert.Equal
         (
             "DELETE FROM widgets WHERE widget_id = @Id",
             sql!
@@ -234,7 +234,7 @@ public class DbTableGeneratorTests
     {
         var sql = Sql<GeneratedOrderLine>("Delete");
 
-        Assert.Equal<string>
+        Assert.Equal
         (
             "DELETE FROM order_lines WHERE order_id = @OrderId AND line_no = @LineNumber",
             sql!
@@ -249,7 +249,7 @@ public class DbTableGeneratorTests
         // Key-only type: Update would have nothing to SET, so it's not
         // emitted. Delete is still meaningful.
         var deleteSql = Sql<GeneratedTokenOnly>("Delete");
-        Assert.Equal<string>("DELETE FROM tokens WHERE Token = @Token", deleteSql!);
+        Assert.Equal("DELETE FROM tokens WHERE Token = @Token", deleteSql!);
 
         Assert.False(HasMember<GeneratedTokenOnly>("Update"));
     }
@@ -276,8 +276,8 @@ public class DbTableGeneratorTests
 
         InvokeBind(p, record);
 
-        Assert.Equal<string>("Ada", p.Get<string>("@FirstName"));
-        Assert.Equal<string>("Lovelace", p.Get<string>("@LastName"));
+        Assert.Equal("Ada", p.Get<string>("@FirstName"));
+        Assert.Equal("Lovelace", p.Get<string>("@LastName"));
         Assert.Equal(36, p.Get<int>("@Age"));
     }
 }
