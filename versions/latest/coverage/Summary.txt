@@ -1,31 +1,35 @@
 Summary
-  Generated on: 7/12/2026 - 1:03:50 PM
-  Coverage date: 7/12/2026 - 1:03:41 PM - 7/12/2026 - 1:03:46 PM
+  Generated on: 8/8/2026 - 12:04:40 PM
+  Coverage date: 8/8/2026 - 12:04:35 PM - 8/8/2026 - 12:04:36 PM
   Parser: MultiReport (2x Cobertura)
   Assemblies: 1
-  Classes: 9
-  Files: 9
-  Line coverage: 98%
-  Covered lines: 822
-  Uncovered lines: 16
-  Coverable lines: 838
-  Total lines: 2893
-  Branch coverage: 93.3% (321 of 344)
-  Covered branches: 321
-  Total branches: 344
-  Method coverage: 100% (118 of 118)
-  Full method coverage: 96.6% (114 of 118)
-  Covered methods: 118
-  Fully covered methods: 114
-  Total methods: 118
+  Classes: 13
+  Files: 13
+  Line coverage: 97.4%
+  Covered lines: 968
+  Uncovered lines: 25
+  Coverable lines: 993
+  Total lines: 3650
+  Branch coverage: 92.3% (373 of 404)
+  Covered branches: 373
+  Total branches: 404
+  Method coverage: 99.3% (151 of 152)
+  Full method coverage: 92.7% (141 of 152)
+  Covered methods: 151
+  Fully covered methods: 141
+  Total methods: 152
 
-Wolfgang.Etl.DbClient                                 98%
-  Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper   96.8%
-  Wolfgang.Etl.DbClient.DbClientOptions              100%
-  Wolfgang.Etl.DbClient.DbColumnAttribute            100%
-  Wolfgang.Etl.DbClient.DbCommandBuilder             100%
-  Wolfgang.Etl.DbClient.DbExtractor<T>              99.5%
-  Wolfgang.Etl.DbClient.DbLoader<T>                 96.8%
-  Wolfgang.Etl.DbClient.DbReport                     100%
-  Wolfgang.Etl.DbClient.DbTableAttribute             100%
-  Wolfgang.Etl.DbClient.RowFailedEventArgs<T>        100%
+Wolfgang.Etl.DbClient                                   97.4%
+  Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper       96.8%
+  Wolfgang.Etl.DbClient.DbClientOptions                  100%
+  Wolfgang.Etl.DbClient.DbColumnAttribute                100%
+  Wolfgang.Etl.DbClient.DbCommandBuilder                 100%
+  Wolfgang.Etl.DbClient.DbExtractor<T>                  99.5%
+  Wolfgang.Etl.DbClient.DbExtractorBuilder<T>           96.8%
+  Wolfgang.Etl.DbClient.DbLoader<T>                     96.8%
+  Wolfgang.Etl.DbClient.DbLoaderBuilder<T>               100%
+  Wolfgang.Etl.DbClient.DbReport                         100%
+  Wolfgang.Etl.DbClient.DbSchemaValidator               92.3%
+  Wolfgang.Etl.DbClient.DbTableAttribute                 100%
+  Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions   92.8%
+  Wolfgang.Etl.DbClient.RowFailedEventArgs<T>            100%

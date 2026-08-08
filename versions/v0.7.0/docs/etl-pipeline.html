@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Fluent EtlPipeline chain | Wolfgang.Etl.DbClient Documentation </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Fluent EtlPipeline chain | Wolfgang.Etl.DbClient Documentation ">
+      
+      
+      <link rel="icon" href="../favicon.svg">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.7.0/docfx_project/docs/etl-pipeline.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="Wolfgang.Etl.DbClient">
+            Wolfgang.Etl.DbClient
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+
+      <div class="content">
+        <div class="actionbar">
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+<h1 id="fluent-etlpipeline-chain">Fluent EtlPipeline chain</h1>
+
+<p>The <code>DbExtractor&lt;T&gt;</code> and <code>DbLoader&lt;T&gt;</code> types plug into the generic
+<a href="xref:Wolfgang.Etl.Abstractions.EtlPipeline"><code>EtlPipeline</code></a> framework via a set
+of class-named factory / terminator extensions. That lets a single fluent chain
+read from a database, thread rows through operators from
+<code>Wolfgang.Etl.Transformers</code>, and write to any sink shipped by the ETL family
+— another database, JSON, CSV, <code>Console</code>, an arbitrary <code>LoaderBase&lt;T, TProgress&gt;</code>,
+or an <code>IAsyncEnumerable&lt;T&gt;</code> escape hatch.</p>
+<p>Added in <strong>v0.7.0</strong>. Requires <code>Wolfgang.Etl.Abstractions</code> ≥ 0.16.0.</p>
+<h2 id="the-pattern">The pattern</h2>
+<p>Every source and sink hangs off the same <code>EtlPipeline.Create()</code> seed, so every
+pipeline reads the same way regardless of the format at either end:</p>
+<pre><code class="lang-csharp">using Wolfgang.Etl.Abstractions;
+using Wolfgang.Etl.DbClient;
+
+await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Person&gt;(connection, &quot;SELECT * FROM People WHERE Active = 1&quot;)
+    .DbLoader&lt;Person&gt;(destConnection, &quot;INSERT INTO ActivePeople (Id, Name) VALUES (@Id, @Name)&quot;)
+    .RunAsync();
+</code></pre>
+<p><code>DbExtractor&lt;T&gt;</code> returns an
+<a class="xref" href="../api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html"><code>IDbExtractorBuilder&lt;T&gt;</code></a>;
+<code>DbLoader&lt;T&gt;</code> returns an
+<a class="xref" href="../api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html"><code>IDbLoaderBuilder&lt;T&gt;</code></a>. Both are
+just <code>IEtlPipeline&lt;T&gt;</code> / <code>IEtlPipelineSink</code> with extra fluent setters — on the
+first operator or terminator call they transition seamlessly into the plain
+pipeline interfaces.</p>
+<h2 id="extractor-knobs">Extractor knobs</h2>
+<p>Every configurable property on <code>DbExtractor&lt;T&gt;</code> has a matching builder setter:</p>
+<table>
+<thead>
+<tr>
+<th>Setter</th>
+<th>Underlying property</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CommandType(CommandType)</code></td>
+<td><code>DbExtractor&lt;T&gt;.CommandType</code></td>
+<td><code>Text</code> (default) or <code>StoredProcedure</code>.</td>
+</tr>
+<tr>
+<td><code>ManageConnection(bool)</code></td>
+<td><code>DbExtractor&lt;T&gt;.ManageConnection</code></td>
+<td>When <code>true</code>, extractor opens/closes the connection.</td>
+</tr>
+<tr>
+<td><code>Parameters(DynamicParameters)</code></td>
+<td><code>DbExtractor&lt;T&gt;.Parameters</code></td>
+<td>Dapper parameter bag; overrides constructor <code>Parameters</code>.</td>
+</tr>
+<tr>
+<td><code>ServerOffset(long?)</code></td>
+<td><code>DbExtractor&lt;T&gt;.ServerOffset</code></td>
+<td>Row offset for server-side paging.</td>
+</tr>
+<tr>
+<td><code>ServerLimit(long?)</code></td>
+<td><code>DbExtractor&lt;T&gt;.ServerLimit</code></td>
+<td>Page size in rows.</td>
+</tr>
+<tr>
+<td><code>PagingClauseTemplate(string)</code></td>
+<td><code>DbExtractor&lt;T&gt;.PagingClauseTemplate</code></td>
+<td>SQL appended when both offset+limit are set (default <code>LIMIT @PageLimit OFFSET @PageOffset</code>).</td>
+</tr>
+<tr>
+<td><code>TotalCountQuery(Func&lt;CancellationToken, Task&lt;int&gt;&gt;)</code></td>
+<td><code>DbExtractor&lt;T&gt;.TotalCountQuery</code></td>
+<td>Snapshot the total row count for progress reporting.</td>
+</tr>
+</tbody>
+</table>
+<p>Server-side paging kicks in only when <strong>both</strong> <code>ServerOffset</code> and <code>ServerLimit</code>
+are set — matching the underlying <code>DbExtractor.ApplyServerPaging</code> semantics.</p>
+<h2 id="loader-knobs">Loader knobs</h2>
+<table>
+<thead>
+<tr>
+<th>Setter</th>
+<th>Underlying property</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CommandType(CommandType)</code></td>
+<td><code>DbLoader&lt;T&gt;.CommandType</code></td>
+<td><code>Text</code> (default) or <code>StoredProcedure</code>.</td>
+</tr>
+<tr>
+<td><code>ManageConnection(bool)</code></td>
+<td><code>DbLoader&lt;T&gt;.ManageConnection</code></td>
+<td>When <code>true</code>, loader opens/closes the connection.</td>
+</tr>
+<tr>
+<td><code>ErrorHandling(RowErrorHandling)</code></td>
+<td><code>DbLoader&lt;T&gt;.ErrorHandling</code></td>
+<td><code>Abort</code> (default) or <code>Skip</code> (per-record path only).</td>
+</tr>
+</tbody>
+</table>
+<p>Dry-run behaviour on <code>DbLoader&lt;T&gt;</code> flows through the shared <code>ISupportDryRun</code>
+pipeline hook — no builder-specific setter, consistent with the rest of the ETL
+family.</p>
+<h2 id="connection-ownership">Connection ownership</h2>
+<p>The pipeline never overrides ownership. When <code>ManageConnection</code> is <code>false</code> (the
+default) the caller owns the connection lifetime, so the caller is responsible
+for opening the connection before <code>RunAsync</code> and disposing it after. When
+<code>ManageConnection</code> is <code>true</code> the extractor / loader opens and closes it. There
+is no factory-created file handle here (unlike <code>JsonLineLoader&lt;T&gt;(this IEtlPipeline&lt;T&gt;, string path)</code>), so no <code>DisposingOwned</code>-style resource handoff
+applies.</p>
+<h2 id="cross-package-chains">Cross-package chains</h2>
+<p>Any format package that ships EtlPipeline extensions composes with DbClient:</p>
+<pre><code class="lang-csharp">// SQL query → JSONL file (needs Wolfgang.Etl.Json)
+await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Person&gt;(conn, &quot;SELECT * FROM People WHERE Active = 1&quot;)
+    .JsonLineLoader&lt;Person&gt;(&quot;people.jsonl&quot;)
+    .RunAsync();
+
+// JSONL file → database table
+await EtlPipeline
+    .Create()
+    .JsonLineExtractor&lt;Order&gt;(&quot;orders.jsonl&quot;)
+    .DbLoader&lt;Order&gt;(conn, &quot;INSERT INTO Orders (Id, Total) VALUES (@Id, @Total)&quot;)
+    .RunAsync();
+</code></pre>
+<h2 id="reusing-a-pre-configured-extractor-or-loader">Reusing a pre-configured extractor or loader</h2>
+<p>Both <code>DbExtractor</code> and <code>DbLoader</code> extensions have overloads that accept an
+existing instance instead of connection + SQL. Setter calls on the returned
+builder mutate the caller's instance — useful when the extractor / loader is
+constructed elsewhere (e.g. dependency injection) and needs a chain-time
+override:</p>
+<pre><code class="lang-csharp">var extractor = serviceProvider.GetRequiredService&lt;DbExtractor&lt;Person&gt;&gt;();
+
+await EtlPipeline
+    .Create()
+    .DbExtractor(extractor)           // reuse the DI-registered instance
+    .ServerOffset(0)                  // mutates `extractor.ServerOffset`
+    .ServerLimit(500)
+    .DbLoader&lt;Person&gt;(destConn, insertSql)
+    .RunAsync();
+</code></pre>
+<h2 id="server-side-paging">Server-side paging</h2>
+<pre><code class="lang-csharp">await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Invoice&gt;(conn, &quot;SELECT * FROM Invoices WHERE Status = @Status&quot;)
+    .Parameters(new DynamicParameters(new { Status = &quot;paid&quot; }))
+    .ServerOffset(1000)
+    .ServerLimit(500)
+    .DbLoader&lt;Invoice&gt;(destConn, &quot;INSERT INTO PaidInvoicesPage2 ...&quot;)
+    .RunAsync();
+</code></pre>
+<p>When both <code>ServerOffset</code> and <code>ServerLimit</code> are set, the extractor appends
+<code>PagingClauseTemplate</code> (default <code>LIMIT @PageLimit OFFSET @PageOffset</code>) to the
+command text and adds <code>@PageOffset</code> / <code>@PageLimit</code> to the parameter set. For
+databases that use a different paging dialect (e.g. SQL Server's
+<code>OFFSET n ROWS FETCH NEXT m ROWS ONLY</code>), override the template:</p>
+<pre><code class="lang-csharp">await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Invoice&gt;(conn, &quot;SELECT * FROM Invoices ORDER BY Id&quot;)
+    .ServerOffset(0)
+    .ServerLimit(500)
+    .PagingClauseTemplate(&quot;OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY&quot;)
+    .DbLoader&lt;Invoice&gt;(destConn, &quot;...&quot;)
+    .RunAsync();
+</code></pre>
+<h2 id="error-handling">Error handling</h2>
+<p><code>RowErrorHandling.Skip</code> on the loader silently drops the failing row and
+continues (per-record path only, requires <code>InsertBatchSize = 1</code>). Useful for
+imports where a per-row PK conflict or check-constraint violation shouldn't
+tear down the whole run:</p>
+<pre><code class="lang-csharp">var loader = new DbLoader&lt;Widget&gt;(destConn, insertSql) { InsertBatchSize = 1 };
+
+await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Widget&gt;(srcConn, &quot;SELECT * FROM StagingWidgets&quot;)
+    .DbLoader(loader)
+    .ErrorHandling(RowErrorHandling.Skip)
+    .RunAsync();
+</code></pre>
+<h2 id="escape-hatch-enumerate-without-a-sink">Escape hatch: enumerate without a sink</h2>
+<p><code>AsAsyncEnumerable()</code> drops down to the raw stream, useful when the caller
+wants to apply <code>System.Linq.Async</code> operators the pipeline doesn't ship, or when
+the row processing is not a &quot;load somewhere&quot; pattern at all:</p>
+<pre><code class="lang-csharp">using System.Linq;
+
+var totalPaid = await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Invoice&gt;(conn, &quot;SELECT * FROM Invoices WHERE Status = 'paid'&quot;)
+    .AsAsyncEnumerable()
+    .SumAsync(i =&gt; i.Total);
+</code></pre>
+<h2 id="progress-reporting">Progress reporting</h2>
+<p><code>RunAsync</code> accepts an optional <code>IProgress&lt;EtlPipelineProgress&gt;</code>:</p>
+<pre><code class="lang-csharp">var progress = new Progress&lt;EtlPipelineProgress&gt;(p =&gt;
+    Console.WriteLine($&quot;loaded {p.RecordsLoaded}&quot;));
+
+await EtlPipeline
+    .Create()
+    .DbExtractor&lt;Person&gt;(conn, sql)
+    .DbLoader&lt;Person&gt;(destConn, insertSql)
+    .RunAsync(progress);
+</code></pre>
+<p>For extractor-side totals, wire
+<a class="xref" href="../api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_TotalCountQuery_"><code>TotalCountQuery</code></a>
+so the extractor can populate <code>EtlPipelineProgress.TotalRecords</code>.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="xref:Wolfgang.Etl.Abstractions.EtlPipeline"><code>EtlPipeline</code></a> — the framework
+entry point in <code>Wolfgang.Etl.Abstractions</code>.</li>
+<li><a href="xref:Wolfgang.Etl.Abstractions.IEtlPipeline%601"><code>IEtlPipeline&lt;T&gt;</code></a> — the core
+chain interface.</li>
+<li>The <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/tree/main/examples/Wolfgang.Etl.DbClient.Example.EtlPipeline">Example.EtlPipeline</a>
+runnable project.</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.7.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with DocFX <script>(function(){var r='/';if(window.location.hostname.endsWith('.github.io')){var s=window.location.pathname.split('/').filter(Boolean);if(s.length)r='/'+s[0]+'/';}var t=document.createElement('script');t.src=r+'public/version-picker.js';t.async=true;document.head.appendChild(t);})();</script>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

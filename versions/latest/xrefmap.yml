@@ -371,6 +371,29 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).TotalCountQuery
   nameWithType: DbExtractor<TRecord>.TotalCountQuery
   nameWithType.vb: DbExtractor(Of TRecord).TotalCountQuery
+- uid: Wolfgang.Etl.DbClient.DbExtractor`1.ValidateSchemaOnStart
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_ValidateSchemaOnStart
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractor`1.ValidateSchemaOnStart
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).ValidateSchemaOnStart
+  nameWithType: DbExtractor<TRecord>.ValidateSchemaOnStart
+  nameWithType.vb: DbExtractor(Of TRecord).ValidateSchemaOnStart
+- uid: Wolfgang.Etl.DbClient.DbExtractor`1.ValidateSchemaOnStart*
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_ValidateSchemaOnStart_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`1.ValidateSchemaOnStart
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).ValidateSchemaOnStart
+  nameWithType: DbExtractor<TRecord>.ValidateSchemaOnStart
+  nameWithType.vb: DbExtractor(Of TRecord).ValidateSchemaOnStart
+- uid: Wolfgang.Etl.DbClient.DbKeyAttribute
+  name: DbKeyAttribute
+  href: api/Wolfgang.Etl.DbClient.DbKeyAttribute.html
+  commentId: T:Wolfgang.Etl.DbClient.DbKeyAttribute
+  fullName: Wolfgang.Etl.DbClient.DbKeyAttribute
+  nameWithType: DbKeyAttribute
 - uid: Wolfgang.Etl.DbClient.DbLoader`1
   name: DbLoader<TRecord>
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html
@@ -665,6 +688,23 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).RowFailed
   nameWithType: DbLoader<TRecord>.RowFailed
   nameWithType.vb: DbLoader(Of TRecord).RowFailed
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.ValidateSchemaOnStart
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_ValidateSchemaOnStart
+  commentId: P:Wolfgang.Etl.DbClient.DbLoader`1.ValidateSchemaOnStart
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).ValidateSchemaOnStart
+  nameWithType: DbLoader<TRecord>.ValidateSchemaOnStart
+  nameWithType.vb: DbLoader(Of TRecord).ValidateSchemaOnStart
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.ValidateSchemaOnStart*
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_ValidateSchemaOnStart_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`1.ValidateSchemaOnStart
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).ValidateSchemaOnStart
+  nameWithType: DbLoader<TRecord>.ValidateSchemaOnStart
+  nameWithType.vb: DbLoader(Of TRecord).ValidateSchemaOnStart
 - uid: Wolfgang.Etl.DbClient.DbReport
   name: DbReport
   href: api/Wolfgang.Etl.DbClient.DbReport.html
@@ -729,6 +769,44 @@ references:
   isSpec: "True"
   fullName: Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds
   nameWithType: DbReport.ElapsedMilliseconds
+- uid: Wolfgang.Etl.DbClient.DbSchemaValidator
+  name: DbSchemaValidator
+  href: api/Wolfgang.Etl.DbClient.DbSchemaValidator.html
+  commentId: T:Wolfgang.Etl.DbClient.DbSchemaValidator
+  fullName: Wolfgang.Etl.DbClient.DbSchemaValidator
+  nameWithType: DbSchemaValidator
+- uid: Wolfgang.Etl.DbClient.DbSchemaValidator.Validate*
+  name: Validate
+  href: api/Wolfgang.Etl.DbClient.DbSchemaValidator.html#Wolfgang_Etl_DbClient_DbSchemaValidator_Validate_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbSchemaValidator.Validate
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbSchemaValidator.Validate
+  nameWithType: DbSchemaValidator.Validate
+- uid: Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync*
+  name: ValidateAsync
+  href: api/Wolfgang.Etl.DbClient.DbSchemaValidator.html#Wolfgang_Etl_DbClient_DbSchemaValidator_ValidateAsync_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync
+  nameWithType: DbSchemaValidator.ValidateAsync
+- uid: Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync``1(System.Data.Common.DbConnection,System.Threading.CancellationToken)
+  name: ValidateAsync<TRecord>(DbConnection, CancellationToken)
+  href: api/Wolfgang.Etl.DbClient.DbSchemaValidator.html#Wolfgang_Etl_DbClient_DbSchemaValidator_ValidateAsync__1_System_Data_Common_DbConnection_System_Threading_CancellationToken_
+  commentId: M:Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync``1(System.Data.Common.DbConnection,System.Threading.CancellationToken)
+  name.vb: ValidateAsync(Of TRecord)(DbConnection, CancellationToken)
+  fullName: Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync<TRecord>(System.Data.Common.DbConnection, System.Threading.CancellationToken)
+  fullName.vb: Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync(Of TRecord)(System.Data.Common.DbConnection, System.Threading.CancellationToken)
+  nameWithType: DbSchemaValidator.ValidateAsync<TRecord>(DbConnection, CancellationToken)
+  nameWithType.vb: DbSchemaValidator.ValidateAsync(Of TRecord)(DbConnection, CancellationToken)
+- uid: Wolfgang.Etl.DbClient.DbSchemaValidator.Validate``1(System.Data.Common.DbConnection)
+  name: Validate<TRecord>(DbConnection)
+  href: api/Wolfgang.Etl.DbClient.DbSchemaValidator.html#Wolfgang_Etl_DbClient_DbSchemaValidator_Validate__1_System_Data_Common_DbConnection_
+  commentId: M:Wolfgang.Etl.DbClient.DbSchemaValidator.Validate``1(System.Data.Common.DbConnection)
+  name.vb: Validate(Of TRecord)(DbConnection)
+  fullName: Wolfgang.Etl.DbClient.DbSchemaValidator.Validate<TRecord>(System.Data.Common.DbConnection)
+  fullName.vb: Wolfgang.Etl.DbClient.DbSchemaValidator.Validate(Of TRecord)(System.Data.Common.DbConnection)
+  nameWithType: DbSchemaValidator.Validate<TRecord>(DbConnection)
+  nameWithType.vb: DbSchemaValidator.Validate(Of TRecord)(DbConnection)
 - uid: Wolfgang.Etl.DbClient.DbTableAttribute
   name: DbTableAttribute
   href: api/Wolfgang.Etl.DbClient.DbTableAttribute.html
@@ -767,6 +845,256 @@ references:
   isSpec: "True"
   fullName: Wolfgang.Etl.DbClient.DbTableAttribute.Name
   nameWithType: DbTableAttribute.Name
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions
+  name: EtlPipelineDbClientExtensions
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html
+  commentId: T:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions
+  nameWithType: EtlPipelineDbClientExtensions
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor*
+  name: DbExtractor
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html#Wolfgang_Etl_DbClient_EtlPipelineDbClientExtensions_DbExtractor_
+  commentId: Overload:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor
+  nameWithType: EtlPipelineDbClientExtensions.DbExtractor
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor``1(Wolfgang.Etl.Abstractions.EtlPipeline,System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction)
+  name: DbExtractor<T>(EtlPipeline, DbConnection, string, DbTransaction?)
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html#Wolfgang_Etl_DbClient_EtlPipelineDbClientExtensions_DbExtractor__1_Wolfgang_Etl_Abstractions_EtlPipeline_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_
+  commentId: M:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor``1(Wolfgang.Etl.Abstractions.EtlPipeline,System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction)
+  name.vb: DbExtractor(Of T)(EtlPipeline, DbConnection, String, DbTransaction)
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(Wolfgang.Etl.Abstractions.EtlPipeline, System.Data.Common.DbConnection, string, System.Data.Common.DbTransaction?)
+  fullName.vb: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor(Of T)(Wolfgang.Etl.Abstractions.EtlPipeline, System.Data.Common.DbConnection, String, System.Data.Common.DbTransaction)
+  nameWithType: EtlPipelineDbClientExtensions.DbExtractor<T>(EtlPipeline, DbConnection, string, DbTransaction?)
+  nameWithType.vb: EtlPipelineDbClientExtensions.DbExtractor(Of T)(EtlPipeline, DbConnection, String, DbTransaction)
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor``1(Wolfgang.Etl.Abstractions.EtlPipeline,Wolfgang.Etl.DbClient.DbExtractor{``0})
+  name: DbExtractor<T>(EtlPipeline, DbExtractor<T>)
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html#Wolfgang_Etl_DbClient_EtlPipelineDbClientExtensions_DbExtractor__1_Wolfgang_Etl_Abstractions_EtlPipeline_Wolfgang_Etl_DbClient_DbExtractor___0__
+  commentId: M:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor``1(Wolfgang.Etl.Abstractions.EtlPipeline,Wolfgang.Etl.DbClient.DbExtractor{``0})
+  name.vb: DbExtractor(Of T)(EtlPipeline, DbExtractor(Of T))
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(Wolfgang.Etl.Abstractions.EtlPipeline, Wolfgang.Etl.DbClient.DbExtractor<T>)
+  fullName.vb: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor(Of T)(Wolfgang.Etl.Abstractions.EtlPipeline, Wolfgang.Etl.DbClient.DbExtractor(Of T))
+  nameWithType: EtlPipelineDbClientExtensions.DbExtractor<T>(EtlPipeline, DbExtractor<T>)
+  nameWithType.vb: EtlPipelineDbClientExtensions.DbExtractor(Of T)(EtlPipeline, DbExtractor(Of T))
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader*
+  name: DbLoader
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html#Wolfgang_Etl_DbClient_EtlPipelineDbClientExtensions_DbLoader_
+  commentId: Overload:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader
+  nameWithType: EtlPipelineDbClientExtensions.DbLoader
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader``1(Wolfgang.Etl.Abstractions.IEtlPipeline{``0},System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction)
+  name: DbLoader<T>(IEtlPipeline<T>, DbConnection, string, DbTransaction?)
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html#Wolfgang_Etl_DbClient_EtlPipelineDbClientExtensions_DbLoader__1_Wolfgang_Etl_Abstractions_IEtlPipeline___0__System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_
+  commentId: M:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader``1(Wolfgang.Etl.Abstractions.IEtlPipeline{``0},System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction)
+  name.vb: DbLoader(Of T)(IEtlPipeline(Of T), DbConnection, String, DbTransaction)
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(Wolfgang.Etl.Abstractions.IEtlPipeline<T>, System.Data.Common.DbConnection, string, System.Data.Common.DbTransaction?)
+  fullName.vb: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader(Of T)(Wolfgang.Etl.Abstractions.IEtlPipeline(Of T), System.Data.Common.DbConnection, String, System.Data.Common.DbTransaction)
+  nameWithType: EtlPipelineDbClientExtensions.DbLoader<T>(IEtlPipeline<T>, DbConnection, string, DbTransaction?)
+  nameWithType.vb: EtlPipelineDbClientExtensions.DbLoader(Of T)(IEtlPipeline(Of T), DbConnection, String, DbTransaction)
+- uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader``1(Wolfgang.Etl.Abstractions.IEtlPipeline{``0},Wolfgang.Etl.DbClient.DbLoader{``0})
+  name: DbLoader<T>(IEtlPipeline<T>, DbLoader<T>)
+  href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html#Wolfgang_Etl_DbClient_EtlPipelineDbClientExtensions_DbLoader__1_Wolfgang_Etl_Abstractions_IEtlPipeline___0__Wolfgang_Etl_DbClient_DbLoader___0__
+  commentId: M:Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader``1(Wolfgang.Etl.Abstractions.IEtlPipeline{``0},Wolfgang.Etl.DbClient.DbLoader{``0})
+  name.vb: DbLoader(Of T)(IEtlPipeline(Of T), DbLoader(Of T))
+  fullName: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(Wolfgang.Etl.Abstractions.IEtlPipeline<T>, Wolfgang.Etl.DbClient.DbLoader<T>)
+  fullName.vb: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader(Of T)(Wolfgang.Etl.Abstractions.IEtlPipeline(Of T), Wolfgang.Etl.DbClient.DbLoader(Of T))
+  nameWithType: EtlPipelineDbClientExtensions.DbLoader<T>(IEtlPipeline<T>, DbLoader<T>)
+  nameWithType.vb: EtlPipelineDbClientExtensions.DbLoader(Of T)(IEtlPipeline(Of T), DbLoader(Of T))
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1
+  name: IDbExtractorBuilder<T>
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html
+  commentId: T:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1
+  name.vb: IDbExtractorBuilder(Of T)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T)
+  nameWithType: IDbExtractorBuilder<T>
+  nameWithType.vb: IDbExtractorBuilder(Of T)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.CommandType(System.Data.CommandType)
+  name: CommandType(CommandType)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_CommandType_System_Data_CommandType_
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.CommandType(System.Data.CommandType)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.CommandType(System.Data.CommandType)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).CommandType(System.Data.CommandType)
+  nameWithType: IDbExtractorBuilder<T>.CommandType(CommandType)
+  nameWithType.vb: IDbExtractorBuilder(Of T).CommandType(CommandType)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.CommandType*
+  name: CommandType
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_CommandType_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.CommandType
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.CommandType
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).CommandType
+  nameWithType: IDbExtractorBuilder<T>.CommandType
+  nameWithType.vb: IDbExtractorBuilder(Of T).CommandType
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ManageConnection(System.Boolean)
+  name: ManageConnection(bool)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_ManageConnection_System_Boolean_
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ManageConnection(System.Boolean)
+  name.vb: ManageConnection(Boolean)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ManageConnection(bool)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).ManageConnection(Boolean)
+  nameWithType: IDbExtractorBuilder<T>.ManageConnection(bool)
+  nameWithType.vb: IDbExtractorBuilder(Of T).ManageConnection(Boolean)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ManageConnection*
+  name: ManageConnection
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_ManageConnection_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ManageConnection
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ManageConnection
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).ManageConnection
+  nameWithType: IDbExtractorBuilder<T>.ManageConnection
+  nameWithType.vb: IDbExtractorBuilder(Of T).ManageConnection
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate(System.String)
+  name: PagingClauseTemplate(string)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_PagingClauseTemplate_System_String_
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate(System.String)
+  name.vb: PagingClauseTemplate(String)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).PagingClauseTemplate(String)
+  nameWithType: IDbExtractorBuilder<T>.PagingClauseTemplate(string)
+  nameWithType.vb: IDbExtractorBuilder(Of T).PagingClauseTemplate(String)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate*
+  name: PagingClauseTemplate
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_PagingClauseTemplate_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).PagingClauseTemplate
+  nameWithType: IDbExtractorBuilder<T>.PagingClauseTemplate
+  nameWithType.vb: IDbExtractorBuilder(Of T).PagingClauseTemplate
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.Parameters(Dapper.DynamicParameters)
+  name: Parameters(DynamicParameters)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_Parameters_Dapper_DynamicParameters_
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.Parameters(Dapper.DynamicParameters)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.Parameters(Dapper.DynamicParameters)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).Parameters(Dapper.DynamicParameters)
+  nameWithType: IDbExtractorBuilder<T>.Parameters(DynamicParameters)
+  nameWithType.vb: IDbExtractorBuilder(Of T).Parameters(DynamicParameters)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.Parameters*
+  name: Parameters
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_Parameters_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.Parameters
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.Parameters
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).Parameters
+  nameWithType: IDbExtractorBuilder<T>.Parameters
+  nameWithType.vb: IDbExtractorBuilder(Of T).Parameters
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerLimit(System.Nullable{System.Int64})
+  name: ServerLimit(long?)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_ServerLimit_System_Nullable_System_Int64__
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerLimit(System.Nullable{System.Int64})
+  name.vb: ServerLimit(Long?)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerLimit(long?)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).ServerLimit(Long?)
+  nameWithType: IDbExtractorBuilder<T>.ServerLimit(long?)
+  nameWithType.vb: IDbExtractorBuilder(Of T).ServerLimit(Long?)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerLimit*
+  name: ServerLimit
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_ServerLimit_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerLimit
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerLimit
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).ServerLimit
+  nameWithType: IDbExtractorBuilder<T>.ServerLimit
+  nameWithType.vb: IDbExtractorBuilder(Of T).ServerLimit
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerOffset(System.Nullable{System.Int64})
+  name: ServerOffset(long?)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_ServerOffset_System_Nullable_System_Int64__
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerOffset(System.Nullable{System.Int64})
+  name.vb: ServerOffset(Long?)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerOffset(long?)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).ServerOffset(Long?)
+  nameWithType: IDbExtractorBuilder<T>.ServerOffset(long?)
+  nameWithType.vb: IDbExtractorBuilder(Of T).ServerOffset(Long?)
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerOffset*
+  name: ServerOffset
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_ServerOffset_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.ServerOffset
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerOffset
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).ServerOffset
+  nameWithType: IDbExtractorBuilder<T>.ServerOffset
+  nameWithType.vb: IDbExtractorBuilder(Of T).ServerOffset
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.TotalCountQuery(System.Func{System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Int32}})
+  name: TotalCountQuery(Func<CancellationToken, Task<int>>)
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_TotalCountQuery_System_Func_System_Threading_CancellationToken_System_Threading_Tasks_Task_System_Int32___
+  commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.TotalCountQuery(System.Func{System.Threading.CancellationToken,System.Threading.Tasks.Task{System.Int32}})
+  name.vb: TotalCountQuery(Func(Of CancellationToken, Task(Of Integer)))
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.TotalCountQuery(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>>)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).TotalCountQuery(System.Func(Of System.Threading.CancellationToken, System.Threading.Tasks.Task(Of Integer)))
+  nameWithType: IDbExtractorBuilder<T>.TotalCountQuery(Func<CancellationToken, Task<int>>)
+  nameWithType.vb: IDbExtractorBuilder(Of T).TotalCountQuery(Func(Of CancellationToken, Task(Of Integer)))
+- uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.TotalCountQuery*
+  name: TotalCountQuery
+  href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_TotalCountQuery_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.TotalCountQuery
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.TotalCountQuery
+  fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).TotalCountQuery
+  nameWithType: IDbExtractorBuilder<T>.TotalCountQuery
+  nameWithType.vb: IDbExtractorBuilder(Of T).TotalCountQuery
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1
+  name: IDbLoaderBuilder<T>
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html
+  commentId: T:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1
+  name.vb: IDbLoaderBuilder(Of T)
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T)
+  nameWithType: IDbLoaderBuilder<T>
+  nameWithType.vb: IDbLoaderBuilder(Of T)
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.CommandType(System.Data.CommandType)
+  name: CommandType(CommandType)
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html#Wolfgang_Etl_DbClient_IDbLoaderBuilder_1_CommandType_System_Data_CommandType_
+  commentId: M:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.CommandType(System.Data.CommandType)
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.CommandType(System.Data.CommandType)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).CommandType(System.Data.CommandType)
+  nameWithType: IDbLoaderBuilder<T>.CommandType(CommandType)
+  nameWithType.vb: IDbLoaderBuilder(Of T).CommandType(CommandType)
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.CommandType*
+  name: CommandType
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html#Wolfgang_Etl_DbClient_IDbLoaderBuilder_1_CommandType_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.CommandType
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.CommandType
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).CommandType
+  nameWithType: IDbLoaderBuilder<T>.CommandType
+  nameWithType.vb: IDbLoaderBuilder(Of T).CommandType
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ErrorHandling(Wolfgang.Etl.DbClient.RowErrorHandling)
+  name: ErrorHandling(RowErrorHandling)
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html#Wolfgang_Etl_DbClient_IDbLoaderBuilder_1_ErrorHandling_Wolfgang_Etl_DbClient_RowErrorHandling_
+  commentId: M:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ErrorHandling(Wolfgang.Etl.DbClient.RowErrorHandling)
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ErrorHandling(Wolfgang.Etl.DbClient.RowErrorHandling)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).ErrorHandling(Wolfgang.Etl.DbClient.RowErrorHandling)
+  nameWithType: IDbLoaderBuilder<T>.ErrorHandling(RowErrorHandling)
+  nameWithType.vb: IDbLoaderBuilder(Of T).ErrorHandling(RowErrorHandling)
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ErrorHandling*
+  name: ErrorHandling
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html#Wolfgang_Etl_DbClient_IDbLoaderBuilder_1_ErrorHandling_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ErrorHandling
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ErrorHandling
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).ErrorHandling
+  nameWithType: IDbLoaderBuilder<T>.ErrorHandling
+  nameWithType.vb: IDbLoaderBuilder(Of T).ErrorHandling
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ManageConnection(System.Boolean)
+  name: ManageConnection(bool)
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html#Wolfgang_Etl_DbClient_IDbLoaderBuilder_1_ManageConnection_System_Boolean_
+  commentId: M:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ManageConnection(System.Boolean)
+  name.vb: ManageConnection(Boolean)
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ManageConnection(bool)
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).ManageConnection(Boolean)
+  nameWithType: IDbLoaderBuilder<T>.ManageConnection(bool)
+  nameWithType.vb: IDbLoaderBuilder(Of T).ManageConnection(Boolean)
+- uid: Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ManageConnection*
+  name: ManageConnection
+  href: api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html#Wolfgang_Etl_DbClient_IDbLoaderBuilder_1_ManageConnection_
+  commentId: Overload:Wolfgang.Etl.DbClient.IDbLoaderBuilder`1.ManageConnection
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ManageConnection
+  fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).ManageConnection
+  nameWithType: IDbLoaderBuilder<T>.ManageConnection
+  nameWithType.vb: IDbLoaderBuilder(Of T).ManageConnection
 - uid: Wolfgang.Etl.DbClient.RowErrorHandling
   name: RowErrorHandling
   href: api/Wolfgang.Etl.DbClient.RowErrorHandling.html

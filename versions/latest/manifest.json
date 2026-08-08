@@ -64,6 +64,20 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbKeyAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbKeyAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbKeyAttribute",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbKeyAttribute.yml\" sourcestartlinenumber=\"1\">Marks a property on a <xref href=\"Wolfgang.Etl.DbClient.DbTableAttribute\" data-throw-if-not-resolved=\"false\"></xref>-decorated record as\npart of the row's identifying key. The <code>DbTableGenerator</code> source\ngenerator uses <code>[DbKey]</code> properties to build the WHERE clause of\nthe generated <code>Update</code> and <code>Delete</code> SQL constants.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/Wolfgang.Etl.DbClient.DbLoader-1.yml",
       "output": {
         ".html": {
@@ -92,6 +106,20 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbSchemaValidator.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbSchemaValidator.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbSchemaValidator",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbSchemaValidator.yml\" sourcestartlinenumber=\"1\">Validates that a record type's <code>[Table]</code> and <code>[Column]</code>\nattribute mappings match the actual database schema before you invest\nin an extract or load. Catches configuration errors — table renamed,\ncolumn dropped, <code>[Column(&quot;wrong_name&quot;)]</code> typo — at the top of a\nbatch instead of mid-operation.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/Wolfgang.Etl.DbClient.DbTableAttribute.yml",
       "output": {
         ".html": {
@@ -103,6 +131,48 @@
       "IsMRef": true,
       "Title": "Wolfgang.Etl.DbClient.DbTableAttribute",
       "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbTableAttribute.yml\" sourcestartlinenumber=\"1\">Marks a record / class as mapping to a database table. Triggers the\nWolfgang.Etl.DbClient source generator to emit a partial class with\nreflection-free <code>Insert</code> SQL + parameter-binding helpers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.yml\" sourcestartlinenumber=\"1\">Class-named DbClient factories + terminators for the fluent\n<xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Enables\n<code>EtlPipeline.Create().DbExtractor&lt;Order&gt;(conn, sql).DbLoader&lt;Order&gt;(destConn, insertSql).RunAsync()</code>\nalongside the sibling factories shipped by other format packages\n(<code>CsvExtractor</code>, <code>JsonLineLoader</code>, etc.).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.yml\" sourcestartlinenumber=\"1\">Fluent builder for a <xref href=\"Wolfgang.Etl.DbClient.DbExtractor%601\" data-throw-if-not-resolved=\"false\"></xref> hung off the generic\n<xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Extends <xref href=\"Wolfgang.Etl.Abstractions.IEtlPipeline%601\" data-throw-if-not-resolved=\"false\"></xref>, so a\nconsumer transitions from configuring the extractor to appending pipeline\noperators simply by calling one — no explicit <code>Build()</code> step.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.yml\" sourcestartlinenumber=\"1\">Fluent builder for a <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref> that terminates a\ngeneric <xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Extends <xref href=\"Wolfgang.Etl.Abstractions.IEtlPipelineSink\" data-throw-if-not-resolved=\"false\"></xref>,\nso a consumer transitions from configuring the loader to running the\npipeline simply by calling\n<xref href=\"Wolfgang.Etl.Abstractions.IEtlPipelineSink.RunAsync(System.IProgress%7bWolfgang.Etl.Abstractions.EtlPipelineProgress%7d%2cSystem.Threading.CancellationToken)\" data-throw-if-not-resolved=\"false\"></xref>\n— no explicit <code>Build()</code> step.</p>\n"
     },
     {
       "type": "ManagedReference",
@@ -189,6 +259,16 @@
       "output": {
         "resource": {
           "relative_path": "apple-touch-icon.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docs/etl-pipeline.md",
+      "output": {
+        ".html": {
+          "relative_path": "docs/etl-pipeline.html"
         }
       },
       "version": ""

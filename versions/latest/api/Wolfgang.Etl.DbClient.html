@@ -103,6 +103,14 @@ and convention-based name matching.</p>
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbKeyAttribute.html">DbKeyAttribute</a></dt>
+      <dd><p>Marks a property on a <a class="xref" href="Wolfgang.Etl.DbClient.DbTableAttribute.html">DbTableAttribute</a>-decorated record as
+part of the row's identifying key. The <code>DbTableGenerator</code> source
+generator uses <code>[DbKey]</code> properties to build the WHERE clause of
+the generated <code>Update</code> and <code>Delete</code> SQL constants.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a></dt>
       <dd><p>Loads records into a database via INSERT or UPDATE commands.
 Uses Dapper for parameter mapping from POCO properties.</p>
@@ -115,6 +123,15 @@ Extends the base <span class="xref">Wolfgang.Etl.Abstractions.Report</span> with
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbSchemaValidator.html">DbSchemaValidator</a></dt>
+      <dd><p>Validates that a record type's <code>[Table]</code> and <code>[Column]</code>
+attribute mappings match the actual database schema before you invest
+in an extract or load. Catches configuration errors — table renamed,
+column dropped, <code>[Column(&quot;wrong_name&quot;)]</code> typo — at the top of a
+batch instead of mid-operation.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbTableAttribute.html">DbTableAttribute</a></dt>
       <dd><p>Marks a record / class as mapping to a database table. Triggers the
 Wolfgang.Etl.DbClient source generator to emit a partial class with
@@ -122,9 +139,39 @@ reflection-free <code>Insert</code> SQL + parameter-binding helpers.</p>
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html">EtlPipelineDbClientExtensions</a></dt>
+      <dd><p>Class-named DbClient factories + terminators for the fluent
+<span class="xref">Wolfgang.Etl.Abstractions.EtlPipeline</span> chain. Enables
+<code>EtlPipeline.Create().DbExtractor&lt;Order&gt;(conn, sql).DbLoader&lt;Order&gt;(destConn, insertSql).RunAsync()</code>
+alongside the sibling factories shipped by other format packages
+(<code>CsvExtractor</code>, <code>JsonLineLoader</code>, etc.).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="Wolfgang.Etl.DbClient.RowFailedEventArgs-1.html">RowFailedEventArgs&lt;TRecord&gt;</a></dt>
       <dd><p>Payload for <code>DbLoader{TRecord}.RowFailed</code>. Fires once per row that
 failed to load when <code>ErrorHandling</code> is <a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a>.</p>
+</dd>
+    </dl>
+    <h3 id="interfaces">
+Interfaces
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html">IDbExtractorBuilder&lt;T&gt;</a></dt>
+      <dd><p>Fluent builder for a <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a> hung off the generic
+<span class="xref">Wolfgang.Etl.Abstractions.EtlPipeline</span> chain. Extends <span class="xref">Wolfgang.Etl.Abstractions.IEtlPipeline&lt;T&gt;</span>, so a
+consumer transitions from configuring the extractor to appending pipeline
+operators simply by calling one — no explicit <code>Build()</code> step.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html">IDbLoaderBuilder&lt;T&gt;</a></dt>
+      <dd><p>Fluent builder for a <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> that terminates a
+generic <span class="xref">Wolfgang.Etl.Abstractions.EtlPipeline</span> chain. Extends <span class="xref">Wolfgang.Etl.Abstractions.IEtlPipelineSink</span>,
+so a consumer transitions from configuring the loader to running the
+pipeline simply by calling
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iprogress-1">RunAsync(IProgress&lt;EtlPipelineProgress&gt;, CancellationToken)</a>
+— no explicit <code>Build()</code> step.</p>
 </dd>
     </dl>
     <h3 id="enums">
