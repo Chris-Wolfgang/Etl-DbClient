@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786190733180,
+  "lastUpdate": 1786195539486,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mariadb)": [
@@ -332,6 +332,48 @@ window.BENCHMARK_DATA = {
             "value": 9100645.916294644,
             "unit": "ns",
             "range": "± 137227.68892110055"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9769222bce5a268db669aacc33c008e532241be3",
+          "message": "Merge pull request #307 from Chris-Wolfgang/fix/apicompat-suppressions-xml\n\nfix(apicompat): convert compat-suppressions.txt to XML — unblocks v0.7.0 publish",
+          "timestamp": "2026-08-08T08:30:54-04:00",
+          "tree_id": "e59dec13a365e09341f9643a9f35bce3a682fe53",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/9769222bce5a268db669aacc33c008e532241be3"
+        },
+        "date": 1786195537228,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 1166612.4711538462,
+            "unit": "ns",
+            "range": "± 5533.757287133069"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 4728355.9269255055,
+            "unit": "ns",
+            "range": "± 307258.6594941969"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 6627417.920833333,
+            "unit": "ns",
+            "range": "± 86826.23394174025"
           }
         ]
       }
