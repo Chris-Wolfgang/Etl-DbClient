@@ -421,4 +421,128 @@ public class EtlPipelineDbClientExtensionsTests
 
         Assert.False(loader.ManageConnection);
     }
+
+
+
+    // ------------------------------------------------------------------
+    // DbExtractorBuilder<T>.Through — 4 overloads that materialize the
+    // pipeline and delegate. Each test uses a simple identity transform
+    // so the assertion just verifies the shape flows through.
+    // ------------------------------------------------------------------
+
+    private sealed class IdentityTransform : ITransformAsync<Widget, Widget>
+    {
+        public async IAsyncEnumerable<Widget> TransformAsync(IAsyncEnumerable<Widget> source)
+        {
+            await foreach (var w in source)
+            {
+                yield return w;
+            }
+        }
+    }
+
+
+
+    private sealed class IdentityTransformWithCancellation : ITransformWithCancellationAsync<Widget, Widget>
+    {
+        public async IAsyncEnumerable<Widget> TransformAsync(IAsyncEnumerable<Widget> source, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await foreach (var w in source.WithCancellation(cancellationToken))
+            {
+                yield return w;
+            }
+        }
+
+        // ITransformWithCancellationAsync<T,TOut> extends ITransformAsync<T,TOut>.
+        // The bare overload just forwards to the cancellation-aware one with
+        // CancellationToken.None.
+        public IAsyncEnumerable<Widget> TransformAsync(IAsyncEnumerable<Widget> source)
+            => TransformAsync(source, default);
+    }
+
+
+
+    [Fact]
+    public async Task Extractor_builder_Through_ITransformAsync_materializes_pipeline()
+    {
+        using var src = CreateSourceWithRows(3);
+        var results = await EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .Through(new IdentityTransform())
+            .AsAsyncEnumerable()
+            .ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
+
+
+
+    [Fact]
+    public async Task Extractor_builder_Through_ITransformWithCancellationAsync_materializes_pipeline()
+    {
+        using var src = CreateSourceWithRows(3);
+        var results = await EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .Through(new IdentityTransformWithCancellation())
+            .AsAsyncEnumerable()
+            .ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
+
+
+
+    [Fact]
+    public async Task Extractor_builder_Through_delegate_materializes_pipeline()
+    {
+        using var src = CreateSourceWithRows(3);
+        var results = await EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .Through<Widget>(source => source) // Func<IAsyncEnumerable<T>, IAsyncEnumerable<TOut>> — plain identity.
+            .AsAsyncEnumerable()
+            .ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
+
+
+
+    [Fact]
+    public async Task Extractor_builder_Through_delegate_with_cancellation_materializes_pipeline()
+    {
+        using var src = CreateSourceWithRows(3);
+        var results = await EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .Through<Widget>((source, _) => source)
+            .AsAsyncEnumerable()
+            .ToListAsync();
+
+        Assert.Equal(3, results.Count);
+    }
+
+
+
+    [Fact]
+    public async Task Extractor_builder_To_LoaderBase_materializes_pipeline()
+    {
+        using var src = CreateSourceWithRows(3);
+        using var dest = CreateEmptyDestination();
+        var loader = new DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)");
+
+        // Explicitly go through Through+To rather than the DbLoader terminator
+        // extension, so DbExtractorBuilder<T>.To<TProgress>(LoaderBase) is
+        // exercised directly.
+        await EtlPipeline
+            .Create()
+            .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .Through(new IdentityTransform())
+            .To(loader)
+            .RunAsync();
+
+        Assert.Equal(3L, CountRows(dest, "dest"));
+    }
 }
