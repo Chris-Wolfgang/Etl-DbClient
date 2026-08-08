@@ -29,7 +29,7 @@ namespace Wolfgang.Etl.DbClient.Example.AotSmoke;
 // own [PublicAPI]/[UsedImplicitly] annotations landed in #211).
 [DbTable("widget")]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
-public record Widget
+public partial record Widget
 {
     [DbColumn("id")]
     public int Id { get; init; }
