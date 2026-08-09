@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## [0.7.0] - 2026-07-20
+## [0.7.0] - 2026-08-08
 
 Additive release. New runtime schema-validation type, opt-in
 extractor/loader property that wires it in, `[DbKey]` attribute + full
