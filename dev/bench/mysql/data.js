@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786195381215,
+  "lastUpdate": 1786309631847,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mysql)": [
@@ -416,6 +416,48 @@ window.BENCHMARK_DATA = {
             "value": 4645614.858816965,
             "unit": "ns",
             "range": "± 128264.60837807618"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7db127be825b8bfc1c4da94c1443d0500dcfdf62",
+          "message": "Merge pull request #311 from Chris-Wolfgang/ci/enable-package-validation\n\nci(packagevalidation): enable PackageValidation gate",
+          "timestamp": "2026-08-09T16:16:57-04:00",
+          "tree_id": "554b2fa9d0d54ff38e30f377c45e0d8f6679b85e",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/7db127be825b8bfc1c4da94c1443d0500dcfdf62"
+        },
+        "date": 1786309628641,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 1443509.7379557292,
+            "unit": "ns",
+            "range": "± 7636.7417598512"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 2214254.7994791665,
+            "unit": "ns",
+            "range": "± 20675.991790135737"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 8104709.360131049,
+            "unit": "ns",
+            "range": "± 308104.7139178949"
           }
         ]
       }
