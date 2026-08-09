@@ -793,7 +793,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     )
     {
         var prefix = ExtractInsertPrefix(_commandText, out var template);
-        var paramNames = ExtractTemplateParamNames(template, out var paramSpans);
+        var templateParams = ExtractTemplateParamNames(template);
+        var paramNames = templateParams.Names;
+        var paramSpans = templateParams.Spans;
         var properties = GetMappedProperties(paramNames);
 
         var buffer = new List<TRecord>(_insertBatchSize);
@@ -931,6 +933,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// the leading <c>@</c>. Lets the multi-row flush copy the template by exact
     /// offset instead of substring-matching parameter names against it.
     /// </summary>
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Auto)]
     private readonly struct ParamSpan : IEquatable<ParamSpan>
     {
         internal ParamSpan(int start, int length)
@@ -972,7 +975,33 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
 
-    private static IReadOnlyList<string> ExtractTemplateParamNames(string template, out IReadOnlyList<ParamSpan> spans)
+    /// <summary>
+    /// The parameter names and their token spans scanned from an INSERT row
+    /// template. A class rather than a tuple — net462 doesn't ship
+    /// <c>System.ValueTuple</c> in the base targeting pack and we avoid the
+    /// extra package reference (same convention as <see cref="DbExtractor{TRecord}"/>'s
+    /// paging out-parameters).
+    /// </summary>
+    private sealed class TemplateParams
+    {
+        internal TemplateParams(IReadOnlyList<string> names, IReadOnlyList<ParamSpan> spans)
+        {
+            Names = names;
+            Spans = spans;
+        }
+
+
+
+        internal IReadOnlyList<string> Names { get; }
+
+
+
+        internal IReadOnlyList<ParamSpan> Spans { get; }
+    }
+
+
+
+    private static TemplateParams ExtractTemplateParamNames(string template)
     {
         // `while` rather than `for` — the loop intentionally jumps the cursor past
         // the matched parameter name in one step, which Sonar's S127 flags as
@@ -1001,8 +1030,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
             }
             i = end;
         }
-        spans = spanList;
-        return names;
+        return new TemplateParams(names, spanList);
     }
 
 

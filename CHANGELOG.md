@@ -21,8 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1] - 2026-08-09
 
-Patch release — one correctness fix, one packaging-safety addition, plus
-docs/CI cleanup. No public API changes.
+Patch release — one correctness fix plus docs/CI cleanup. No public
+API changes.
 
 ### Changed
 
