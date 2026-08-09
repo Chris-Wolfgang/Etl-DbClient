@@ -21,8 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1] - 2026-08-09
 
-Patch release — one correctness fix plus docs/CI cleanup. No public
-API changes.
+Patch release — one correctness fix, one packaging-safety addition,
+plus docs/CI cleanup. No public API changes.
+
+### Added
+
+- **`PackageValidation` gate**, enabled via `EnablePackageValidation` +
+  `PackageValidationBaselineVersion` (pinned to `0.7.0`, the last
+  published version) — now diffs the packed public API surface against
+  the previous release on every pack, catching unintentional
+  binary-breaking changes before they ship (#290).
 
 ### Changed
 
