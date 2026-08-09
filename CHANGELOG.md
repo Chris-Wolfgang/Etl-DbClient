@@ -19,6 +19,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.7.1] - 2026-08-09
+
+Docs/CI-only patch — no source or public API changes.
+
+### Changed
+
+- CI: bumped the `github-actions` dependency group (checkout, setup-dotnet,
+  upload-artifact, paths-filter, attest-build-provenance,
+  action-gh-release, scorecard-action, zizmor-action) to their latest
+  pinned SHAs (#306).
+- README: corrected the Supported Frameworks TFM list to match the
+  csproj's actual multi-targeting (#288).
+- README: added the canonical publication badge set (nuget-version,
+  nuget-downloads, wf:pr, wf:release) (#286).
+
+### Fixed
+
+- CHANGELOG: corrected the v0.7.0 entry date to the actual NuGet
+  publish date (#308).
+- Fixed a stale comment describing the version-picker's auto-select
+  behavior in the docfx template (#291).
+
 ## [0.7.0] - 2026-08-08
 
 Additive release. New runtime schema-validation type, opt-in
