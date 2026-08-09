@@ -43,6 +43,12 @@
     <SignAssembly>False</SignAssembly>
     <PackageTags>ETL;Extract-Transform-Load;ADO.NET;Database;SQL;DbConnection</PackageTags>
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    <!-- Gate against unintentional binary-breaking changes. Baseline stays pinned
+         to the last version actually PUBLISHED on NuGet — bump it in its own PR
+         once the version being released here is live on the flatcontainer CDN,
+         never to the in-flight version (the pack step downloads the baseline). -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.7.0</PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>
