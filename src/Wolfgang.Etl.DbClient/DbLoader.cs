@@ -793,7 +793,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     )
     {
         var prefix = ExtractInsertPrefix(_commandText, out var template);
-        var paramNames = ExtractTemplateParamNames(template);
+        var templateParams = ExtractTemplateParamNames(template);
+        var paramNames = templateParams.Names;
+        var paramSpans = templateParams.Spans;
         var properties = GetMappedProperties(paramNames);
 
         var buffer = new List<TRecord>(_insertBatchSize);
@@ -818,14 +820,14 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
             if (buffer.Count >= _insertBatchSize)
             {
-                await FlushMultiRowInsertAsync(prefix, template, paramNames, properties, buffer, transaction, token).ConfigureAwait(false);
+                await FlushMultiRowInsertAsync(prefix, template, paramNames, paramSpans, properties, buffer, transaction, token).ConfigureAwait(false);
                 buffer.Clear();
             }
         }
 
         if (buffer.Count > 0)
         {
-            await FlushMultiRowInsertAsync(prefix, template, paramNames, properties, buffer, transaction, token).ConfigureAwait(false);
+            await FlushMultiRowInsertAsync(prefix, template, paramNames, paramSpans, properties, buffer, transaction, token).ConfigureAwait(false);
         }
     }
 
@@ -836,6 +838,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         string prefix,
         string template,
         IReadOnlyList<string> paramNames,
+        IReadOnlyList<ParamSpan> paramSpans,
         IReadOnlyList<System.Reflection.PropertyInfo> properties,
         List<TRecord> batch,
         DbTransaction? transaction,
@@ -863,15 +866,24 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 sb.Append(',');
             }
 
-            var rowTemplate = template;
-            for (var p = 0; p < paramNames.Count; p++)
+            // Rebuild the row directly from the pre-scanned parameter spans instead
+            // of String.Replace-ing "@name" -> "@name_<i>" against the whole template:
+            // Replace does a substring match, so a name that's a textual prefix of
+            // another (e.g. "@Order" inside "@OrderId") gets corrupted mid-rewrite.
+            // Copying by exact span never touches text outside the matched token.
+            var cursor = 0;
+            for (var p = 0; p < paramSpans.Count; p++)
             {
-                var original = "@" + paramNames[p];
-                var suffixed = original + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                rowTemplate = rowTemplate.Replace(original, suffixed);
-                dp.Add(suffixed, properties[p].GetValue(batch[i]));
+                var span = paramSpans[p];
+                sb.Append(template, cursor, span.Start - cursor);
+
+                var paramKey = "@" + paramNames[p] + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                sb.Append(paramKey);
+                dp.Add(paramKey, properties[p].GetValue(batch[i]));
+
+                cursor = span.Start + span.Length;
             }
-            sb.Append(rowTemplate);
+            sb.Append(template, cursor, template.Length - cursor);
         }
 
         await _connection.ExecuteAsync
@@ -916,12 +928,86 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
 
-    private static IReadOnlyList<string> ExtractTemplateParamNames(string template)
+    /// <summary>
+    /// A parameter token's <c>@name</c> extent within the row template, including
+    /// the leading <c>@</c>. Lets the multi-row flush copy the template by exact
+    /// offset instead of substring-matching parameter names against it.
+    /// </summary>
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Auto)]
+    private readonly struct ParamSpan : IEquatable<ParamSpan>
+    {
+        internal ParamSpan(int start, int length)
+        {
+            Start = start;
+            Length = length;
+        }
+
+
+
+        internal int Start { get; }
+
+
+
+        internal int Length { get; }
+
+
+
+        public bool Equals(ParamSpan other) => Start == other.Start && Length == other.Length;
+
+
+
+        public override bool Equals(object? obj) => obj is ParamSpan other && Equals(other);
+
+
+
+        public override int GetHashCode()
+        {
+#if NETCOREAPP2_1_OR_GREATER || NET5_0_OR_GREATER
+            return HashCode.Combine(Start, Length);
+#else
+            unchecked
+            {
+                return (Start * 397) ^ Length;
+            }
+#endif
+        }
+    }
+
+
+
+    /// <summary>
+    /// The parameter names and their token spans scanned from an INSERT row
+    /// template. A class rather than a tuple — net462 doesn't ship
+    /// <c>System.ValueTuple</c> in the base targeting pack and we avoid the
+    /// extra package reference (same convention as <see cref="DbExtractor{TRecord}"/>'s
+    /// paging out-parameters).
+    /// </summary>
+    private sealed class TemplateParams
+    {
+        internal TemplateParams(IReadOnlyList<string> names, IReadOnlyList<ParamSpan> spans)
+        {
+            Names = names;
+            Spans = spans;
+        }
+
+
+
+        internal IReadOnlyList<string> Names { get; }
+
+
+
+        internal IReadOnlyList<ParamSpan> Spans { get; }
+    }
+
+
+
+    private static TemplateParams ExtractTemplateParamNames(string template)
     {
         // `while` rather than `for` — the loop intentionally jumps the cursor past
         // the matched parameter name in one step, which Sonar's S127 flags as
         // "loop counter mutated in body" when the cursor is a for-loop variable.
         var names = new List<string>();
+        var spanList = new List<ParamSpan>();
         var i = 0;
         while (i < template.Length)
         {
@@ -930,6 +1016,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 i++;
                 continue;
             }
+            var tokenStart = i;
             var start = i + 1;
             var end = start;
             while (end < template.Length && (char.IsLetterOrDigit(template[end]) || template[end] == '_'))
@@ -939,10 +1026,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
             if (end > start)
             {
                 names.Add(template.Substring(start, end - start));
+                spanList.Add(new ParamSpan(tokenStart, end - tokenStart));
             }
             i = end;
         }
-        return names;
+        return new TemplateParams(names, spanList);
     }
 
 
