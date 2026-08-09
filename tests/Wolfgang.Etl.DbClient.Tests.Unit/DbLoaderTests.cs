@@ -945,6 +945,61 @@ public class DbLoaderTests
 
 
 
+    [Fact]
+    public async Task LoadAsync_with_InsertBatchSize_when_a_parameter_name_is_a_textual_prefix_of_another_binds_correct_values()
+    {
+        using var conn = TestDb.CreateConnection();
+
+        using (var create = conn.CreateCommand())
+        {
+            create.CommandText = @"
+                CREATE TABLE Orders (
+                    total_amount REAL NOT NULL,
+                    total_tax REAL NOT NULL
+                )";
+            await create.ExecuteNonQueryAsync();
+        }
+
+        // "@Total" is a textual prefix of "@TotalTax" — regression guard for #279,
+        // where per-parameter String.Replace corrupted the row template because
+        // the shorter name's replace pass matched inside the longer one too.
+        var loader = new DbLoader<OrderRecord>
+        (
+            conn,
+            "INSERT INTO Orders (total_amount, total_tax) VALUES (@Total, @TotalTax)"
+        )
+        {
+            InsertBatchSize = 2
+        };
+
+        var records = new[]
+        {
+            new OrderRecord { Total = 100m, TotalTax = 8m },
+            new OrderRecord { Total = 250m, TotalTax = 20m },
+            new OrderRecord { Total = 75m, TotalTax = 6m }
+        };
+
+        await loader.LoadAsync(records.ToAsyncEnumerable());
+
+        using var select = conn.CreateCommand();
+        select.CommandText = "SELECT total_amount, total_tax FROM Orders ORDER BY rowid";
+        using var reader = await select.ExecuteReaderAsync();
+
+        var actual = new List<(decimal Total, decimal Tax)>();
+        while (await reader.ReadAsync())
+        {
+            actual.Add((reader.GetDecimal(0), reader.GetDecimal(1)));
+        }
+
+        Assert.Equal
+        (
+            new[] { (100m, 8m), (250m, 20m), (75m, 6m) },
+            actual
+        );
+    }
+
+
+
     // ------------------------------------------------------------------
     // ManageConnection (#31)
     // ------------------------------------------------------------------

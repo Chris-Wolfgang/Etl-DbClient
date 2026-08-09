@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1] - 2026-08-09
 
-Docs/CI-only patch — no source or public API changes.
+Patch release — one correctness fix, one packaging-safety addition, plus
+docs/CI cleanup. No public API changes.
 
 ### Changed
 
@@ -36,6 +37,14 @@ Docs/CI-only patch — no source or public API changes.
 
 ### Fixed
 
+- **`DbLoader<T>.InsertBatchSize > 1` corrupted SQL when one bound
+  parameter's name was a textual prefix of another** (e.g. `@Total` /
+  `@TotalTax`) — the per-parameter `String.Replace` rewrite matched the
+  shorter name inside the longer one, producing a parameter Dapper
+  never bound and throwing at execution time. The multi-row row
+  template is now rebuilt from pre-scanned parameter spans instead of
+  sequential substring replacement, which also removes the per-row
+  full-template rescans (#279).
 - CHANGELOG: corrected the v0.7.0 entry date to the actual NuGet
   publish date (#308).
 - Fixed a stale comment describing the version-picker's auto-select
