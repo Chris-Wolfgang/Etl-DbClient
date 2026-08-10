@@ -6,10 +6,10 @@
 #
 # Fails the workflow when a metric regresses beyond a per-metric threshold
 # (defaults per #130 AC: 20% latency, 50% allocations). Files a
-# `shadow-regression` issue on scheduled runs — same duplicate-detection
-# pattern as the fuzz-failure workflow (#275): comment on the open one if
-# it exists, otherwise create a new one. On pull_request runs, we don't
-# file an issue (the failing check already surfaces on the PR).
+# `shadow-regression` issue on workflow_dispatch runs — same duplicate-
+# detection pattern as the fuzz-failure workflow (#275): comment on the
+# open one if it exists, otherwise create a new one. On pull_request runs,
+# we don't file an issue (the failing check already surfaces on the PR).
 #
 # Baseline lookup URL:
 #   https://chris-wolfgang.github.io/Etl-DbClient/dev/shadow/<os>.json
@@ -51,7 +51,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -213,6 +213,7 @@ jobs:
           name: shadow-regression-${{ matrix.os }}
           path: reports/
           retention-days: 60
+          if-no-files-found: warn
 
       # ------------------------------------------------------------------
       # Auto-issue on regression during workflow_dispatch runs.
@@ -221,8 +222,15 @@ jobs:
       # surface on the PR itself, and auto-filing there would spam.
       # ------------------------------------------------------------------
       - name: File / comment shadow-regression issue
+        # always() is required here: the "Compare metrics + gate" step
+        # exits 1 on a real regression, and a plain `if:` implicitly ANDs
+        # in success() -- which would already be false once a prior step
+        # failed, skipping this step before steps.compare.outcome even
+        # gets evaluated. Without always(), this step (the whole point of
+        # the workflow) would never fire on the failure path it exists for.
         if: |
-          steps.check.outputs.found == 'true'
+          always()
+          && steps.check.outputs.found == 'true'
           && steps.compare.outcome == 'failure'
           && github.event_name == 'workflow_dispatch'
         env:
@@ -249,7 +257,7 @@ jobs:
           if [ -n "$existing" ]; then
             echo "Existing shadow-regression issue #$existing — commenting."
             {
-              echo "Additional regression on scheduled shadow run (\`$OS\`)."
+              echo "Additional regression on a manually-triggered shadow run (\`$OS\`)."
               echo ""
               echo "- Run: $RUN_URL"
               echo "- Artifact: \`shadow-regression-$OS\` on the run above (retention 60 days)"
@@ -276,7 +284,7 @@ jobs:
               echo ""
               echo "Thresholds are documented in \`.github/workflows/shadow-regression.yaml\` and were set to defaults per #130's AC: 20% latency, 50% allocations, 50% gen0, 100% gen1/gen2 (noisier)."
               echo ""
-              echo "Close this issue once the regression is either accepted (bump baseline via a manual \`workflow_dispatch\` on shadow-baseline.yaml) or resolved (fix the perf regression). The next scheduled regression on the same OS re-opens a fresh one automatically."
+              echo "Close this issue once the regression is either accepted (bump baseline via a manual \`workflow_dispatch\` on shadow-baseline.yaml) or resolved (fix the perf regression). The next workflow_dispatch run that still regresses on the same OS re-opens a fresh one automatically."
               echo ""
               echo "<details><summary>Comparison table</summary>"
               echo ""
