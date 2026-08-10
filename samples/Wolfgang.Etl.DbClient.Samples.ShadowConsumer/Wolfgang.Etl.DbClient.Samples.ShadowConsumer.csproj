@@ -13,9 +13,13 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
 
-    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 same treatment as sibling
-         samples. CA2007 / MA0004 / MA0048 / S3903 / VSTHRD200 — top-level
-         statements in a .exe workload, not library code. -->
+    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3, same treatment as the other
+         Microsoft.Data.Sqlite-referencing projects in this repo (see
+         fix/sqlitepclraw-ghsa-2m69 for the tracked fix, #318).
+         CA2007 / CA1849 / MA0004 / MA0048 / S3903 / VSTHRD200 — top-level
+         statements in a .exe workload, not library code; the
+         ConfigureAwait / sync-over-async discipline aimed at library
+         callers doesn't apply to an app entrypoint. -->
     <NoWarn>$(NoWarn);NU1903;CA2007;CA1849;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
   </PropertyGroup>
 
