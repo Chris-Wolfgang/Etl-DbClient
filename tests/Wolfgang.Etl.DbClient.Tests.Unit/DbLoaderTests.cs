@@ -1,4 +1,3 @@
-using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
@@ -37,19 +36,6 @@ public class DbLoaderTests
         new ContractRecord { Name = "Item5", Value = 50 },
     };
 
-
-
-    /// <inheritdoc/>
-    protected override DbLoader<ContractRecord> CreateSutWithTimer(IProgressTimer timer)
-    {
-        var conn = TestDb.CreateContractLoaderConnection();
-        return new DbLoader<ContractRecord>
-        (
-            conn,
-            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
-            timer
-        );
-    }
 
 
     // ------------------------------------------------------------------
