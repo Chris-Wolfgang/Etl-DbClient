@@ -26,7 +26,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # push metrics JSON to gh-pages
+  contents: read   # least-privilege default; publish job grants write below
 
 concurrency:
   group: shadow-baseline
@@ -46,7 +46,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -116,12 +116,14 @@ jobs:
     name: "Publish baselines to gh-pages"
     runs-on: ubuntu-latest
     needs: measure
+    permissions:
+      contents: write   # push metrics JSON to gh-pages
     # Skip the publish job on the template repo — it doesn't have gh-pages
     # provisioned. Matches the integration-status.yaml guard.
     if: always() && github.repository != 'Chris-Wolfgang/repo-template'
     steps:
       - name: Checkout gh-pages
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: gh-pages
           persist-credentials: false
