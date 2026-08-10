@@ -101,6 +101,25 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!--
+      Cross-OS reproducibility (#255):
+      Microsoft.SourceLink.GitHub maps source paths under the repo root to
+      GitHub raw URLs, but doesn't touch OTHER absolute paths the compiler
+      bakes into PDB records — most notably MSBuild-computed obj/bin
+      intermediates. Those paths differ per-OS (`D:\a\Etl-DbClient\…` on
+      Windows vs `/home/runner/work/Etl-DbClient/…` on Linux), so the two
+      OSes emit byte-different PDBs (and therefore byte-different DLLs
+      when the debug directory is embedded).
+
+      `<PathMap>` rewrites the leading source root uniformly to `/_/`
+      across every OS. The `/_/` sentinel is the same one dotnet SDK
+      uses when `ContinuousIntegrationBuild=true` implicitly normalises
+      the source path — this makes the explicit intent match the
+      implicit behaviour and covers the intermediates the implicit
+      normalisation misses.
+    -->
+    <PathMap>$(MSBuildThisFileDirectory)=/_/</PathMap>
   </PropertyGroup>
 
   <ItemGroup>
