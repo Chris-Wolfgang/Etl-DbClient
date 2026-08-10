@@ -1079,11 +1079,15 @@ jobs:
       # Consumer-side verification recipe is in `docs/REPRODUCIBLE-BUILD.md`.
       - name: Write reproducible-build manifest
         shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_PUBLISHED_AT: ${{ github.event.release.published_at }}
         run: |
           set -euo pipefail
-          tag="${{ github.event.release.tag_name }}"
-          sha="${{ github.sha }}"
-          released_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          tag="$RELEASE_TAG"
+          sha="$RELEASE_SHA"
+          released_at="$RELEASE_PUBLISHED_AT"
 
           artifacts_json="["
           first=1
@@ -1105,7 +1109,7 @@ jobs:
             echo "  \"commitSha\": \"${sha}\","
             echo "  \"releasedAt\": \"${released_at}\","
             echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
-            echo "  \"instructions\": \"https://github.com/${GITHUB_REPOSITORY}/blob/main/docs/REPRODUCIBLE-BUILD.md\","
+            echo "  \"instructions\": \"https://github.com/${GITHUB_REPOSITORY}/blob/${tag}/docs/REPRODUCIBLE-BUILD.md\","
             printf '  "artifacts": %b\n' "$artifacts_json"
             echo '}'
           } > reproducible-build-manifest.json

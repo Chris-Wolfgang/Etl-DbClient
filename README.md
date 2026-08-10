@@ -40,20 +40,22 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 ## 🔎 Verify the build
 
-`Wolfgang.Etl.DbClient` builds are reproducible from source, and every
-release ships a signed [SLSA build-provenance attestation](https://slsa.dev/spec/v1.0/provenance)
+Every release of `Wolfgang.Etl.DbClient` ships a signed [SLSA build-provenance attestation](https://slsa.dev/spec/v1.0/provenance)
 plus a `reproducible-build-manifest.json` recording the sha256 of every
-`.nupkg` / `.snupkg` in that release.
+`.nupkg` / `.snupkg` in that release, so you can confirm a published
+package actually came from this repo's release pipeline at the tagged
+commit. Same-OS builds reproduce byte-for-byte from source; cross-OS
+byte-identity is tracked as in-progress ([#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
 
-Third-party consumers can independently verify a published package came
-from the tagged commit — full recipe (rebuild from source, cross-check
-manifest, publish an attestation) in
+Third-party consumers can independently verify a published package —
+full recipe (rebuild from source, cross-check manifest, publish an
+attestation) in
 **[docs/REPRODUCIBLE-BUILD.md](docs/REPRODUCIBLE-BUILD.md)**.
 
 TL;DR:
 
 ```bash
-gh attestation verify --owner Chris-Wolfgang path/to/Wolfgang.Etl.DbClient.<version>.nupkg
+gh attestation verify path/to/Wolfgang.Etl.DbClient.<version>.nupkg --owner Chris-Wolfgang --repo Etl-DbClient
 ```
 
 ---
