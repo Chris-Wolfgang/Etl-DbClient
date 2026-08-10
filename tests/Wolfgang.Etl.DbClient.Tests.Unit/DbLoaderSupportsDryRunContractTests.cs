@@ -20,8 +20,7 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 /// contract tests don't reach (the contract's default per-row path goes
 /// through the loader base's <c>LoadWorkerAsync</c>). Property tests
 /// <c>IsDryRun_defaults_to_false</c> + <c>IsDryRun_set_and_get_roundtrips</c>
-/// in DbLoaderTests ARE subsumed — see the follow-up commit that
-/// prunes them.
+/// in DbLoaderTests ARE subsumed and have been pruned from that file.
 /// </remarks>
 public sealed class DbLoaderSupportsDryRunContractTests
     : SupportsDryRunContractTests<DbLoader<DryRunContractRecord>>
