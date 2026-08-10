@@ -128,6 +128,7 @@
          3.50.3 transitively — don't pin lib.e_sqlite3 directly, that
          package line never reached 3.50.x itself. -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
+    <PackageReference Include="Wolfgang.Etl.ErrorPolicies" Version="0.21.0" />
     <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.14.0" />
     <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.14.0" />
   </ItemGroup>
