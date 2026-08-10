@@ -74,9 +74,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     private readonly DynamicParameters? _dynamicParameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
-    private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
-    private int _progressTimerWired;
     private int? _totalItemCount;
 
 
@@ -231,25 +229,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         conn.ConnectionString = connectionString;
         _connection = conn;
         _ownsConnection = true;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
-    }
-
-
-
-    /// <summary>
-    /// Internal constructor for timer injection (testing).
-    /// </summary>
-    internal DbExtractor
-    (
-        DbConnection connection,
-        string commandText,
-        IProgressTimer timer,
-        ILogger<DbExtractor<TRecord>>? logger = null
-    )
-    {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
@@ -562,24 +541,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Returns a snapshot progress report. Visible to the test assembly via InternalsVisibleTo.
     /// </summary>
     internal DbReport GetProgressReport() => CreateProgressReport();
-
-
-
-    /// <inheritdoc/>
-    protected override IProgressTimer CreateProgressTimer(IProgress<DbReport> progress)
-    {
-        if (_progressTimer != null)
-        {
-            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-            {
-                _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-            }
-
-            return _progressTimer;
-        }
-
-        return base.CreateProgressTimer(progress);
-    }
 
 
 
