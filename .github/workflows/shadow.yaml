@@ -1,0 +1,145 @@
+# Shadow-testing gate for realistic consumer workloads.
+#
+# Runs the sample under `samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/`
+# on a weekly cron + workflow_dispatch, parses the JSON metrics line it
+# writes to stdout, and uploads the raw output as an artifact for
+# post-mortem. Baseline capture on gh-pages + regression gate + auto-issue
+# arrive in follow-up PRs so this workflow can land ahead of the metric
+# thresholds being settled.
+#
+# The Shadow Consumer's scenario is a paged ETL loop against SQLite
+# in-memory — deterministic across runners so the metric deltas rather
+# than the absolute values are what matter. See
+# samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/README.md.
+#
+# Refs #130.
+
+name: Shadow-testing
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Weekly Sunday 08:00 UTC — outside the Stryker (Sunday 06:00) +
+    # gc-profile (Sunday 07:00) window so the three heavy scheduled
+    # jobs don't pile up on the runner pool.
+    - cron: '0 8 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shadow-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shadow:
+    name: Shadow consumer (${{ matrix.os }} / net10.0)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Multi-OS from the start so the baseline captured later has
+        # per-OS numbers. Linux/Windows are the two OSes reproducible-
+        # build already exercises; adding macOS would triple runtime for
+        # marginal signal — deferred to a follow-up if a Mac-specific
+        # regression class emerges.
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Guard so the scheduled Sunday 08:00 UTC run on main no-ops when
+      # the sample project isn't on the checked-out ref. The sample
+      # lives on vNext and hasn't merged to main yet; once it has, this
+      # guard becomes a no-op and the block can be dropped.
+      - name: Detect Shadow Consumer sample
+        id: check
+        shell: bash
+        run: |
+          if [ -f samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Shadow Consumer sample not present on this ref — skipping. Merge vNext to main to enable."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup .NET
+        if: steps.check.outputs.found == 'true'
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore + Build sample (Release)
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        run: |
+          dotnet restore samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj
+          dotnet build samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj \
+            --no-restore \
+            --configuration Release
+
+      - name: Run shadow consumer + capture metrics
+        # The sample writes human-readable progress to stderr and one
+        # JSON line to stdout at the end. Redirect them separately so we
+        # can persist the metrics line as a first-class artifact (that
+        # the regression-gate follow-up PR consumes) AND the human log
+        # for post-mortem. pwsh (not bash+jq) for the tagging step so it
+        # behaves identically on ubuntu-latest and windows-latest --
+        # this repo has never proven jq is on PATH in windows-latest's
+        # Git Bash, only ubuntu-latest. Context values come in via env:
+        # rather than inline ${{ }} expansion in the script body.
+        if: steps.check.outputs.found == 'true'
+        shell: pwsh
+        env:
+          SHADOW_OS: ${{ matrix.os }}
+          SHADOW_SHA: ${{ github.sha }}
+          SHADOW_REF: ${{ github.ref }}
+          SHADOW_RUN_ID: ${{ github.run_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path reports | Out-Null
+
+          dotnet run --project samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj `
+            --configuration Release `
+            --no-build `
+            1> reports/metrics.json `
+            2> reports/shadow.log
+
+          # Tag the metrics with runner metadata so the follow-up
+          # regression gate can pick the right baseline record.
+          $metrics = Get-Content reports/metrics.json -Raw | ConvertFrom-Json
+          $metrics | Add-Member -NotePropertyName os -NotePropertyValue $env:SHADOW_OS
+          $metrics | Add-Member -NotePropertyName sha -NotePropertyValue $env:SHADOW_SHA
+          $metrics | Add-Member -NotePropertyName ref -NotePropertyValue $env:SHADOW_REF
+          $metrics | Add-Member -NotePropertyName runId -NotePropertyValue $env:SHADOW_RUN_ID
+          $metrics | ConvertTo-Json -Depth 10 | Set-Content reports/metrics.json
+
+          Write-Host "=== shadow.log ==="
+          Get-Content reports/shadow.log
+          Write-Host ""
+          Write-Host "=== metrics.json ==="
+          Get-Content reports/metrics.json
+
+      - name: Emit metrics to Step Summary
+        if: steps.check.outputs.found == 'true'
+        shell: bash
+        run: |
+          {
+            echo "### Shadow consumer — \`${{ matrix.os }}\` / net10.0"
+            echo ""
+            echo '```json'
+            cat reports/metrics.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload shadow artifacts
+        if: always() && steps.check.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: shadow-${{ matrix.os }}
+          path: reports/
+          retention-days: 60
+          if-no-files-found: warn
