@@ -620,28 +620,84 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
             long rowIndex = 0;
 
-            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
+            // The Dapper stream is enumerated with a manual MoveNextAsync loop so
+            // per-row failures (a mapper throw on a bad column, an unexpected null
+            // hitting a non-nullable property) can be routed through the base
+            // class's ErrorPolicy pipeline. `await foreach` would let the loop's
+            // try/catch scope only cover the body, not the enumerator's own
+            // MoveNextAsync — a bad-row exception thrown by Dapper's materialiser
+            // would then bypass the policy entirely.
+            var enumerator = _connection
+                .QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType)
+                .GetAsyncEnumerator(token);
+            try
             {
-                token.ThrowIfCancellationRequested();
-                rowIndex++;
-
-                if (rowIndex <= SkipItemCount)
+                while (true)
                 {
-                    IncrementCurrentSkippedItemCount();
-                    LogDebugRowSkipped(rowIndex);
-                    continue;
-                }
+                    token.ThrowIfCancellationRequested();
 
-                if (CurrentItemCount >= MaximumItemCount)
-                {
-                    LogDebugMaxReached();
-                    LogExtractionCompleted();
-                    yield break;
-                }
+                    TRecord record;
+                    try
+                    {
+                        if (!await enumerator.MoveNextAsync().ConfigureAwait(false))
+                        {
+                            break;
+                        }
+                        record = enumerator.Current;
+                    }
+                    catch (System.Data.DataException ex)
+                    {
+                        // Scoped to DataException — the type Dapper wraps row-materialization
+                        // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
+                        // sees per-row failures. A broader `catch (Exception)` here would also
+                        // catch connection-level failures (a dropped connection, a syntax error
+                        // surfacing lazily); those aren't per-row, MoveNextAsync would likely keep
+                        // throwing the same fault on every subsequent call, and routing them
+                        // through ItemErrorAction.Skip would spin the loop instead of terminating.
+                        rowIndex++;
+                        var action = HandleItemError
+                        (
+                            new ItemErrorContext
+                            (
+                                rowIndex,
+                                ex,
+                                rawContent: null
+                            )
+                        );
+                        if (action == ItemErrorAction.Abort)
+                        {
+                            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+                        }
+                        // ItemErrorAction.Skip — HandleItemError already incremented
+                        // the error-item counter on the base. Log and continue.
+                        LogDebugRowErrorSkipped(rowIndex, ex);
+                        continue;
+                    }
 
-                LogDebugRowExtracted(rowIndex);
-                IncrementCurrentItemCount();
-                yield return record;
+                    rowIndex++;
+
+                    if (rowIndex <= SkipItemCount)
+                    {
+                        IncrementCurrentSkippedItemCount();
+                        LogDebugRowSkipped(rowIndex);
+                        continue;
+                    }
+
+                    if (CurrentItemCount >= MaximumItemCount)
+                    {
+                        LogDebugMaxReached();
+                        LogExtractionCompleted();
+                        yield break;
+                    }
+
+                    LogDebugRowExtracted(rowIndex);
+                    IncrementCurrentItemCount();
+                    yield return record;
+                }
+            }
+            finally
+            {
+                await enumerator.DisposeAsync().ConfigureAwait(false);
             }
 
             LogExtractionCompleted();
@@ -848,6 +904,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 "Extracted row {RowIndex} (item #{ItemCount})",
                 rowIndex,
                 CurrentItemCount + 1
+            );
+        }
+    }
+
+
+
+    private void LogDebugRowErrorSkipped(long rowIndex, Exception exception)
+    {
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug
+            (
+                exception,
+                "Row {RowIndex} skipped by ErrorPolicy: {ExceptionMessage}",
+                rowIndex,
+                exception.Message
             );
         }
     }
