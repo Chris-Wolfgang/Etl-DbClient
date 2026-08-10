@@ -585,8 +585,10 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         CancellationToken token
     )
     {
-        // TestKit 0.22 contract: a pre-cancelled token must yield zero rows.
-        // netfx / netcoreapp3.1 Dapper can otherwise materialise one row first.
+        // Contract: a pre-cancelled token must load zero rows. Without this
+        // upfront check, a caller that cancels before invoking LoadAsync would
+        // still see the connection opened and (depending on timing) a write
+        // attempted before the first internal cancellation check fires.
         token.ThrowIfCancellationRequested();
         _stopwatch.Restart();
         CurrentErrorCount = 0;
