@@ -627,11 +627,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             // try/catch scope only cover the body, not the enumerator's own
             // MoveNextAsync — a bad-row exception thrown by Dapper's materialiser
             // would then bypass the policy entirely.
-            //
-            // On ItemErrorAction.Skip, HandleItemError already increments the
-            // skipped-items counter and returns false to indicate "swallow and
-            // continue"; on Abort it returns true and we rethrow with the
-            // original stack via ExceptionDispatchInfo.
             var enumerator = _connection
                 .QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType)
                 .GetAsyncEnumerator(token);
@@ -650,8 +645,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                         }
                         record = enumerator.Current;
                     }
-                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    catch (System.Data.DataException ex)
                     {
+                        // Scoped to DataException — the type Dapper wraps row-materialization
+                        // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
+                        // sees per-row failures. A broader `catch (Exception)` here would also
+                        // catch connection-level failures (a dropped connection, a syntax error
+                        // surfacing lazily); those aren't per-row, MoveNextAsync would likely keep
+                        // throwing the same fault on every subsequent call, and routing them
+                        // through ItemErrorAction.Skip would spin the loop instead of terminating.
                         rowIndex++;
                         var action = HandleItemError
                         (

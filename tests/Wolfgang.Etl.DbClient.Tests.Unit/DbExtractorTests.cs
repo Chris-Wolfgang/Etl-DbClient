@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.ErrorPolicies;
 using Wolfgang.Etl.TestKit.Xunit;
@@ -893,6 +894,35 @@ public class DbExtractorTests
         // No ErrorPolicy set — default is Abort, so pre-existing behavior
         // (the row's exception propagates) is preserved bit-for-bit.
         await Assert.ThrowsAnyAsync<Exception>
+        (
+            async () => await extractor.ExtractAsync().ToListAsync()
+        );
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_ErrorPolicy_is_Skip_still_propagates_non_row_failures()
+    {
+        using var conn = TestDb.CreateConnection();
+        using (var seed = conn.CreateCommand())
+        {
+            seed.CommandText = "CREATE TABLE People (first_name TEXT);";
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        // A bad column name fails at command execution, not row materialization —
+        // SQLite throws its own provider exception (SqliteException), never a
+        // Dapper DataException. ErrorPolicy only ever catches DataException, so
+        // this must propagate even under Skip — routing a connection/execution-level
+        // fault through ItemErrorAction would otherwise spin the read loop instead
+        // of terminating (MoveNextAsync would keep failing the same way forever).
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT nonexistent_column FROM People")
+        {
+            ErrorPolicy = ItemErrorPolicy.Skip
+        };
+
+        await Assert.ThrowsAsync<SqliteException>
         (
             async () => await extractor.ExtractAsync().ToListAsync()
         );
