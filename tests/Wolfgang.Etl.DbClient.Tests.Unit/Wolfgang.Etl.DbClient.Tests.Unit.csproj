@@ -14,7 +14,7 @@
          These TFMs only ever build on the Windows CI stage anyway, so a
          fixed win-x64 RID is safe here. -->
     <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">win-x64</RuntimeIdentifier>
-    <SelfContained Condition="'$(RuntimeIdentifier)' != ''">false</SelfContained>
+    <SelfContained Condition="'$(RuntimeIdentifier)' != '' AND '$(TargetFrameworkIdentifier)' == '.NETFramework'">false</SelfContained>
     <!-- RS0016 / RS0037: PublicApiAnalyzers fires on members emitted by the
          DbTableGenerator source generator into this test project (the
          [DbTable]-decorated fixtures GeneratedPerson / GeneratedOrder gain
