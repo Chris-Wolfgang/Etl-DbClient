@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+
+    <!-- Server GC + concurrent tuning — matches a production ETL workload
+         the library would run under. Same reasoning as tools/GcProfileWorkload. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+
+    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3, same treatment as the other
+         Microsoft.Data.Sqlite-referencing projects in this repo (see
+         fix/sqlitepclraw-ghsa-2m69 for the tracked fix, #318).
+         CA2007 / CA1849 / MA0004 / MA0048 / S3903 / VSTHRD200 — top-level
+         statements in a .exe workload, not library code; the
+         ConfigureAwait / sync-over-async discipline aimed at library
+         callers doesn't apply to an app entrypoint. -->
+    <NoWarn>$(NoWarn);NU1903;CA2007;CA1849;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Wolfgang.Etl.DbClient\Wolfgang.Etl.DbClient.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+  </ItemGroup>
+
+</Project>
