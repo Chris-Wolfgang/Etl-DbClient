@@ -17,13 +17,7 @@
 name: Shadow-testing
 
 on:
-  workflow_dispatch:
-    inputs:
-      rows:
-        description: "Row count for the paged ETL loop (default = the sample's built-in 100000)"
-        required: false
-        default: ""
-        type: string
+  workflow_dispatch: {}
   schedule:
     # Weekly Sunday 08:00 UTC — outside the Stryker (Sunday 06:00) +
     # gc-profile (Sunday 07:00) window so the three heavy scheduled
@@ -53,7 +47,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -92,33 +86,42 @@ jobs:
         # JSON line to stdout at the end. Redirect them separately so we
         # can persist the metrics line as a first-class artifact (that
         # the regression-gate follow-up PR consumes) AND the human log
-        # for post-mortem.
+        # for post-mortem. pwsh (not bash+jq) for the tagging step so it
+        # behaves identically on ubuntu-latest and windows-latest --
+        # this repo has never proven jq is on PATH in windows-latest's
+        # Git Bash, only ubuntu-latest. Context values come in via env:
+        # rather than inline ${{ }} expansion in the script body.
         if: steps.check.outputs.found == 'true'
-        shell: bash
+        shell: pwsh
+        env:
+          SHADOW_OS: ${{ matrix.os }}
+          SHADOW_SHA: ${{ github.sha }}
+          SHADOW_REF: ${{ github.ref }}
+          SHADOW_RUN_ID: ${{ github.run_id }}
         run: |
-          set -euo pipefail
-          mkdir -p reports
-          dotnet run --project samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj \
-            --configuration Release \
-            --no-build \
-            1> reports/metrics.json \
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path reports | Out-Null
+
+          dotnet run --project samples/Wolfgang.Etl.DbClient.Samples.ShadowConsumer/Wolfgang.Etl.DbClient.Samples.ShadowConsumer.csproj `
+            --configuration Release `
+            --no-build `
+            1> reports/metrics.json `
             2> reports/shadow.log
 
           # Tag the metrics with runner metadata so the follow-up
           # regression gate can pick the right baseline record.
-          jq --arg os "${{ matrix.os }}" \
-             --arg sha "${{ github.sha }}" \
-             --arg ref "${{ github.ref }}" \
-             --arg run_id "${{ github.run_id }}" \
-             '. + {os: $os, sha: $sha, ref: $ref, runId: $run_id}' \
-             reports/metrics.json > reports/metrics.tagged.json
-          mv reports/metrics.tagged.json reports/metrics.json
+          $metrics = Get-Content reports/metrics.json -Raw | ConvertFrom-Json
+          $metrics | Add-Member -NotePropertyName os -NotePropertyValue $env:SHADOW_OS
+          $metrics | Add-Member -NotePropertyName sha -NotePropertyValue $env:SHADOW_SHA
+          $metrics | Add-Member -NotePropertyName ref -NotePropertyValue $env:SHADOW_REF
+          $metrics | Add-Member -NotePropertyName runId -NotePropertyValue $env:SHADOW_RUN_ID
+          $metrics | ConvertTo-Json -Depth 10 | Set-Content reports/metrics.json
 
-          echo "=== shadow.log ==="
-          cat reports/shadow.log
-          echo
-          echo "=== metrics.json ==="
-          cat reports/metrics.json
+          Write-Host "=== shadow.log ==="
+          Get-Content reports/shadow.log
+          Write-Host ""
+          Write-Host "=== metrics.json ==="
+          Get-Content reports/metrics.json
 
       - name: Emit metrics to Step Summary
         if: steps.check.outputs.found == 'true'
@@ -139,3 +142,4 @@ jobs:
           name: shadow-${{ matrix.os }}
           path: reports/
           retention-days: 60
+          if-no-files-found: warn
