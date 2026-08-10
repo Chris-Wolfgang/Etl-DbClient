@@ -118,8 +118,14 @@
       the source path — this makes the explicit intent match the
       implicit behaviour and covers the intermediates the implicit
       normalisation misses.
+
+      Scoped to CI only (matching ContinuousIntegrationBuild's own
+      $(CI) condition above) so local dev builds keep real source
+      paths — rewriting them locally would break IDE step-into/
+      breakpoint source mapping for no reproducibility benefit, since
+      only CI-built artifacts get compared/published.
     -->
-    <PathMap>$(MSBuildThisFileDirectory)=/_/</PathMap>
+    <PathMap Condition="'$(CI)' == 'true'">$(MSBuildThisFileDirectory)=/_/</PathMap>
   </PropertyGroup>
 
   <ItemGroup>
