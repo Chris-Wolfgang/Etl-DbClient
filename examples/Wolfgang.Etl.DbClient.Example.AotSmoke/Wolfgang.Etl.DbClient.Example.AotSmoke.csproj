@@ -22,12 +22,7 @@
          informational (see .github/workflows/aot-smoke.yaml comments). -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
-    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 (transitive via Microsoft.Data.Sqlite)
-         is on GHSA-2m69-gcr7-jv3q with no patched version. Same treatment as
-         the other example projects. This assembly is never published; impact
-         limited to local + CI runs.
-
-         The rest of this NoWarn list is analyzer noise scoped ONLY to this
+    <!-- This NoWarn list is analyzer noise scoped ONLY to this
          smoke-test example, not the library. The example is a single-file
          Program.cs whose sole purpose is to exercise the AOT publish path —
          the library-level style rules don't add value here and demanding
@@ -46,7 +41,7 @@
          VSTHRD200 — "Async" suffix on methods returning awaitable types.
                    A local helper inside Program.cs isn't part of a
                    consumer API surface. -->
-    <NoWarn>$(NoWarn);NU1903;MA0004;MA0048;MA0051;VSTHRD200</NoWarn>
+    <NoWarn>$(NoWarn);MA0004;MA0048;MA0051;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,6 +53,8 @@
     <!-- Microsoft.Data.Sqlite for a real DbConnection to hand to the
          extractor / loader — no external service needed. -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
   </ItemGroup>
 
 </Project>

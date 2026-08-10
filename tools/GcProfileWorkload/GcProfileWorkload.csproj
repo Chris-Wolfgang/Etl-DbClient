@@ -13,12 +13,10 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
 
-    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 — same treatment as
-         benchmarks / examples.
-         CA2007: This is an .exe workload, not library code — the
+    <!-- CA2007: This is an .exe workload, not library code — the
          ConfigureAwait(false) discipline aimed at avoiding
          deadlocks in sync-over-async callers doesn't apply. -->
-    <NoWarn>$(NoWarn);NU1903;CA2007;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
+    <NoWarn>$(NoWarn);CA2007;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +25,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
   </ItemGroup>
 

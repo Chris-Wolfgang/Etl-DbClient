@@ -8,17 +8,20 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
-    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 (transitive from Microsoft.Data.Sqlite)
-         is on GHSA-2m69-gcr7-jv3q with no patched version available yet. Same
-         treatment as benchmarks/.../*.csproj and Tests.Integration. Test
-         assembly is never published; impact limited to local + CI runs. -->
+    <!-- SQLitePCLRaw.bundle_e_sqlite3 3.0.3's native SourceGear.sqlite3
+         dependency refuses AnyCPU builds on net471+ (net462/net47 aren't
+         affected — its buildTransitive assets only apply from net471 up).
+         These TFMs only ever build on the Windows CI stage anyway, so a
+         fixed win-x64 RID is safe here. -->
+    <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">win-x64</RuntimeIdentifier>
+    <SelfContained Condition="'$(RuntimeIdentifier)' != '' AND '$(TargetFrameworkIdentifier)' == '.NETFramework'">false</SelfContained>
     <!-- RS0016 / RS0037: PublicApiAnalyzers fires on members emitted by the
          DbTableGenerator source generator into this test project (the
          [DbTable]-decorated fixtures GeneratedPerson / GeneratedOrder gain
          a public `Insert` const + `Bind` helper). This assembly is never
          packaged — PublicAPI.txt contract doesn't apply. Same justification
          as the SourceGenerator project's local .editorconfig. -->
-    <NoWarn>$(NoWarn);MA0004;S1144;S6966;NU1903;RS0016;RS0037</NoWarn>
+    <NoWarn>$(NoWarn);MA0004;S1144;S6966;RS0016;RS0037</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -120,8 +123,11 @@
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
-    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
+    <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql.
+         The bundle_e_sqlite3/core line pulls patched native lib.e_sqlite3
+         3.50.3 transitively — don't pin lib.e_sqlite3 directly, that
+         package line never reached 3.50.x itself. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.9.0" />
     <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.9.0" />
   </ItemGroup>
