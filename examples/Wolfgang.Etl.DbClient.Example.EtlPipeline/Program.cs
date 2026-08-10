@@ -163,7 +163,7 @@ using (var cmd = live.CreateCommand())
 }
 
 var progress = new Progress<EtlPipelineProgress>(p =>
-    Console.WriteLine($"   ↪ loaded={p.RecordsLoaded}"));
+    Console.WriteLine($"   ↪ loaded={p.LoadedItemCount}"));
 
 await EtlPipeline
     .Create()
