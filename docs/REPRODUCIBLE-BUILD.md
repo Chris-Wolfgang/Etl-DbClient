@@ -1,6 +1,6 @@
 # Reproducible-build guarantee
 
-`Wolfgang.Etl.DbClient` claims **reproducible builds**: building the same tagged commit twice — same source, same SDK version, different runner OS — produces byte-identical `.dll` / `.pdb` / `.nupkg` outputs. Downstream consumers, SBOM validators, and third-party reproducers can rely on that guarantee.
+`Wolfgang.Etl.DbClient` targets **reproducible builds**: building the same tagged commit twice — same source, same SDK version, different runner OS — should produce byte-identical `.dll` / `.pdb` / `.nupkg` outputs. Same-OS reproducibility is achieved today; cross-OS byte-identity is tracked as in-progress work (see [Gate mode](#gate-mode-informational-non-blocking-today) below and [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
 
 ## What "reproducible" means here
 
@@ -35,9 +35,63 @@ The current tree isn't yet reproducible cross-OS — the deterministic knobs abo
 
 The follow-up work to close the gap and flip the gate to blocking is tracked in [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255) (candidate causes: PathMap coverage, SDK-emitted AssemblyMetadata attributes, source-generator file ordering, `.nupkg` zip-format determinism).
 
+## Per-release manifest
+
+Every published release ships a `reproducible-build-manifest.json` as a
+GitHub Release asset alongside the `.nupkg` / `.snupkg`. The manifest
+records the sha256 of every artifact plus enough metadata for a
+third-party reproducer to look up "what should I get if I rebuild this
+tag from source?" without needing to download the actual package first.
+
+Example (excerpt):
+
+```json
+{
+  "schemaVersion": 1,
+  "package": "Wolfgang.Etl.DbClient",
+  "tag": "v0.7.0",
+  "commitSha": "…",
+  "releasedAt": "2026-07-29T…Z",
+  "repository": "Chris-Wolfgang/Etl-DbClient",
+  "instructions": "https://github.com/Chris-Wolfgang/Etl-DbClient/blob/main/docs/REPRODUCIBLE-BUILD.md",
+  "artifacts": [
+    { "name": "Wolfgang.Etl.DbClient.0.7.0.nupkg",  "sha256": "…", "size": 123456 },
+    { "name": "Wolfgang.Etl.DbClient.0.7.0.snupkg", "sha256": "…", "size":  45678 }
+  ]
+}
+```
+
+Grab it from the release page:
+
+```bash
+gh release download v<version> --repo Chris-Wolfgang/Etl-DbClient --pattern reproducible-build-manifest.json
+```
+
+Or fetch directly:
+
+```bash
+curl -sSL -o reproducible-build-manifest.json \
+  "https://github.com/Chris-Wolfgang/Etl-DbClient/releases/download/v<version>/reproducible-build-manifest.json"
+```
+
+## Toolchain versions for verification
+
+The release build resolves the .NET SDK via `actions/setup-dotnet`'s
+floating `x.x.x` pins in `release.yaml` (the latest patch of each major
+line at build time — there's no `global.json` pinning an exact SDK
+build). For a rebuild to match, use the same major .NET SDK line the
+target TFM needs (e.g. the `10.0.x` SDK for `net10.0`) — check
+`release.yaml`'s `Setup .NET` step for the current list. Other tools
+used in the verification recipe below:
+
+- **GitHub CLI** ≥ 2.60 (for `gh attestation verify` support).
+- **`jq`** (for the manifest cross-check `sha256sum -c` pipeline).
+- **`sha256sum`** (GNU coreutils, or an equivalent — `shasum -a 256` on macOS).
+
 ## Verify a released build yourself
 
-To confirm a NuGet package on nuget.org actually came from the tagged commit and reproduces from source:
+To confirm a NuGet package on nuget.org actually came from the tagged
+commit and reproduces from source:
 
 ```bash
 # 1. Clone the tagged commit.
@@ -52,15 +106,61 @@ dotnet build src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
 dotnet pack src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj \
   --no-build --configuration Release --output my-artifacts
 
-# 3. Download the published package.
-curl -sSL -o published.nupkg \
+# 3. Download the published package + snupkg + the manifest, keeping
+#    NuGet's own filenames so they line up with what the manifest lists.
+curl -sSL -o "Wolfgang.Etl.DbClient.<version>.nupkg" \
   "https://api.nuget.org/v3-flatcontainer/wolfgang.etl.dbclient/<version>/wolfgang.etl.dbclient.<version>.nupkg"
+curl -sSL -o "Wolfgang.Etl.DbClient.<version>.snupkg" \
+  "https://api.nuget.org/v3-flatcontainer/wolfgang.etl.dbclient/<version>/wolfgang.etl.dbclient.<version>.snupkg"
+gh release download v<version> --repo Chris-Wolfgang/Etl-DbClient \
+  --pattern reproducible-build-manifest.json
 
-# 4. sha256sum both. They should match.
-sha256sum my-artifacts/Wolfgang.Etl.DbClient.<version>.nupkg published.nupkg
+# 4. Cross-check three ways:
+#    - your local rebuild vs the NuGet-published binaries
+sha256sum my-artifacts/Wolfgang.Etl.DbClient.<version>.nupkg Wolfgang.Etl.DbClient.<version>.nupkg
+sha256sum my-artifacts/Wolfgang.Etl.DbClient.<version>.snupkg Wolfgang.Etl.DbClient.<version>.snupkg
+#    - the NuGet-published binaries vs the manifest's declared hashes
+#      (filenames must match what step 3 downloaded them as)
+jq -r '.artifacts[] | "\(.sha256)  \(.name)"' reproducible-build-manifest.json | \
+  sha256sum -c --ignore-missing
 ```
 
-If the digests differ, either the tag doesn't correspond to the published binary (audit the release-workflow log for that tag) or a reproducibility knob regressed between publish time and now (compare against the artifact manifests uploaded by the reproducible-build workflow for that commit).
+All three checks should match. If they don't:
+
+- **Local rebuild ≠ NuGet-published**: either the tag doesn't correspond to the published binary (audit the release-workflow log for that tag) or a reproducibility knob regressed between publish time and now.
+- **NuGet-published ≠ manifest**: the release was tampered with after publish. This is a serious supply-chain event — file a [discrepancy issue](#file-a-discrepancy) immediately.
+
+## File a discrepancy
+
+If your local rebuild does not match the manifest's declared sha256:
+
+1. Open an issue at `https://github.com/Chris-Wolfgang/Etl-DbClient/issues/new` with title `reproducibility: <version> divergence on <OS>`.
+2. Include:
+   - The version tag you built.
+   - Your `dotnet --info` output (SDK version, OS, RID).
+   - Both sha256 values (your rebuild's, and the manifest's declared).
+   - Any local modifications to `Directory.Build.props`, `global.json`, or environment (`DOTNET_ROOT`, `MSBUILDDISABLENODEREUSE`, etc).
+
+The maintainer investigates by reproducing your environment on a clean runner and either issues an errata for the release or documents the specific knob that leaked.
+
+## Third-party verification attestations
+
+Wolfgang.Etl.DbClient participates in the [Reproducible Builds project](https://reproducible-builds.org/) conventions for cross-verifier attestations.
+
+A third party who has independently rebuilt a tagged release and gotten matching bytes can publish that fact:
+
+1. Follow the Reproducible Builds project's [rebuilderd](https://reproducible-builds.org/tools/#rebuilderd) or `in-toto` attestation format.
+2. Sign the attestation with your GPG key or a Sigstore identity.
+3. Publish somewhere durable (a personal git repo, a rebuilders' index, etc.).
+4. Optionally: open an issue on this repo referencing your attestation so it can be linked from the release page.
+
+The GitHub Release itself already carries a Sigstore-keyless [SLSA build-provenance attestation](https://slsa.dev/spec/v1.0/provenance) generated by `attest-build-provenance` in `release.yaml`. Consumers can verify it with:
+
+```bash
+gh attestation verify <path-to-downloaded.nupkg> --owner Chris-Wolfgang --repo Etl-DbClient
+```
+
+The SLSA attestation proves "this .nupkg was built by this release-workflow run at this commit." The reproducibility manifest + third-party attestations layer on top to prove "…and building from source deterministically produces the same bytes."
 
 ## What can break reproducibility
 
