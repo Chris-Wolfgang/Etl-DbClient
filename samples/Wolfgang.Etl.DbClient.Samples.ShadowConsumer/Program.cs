@@ -40,8 +40,17 @@ using var dest = new SqliteConnection("Data Source=:memory:");
 await src.OpenAsync();
 await dest.OpenAsync();
 
-await Ddl(src, "CREATE TABLE widget (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL);");
-await Ddl(dest, "CREATE TABLE widget_projected (id INTEGER PRIMARY KEY, upper_name TEXT NOT NULL, price REAL NOT NULL);");
+using (var cmd = src.CreateCommand())
+{
+    cmd.CommandText = "CREATE TABLE widget (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL);";
+    await cmd.ExecuteNonQueryAsync();
+}
+
+using (var cmd = dest.CreateCommand())
+{
+    cmd.CommandText = "CREATE TABLE widget_projected (id INTEGER PRIMARY KEY, upper_name TEXT NOT NULL, price REAL NOT NULL);";
+    await cmd.ExecuteNonQueryAsync();
+}
 await SeedSourceAsync(src, totalRows);
 
 // Baseline GC counters — everything after this point is measured.
@@ -127,14 +136,6 @@ Console.WriteLine(JsonSerializer.Serialize(metrics));
 // -----------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------
-
-static async Task Ddl(SqliteConnection conn, string sql)
-{
-    using var cmd = conn.CreateCommand();
-    // nosemgrep: csharp.lang.security.sqli.csharp-sqli.csharp-sqli
-    cmd.CommandText = sql;
-    await cmd.ExecuteNonQueryAsync();
-}
 
 static async Task SeedSourceAsync(SqliteConnection conn, int rowCount)
 {

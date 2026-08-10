@@ -13,14 +13,11 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
 
-    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3, same treatment as the other
-         Microsoft.Data.Sqlite-referencing projects in this repo (see
-         fix/sqlitepclraw-ghsa-2m69 for the tracked fix, #318).
-         CA2007 / CA1849 / MA0004 / MA0048 / S3903 / VSTHRD200 — top-level
+    <!-- CA2007 / CA1849 / MA0004 / MA0048 / S3903 / VSTHRD200 — top-level
          statements in a .exe workload, not library code; the
          ConfigureAwait / sync-over-async discipline aimed at library
          callers doesn't apply to an app entrypoint. -->
-    <NoWarn>$(NoWarn);NU1903;CA2007;CA1849;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
+    <NoWarn>$(NoWarn);CA2007;CA1849;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +27,11 @@
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql.
+         The bundle_e_sqlite3/core line pulls patched native lib.e_sqlite3
+         3.50.3 transitively — don't pin lib.e_sqlite3 directly, that
+         package line never reached 3.50.x itself. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
   </ItemGroup>
 
 </Project>

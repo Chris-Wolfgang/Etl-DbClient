@@ -128,7 +128,11 @@ jobs:
           # gen1/gen2 collections are noisier — allow doubling.
           # rowsPerSecond is the throughput inverse of elapsedMs; failing
           # on both would be redundant, so gate ONLY elapsedMs on latency.
-          python3 - <<'PY'
+          # windows-latest's pre-installed Python is only on PATH as
+          # `python`, not `python3` — pick whichever exists.
+          PYTHON_BIN=python3
+          command -v python3 >/dev/null 2>&1 || PYTHON_BIN=python
+          "$PYTHON_BIN" - <<'PY'
           import json, os, sys
 
           strict = os.environ.get("STRICT", "false").lower() == "true"
