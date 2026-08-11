@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786309150177,
+  "lastUpdate": 1786469676222,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlite)": [
@@ -498,6 +498,48 @@ window.BENCHMARK_DATA = {
             "value": 5874905.04375,
             "unit": "ns",
             "range": "± 17319.588978744952"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd9a209e893ee6a0869435fb80379da276b8ac59",
+          "message": "Merge pull request #319 from Chris-Wolfgang/vNext\n\nvNext: reproducible-build fix + shadow testing + SQLitePCLRaw GHSA fix",
+          "timestamp": "2026-08-11T13:03:23-04:00",
+          "tree_id": "4e65e690e5adc5d13812d44239ed87ac6fda2ed1",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/cd9a209e893ee6a0869435fb80379da276b8ac59"
+        },
+        "date": 1786469674294,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 60867.50626046317,
+            "unit": "ns",
+            "range": "± 514.2449997771564"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 547177.7157389323,
+            "unit": "ns",
+            "range": "± 1687.523387996883"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 5412306.468191965,
+            "unit": "ns",
+            "range": "± 33804.868354263446"
           }
         ]
       }
