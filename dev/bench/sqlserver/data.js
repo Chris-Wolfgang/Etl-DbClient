@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786309311668,
+  "lastUpdate": 1786469818894,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlserver)": [
@@ -498,6 +498,48 @@ window.BENCHMARK_DATA = {
             "value": 5127455.142708333,
             "unit": "ns",
             "range": "± 58599.022504728244"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cd9a209e893ee6a0869435fb80379da276b8ac59",
+          "message": "Merge pull request #319 from Chris-Wolfgang/vNext\n\nvNext: reproducible-build fix + shadow testing + SQLitePCLRaw GHSA fix",
+          "timestamp": "2026-08-11T13:03:23-04:00",
+          "tree_id": "4e65e690e5adc5d13812d44239ed87ac6fda2ed1",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/cd9a209e893ee6a0869435fb80379da276b8ac59"
+        },
+        "date": 1786469816385,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 385242.21026141825,
+            "unit": "ns",
+            "range": "± 2800.7825909386397"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 797040.2098858173,
+            "unit": "ns",
+            "range": "± 1817.0575833555486"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 4697863.878645834,
+            "unit": "ns",
+            "range": "± 76806.50739726888"
           }
         ]
       }
