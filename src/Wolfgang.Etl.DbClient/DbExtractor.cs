@@ -581,84 +581,79 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
             long rowIndex = 0;
 
-            // The Dapper stream is enumerated with a manual MoveNextAsync loop so
-            // per-row failures (a mapper throw on a bad column, an unexpected null
-            // hitting a non-nullable property) can be routed through the base
-            // class's ErrorPolicy pipeline. `await foreach` would let the loop's
-            // try/catch scope only cover the body, not the enumerator's own
-            // MoveNextAsync — a bad-row exception thrown by Dapper's materialiser
-            // would then bypass the policy entirely.
-            var enumerator = _connection
-                .QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType)
-                .GetAsyncEnumerator(token);
-            try
+            // The reader is driven with a manual ReadAsync loop, and row mapping
+            // goes through a standalone Dapper row-parser delegate, rather than
+            // Dapper's own QueryUnbufferedAsync<T> IAsyncEnumerable. That matters:
+            // QueryUnbufferedAsync's read-and-map loop lives inside ONE compiler-
+            // generated async-iterator state machine. When mapping throws mid-loop,
+            // the iterator's finally block runs and the state machine transitions
+            // to "finished" — so even catching the exception at the call site,
+            // the NEXT MoveNextAsync just returns false. Skip would silently
+            // truncate the result set after the first bad row instead of
+            // continuing past it. Reading via our own loop keeps ReadAsync's
+            // cursor alive across a caught mapping failure, so Skip actually
+            // skips-and-continues.
+            var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
+            using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            var parseRow = reader.GetRowParser<TRecord>();
+
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
-                while (true)
+                token.ThrowIfCancellationRequested();
+
+                TRecord record;
+                try
                 {
-                    token.ThrowIfCancellationRequested();
-
-                    TRecord record;
-                    try
-                    {
-                        if (!await enumerator.MoveNextAsync().ConfigureAwait(false))
-                        {
-                            break;
-                        }
-                        record = enumerator.Current;
-                    }
-                    catch (System.Data.DataException ex)
-                    {
-                        // Scoped to DataException — the type Dapper wraps row-materialization
-                        // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
-                        // sees per-row failures. A broader `catch (Exception)` here would also
-                        // catch connection-level failures (a dropped connection, a syntax error
-                        // surfacing lazily); those aren't per-row, MoveNextAsync would likely keep
-                        // throwing the same fault on every subsequent call, and routing them
-                        // through ItemErrorAction.Skip would spin the loop instead of terminating.
-                        rowIndex++;
-                        var action = HandleItemError
-                        (
-                            new ItemErrorContext
-                            (
-                                rowIndex,
-                                ex,
-                                rawContent: null
-                            )
-                        );
-                        if (action == ItemErrorAction.Abort)
-                        {
-                            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
-                        }
-                        // ItemErrorAction.Skip — HandleItemError already incremented
-                        // the error-item counter on the base. Log and continue.
-                        LogDebugRowErrorSkipped(rowIndex, ex);
-                        continue;
-                    }
-
-                    rowIndex++;
-
-                    if (rowIndex <= SkipItemCount)
-                    {
-                        IncrementCurrentSkippedItemCount();
-                        LogDebugRowSkipped(rowIndex);
-                        continue;
-                    }
-
-                    if (CurrentItemCount >= MaximumItemCount)
-                    {
-                        LogDebugMaxReached();
-                        LogExtractionCompleted();
-                        yield break;
-                    }
-
-                    LogDebugRowExtracted(rowIndex);
-                    IncrementCurrentItemCount();
-                    yield return record;
+                    record = parseRow(reader);
                 }
-            }
-            finally
-            {
-                await enumerator.DisposeAsync().ConfigureAwait(false);
+                catch (System.Data.DataException ex)
+                {
+                    // Scoped to DataException — the type Dapper wraps row-materialization
+                    // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
+                    // sees per-row failures. A broader `catch (Exception)` here would also
+                    // catch connection-level failures (a dropped connection, a syntax error
+                    // surfacing lazily); those aren't per-row, and ReadAsync would likely keep
+                    // throwing the same fault on every subsequent call, so routing them
+                    // through ItemErrorAction.Skip would spin the loop instead of terminating.
+                    rowIndex++;
+                    var action = HandleItemError
+                    (
+                        new ItemErrorContext
+                        (
+                            rowIndex,
+                            ex,
+                            rawContent: null
+                        )
+                    );
+                    if (action == ItemErrorAction.Abort)
+                    {
+                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+                    }
+                    // ItemErrorAction.Skip — HandleItemError already incremented
+                    // the error-item counter on the base. Log and continue.
+                    LogDebugRowErrorSkipped(rowIndex, ex);
+                    continue;
+                }
+
+                rowIndex++;
+
+                if (rowIndex <= SkipItemCount)
+                {
+                    IncrementCurrentSkippedItemCount();
+                    LogDebugRowSkipped(rowIndex);
+                    continue;
+                }
+
+                if (CurrentItemCount >= MaximumItemCount)
+                {
+                    LogDebugMaxReached();
+                    LogExtractionCompleted();
+                    yield break;
+                }
+
+                LogDebugRowExtracted(rowIndex);
+                IncrementCurrentItemCount();
+                yield return record;
             }
 
             LogExtractionCompleted();

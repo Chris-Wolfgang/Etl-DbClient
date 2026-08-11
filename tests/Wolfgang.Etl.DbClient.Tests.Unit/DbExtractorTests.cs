@@ -841,7 +841,8 @@ public class DbExtractorTests
             seed.CommandText = @"
                 CREATE TABLE People (first_name TEXT, age INTEGER);
                 INSERT INTO People (first_name, age) VALUES ('Ada', 30);
-                INSERT INTO People (first_name, age) VALUES ('Bad', 'oops');";
+                INSERT INTO People (first_name, age) VALUES ('Bad', 'oops');
+                INSERT INTO People (first_name, age) VALUES ('Zoe', 40);";
             await seed.ExecuteNonQueryAsync();
         }
 
@@ -852,10 +853,15 @@ public class DbExtractorTests
 
         var results = await extractor.ExtractAsync().ToListAsync();
 
-        // Only the good row survives; the bad row bumped the error-item counter
-        // instead of aborting or landing a half-mapped record.
-        Assert.Single(results);
+        // Both good rows survive, including the one AFTER the bad row — proves
+        // Skip actually continues extraction instead of silently truncating at
+        // the first error. (Regression guard: an earlier implementation drove
+        // the read loop through Dapper's QueryUnbufferedAsync<T> IAsyncEnumerable,
+        // whose single async-iterator state machine finishes on any exception —
+        // 'Zoe' never appeared because the enumerator was already done.)
+        Assert.Equal(2, results.Count);
         Assert.Equal("Ada", results[0].FirstName);
+        Assert.Equal("Zoe", results[1].FirstName);
         Assert.Equal(1, extractor.CurrentErrorItemCount);
     }
 
