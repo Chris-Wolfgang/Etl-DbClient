@@ -125,7 +125,10 @@ jobs:
         run: |
           set -euo pipefail
           # Thresholds: per #130 AC (20% latency, 50% allocations).
-          # gen1/gen2 collections are noisier — allow doubling.
+          # gen1/gen2 collections are noisy on small per-run sample counts
+          # (e.g. 2 -> 5 collections is a 150% swing with no change in
+          # allocatedBytes/bytesPerRow) — widened to 3x (200%) on
+          # 2026-08-11 after that exact false-positive on PR #326.
           # rowsPerSecond is the throughput inverse of elapsedMs; failing
           # on both would be redundant, so gate ONLY elapsedMs on latency.
           # windows-latest's pre-installed Python is only on PATH as
@@ -148,8 +151,8 @@ jobs:
               "allocatedBytes":    ("up",   0.50),
               "bytesPerRow":       ("up",   0.50),
               "gen0Collections":   ("up",   0.50),
-              "gen1Collections":   ("up",   1.00),
-              "gen2Collections":   ("up",   1.00),
+              "gen1Collections":   ("up",   2.00),
+              "gen2Collections":   ("up",   2.00),
           }
 
           rows = []
@@ -162,16 +165,16 @@ jobs:
                   continue
               # Skip zero-baseline rules for gen1/gen2 (noise on tiny values).
               if b == 0:
-                  rows.append((m, b, c, "-", "baseline=0 → skipped"))
+                  rows.append((m, b, c, "-", "baseline=0 -> skipped"))
                   continue
               delta = (c - b) / b if direction == "up" else (b - c) / b
               limit = thresh
               status = "ok"
               if delta > limit:
-                  status = f"REGRESS Δ={delta*100:.1f}% (>{limit*100:.0f}%)"
+                  status = f"REGRESS delta={delta*100:.1f}% (>{limit*100:.0f}%)"
                   any_regress = True
               elif strict and delta > 0:
-                  status = f"drift Δ={delta*100:.1f}% (strict)"
+                  status = f"drift delta={delta*100:.1f}% (strict)"
                   any_regress = True
               rows.append((m, b, c, f"{delta*100:+.1f}%", status))
 
@@ -286,7 +289,7 @@ jobs:
               echo "- Baseline source: \`https://chris-wolfgang.github.io/Etl-DbClient/dev/shadow/$OS.json\`"
               echo "- Artifact: \`shadow-regression-$OS\` on the run above (retention 60 days)"
               echo ""
-              echo "Thresholds are documented in \`.github/workflows/shadow-regression.yaml\` and were set to defaults per #130's AC: 20% latency, 50% allocations, 50% gen0, 100% gen1/gen2 (noisier)."
+              echo "Thresholds are documented in \`.github/workflows/shadow-regression.yaml\` and were set to defaults per #130's AC: 20% latency, 50% allocations, 50% gen0, 200% gen1/gen2 (noisier)."
               echo ""
               echo "Close this issue once the regression is either accepted (bump baseline via a manual \`workflow_dispatch\` on shadow-baseline.yaml) or resolved (fix the perf regression). The next workflow_dispatch run that still regresses on the same OS re-opens a fresh one automatically."
               echo ""
