@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "runtime": "10.0.10",
+  "serverGc": true,
+  "scenario": "paged-etl",
+  "rows": 100000,
+  "loaded": 100000,
+  "elapsedMs": 2930,
+  "rowsPerSecond": 34129,
+  "allocatedBytes": 269213672,
+  "bytesPerRow": 2692,
+  "gen0Collections": 80,
+  "gen1Collections": 6,
+  "gen2Collections": 0,
+  "peakWorkingSetBytes": 71663616,
+  "os": "ubuntu-latest",
+  "sha": "cd9a209e893ee6a0869435fb80379da276b8ac59",
+  "capturedAt": "2026-08-11T17:04:05Z",
+  "kind": "baseline"
+}
