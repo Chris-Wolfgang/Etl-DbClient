@@ -125,7 +125,14 @@ jobs:
         run: |
           set -euo pipefail
           # Thresholds: per #130 AC (20% latency, 50% allocations).
-          # gen1/gen2 collections are noisier — allow doubling.
+          # gen1/gen2 collections are noisy on small per-run sample counts
+          # (observed 2, 5, 8 collections across otherwise-identical runs
+          # of PR #326/#327 with unchanged allocatedBytes/bytesPerRow) --
+          # percentage alone can't gate a metric that swings this much on
+          # tiny integers, so gen1/gen2 also require an absolute floor
+          # (see ABS_FLOOR below) on top of the percentage threshold.
+          # Added 2026-08-11 after the plain-percentage widening (100%,
+          # then 200%) both still false-triggered on PR #326.
           # rowsPerSecond is the throughput inverse of elapsedMs; failing
           # on both would be redundant, so gate ONLY elapsedMs on latency.
           # windows-latest's pre-installed Python is only on PATH as
@@ -140,21 +147,25 @@ jobs:
           with open("reports/current.json") as f:  cur = json.load(f)
           with open("reports/baseline.json") as f: base = json.load(f)
 
-          # metric -> (direction, threshold_frac)
+          # metric -> (direction, threshold_frac, abs_floor)
           #   direction: "up" means values > baseline are worse; "down" means values < baseline are worse.
           #   threshold_frac: allowed delta beyond baseline (0.20 = 20%).
+          #   abs_floor: if set, the RAW count must ALSO grow by at least this many
+          #     collections before the percentage threshold can trigger a REGRESS --
+          #     keeps tiny-integer noise (e.g. 2 -> 5) from tripping the gate even at
+          #     a wide percentage threshold. None = no floor (percentage alone gates).
           rules = {
-              "elapsedMs":         ("up",   0.20),
-              "allocatedBytes":    ("up",   0.50),
-              "bytesPerRow":       ("up",   0.50),
-              "gen0Collections":   ("up",   0.50),
-              "gen1Collections":   ("up",   1.00),
-              "gen2Collections":   ("up",   1.00),
+              "elapsedMs":         ("up",   0.20, None),
+              "allocatedBytes":    ("up",   0.50, None),
+              "bytesPerRow":       ("up",   0.50, None),
+              "gen0Collections":   ("up",   0.50, None),
+              "gen1Collections":   ("up",   2.00, 15),
+              "gen2Collections":   ("up",   2.00, 15),
           }
 
           rows = []
           any_regress = False
-          for m, (direction, thresh) in rules.items():
+          for m, (direction, thresh, abs_floor) in rules.items():
               b = base.get(m)
               c = cur.get(m)
               if b is None or c is None:
@@ -162,16 +173,17 @@ jobs:
                   continue
               # Skip zero-baseline rules for gen1/gen2 (noise on tiny values).
               if b == 0:
-                  rows.append((m, b, c, "-", "baseline=0 → skipped"))
+                  rows.append((m, b, c, "-", "baseline=0 -> skipped"))
                   continue
               delta = (c - b) / b if direction == "up" else (b - c) / b
+              abs_delta = c - b
               limit = thresh
               status = "ok"
-              if delta > limit:
-                  status = f"REGRESS Δ={delta*100:.1f}% (>{limit*100:.0f}%)"
+              if delta > limit and (abs_floor is None or abs(abs_delta) >= abs_floor):
+                  status = f"REGRESS delta={delta*100:.1f}% (>{limit*100:.0f}%), abs={abs_delta:+d}"
                   any_regress = True
               elif strict and delta > 0:
-                  status = f"drift Δ={delta*100:.1f}% (strict)"
+                  status = f"drift delta={delta*100:.1f}% (strict)"
                   any_regress = True
               rows.append((m, b, c, f"{delta*100:+.1f}%", status))
 
@@ -286,7 +298,7 @@ jobs:
               echo "- Baseline source: \`https://chris-wolfgang.github.io/Etl-DbClient/dev/shadow/$OS.json\`"
               echo "- Artifact: \`shadow-regression-$OS\` on the run above (retention 60 days)"
               echo ""
-              echo "Thresholds are documented in \`.github/workflows/shadow-regression.yaml\` and were set to defaults per #130's AC: 20% latency, 50% allocations, 50% gen0, 100% gen1/gen2 (noisier)."
+              echo "Thresholds are documented in \`.github/workflows/shadow-regression.yaml\` and were set to defaults per #130's AC: 20% latency, 50% allocations, 50% gen0, 200% + 15-collection absolute floor for gen1/gen2 (noisier)."
               echo ""
               echo "Close this issue once the regression is either accepted (bump baseline via a manual \`workflow_dispatch\` on shadow-baseline.yaml) or resolved (fix the perf regression). The next workflow_dispatch run that still regresses on the same OS re-opens a fresh one automatically."
               echo ""
