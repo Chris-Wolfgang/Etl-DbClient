@@ -1,4 +1,3 @@
-using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
@@ -37,19 +36,6 @@ public class DbLoaderTests
         new ContractRecord { Name = "Item5", Value = 50 },
     };
 
-
-
-    /// <inheritdoc/>
-    protected override DbLoader<ContractRecord> CreateSutWithTimer(IProgressTimer timer)
-    {
-        var conn = TestDb.CreateContractLoaderConnection();
-        return new DbLoader<ContractRecord>
-        (
-            conn,
-            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
-            timer
-        );
-    }
 
 
     // ------------------------------------------------------------------
@@ -681,31 +667,13 @@ public class DbLoaderTests
 
     // ------------------------------------------------------------------
     // IsDryRun (#21)
+    //
+    // Property-contract coverage (defaults, roundtrip, set-back-to-false)
+    // is provided by SupportsDryRunContractTests<DbLoader<T>> — see
+    // DbLoaderSupportsDryRunContractTests. Only the batched behavioural
+    // scenario remains here because the contract's default per-row path
+    // doesn't reach the InsertBatchSize code path.
     // ------------------------------------------------------------------
-
-    [Fact]
-    public void IsDryRun_defaults_to_false()
-    {
-        using var conn = TestDb.CreateConnection();
-        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
-
-        Assert.False(loader.IsDryRun);
-    }
-
-
-
-    [Fact]
-    public void IsDryRun_set_and_get_roundtrips()
-    {
-        using var conn = TestDb.CreateConnection();
-        var loader = new DbLoader<PersonRecord>(conn, "INSERT INTO People (first_name) VALUES (@FirstName)");
-
-        loader.IsDryRun = true;
-
-        Assert.True(loader.IsDryRun);
-    }
-
-
 
     [Fact]
     public async Task LoadAsync_when_IsDryRun_is_true_does_not_write_to_database()

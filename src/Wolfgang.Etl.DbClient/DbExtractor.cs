@@ -74,9 +74,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     private readonly DynamicParameters? _dynamicParameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
-    private readonly IProgressTimer? _progressTimer;
     private readonly Stopwatch _stopwatch = new();
-    private int _progressTimerWired;
     private int? _totalItemCount;
 
 
@@ -231,25 +229,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         conn.ConnectionString = connectionString;
         _connection = conn;
         _ownsConnection = true;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
-    }
-
-
-
-    /// <summary>
-    /// Internal constructor for timer injection (testing).
-    /// </summary>
-    internal DbExtractor
-    (
-        DbConnection connection,
-        string commandText,
-        IProgressTimer timer,
-        ILogger<DbExtractor<TRecord>>? logger = null
-    )
-    {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
         _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
@@ -566,24 +545,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <inheritdoc/>
-    protected override IProgressTimer CreateProgressTimer(IProgress<DbReport> progress)
-    {
-        if (_progressTimer != null)
-        {
-            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-            {
-                _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-            }
-
-            return _progressTimer;
-        }
-
-        return base.CreateProgressTimer(progress);
-    }
-
-
-
-    /// <inheritdoc/>
 #pragma warning disable MA0051
     protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([EnumeratorCancellation] CancellationToken token)
 #pragma warning restore MA0051
@@ -620,9 +581,60 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
             long rowIndex = 0;
 
-            await foreach (var record in _connection.QueryUnbufferedAsync<TRecord>(commandText, param, _transaction, CommandTimeoutSeconds, CommandType).ConfigureAwait(false))
+            // The reader is driven with a manual ReadAsync loop, and row mapping
+            // goes through a standalone Dapper row-parser delegate, rather than
+            // Dapper's own QueryUnbufferedAsync<T> IAsyncEnumerable. That matters:
+            // QueryUnbufferedAsync's read-and-map loop lives inside ONE compiler-
+            // generated async-iterator state machine. When mapping throws mid-loop,
+            // the iterator's finally block runs and the state machine transitions
+            // to "finished" — so even catching the exception at the call site,
+            // the NEXT MoveNextAsync just returns false. Skip would silently
+            // truncate the result set after the first bad row instead of
+            // continuing past it. Reading via our own loop keeps ReadAsync's
+            // cursor alive across a caught mapping failure, so Skip actually
+            // skips-and-continues.
+            var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
+            using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            var parseRow = reader.GetRowParser<TRecord>();
+
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
                 token.ThrowIfCancellationRequested();
+
+                TRecord record;
+                try
+                {
+                    record = parseRow(reader);
+                }
+                catch (System.Data.DataException ex)
+                {
+                    // Scoped to DataException — the type Dapper wraps row-materialization
+                    // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
+                    // sees per-row failures. Catching every exception type here would also
+                    // catch connection-level failures (a dropped connection, a syntax error
+                    // surfacing lazily); those aren't per-row, and ReadAsync would likely keep
+                    // throwing the same fault on every subsequent call, so routing them
+                    // through ItemErrorAction.Skip would spin the loop instead of terminating.
+                    rowIndex++;
+                    var action = HandleItemError
+                    (
+                        new ItemErrorContext
+                        (
+                            rowIndex,
+                            ex,
+                            rawContent: null
+                        )
+                    );
+                    if (action == ItemErrorAction.Abort)
+                    {
+                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+                    }
+                    // ItemErrorAction.Skip — HandleItemError already incremented
+                    // the error-item counter on the base. Log and continue.
+                    LogDebugRowErrorSkipped(rowIndex, ex);
+                    continue;
+                }
+
                 rowIndex++;
 
                 if (rowIndex <= SkipItemCount)
@@ -848,6 +860,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 "Extracted row {RowIndex} (item #{ItemCount})",
                 rowIndex,
                 CurrentItemCount + 1
+            );
+        }
+    }
+
+
+
+    private void LogDebugRowErrorSkipped(long rowIndex, Exception exception)
+    {
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug
+            (
+                exception,
+                "Row {RowIndex} skipped by ErrorPolicy: {ExceptionMessage}",
+                rowIndex,
+                exception.Message
             );
         }
     }

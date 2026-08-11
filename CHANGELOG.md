@@ -19,6 +19,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.8.0] - 2026-08-11
+
+MINOR release. Adds per-row error handling on `DbExtractor<T>`, plus
+reproducible-build and shadow-testing CI infrastructure. Includes one
+narrow, behaviorally-inert protected-API removal — see below.
+
+### Added
+
+- **`DbExtractor<T>.ErrorPolicy`** — per-row error handling for
+  extraction, driven by `Wolfgang.Etl.ErrorPolicies`:
+  ```csharp
+  using Wolfgang.Etl.ErrorPolicies;
+
+  var extractor = new DbExtractor<Order>(conn, sql)
+  {
+      ErrorPolicy = ItemErrorPolicy.SkipAndLog(logger)
+      // or .Skip / .Abort / .SkipAndDeadLetter(deadLetters) / .SkipDeadLetterAndLog(...)
+  };
+  ```
+  A row that fails to materialize (a Dapper column-mapping error) is
+  routed through the policy instead of always aborting the whole
+  extraction. Default is `Abort`, preserving prior behavior when unset.
+  `DbLoader<T>` wiring is deferred — batching + auto-transaction make
+  Skip-vs-Abort semantics non-trivial there.
+- **Reproducible builds**: `<PathMap>` normalizes MSBuild-computed
+  intermediate paths so Linux and Windows CI produce byte-identical
+  PDBs (#255); `release.yaml` now publishes a
+  `reproducible-build-manifest.json` release asset with the sha256 of
+  every shipped artifact, and `docs/REPRODUCIBLE-BUILD.md` documents
+  the consumer-side verification recipe (#155).
+- **Shadow testing** (#130) — a sample consumer workload + CI
+  (`shadow.yaml`, `shadow-baseline.yaml`, `shadow-regression.yaml`)
+  captures latency/allocation/GC metrics on a nightly cadence and gates
+  PRs against a recorded baseline.
+
+### Changed
+
+- Bumped `Wolfgang.Etl.Abstractions` to `0.21.0` and
+  `Wolfgang.Etl.TestKit`(.Xunit) to `0.14.0`.
+
+### Removed
+
+- **`DbExtractor<T>.CreateProgressTimer` / `DbLoader<T>.CreateProgressTimer`
+  protected overrides removed** (subclassing surface only — no public,
+  init, or settable member disappears). These existed solely to support
+  an `internal`, test-only `IProgressTimer`-injection constructor that's
+  also removed; for every external caller the override always delegated
+  straight to the base implementation, so behavior is unchanged for any
+  real consumer. Progress-timer testability now goes through
+  `Wolfgang.Etl.TestKit`'s `ManualProgressTimerCore` +
+  `WithManualProgressTimer<>`, which needs no per-library plumbing.
+  Flagged as a MINOR-triggering change out of caution, since these were
+  part of the shipped API surface since v0.2.1.
+
+### Fixed
+
+- `SQLitePCLRaw.lib.e_sqlite3` GHSA-2m69-gcr7-jv3q (high severity) —
+  pinned `SQLitePCLRaw.bundle_e_sqlite3` 3.0.3 across dev/test-only
+  projects. Never affected the shipped package.
+
 ## [0.7.1] - 2026-08-09
 
 Patch release — one correctness fix, one packaging-safety addition,

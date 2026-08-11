@@ -1,5 +1,6 @@
 using Dapper;
-using Wolfgang.Etl.Abstractions;
+using Microsoft.Data.Sqlite;
+using Wolfgang.Etl.ErrorPolicies;
 using Wolfgang.Etl.TestKit.Xunit;
 using Xunit;
 
@@ -41,20 +42,6 @@ public class DbExtractorTests
 
     /// <inheritdoc/>
     protected override IReadOnlyList<ContractRecord> CreateExpectedItems() => ExpectedItems;
-
-
-
-    /// <inheritdoc/>
-    protected override DbExtractor<ContractRecord> CreateSutWithTimer(IProgressTimer timer)
-    {
-        var conn = TestDb.CreateContractConnection(5);
-        return new DbExtractor<ContractRecord>
-        (
-            conn,
-            "SELECT Name, Value FROM ContractItems ORDER BY Value",
-            timer
-        );
-    }
 
 
     // ------------------------------------------------------------------
@@ -833,5 +820,102 @@ public class DbExtractorTests
         // counters — those advance only when ExtractAsync streams rows.
         Assert.Equal(5, count);
         Assert.Equal(0, extractor.CurrentItemCount);
+    }
+
+
+
+    // ------------------------------------------------------------------
+    // ErrorPolicy
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task ExtractAsync_when_ErrorPolicy_is_Skip_swallows_bad_row_and_continues()
+    {
+        using var conn = TestDb.CreateConnection();
+        using (var seed = conn.CreateCommand())
+        {
+            // A non-numeric age fails Dapper's conversion to PersonRecord.Age
+            // (int) while materializing that row. A NULL age does NOT
+            // reproduce this — Dapper coerces DBNull to default(int) silently
+            // rather than throwing.
+            seed.CommandText = @"
+                CREATE TABLE People (first_name TEXT, age INTEGER);
+                INSERT INTO People (first_name, age) VALUES ('Ada', 30);
+                INSERT INTO People (first_name, age) VALUES ('Bad', 'oops');
+                INSERT INTO People (first_name, age) VALUES ('Zoe', 40);";
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, age AS Age FROM People")
+        {
+            ErrorPolicy = ItemErrorPolicy.Skip
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        // Both good rows survive, including the one AFTER the bad row — proves
+        // Skip actually continues extraction instead of silently truncating at
+        // the first error. (Regression guard: an earlier implementation drove
+        // the read loop through Dapper's QueryUnbufferedAsync<T> IAsyncEnumerable,
+        // whose single async-iterator state machine finishes on any exception —
+        // 'Zoe' never appeared because the enumerator was already done.)
+        Assert.Equal(2, results.Count);
+        Assert.Equal("Ada", results[0].FirstName);
+        Assert.Equal("Zoe", results[1].FirstName);
+        Assert.Equal(1, extractor.CurrentErrorItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_ErrorPolicy_is_default_aborts_on_bad_row()
+    {
+        using var conn = TestDb.CreateConnection();
+        using (var seed = conn.CreateCommand())
+        {
+            seed.CommandText = @"
+                CREATE TABLE People (first_name TEXT, age INTEGER);
+                INSERT INTO People (first_name, age) VALUES ('Ada', 30);
+                INSERT INTO People (first_name, age) VALUES ('Bad', 'oops');";
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, age AS Age FROM People");
+
+        // No ErrorPolicy set — default is Abort, so pre-existing behavior
+        // (the row's exception propagates) is preserved bit-for-bit.
+        await Assert.ThrowsAnyAsync<Exception>
+        (
+            async () => await extractor.ExtractAsync().ToListAsync()
+        );
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_ErrorPolicy_is_Skip_still_propagates_non_row_failures()
+    {
+        using var conn = TestDb.CreateConnection();
+        using (var seed = conn.CreateCommand())
+        {
+            seed.CommandText = "CREATE TABLE People (first_name TEXT);";
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        // A bad column name fails at command execution, not row materialization —
+        // SQLite throws its own provider exception (SqliteException), never a
+        // Dapper DataException. ErrorPolicy only ever catches DataException, so
+        // this must propagate even under Skip — routing a connection/execution-level
+        // fault through ItemErrorAction would otherwise spin the read loop instead
+        // of terminating (MoveNextAsync would keep failing the same way forever).
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT nonexistent_column FROM People")
+        {
+            ErrorPolicy = ItemErrorPolicy.Skip
+        };
+
+        await Assert.ThrowsAsync<SqliteException>
+        (
+            async () => await extractor.ExtractAsync().ToListAsync()
+        );
     }
 }
