@@ -610,7 +610,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 {
                     // Scoped to DataException — the type Dapper wraps row-materialization
                     // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
-                    // sees per-row failures. A broader `catch (Exception)` here would also
+                    // sees per-row failures. Catching every exception type here would also
                     // catch connection-level failures (a dropped connection, a syntax error
                     // surfacing lazily); those aren't per-row, and ReadAsync would likely keep
                     // throwing the same fault on every subsequent call, so routing them

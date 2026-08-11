@@ -81,13 +81,42 @@ public class SqlSnapshotTests
     // Internal (not public) so xUnit1013 doesn't flag it as an unmarked
     // test method. [ModuleInitializer] works with any accessibility
     // as long as the method is static, returns void, and takes no args.
+    //
+    // Deliberately ignores the `sourceFile` callback parameter (Verify's own
+    // [CallerFilePath] capture) and resolves the project directory from
+    // AppContext.BaseDirectory instead. CI builds set ContinuousIntegrationBuild
+    // + <PathMap> (#255, cross-OS reproducibility), which rewrites embedded
+    // source paths to a fictional `/_/...` root — `sourceFile` would resolve to
+    // that non-existent path in CI, and Directory.CreateDirectory would fail
+    // with UnauthorizedAccessException trying to create `/_` under filesystem
+    // root. AppContext.BaseDirectory reflects the real runtime output
+    // directory and is never rewritten by PathMap (that only touches
+    // compile-time embedded literals).
     [ModuleInitializer]
     internal static void Init() => Verifier.DerivePathInfo(
-        (sourceFile, _, type, method) =>
+        (_, _, type, method) =>
             new PathInfo(
-                directory: Path.Combine(Path.GetDirectoryName(sourceFile) ?? ".", "Snapshots"),
+                directory: Path.Combine(ResolveProjectDirectory(), "Snapshots"),
                 typeName: type.Name,
                 methodName: method.Name));
+
+
+
+    private static string ResolveProjectDirectory()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+        {
+            if (dir.GetFiles("*.csproj").Length > 0)
+            {
+                return dir.FullName;
+            }
+        }
+
+        throw new InvalidOperationException
+        (
+            $"Could not locate the Tests.Snapshots project directory by walking up from '{AppContext.BaseDirectory}'."
+        );
+    }
 
     [Fact]
     public Task Select_orders() => Verifier.Verify(DbCommandBuilder.BuildSelect<OrderRecord>());
