@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.7.1/docfx_project/docs/etl-pipeline.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.8.0/docfx_project/docs/etl-pipeline.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -272,7 +272,7 @@ var totalPaid = await EtlPipeline
 <h2 id="progress-reporting">Progress reporting</h2>
 <p><code>RunAsync</code> accepts an optional <code>IProgress&lt;EtlPipelineProgress&gt;</code>:</p>
 <pre><code class="lang-csharp">var progress = new Progress&lt;EtlPipelineProgress&gt;(p =&gt;
-    Console.WriteLine($&quot;loaded {p.RecordsLoaded}&quot;));
+    Console.WriteLine($&quot;loaded {p.LoadedItemCount}&quot;));
 
 await EtlPipeline
     .Create()
@@ -296,7 +296,7 @@ runnable project.</li>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.7.1/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.8.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

@@ -217,24 +217,6 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).CreateProgressReport
   nameWithType: DbExtractor<TRecord>.CreateProgressReport
   nameWithType.vb: DbExtractor(Of TRecord).CreateProgressReport
-- uid: Wolfgang.Etl.DbClient.DbExtractor`1.CreateProgressTimer(System.IProgress{Wolfgang.Etl.DbClient.DbReport})
-  name: CreateProgressTimer(IProgress<DbReport>)
-  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_CreateProgressTimer_System_IProgress_Wolfgang_Etl_DbClient_DbReport__
-  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`1.CreateProgressTimer(System.IProgress{Wolfgang.Etl.DbClient.DbReport})
-  name.vb: CreateProgressTimer(IProgress(Of DbReport))
-  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport>)
-  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).CreateProgressTimer(System.IProgress(Of Wolfgang.Etl.DbClient.DbReport))
-  nameWithType: DbExtractor<TRecord>.CreateProgressTimer(IProgress<DbReport>)
-  nameWithType.vb: DbExtractor(Of TRecord).CreateProgressTimer(IProgress(Of DbReport))
-- uid: Wolfgang.Etl.DbClient.DbExtractor`1.CreateProgressTimer*
-  name: CreateProgressTimer
-  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_CreateProgressTimer_
-  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractor`1.CreateProgressTimer
-  isSpec: "True"
-  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressTimer
-  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).CreateProgressTimer
-  nameWithType: DbExtractor<TRecord>.CreateProgressTimer
-  nameWithType.vb: DbExtractor(Of TRecord).CreateProgressTimer
 - uid: Wolfgang.Etl.DbClient.DbExtractor`1.DefaultTotalCountQuery
   name: DefaultTotalCountQuery
   href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1_DefaultTotalCountQuery
@@ -542,24 +524,6 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).CreateProgressReport
   nameWithType: DbLoader<TRecord>.CreateProgressReport
   nameWithType.vb: DbLoader(Of TRecord).CreateProgressReport
-- uid: Wolfgang.Etl.DbClient.DbLoader`1.CreateProgressTimer(System.IProgress{Wolfgang.Etl.DbClient.DbReport})
-  name: CreateProgressTimer(IProgress<DbReport>)
-  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CreateProgressTimer_System_IProgress_Wolfgang_Etl_DbClient_DbReport__
-  commentId: M:Wolfgang.Etl.DbClient.DbLoader`1.CreateProgressTimer(System.IProgress{Wolfgang.Etl.DbClient.DbReport})
-  name.vb: CreateProgressTimer(IProgress(Of DbReport))
-  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressTimer(System.IProgress<Wolfgang.Etl.DbClient.DbReport>)
-  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).CreateProgressTimer(System.IProgress(Of Wolfgang.Etl.DbClient.DbReport))
-  nameWithType: DbLoader<TRecord>.CreateProgressTimer(IProgress<DbReport>)
-  nameWithType.vb: DbLoader(Of TRecord).CreateProgressTimer(IProgress(Of DbReport))
-- uid: Wolfgang.Etl.DbClient.DbLoader`1.CreateProgressTimer*
-  name: CreateProgressTimer
-  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CreateProgressTimer_
-  commentId: Overload:Wolfgang.Etl.DbClient.DbLoader`1.CreateProgressTimer
-  isSpec: "True"
-  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressTimer
-  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).CreateProgressTimer
-  nameWithType: DbLoader<TRecord>.CreateProgressTimer
-  nameWithType.vb: DbLoader(Of TRecord).CreateProgressTimer
 - uid: Wolfgang.Etl.DbClient.DbLoader`1.CurrentErrorCount
   name: CurrentErrorCount
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CurrentErrorCount
