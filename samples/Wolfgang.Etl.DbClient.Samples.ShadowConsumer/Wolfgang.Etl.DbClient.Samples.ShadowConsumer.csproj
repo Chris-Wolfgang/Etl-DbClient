@@ -16,8 +16,15 @@
     <!-- CA2007 / CA1849 / MA0004 / MA0048 / S3903 / VSTHRD200 — top-level
          statements in a .exe workload, not library code; the
          ConfigureAwait / sync-over-async discipline aimed at library
-         callers doesn't apply to an app entrypoint. -->
-    <NoWarn>$(NoWarn);CA2007;CA1849;MA0004;MA0048;S3903;VSTHRD200</NoWarn>
+         callers doesn't apply to an app entrypoint.
+         S6966 — same rationale as CA1849/VSTHRD200 above: this is a
+         short-lived measurement script, not a hot path or library code
+         where async Console I/O would matter.
+         S1215 — GC.Collect + GC.WaitForPendingFinalizers before the
+         measured region are the deliberate point (establish a clean
+         baseline for the allocation/GC-count metrics that follow), not
+         an accidental anti-pattern. -->
+    <NoWarn>$(NoWarn);CA2007;CA1849;MA0004;MA0048;S1215;S3903;S6966;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
