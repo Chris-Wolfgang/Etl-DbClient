@@ -9,11 +9,16 @@
     <IsTestProject>true</IsTestProject>
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <!-- SQLitePCLRaw.bundle_e_sqlite3 3.0.3's native SourceGear.sqlite3
-         dependency refuses AnyCPU builds on net471+ (net462/net47 aren't
-         affected — its buildTransitive assets only apply from net471 up).
-         These TFMs only ever build on the Windows CI stage anyway, so a
-         fixed win-x64 RID is safe here. -->
-    <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">win-x64</RuntimeIdentifier>
+         dependency needs an explicit RID on every .NET Framework TFM here,
+         not just net471+: without one, restore never places
+         runtimes\win-x64\native\e_sqlite3.dll anywhere CopySqliteNative
+         (below) can find it, and Microsoft.Data.Sqlite throws
+         DllNotFoundException at runtime — a gap that build success alone
+         doesn't catch (net462/net47 built fine without this, they just
+         couldn't load SQLite when tests actually ran). These TFMs only
+         ever build on the Windows CI stage anyway, so a fixed win-x64 RID
+         is safe here. -->
+    <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net47' OR '$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">win-x64</RuntimeIdentifier>
     <SelfContained Condition="'$(RuntimeIdentifier)' != '' AND '$(TargetFrameworkIdentifier)' == '.NETFramework'">false</SelfContained>
     <!-- RS0016 / RS0037: PublicApiAnalyzers fires on members emitted by the
          DbTableGenerator source generator into this test project (the
@@ -35,7 +40,7 @@
   </ItemGroup>
 
   <!-- net462; net47; net471; net472; net48; net481 -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net47' OR '$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net47' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net47' OR '$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.console" Version="2.9.3">
