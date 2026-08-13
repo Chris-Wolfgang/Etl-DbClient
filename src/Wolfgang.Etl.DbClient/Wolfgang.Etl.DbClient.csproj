@@ -25,7 +25,7 @@
                                   <Version>; set explicitly here so it's
                                   discoverable in a metadata dump.
          ===================================================================== -->
-    <Version>0.8.0</Version>
+    <Version>0.9.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>$([System.Text.RegularExpressions.Regex]::Replace("$(Version)", "[-+].*$", "")).0</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
@@ -91,7 +91,7 @@
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.21.0" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.22.0" />
   </ItemGroup>
 
   <!-- Source generator: built alongside the runtime, packed into the same
