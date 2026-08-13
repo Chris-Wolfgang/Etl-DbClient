@@ -55,6 +55,20 @@
          DbProviderFixtureBase for the Docker availability probe. Pin explicitly
          so a future Testcontainers update can't silently break compilation. -->
     <PackageReference Include="Docker.DotNet.Enhanced" Version="3.126.1" />
+    <!-- SECURITY PIN, not a feature bump (#331). Testcontainers depends
+         transitively on an SSH.NET carrying the HIGH-severity advisory
+         GHSA-q939-rpr3-3284. NuGet audit surfaces that as NU1903, which is an
+         ERROR here because the repo treats warnings as errors — so it fails the
+         build outright and takes every Integration job (all providers, all
+         TFMs) down with it, including SQLite which needs no container.
+
+         Pinning the transitive dependency forward is the remedy; suppressing
+         NU1903 is not. SSH.NET is only used by Testcontainers to drive a REMOTE
+         Docker daemon over SSH — these tests use a local daemon, so the package
+         is not on any path they exercise.
+
+         Mirrors the same pin in ETL-SqlBulkCopy (#264). -->
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
   </ItemGroup>
 
 </Project>
