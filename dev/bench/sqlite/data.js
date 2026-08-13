@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786469676222,
+  "lastUpdate": 1786645805456,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlite)": [
@@ -540,6 +540,48 @@ window.BENCHMARK_DATA = {
             "value": 5412306.468191965,
             "unit": "ns",
             "range": "± 33804.868354263446"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a4d67852a1051e2abdffb5a1128cb51a9ab5cb09",
+          "message": "Merge pull request #333 from Chris-Wolfgang/vNext\n\nRelease 0.9.0",
+          "timestamp": "2026-08-13T14:26:10-04:00",
+          "tree_id": "8c065a53ed0e335cb7b5e732d186fbab594bf142",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/a4d67852a1051e2abdffb5a1128cb51a9ab5cb09"
+        },
+        "date": 1786645802716,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 62852.577436174666,
+            "unit": "ns",
+            "range": "± 330.0611907355601"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 552847.8184344952,
+            "unit": "ns",
+            "range": "± 1406.566468422722"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 5251544.657451923,
+            "unit": "ns",
+            "range": "± 12651.242999363476"
           }
         ]
       }
