@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.9.0] - 2026-08-13
+
+### Changed
+
+- Adopted **ETL core 0.22.0** — `Wolfgang.Etl.Abstractions` 0.21.0 -> 0.22.0, along with the
+  test-only `Wolfgang.Etl.TestKit` / `Wolfgang.Etl.TestKit.Xunit` references. 0.22.0 is the release in
+  which the TestKit packages were folded into the ETL-Abstractions repository and now build and ship
+  from there. The public API of all four core packages is unchanged.
+- Inherited from Abstractions 0.22.0: the `await foreach` sites in `ExtractorBase` and
+  `TransformerBase` now use `ConfigureAwait(false)`, removing a sync-over-async deadlock risk for
+  consumers on the `net462` and `netstandard2.0` targets that drive the pipeline from a
+  synchronization context. No behavioural change on the modern targets.
+
 ## [0.8.0] - 2026-08-11
 
 MINOR release. Adds per-row error handling on `DbExtractor<T>`, plus
