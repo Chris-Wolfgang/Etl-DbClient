@@ -54,6 +54,11 @@ on:
       - ".github/workflows/aot-smoke.yaml"
   workflow_dispatch:
 
+# Least-privilege default at the top level; individual jobs elevate
+# only if they need more. Satisfies Scorecard's TokenPermissionsID rule
+# which flags a missing top-level permissions block.
+permissions: read-all
+
 jobs:
   aot-smoke:
     name: PublishAot + PublishTrimmed

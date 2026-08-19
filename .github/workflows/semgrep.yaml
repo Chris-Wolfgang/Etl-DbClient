@@ -34,14 +34,19 @@ on:
     - cron: '37 5 * * 3'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  security-events: write   # required to upload SARIF to Code Scanning
+# Least-privilege default at the top level; the `semgrep` job below
+# elevates `security-events: write` locally for its SARIF upload.
+# Satisfies Scorecard's TokenPermissionsID rule which flags top-level
+# `security-events: write`.
+permissions: read-all
 
 jobs:
   semgrep:
     name: Semgrep scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # required to upload SARIF to Code Scanning
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
