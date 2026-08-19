@@ -1,0 +1,9 @@
+# Paths Semgrep should not scan.
+#
+# Rules:
+#   - benchmarks/  — micro-benchmark harness, not production code. Uses
+#     compile-time-literal DDL strings (`CREATE TABLE`, `DROP TABLE`) to
+#     seed a fixture DB; no user input reaches the SQL layer. The existing
+#     `// nosemgrep:` inline comment in BenchmarkContext.cs is preserved
+#     as belt-and-braces, but ignoring the directory is the durable fix.
+benchmarks/
