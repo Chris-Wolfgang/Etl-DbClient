@@ -40,6 +40,12 @@ on:
   # Manual trigger for full re-scan (e.g. after tightening the config).
   workflow_dispatch:
 
+# Least-privilege default at the top level; the `zizmor` job elevates
+# `security-events: write` locally for its SARIF upload. Satisfies
+# Scorecard's TokenPermissionsID rule which flags a missing top-level
+# permissions block.
+permissions: read-all
+
 jobs:
   zizmor:
     name: zizmor
