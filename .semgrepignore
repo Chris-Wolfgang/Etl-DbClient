@@ -1,9 +1,34 @@
 # Paths Semgrep should not scan.
 #
-# Rules:
+# Rules (each path ignored has a specific justification — do NOT add
+# blanket `tests/` here; that would drop legitimate SAST on test code):
+#
 #   - benchmarks/  — micro-benchmark harness, not production code. Uses
 #     compile-time-literal DDL strings (`CREATE TABLE`, `DROP TABLE`) to
-#     seed a fixture DB; no user input reaches the SQL layer. The existing
-#     `// nosemgrep:` inline comment in BenchmarkContext.cs is preserved
-#     as belt-and-braces, but ignoring the directory is the durable fix.
+#     seed a fixture DB; no user input reaches the SQL layer.
+#
+#   - tests/**/Fixtures/  — integration-test fixtures (Sqlite/SqlServer/
+#     Postgres/MySql/MariaDb/CockroachDb) run DDL against per-test
+#     databases. Every call site uses a compile-time string literal
+#     (e.g. `ExecuteAsync(conn, "DROP TABLE contract_items;", ...)`);
+#     the `string sql` parameter never carries user input. Semgrep's
+#     csharp-sqli rule can't see that constraint and flags the
+#     assignment inside the helper.
+#
+#   - tests/**/TestDb.cs  — Unit-test in-memory-SQLite bootstrap.
+#     `CountRowsAsync(conn, string table = "People")` interpolates
+#     `table` into `SELECT COUNT(*) FROM {table}`. All callers pass
+#     the default or a hard-coded literal from within the test class.
+#
+#   - tests/Wolfgang.Etl.DbClient.Tests.Unit/EtlPipelineDbClientExtensionsTests.cs
+#     Same pattern: `CountRows(conn, string table)` interpolates a
+#     hard-coded literal from a test-only caller.
+#
+# CodeQL scans everything (including tests) and provides the real SAST
+# coverage on this repo; Semgrep is the second-opinion layer whose
+# strength is src/ analysis. Where Semgrep and CodeQL disagree on a
+# test-only false positive, silencing Semgrep is the low-cost fix.
 benchmarks/
+tests/Wolfgang.Etl.DbClient.Tests.Integration/Fixtures/
+tests/Wolfgang.Etl.DbClient.Tests.Unit/TestDb.cs
+tests/Wolfgang.Etl.DbClient.Tests.Unit/EtlPipelineDbClientExtensionsTests.cs
