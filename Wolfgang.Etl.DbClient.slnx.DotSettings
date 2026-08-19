@@ -36,6 +36,39 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=AutoPropertyCanBeMadeGetOnly_002EGlobal/@EntryIndexedValue">DO_NOT_SHOW</s:String>
 
 	<!--
+	  Redundant-* / partial-record style rules — silenced because they fire
+	  in tests and examples where the extra syntax is intentional for reader
+	  intent, not accidental:
+
+	    - RedundantTypeArgumentsOfMethod: tests spell out generic type
+	      arguments (e.g. `SomeMethod<Foo>(...)` when `Foo` could be inferred)
+	      to make the SUT-under-test's type-signature obvious at the call
+	      site. Inference works, but writing the type is a documentation
+	      choice.
+	    - RedundantCast: tests use explicit casts to pin down which
+	      overload runs (Assert.Equal vs collection Assert.Equal, etc.),
+	      or to prove the SUT accepts a given contract type.
+	    - RedundantArgumentDefaultValue: tests pass the default value
+	      explicitly to make "this parameter matters" obvious at the
+	      call site — swapping to positional-default would hide intent.
+	    - PartialTypeWithSinglePart: the DbTableGenerator source generator
+	      requires consumer records/classes to be declared `partial` so it
+	      can emit the second part with the SQL statement constants and
+	      Bind helper (see DbTableGeneratorTests). ReSharper doesn't run
+	      the source generator during InspectCode, so it sees "partial" as
+	      redundant. Roslyn's incremental-generator pipeline produces the
+	      other part.
+
+	  All current instances fire in tests/, examples/, or benchmarks/ —
+	  never in src/. Silenced fleet-wide for consistency with other repos
+	  that carry the same rules in their noise floor.
+	-->
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=RedundantTypeArgumentsOfMethod/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=RedundantCast/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=RedundantArgumentDefaultValue/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=PartialTypeWithSinglePart/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+
+	<!--
 	  .CSharpErrors — silenced repo-wide.
 
 	  This is InspectCode's meta-category for "the ReSharper C# language service
