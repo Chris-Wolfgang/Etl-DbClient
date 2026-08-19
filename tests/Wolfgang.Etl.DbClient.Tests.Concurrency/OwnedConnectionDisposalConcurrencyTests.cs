@@ -40,6 +40,15 @@ using Xunit;
 // all *ConcurrencyTests.cs files in this project.
 #pragma warning disable VSTHRD002
 
+// AccessToDisposedClosure: the CancellationTokenSource is captured by
+// Task.Run closures and disposed via `using var`. The `Task.WaitAll`
+// call below the closures guarantees both tasks complete BEFORE the
+// `using` scope exits — so the token source stays alive for every
+// access. InspectCode can't see through the WaitAll join, so it flags
+// every capture. Silenced file-wide because this whole file follows
+// the same Coyote-driven cancel-race pattern.
+// ReSharper disable AccessToDisposedClosure
+
 namespace Wolfgang.Etl.DbClient.Tests.Concurrency;
 
 [ExcludeFromCodeCoverage]
