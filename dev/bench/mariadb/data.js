@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786646503969,
+  "lastUpdate": 1787329900126,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (mariadb)": [
@@ -500,6 +500,48 @@ window.BENCHMARK_DATA = {
             "value": 4984608.981829354,
             "unit": "ns",
             "range": "± 268379.0266831592"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2759c09c3ac5da67fdb20a1ce085df230a788275",
+          "message": "Merge pull request #344 from Chris-Wolfgang/vNext\n\nRelease v0.9.1 — code-scanning alert sweep",
+          "timestamp": "2026-08-21T08:38:57-04:00",
+          "tree_id": "4dd6f16fa71022db4d7894e7aec82427c8034991",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/2759c09c3ac5da67fdb20a1ce085df230a788275"
+        },
+        "date": 1787329898222,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 239992.72098214287,
+            "unit": "ns",
+            "range": "± 3118.161338746052"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 654032.7728097098,
+            "unit": "ns",
+            "range": "± 4112.094443327513"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 3938124.7524857954,
+            "unit": "ns",
+            "range": "± 122377.6683813904"
           }
         ]
       }
