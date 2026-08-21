@@ -37,16 +37,17 @@ on:
 
 permissions:
   contents: read
-  # `issues: write` is required for the auto-file / auto-comment step
-  # at the bottom of the job. Job-level scope (rather than
-  # workflow-level) so the earlier fuzz-execution steps run with
-  # least-privilege.
-  issues: write
 
 jobs:
   fuzz:
     name: Continuous fuzz (${{ inputs.iterations || '100000' }} iters)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Auto-files a `fuzz-failure` tracking issue on regression (or
+      # comments on an existing open one). Scoped to this job so the
+      # rest of the workflow can't touch issues.
+      issues: write
     timeout-minutes: 60
     steps:
       - name: Checkout code
