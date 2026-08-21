@@ -124,7 +124,34 @@ jobs:
           STRICT: ${{ inputs.strict || 'false' }}
         run: |
           set -euo pipefail
-          # Thresholds: per #130 AC (20% latency, 50% allocations).
+          # Thresholds: allocation-family only (50% alloc, 50% gen0, 200%+abs
+          # floor for gen1/gen2). Cross-time latency (`elapsedMs` /
+          # `rowsPerSecond`) is REPORTED but NOT GATED — see #332.
+          #
+          # Why: the baseline is fetched from gh-pages, recorded by
+          # shadow-baseline.yaml on some prior push to main. Because the
+          # baseline and the current run happen at different times on
+          # different runner instances, the wall-clock latency comparison
+          # false-fails whenever the GitHub runner fleet is slower today
+          # than it was on baseline day. Chris's controlled A/B (three runs
+          # per branch, same machine, back-to-back) has shown +4% at the
+          # mean with overlapping ranges while CI simultaneously reported
+          # +50% "regression" — the 50% is runner drift, not code. Same
+          # commit repeatedly produces +33% / +51% / -8% over reruns.
+          #
+          # Allocation metrics (allocatedBytes / bytesPerRow / genN) are
+          # deterministic and machine-independent — same code path allocates
+          # the same bytes and triggers the same GC frequency regardless of
+          # runner wall-clock. Those stay in the gate.
+          #
+          # Pure-latency regressions (code got slower without changing
+          # allocations) won't be caught here — the pr-benchmarks workflow
+          # (BenchmarkDotNet, HEAD-vs-BASE on the SAME runner) is the correct
+          # place for that comparison. If a same-runner latency gate is
+          # eventually wanted here too, that's #332 Option 2 — measure the
+          # baseline in the same job by running the sample once on the PR's
+          # merge-base and once on the head. Bigger change; deferred.
+          #
           # gen1/gen2 collections are noisy on small per-run sample counts
           # (observed 2, 5, 8 collections across otherwise-identical runs
           # of PR #326/#327 with unchanged allocatedBytes/bytesPerRow) --
@@ -133,8 +160,6 @@ jobs:
           # (see ABS_FLOOR below) on top of the percentage threshold.
           # Added 2026-08-11 after the plain-percentage widening (100%,
           # then 200%) both still false-triggered on PR #326.
-          # rowsPerSecond is the throughput inverse of elapsedMs; failing
-          # on both would be redundant, so gate ONLY elapsedMs on latency.
           # windows-latest's pre-installed Python is only on PATH as
           # `python`, not `python3` — pick whichever exists.
           PYTHON_BIN=python3
@@ -147,25 +172,32 @@ jobs:
           with open("reports/current.json") as f:  cur = json.load(f)
           with open("reports/baseline.json") as f: base = json.load(f)
 
-          # metric -> (direction, threshold_frac, abs_floor)
-          #   direction: "up" means values > baseline are worse; "down" means values < baseline are worse.
+          # metric -> (direction, threshold_frac, abs_floor, gate)
+          #   direction:      "up" means values > baseline are worse; "down" means values < baseline are worse.
           #   threshold_frac: allowed delta beyond baseline (0.20 = 20%).
-          #   abs_floor: if set, the RAW count must ALSO grow by at least this many
+          #   abs_floor:      if set, the RAW count must ALSO grow by at least this many
           #     collections before the percentage threshold can trigger a REGRESS --
           #     keeps tiny-integer noise (e.g. 2 -> 5) from tripping the gate even at
           #     a wide percentage threshold. None = no floor (percentage alone gates).
+          #   gate:           True — regression sets exit=1 (fails the workflow).
+          #                   False — reported in the comparison table only, never fails
+          #                   the workflow (even under strict mode). Use for metrics whose
+          #                   values are legitimately non-deterministic across runs.
           rules = {
-              "elapsedMs":         ("up",   0.20, None),
-              "allocatedBytes":    ("up",   0.50, None),
-              "bytesPerRow":       ("up",   0.50, None),
-              "gen0Collections":   ("up",   0.50, None),
-              "gen1Collections":   ("up",   2.00, 15),
-              "gen2Collections":   ("up",   2.00, 15),
+              # Cross-time wall-clock — reported only, per #332. See header comment.
+              "elapsedMs":         ("up",   0.20, None, False),
+              "rowsPerSecond":     ("down", 0.20, None, False),
+              # Allocation family — deterministic; gate.
+              "allocatedBytes":    ("up",   0.50, None, True),
+              "bytesPerRow":       ("up",   0.50, None, True),
+              "gen0Collections":   ("up",   0.50, None, True),
+              "gen1Collections":   ("up",   2.00, 15,   True),
+              "gen2Collections":   ("up",   2.00, 15,   True),
           }
 
           rows = []
           any_regress = False
-          for m, (direction, thresh, abs_floor) in rules.items():
+          for m, (direction, thresh, abs_floor, gate) in rules.items():
               b = base.get(m)
               c = cur.get(m)
               if b is None or c is None:
@@ -181,10 +213,16 @@ jobs:
               status = "ok"
               if delta > limit and (abs_floor is None or abs(abs_delta) >= abs_floor):
                   status = f"REGRESS delta={delta*100:.1f}% (>{limit*100:.0f}%), abs={abs_delta:+d}"
-                  any_regress = True
+                  if gate:
+                      any_regress = True
+                  else:
+                      status += " [reported only, not gated per #332]"
               elif strict and delta > 0:
                   status = f"drift delta={delta*100:.1f}% (strict)"
-                  any_regress = True
+                  if gate:
+                      any_regress = True
+                  else:
+                      status += " [reported only, not gated per #332]"
               rows.append((m, b, c, f"{delta*100:+.1f}%", status))
 
           print(f"{'metric':<20} {'baseline':>15} {'current':>15} {'delta':>10}  status")

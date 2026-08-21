@@ -14,9 +14,13 @@ on:
     tags:
       - 'v*'
 
-permissions:
-  contents: write    # benchmark-action pushes commits to gh-pages
-  deployments: write # benchmark-action records a deployment
+# Top-level default is read-only; the five per-RDBMS jobs below elevate
+# to `contents: write` + `deployments: write` locally because each one
+# uses benchmark-action/github-action-benchmark to commit to gh-pages
+# and record a deployment. Scorecard's TokenPermissionsID rule requires
+# top-level to be no more than read; the elevation belongs on the jobs
+# that actually push.
+permissions: read-all
 
 concurrency:
   group: benchmarks-${{ github.ref }}
@@ -36,6 +40,9 @@ jobs:
   benchmark-sqlite:
     name: "Benchmarks / sqlite"
     runs-on: ubuntu-latest
+    permissions:
+      contents: write     # benchmark-action commits to gh-pages
+      deployments: write  # benchmark-action records a deployment
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -73,6 +80,9 @@ jobs:
     name: "Benchmarks / sqlserver"
     runs-on: ubuntu-latest
     needs: benchmark-sqlite
+    permissions:
+      contents: write     # benchmark-action commits to gh-pages
+      deployments: write  # benchmark-action records a deployment
     services:
       mssql:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -124,6 +134,9 @@ jobs:
     name: "Benchmarks / postgres"
     runs-on: ubuntu-latest
     needs: benchmark-sqlserver
+    permissions:
+      contents: write     # benchmark-action commits to gh-pages
+      deployments: write  # benchmark-action records a deployment
     services:
       postgres:
         image: postgres:16-alpine
@@ -175,6 +188,9 @@ jobs:
     name: "Benchmarks / mysql"
     runs-on: ubuntu-latest
     needs: benchmark-postgres
+    permissions:
+      contents: write     # benchmark-action commits to gh-pages
+      deployments: write  # benchmark-action records a deployment
     services:
       mysql:
         image: mysql:8.0
@@ -228,6 +244,9 @@ jobs:
     name: "Benchmarks / mariadb"
     runs-on: ubuntu-latest
     needs: benchmark-mysql
+    permissions:
+      contents: write     # benchmark-action commits to gh-pages
+      deployments: write  # benchmark-action records a deployment
     services:
       mariadb:
         image: mariadb:11.4.4

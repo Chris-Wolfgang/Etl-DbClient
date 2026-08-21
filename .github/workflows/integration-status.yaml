@@ -19,9 +19,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write    # write per-RDBMS status JSONs to gh-pages
-  pull-requests: read
+# Top-level default is read-only; only `publish-status` elevates to
+# `contents: write` (it commits the per-RDBMS status JSONs to gh-pages).
+# `test-matrix` runs `dotnet test` and uploads artifacts — read-only is
+# sufficient. Scorecard's TokenPermissionsID rule wants top-level to be
+# no more than read.
+permissions: read-all
 
 concurrency:
   # Serialize against ourselves so two pushes to main never race the
@@ -135,6 +138,9 @@ jobs:
     needs: test-matrix
     # Run even when some cells failed — we still want fresh badge state.
     if: always() && github.repository != 'Chris-Wolfgang/repo-template'
+    permissions:
+      contents: write     # write per-RDBMS status JSONs to gh-pages
+      pull-requests: read
 
     steps:
       - name: Checkout gh-pages

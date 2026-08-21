@@ -55,6 +55,69 @@ jobs:
           # in README.md resolves. Requires the repo to be public (this repo is).
           publish_results: true
 
+      # Filter known-noise findings BEFORE upload. Dismissing individual
+      # alerts via `gh api ... code-scanning/alerts/N` decays across the
+      # weekly re-run because the SARIF fingerprint drifts — the same
+      # finding re-appears as a new alert-id. Filtering at the SARIF layer
+      # is the durable fix.
+      #
+      # Filter policy:
+      #   - Drop ENTIRE rules whose findings cannot be resolved for this
+      #     repo:
+      #       * FuzzingID              — Scorecard misses SharpFuzz
+      #         (fuzz.yaml exists but the detector recognizes only a
+      #         short list of fuzzing tools).
+      #       * CIIBestPracticesID     — no OpenSSF badge; policy call
+      #         until the maintainer opts into the CII questionnaire.
+      #       * CodeReviewID           — solo-maintainer repo; PRs get
+      #         merged after passing CI + optional Copilot review.
+      #         Enforcing "N approved reviewers" isn't a viable policy.
+      #       * PinnedDependenciesID   — flags every `dotnet` /`pip` /
+      #         `bash download-then-run` invocation as "not pinned by
+      #         hash". `dotnet` pins via SDK version (setup-dotnet); pip
+      #         pins are handled inside individual workflows; downloads
+      #         are pinned by SHA where practical. Not fixable.
+      #       * BranchProtectionID     — Chris uses org-level rulesets
+      #         (not classic branch protection); Scorecard's detector
+      #         doesn't fully cover rulesets.
+      #
+      #   - Drop TokenPermissionsID findings at specific (file, line)
+      #     tuples where the job GENUINELY needs `contents: write`:
+      #       * release.yaml:1013   — trigger-docs → docfx (gh-pages push)
+      #       * release.yaml:1054   — update-release-artifacts (attach)
+      #       * docfx.yaml:59       — build-and-deploy (gh-pages push)
+      #       * shadow-baseline.yaml:120 — publish (gh-pages push)
+      #     All other TokenPermissionsID findings (top-level writes,
+      #     unjustified job writes) continue to fire.
+      - name: Filter SARIF (drop known-noise findings)
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq '
+            .runs |= map(
+              .results |= map(select(
+                (["FuzzingID","CIIBestPracticesID","CodeReviewID","PinnedDependenciesID","BranchProtectionID"] | index(.ruleId) | not)
+                and
+                (
+                  .ruleId != "TokenPermissionsID"
+                  or (
+                    (.locations[0].physicalLocation.artifactLocation.uri // "") as $u
+                    | (.locations[0].physicalLocation.region.startLine // 0) as $l
+                    | [
+                        {u:".github/workflows/release.yaml",           l:1013},
+                        {u:".github/workflows/release.yaml",           l:1054},
+                        {u:".github/workflows/docfx.yaml",             l:59},
+                        {u:".github/workflows/shadow-baseline.yaml",   l:120}
+                      ] as $ignore
+                    | ($ignore | any(.u == $u and .l == $l)) | not
+                  )
+                )
+              ))
+            )
+          ' results.sarif > results.filtered.sarif
+          mv results.filtered.sarif results.sarif
+          echo "Filtered SARIF result count: $(jq '[.runs[].results[]] | length' results.sarif)"
+
       # Upload as an artifact so the SARIF is retrievable even if the
       # code-scanning upload later fails (e.g. quota, transient API).
       - name: Upload SARIF as artifact
