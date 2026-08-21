@@ -1,0 +1,398 @@
+{
+  "source_base_path": "D:/a/Etl-DbClient/Etl-DbClient/docfx_project",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "Resource",
+      "output": {
+        "resource": {
+          "relative_path": "index.json"
+        }
+      }
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "api/README.md",
+      "output": {
+        ".html": {
+          "relative_path": "api/README.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbClientOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbClientOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbClientOptions",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbClientOptions.yml\" sourcestartlinenumber=\"1\">Process-wide knobs for <code>Wolfgang.Etl.DbClient</code>. Settings here are read\nfrom the global Dapper type-map delegate that <code>ColumnAttributeTypeMapper</code>\ninstalls, so they affect read-side column resolution only.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbColumnAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbColumnAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbColumnAttribute",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbColumnAttribute.yml\" sourcestartlinenumber=\"1\">Optional per-property override for a <xref href=\"Wolfgang.Etl.DbClient.DbTableAttribute\" data-throw-if-not-resolved=\"false\"></xref>-decorated\nrecord. Maps the annotated property to a column whose name differs from\nthe property name, or marks it as <xref href=\"Wolfgang.Etl.DbClient.DbColumnAttribute.Skip\" data-throw-if-not-resolved=\"false\"></xref>ped from the\ngenerated SQL.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbExtractor-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbExtractor-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbExtractor<TRecord>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbExtractor-1.yml\" sourcestartlinenumber=\"1\">Extracts records from a database query as an asynchronous stream.\nUses Dapper for column-to-property mapping, supporting <code>[Column]</code> attribute\nand convention-based name matching.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbKeyAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbKeyAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbKeyAttribute",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbKeyAttribute.yml\" sourcestartlinenumber=\"1\">Marks a property on a <xref href=\"Wolfgang.Etl.DbClient.DbTableAttribute\" data-throw-if-not-resolved=\"false\"></xref>-decorated record as\npart of the row's identifying key. The <code>DbTableGenerator</code> source\ngenerator uses <code>[DbKey]</code> properties to build the WHERE clause of\nthe generated <code>Update</code> and <code>Delete</code> SQL constants.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbLoader-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbLoader-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbLoader<TRecord>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbLoader-1.yml\" sourcestartlinenumber=\"1\">Loads records into a database via INSERT or UPDATE commands.\nUses Dapper for parameter mapping from POCO properties.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbReport.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbReport.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbReport",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbReport.yml\" sourcestartlinenumber=\"1\">Progress report for ADO.NET extraction and loading operations.\nExtends the base <xref href=\"Wolfgang.Etl.Abstractions.Report\" data-throw-if-not-resolved=\"false\"></xref> with database-specific context.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbSchemaValidator.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbSchemaValidator.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbSchemaValidator",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbSchemaValidator.yml\" sourcestartlinenumber=\"1\">Validates that a record type's <code>[Table]</code> and <code>[Column]</code>\nattribute mappings match the actual database schema before you invest\nin an extract or load. Catches configuration errors — table renamed,\ncolumn dropped, <code>[Column(&quot;wrong_name&quot;)]</code> typo — at the top of a\nbatch instead of mid-operation.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbTableAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbTableAttribute.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbTableAttribute",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbTableAttribute.yml\" sourcestartlinenumber=\"1\">Marks a record / class as mapping to a database table. Triggers the\nWolfgang.Etl.DbClient source generator to emit a partial class with\nreflection-free <code>Insert</code> SQL + parameter-binding helpers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.yml\" sourcestartlinenumber=\"1\">Class-named DbClient factories + terminators for the fluent\n<xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Enables\n<code>EtlPipeline.Create().DbExtractor&lt;Order&gt;(conn, sql).DbLoader&lt;Order&gt;(destConn, insertSql).RunAsync()</code>\nalongside the sibling factories shipped by other format packages\n(<code>CsvExtractor</code>, <code>JsonLineLoader</code>, etc.).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.yml\" sourcestartlinenumber=\"1\">Fluent builder for a <xref href=\"Wolfgang.Etl.DbClient.DbExtractor%601\" data-throw-if-not-resolved=\"false\"></xref> hung off the generic\n<xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Extends <xref href=\"Wolfgang.Etl.Abstractions.IEtlPipeline%601\" data-throw-if-not-resolved=\"false\"></xref>, so a\nconsumer transitions from configuring the extractor to appending pipeline\noperators simply by calling one — no explicit <code>Build()</code> step.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.yml\" sourcestartlinenumber=\"1\">Fluent builder for a <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref> that terminates a\ngeneric <xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Extends <xref href=\"Wolfgang.Etl.Abstractions.IEtlPipelineSink\" data-throw-if-not-resolved=\"false\"></xref>,\nso a consumer transitions from configuring the loader to running the\npipeline simply by calling\n<xref href=\"Wolfgang.Etl.Abstractions.IEtlPipelineSink.RunAsync(System.IProgress%7bWolfgang.Etl.Abstractions.EtlPipelineProgress%7d%2cSystem.Threading.CancellationToken)\" data-throw-if-not-resolved=\"false\"></xref>\n— no explicit <code>Build()</code> step.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.RowErrorHandling.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.RowErrorHandling.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.RowErrorHandling",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.RowErrorHandling.yml\" sourcestartlinenumber=\"1\">Controls how <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref> reacts when a single row's\n<code>ExecuteAsync</code> call throws.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.RowFailedEventArgs-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.RowFailedEventArgs-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.RowFailedEventArgs-1.yml\" sourcestartlinenumber=\"1\">Payload for <code>DbLoader{TRecord}.RowFailed</code>. Fires once per row that\nfailed to load when <code>ErrorHandling</code> is <xref href=\"Wolfgang.Etl.DbClient.RowErrorHandling.Skip\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.WriteMode.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.WriteMode.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.WriteMode",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.WriteMode.yml\" sourcestartlinenumber=\"1\">Specifies the type of SQL command the <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref>\nauto-generates from attribute metadata.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient",
+      "Summary": null
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "api/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "api/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/toc.html"
+        },
+        ".json": {
+          "relative_path": "api/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "apple-touch-icon.png",
+      "output": {
+        "resource": {
+          "relative_path": "apple-touch-icon.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docs/etl-pipeline.md",
+      "output": {
+        ".html": {
+          "relative_path": "docs/etl-pipeline.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docs/getting-started.md",
+      "output": {
+        ".html": {
+          "relative_path": "docs/getting-started.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docs/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "docs/index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "docs/introduction.md",
+      "output": {
+        ".html": {
+          "relative_path": "docs/introduction.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "docs/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "docs/toc.html"
+        },
+        ".json": {
+          "relative_path": "docs/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "favicon.ico",
+      "output": {
+        "resource": {
+          "relative_path": "favicon.ico"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "favicon.svg",
+      "output": {
+        "resource": {
+          "relative_path": "favicon.svg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "logo.svg",
+      "output": {
+        "resource": {
+          "relative_path": "logo.svg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "public/version-picker.js",
+      "output": {
+        "resource": {
+          "relative_path": "public/version-picker.js"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "versions.json",
+      "output": {
+        "resource": {
+          "relative_path": "versions.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}
