@@ -154,6 +154,19 @@ public class SourceLinkPdbTests
 
         // Substitute the local path prefix from the JSON KEY into the URL.
         // For simplicity, just HEAD the URL as-is and assert not-404.
+        //
+        // ShortLivedHttpClient: this HttpClient is created ONCE per test
+        // run, only for the SourceLink probe. Socket exhaustion is a
+        // service-class concern, not a one-shot test concern; the
+        // dispose-after-use pattern is correct here.
+        //
+        // UsingStatementResourceInitialization: the only initializer
+        // value (TimeSpan.FromSeconds(15)) is a value-type construction
+        // that cannot throw, so initializing inside the `using` header
+        // is safe — the "throw between construction and using" hazard
+        // the rule guards against does not apply.
+        // ReSharper disable once ShortLivedHttpClient
+        // ReSharper disable once UsingStatementResourceInitialization
         using var http = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(15)

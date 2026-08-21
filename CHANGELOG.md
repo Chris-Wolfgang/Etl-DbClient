@@ -19,6 +19,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.9.1] - 2026-08-19
+
+PATCH release. Sweeps the repo's open code-scanning alerts down from 67
+to ~0 across four tools (InspectCode, Scorecard, zizmor, Semgrep OSS).
+Zero source or public-API changes; consumers see no behavioural
+difference.
+
+### Security
+
+- **Semgrep OSS (1 alert cleared)** — `csharp-sqli` false positive on
+  `benchmarks/Wolfgang.Etl.DbClient.Benchmarks/BenchmarkContext.cs`
+  where a compile-time DDL literal is assigned to `DbCommand.CommandText`.
+  Added `.semgrepignore` covering `benchmarks/` and three
+  test-fixture SQL utilities whose only callers pass string literals
+  (`tests/**/Fixtures/`, `tests/**/TestDb.cs`,
+  `tests/**/EtlPipelineDbClientExtensionsTests.cs`).
+- **zizmor (3 alerts cleared)** — `zizmor/excessive-permissions` on
+  `benchmarks.yaml` (`contents: write`, `deployments: write`) and
+  `integration-status.yaml` (`contents: write`) at the workflow top level.
+  Moved the writes down to only the jobs that push to `gh-pages`
+  (5 `benchmark-*` jobs and the `publish-status` job); top level is now
+  `read-all`.
+- **Scorecard TokenPermissionsID (10 alerts cleared)** — added top-level
+  `permissions: read-all` to `aot-smoke.yaml` and `workflow-security.yaml`
+  (both previously had no top-level block), and moved
+  `security-events: write` in `semgrep.yaml` down to the `semgrep` job.
+  Four remaining job-level `contents: write` findings on legitimately-writing
+  jobs (`release.yaml` trigger-docs + update-release-artifacts,
+  `docfx.yaml` build-and-deploy, `shadow-baseline.yaml` publish) are
+  filtered from the SARIF at upload time — see below.
+- **Scorecard SARIF filter (18 alerts cleared)** — added a
+  `jq`-based filter step to `scorecard.yaml` that drops known-noise rules
+  before the SARIF is uploaded to Code Scanning, following the durable
+  pattern from session-memory `reference_scorecard_dismissal_not_durable`
+  (UI dismissals decay across Scorecard's weekly re-runs due to
+  fingerprint drift). Rules dropped:
+  - `FuzzingID` — Scorecard misses SharpFuzz; `fuzz.yaml` already runs it.
+  - `CIIBestPracticesID` — no OpenSSF badge; policy call.
+  - `CodeReviewID` — solo-maintainer repo; N-approvers not viable.
+  - `PinnedDependenciesID` — flags `dotnet`/`pip`/`bash download-then-run`,
+    none of which are hash-pinnable.
+  - `BranchProtectionID` — repo uses org rulesets, not classic branch
+    protection.
+  Plus 4 specific TokenPermissionsID findings on `release.yaml:1013`,
+  `release.yaml:1054`, `docfx.yaml:59`, `shadow-baseline.yaml:120` where
+  the job genuinely needs `contents: write`.
+- **InspectCode noise floor (26 alerts cleared)** — extended
+  `Wolfgang.Etl.DbClient.slnx.DotSettings` with `DO_NOT_SHOW` for four
+  style-noise rules that fired only in `tests/`, `examples/`, and
+  `benchmarks/` — never in `src/`:
+  `RedundantTypeArgumentsOfMethod`, `RedundantCast`,
+  `RedundantArgumentDefaultValue`, and `PartialTypeWithSinglePart`
+  (the last is a source-generator false positive:
+  `DbTableGenerator` requires consumer records to be declared `partial`).
+- **InspectCode safety findings (9 alerts cleared)** — narrow-suppressed
+  9 verified false positives via per-file `// ReSharper disable` comments,
+  each with an inline justification:
+  - 7× `AccessToDisposedClosure` across the three Coyote cancel-race
+    concurrency test files (`Task.WaitAll` joins the closures before the
+    `using` scope exits — InspectCode can't see through the join).
+  - 1× `ShortLivedHttpClient` in `SourceLinkPdbTests.cs` (one-shot
+    per-test client; socket exhaustion doesn't apply to tests).
+  - 1× `UsingStatementResourceInitialization` in the same file
+    (initializer is a value-type construction that cannot throw).
+
+### Fixed
+
+- No source-code fixes in this release. All changes are CI/analyzer
+  configuration and test-code comment annotations.
+
 ## [0.9.0] - 2026-08-13
 
 ### Changed
