@@ -92,6 +92,13 @@ public class OwnedConnectionDisposalConcurrencyTests
                 // no-op each run.
                 "SELECT id AS Id FROM sqlite_master WHERE 1=0");
 
+            // ReSharper disable AccessToDisposedClosure
+            // `cts` is captured in the two Task.Run closures below. The
+            // Task.WaitAll after the two Task.Run calls, but inside the
+            // same `using` scope as `cts`, guarantees both closures
+            // finish before `cts` is disposed — there is no disposed-
+            // closure race here. ReSharper's flow analysis can't see
+            // the WaitAll boundary. Restored right after the boundary.
             using var cts = new CancellationTokenSource();
 
             var cancelTask = Task.Run(() =>
@@ -120,6 +127,7 @@ public class OwnedConnectionDisposalConcurrencyTests
             });
 
             Task.WaitAll(cancelTask, enumTask);
+            // ReSharper restore AccessToDisposedClosure
 
             // First-run invariant: either it completed normally, or it
             // was cancelled, or it threw a DB-related exception because

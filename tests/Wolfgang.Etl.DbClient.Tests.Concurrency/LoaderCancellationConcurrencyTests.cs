@@ -83,6 +83,13 @@ public class LoaderCancellationConcurrencyTests
                 conn,
                 "INSERT INTO load_probe (value) VALUES (@Value)");
 
+            // ReSharper disable AccessToDisposedClosure
+            // `cts` is captured in the two Task.Run closures below. The
+            // Task.WaitAll after the two Task.Run calls, but inside the
+            // same `using` scope as `cts`, guarantees both closures
+            // finish before `cts` is disposed — there is no disposed-
+            // closure race here. ReSharper's flow analysis can't see
+            // the WaitAll boundary. Restored right after the boundary.
             using var cts = new CancellationTokenSource();
 
             var cancelTask = Task.Run(() =>
@@ -103,6 +110,7 @@ public class LoaderCancellationConcurrencyTests
             });
 
             Task.WaitAll(cancelTask, loadTask);
+            // ReSharper restore AccessToDisposedClosure
 
             // Count what actually landed in the destination.
             int actualRows;

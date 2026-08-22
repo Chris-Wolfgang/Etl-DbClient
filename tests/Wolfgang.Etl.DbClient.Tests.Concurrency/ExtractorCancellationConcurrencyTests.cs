@@ -92,6 +92,13 @@ public class ExtractorCancellationConcurrencyTests
                 conn,
                 "SELECT id AS Id, value AS Value FROM cancel_probe ORDER BY id");
 
+            // ReSharper disable AccessToDisposedClosure
+            // `cts` is captured in the two Task.Run closures below. The
+            // Task.WaitAll after the two Task.Run calls, but inside the
+            // same `using` scope as `cts`, guarantees both closures
+            // finish before `cts` is disposed — there is no disposed-
+            // closure race here. ReSharper's flow analysis can't see
+            // the WaitAll boundary. Restored right after the boundary.
             using var cts = new CancellationTokenSource();
             var observed = 0;
 
@@ -121,6 +128,7 @@ public class ExtractorCancellationConcurrencyTests
             });
 
             Task.WaitAll(cancelTask, enumerateTask);
+            // ReSharper restore AccessToDisposedClosure
 
             // Invariant: extractor's own counter never exceeds what the
             // consumer observed. If the extractor incremented the count

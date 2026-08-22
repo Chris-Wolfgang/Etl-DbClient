@@ -69,35 +69,6 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=PartialTypeWithSinglePart/@EntryIndexedValue">DO_NOT_SHOW</s:String>
 
 	<!--
-	  AccessToDisposedClosure — silenced because every current instance
-	  fires in Tests.Concurrency/, in the Coyote testing pattern:
-
-	      using var cts = new CancellationTokenSource();
-	      var cancelTask = Task.Run(() => cts.Cancel());
-	      var workTask   = Task.Run(async () => { ... uses cts.Token ... });
-	      Task.WaitAll(cancelTask, workTask);   // both closures complete
-	                                            // BEFORE the `using` scope
-	                                            // exits and cts is disposed.
-
-	  ReSharper's flow analysis conservatively assumes the Task.Run
-	  closures may outlive the `using` scope, but the WaitAll on the same
-	  scope guarantees they don't. If a future test drops the WaitAll
-	  before the disposal boundary, that IS a real race — and this
-	  suppression would hide it. Two mitigations:
-
-	    1. All current sites fire in tests only. Nothing in src/ uses this
-	       pattern (verified 2026-08-22 across all InspectCode alerts).
-	    2. Coyote scheduling explores the closure completion ordering
-	       and would surface an ObjectDisposedException if the disposal
-	       race actually reached the closure body — see the
-	       Specification.Assert in each test's body.
-
-	  Revisit if this rule starts firing in src/ (add a scoped filter
-	  or move to inline `// ReSharper disable once` at each site).
-	-->
-	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=AccessToDisposedClosure/@EntryIndexedValue">DO_NOT_SHOW</s:String>
-
-	<!--
 	  .CSharpErrors — silenced repo-wide.
 
 	  This is InspectCode's meta-category for "the ReSharper C# language service
