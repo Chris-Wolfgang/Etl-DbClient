@@ -93,26 +93,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # `.ruleId` inside a pipeline is evaluated against the pipeline's
+          # current input, NOT the outer `select` context. The previous form
+          # `["FuzzingID",...] | index(.ruleId)` tried to `.ruleId` the
+          # noise-rule LIST — under jq 1.8 that raises
+          # "Cannot index array with string 'ruleId'" and the whole filter
+          # aborts (exit 5), which then aborts the SARIF upload and leaves
+          # every earlier finding open on `main`. Bind the ruleId as `$rid`
+          # first so the membership check sees the result's ruleId, not the
+          # list.
           jq '
             .runs |= map(
-              .results |= map(select(
-                (["FuzzingID","CIIBestPracticesID","CodeReviewID","PinnedDependenciesID","BranchProtectionID"] | index(.ruleId) | not)
-                and
-                (
-                  .ruleId != "TokenPermissionsID"
-                  or (
-                    (.locations[0].physicalLocation.artifactLocation.uri // "") as $u
-                    | (.locations[0].physicalLocation.region.startLine // 0) as $l
-                    | [
-                        {u:".github/workflows/release.yaml",           l:1013},
-                        {u:".github/workflows/release.yaml",           l:1054},
-                        {u:".github/workflows/docfx.yaml",             l:59},
-                        {u:".github/workflows/shadow-baseline.yaml",   l:120}
-                      ] as $ignore
-                    | ($ignore | any(.u == $u and .l == $l)) | not
+              .results |= map(
+                (.ruleId // "") as $rid
+                | select(
+                    (["FuzzingID","CIIBestPracticesID","CodeReviewID","PinnedDependenciesID","BranchProtectionID"] | index($rid) | not)
+                    and
+                    (
+                      $rid != "TokenPermissionsID"
+                      or (
+                        (.locations[0].physicalLocation.artifactLocation.uri // "") as $u
+                        | (.locations[0].physicalLocation.region.startLine // 0) as $l
+                        | [
+                            {u:".github/workflows/release.yaml",           l:1013},
+                            {u:".github/workflows/release.yaml",           l:1054},
+                            {u:".github/workflows/docfx.yaml",             l:59},
+                            {u:".github/workflows/shadow-baseline.yaml",   l:120}
+                          ] as $ignore
+                        | ($ignore | any(.u == $u and .l == $l)) | not
+                      )
+                    )
                   )
-                )
-              ))
+              )
             )
           ' results.sarif > results.filtered.sarif
           mv results.filtered.sarif results.sarif
