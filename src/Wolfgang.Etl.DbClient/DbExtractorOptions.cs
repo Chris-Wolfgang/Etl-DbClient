@@ -2,7 +2,6 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using Dapper;
 
 namespace Wolfgang.Etl.DbClient;
 
@@ -16,6 +15,12 @@ namespace Wolfgang.Etl.DbClient;
 /// constructor can accidentally diverge from them.
 /// <para>
 /// The record is not generic: none of these settings depends on the record type being extracted.
+/// </para>
+/// <para>
+/// This record deliberately exposes no <c>Parameters</c> property. Dapper's
+/// <c>DynamicParameters</c> is a third-party type, and keeping it off the public surface is what
+/// allows the ORM to be swapped later without a breaking change for consumers. Supply parameters
+/// through the constructor overload that takes an <c>IDictionary&lt;string, object&gt;</c>.
 /// </para>
 /// </remarks>
 public sealed record DbExtractorOptions
@@ -48,12 +53,6 @@ public sealed record DbExtractorOptions
     /// </summary>
     public bool ValidateSchemaOnStart { get; init; }
 
-
-
-    /// <summary>
-    /// Gets the Dapper parameters supplied to the command. Defaults to <see langword="null"/>.
-    /// </summary>
-    public DynamicParameters? Parameters { get; init; }
 
 
 

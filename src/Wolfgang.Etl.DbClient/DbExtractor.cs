@@ -1074,7 +1074,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         CommandType = options.CommandType;
         ManageConnection = options.ManageConnection;
         ValidateSchemaOnStart = options.ValidateSchemaOnStart;
-        Parameters = options.Parameters;
         ServerOffset = options.ServerOffset;
         ServerLimit = options.ServerLimit;
         PagingClauseTemplate = options.PagingClauseTemplate;
