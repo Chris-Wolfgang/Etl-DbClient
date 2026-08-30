@@ -104,6 +104,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/> or <paramref name="commandText"/> is null.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbConnection connection,
@@ -139,6 +140,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/>, <paramref name="commandText"/>, or <paramref name="parameters"/> is null.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbConnection connection,
@@ -180,6 +182,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="InvalidOperationException">
     /// <typeparamref name="TRecord"/> does not have a <c>[Table]</c> attribute.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbConnection connection,
@@ -220,6 +223,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <paramref name="factory"/> returned a null connection from
     /// <see cref="DbProviderFactory.CreateConnection"/>.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbProviderFactory factory,
@@ -261,10 +265,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(connection, commandText, transaction, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
 
 
@@ -290,10 +296,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(connection, commandText, parameters, transaction, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
 
 
@@ -315,10 +323,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(connection, transaction, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
 
 
@@ -342,10 +352,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbExtractorOptions? options,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(factory, connectionString, commandText, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this extractor owns.

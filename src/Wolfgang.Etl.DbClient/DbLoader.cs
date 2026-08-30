@@ -85,6 +85,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/> or <paramref name="commandText"/> is null.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.")]
     public DbLoader
     (
         DbConnection connection,
@@ -123,6 +124,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <paramref name="writeMode"/> is <see cref="WriteMode.Update"/> and no <c>[Key]</c>
     /// properties exist.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.")]
     public DbLoader
     (
         DbConnection connection,
@@ -166,6 +168,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <paramref name="factory"/> returned a null connection from
     /// <see cref="DbProviderFactory.CreateConnection"/>.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.")]
     public DbLoader
     (
         DbProviderFactory factory,
@@ -207,10 +210,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(connection, commandText, transaction, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
 
 
@@ -234,10 +239,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(connection, writeMode, transaction, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
 
 
@@ -261,10 +268,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbLoaderOptions? options,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
         : this(factory, connectionString, commandText, logger)
     {
         ApplyOptions(options);
     }
+#pragma warning restore CS0618
 
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this loader owns.
