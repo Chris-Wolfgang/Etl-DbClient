@@ -92,12 +92,15 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _callerTransaction = transaction;
-        _ownsTransaction = transaction == null;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -127,14 +130,17 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            writeMode == WriteMode.Update
+                ? DbCommandBuilder.BuildUpdate<TRecord>()
+                : DbCommandBuilder.BuildInsert<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = writeMode == WriteMode.Update
-            ? DbCommandBuilder.BuildUpdate<TRecord>()
-            : DbCommandBuilder.BuildInsert<TRecord>();
-        _callerTransaction = transaction;
-        _ownsTransaction = transaction == null;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -167,10 +173,49 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         string commandText,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger
+        )
+    {
+    }
+
+
+
+    /// <summary>
+    /// Validates the provider-factory arguments and produces the connection this loader owns.
+    /// </summary>
+    /// <remarks>
+    /// The validation lives here rather than in the constructor body because a constructor's
+    /// <c>this(...)</c> arguments are evaluated before its body runs. Keeping the checks in this
+    /// order preserves both the original <c>ParamName</c> for each argument and the guarantee that
+    /// no connection is created when any argument is null.
+    /// </remarks>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string applied to the new connection.</param>
+    /// <param name="commandText">The command text, validated here to preserve argument order.</param>
+    /// <returns>A new <see cref="DbConnection"/> owned by this loader.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/>, <paramref name="connectionString"/> or
+    /// <paramref name="commandText"/> is <c>null</c>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="factory"/> produced a <c>null</c> connection.
+    /// </exception>
+    private static DbConnection CreateOwnedConnection
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText
+    )
     {
         if (factory == null) throw new ArgumentNullException(nameof(factory));
         if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
+        if (commandText == null) throw new ArgumentNullException(nameof(commandText));
 
         var conn = factory.CreateConnection()
             ?? throw new InvalidOperationException
@@ -179,10 +224,36 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 "The provider factory does not produce DbConnection instances."
             );
         conn.ConnectionString = connectionString;
-        _connection = conn;
-        _ownsConnection = true;
-        _ownsTransaction = true;  // auto-managed transaction inside the owned connection
-        _logger = logger ?? (ILogger)NullLogger.Instance;
+        return conn;
+    }
+
+
+
+    /// <summary>
+    /// The single initialization path. Every other constructor chains into this one, so the shared
+    /// fields are assigned in exactly one place and cannot drift between input shapes.
+    /// </summary>
+    /// <remarks>
+    /// <c>_ownsTransaction</c> is derived here rather than passed in. The two connection-based
+    /// constructors set it to <c>transaction == null</c>, and the provider-factory constructor set
+    /// it unconditionally to <c>true</c> while supplying no transaction — so the single derivation
+    /// below reproduces all three cases exactly.
+    /// </remarks>
+    private DbLoader
+    (
+        DbConnection connection,
+        string commandText,
+        DbTransaction? transaction,
+        bool ownsConnection,
+        ILogger? logger
+    )
+    {
+        _connection = connection;
+        _commandText = commandText;
+        _callerTransaction = transaction;
+        _ownsTransaction = transaction is null;
+        _ownsConnection = ownsConnection;
+        _logger = logger ?? NullLogger.Instance;
     }
 
 

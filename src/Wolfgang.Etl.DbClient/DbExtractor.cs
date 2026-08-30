@@ -111,11 +111,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _transaction = transaction;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -143,9 +147,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
         if (parameters == null)
         {
             throw new ArgumentNullException(nameof(parameters));
@@ -154,8 +164,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         // Defensive copy — see the field-level comment on _parameters.
         _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
         _dynamicParameters = new DynamicParameters(_parameters);
-        _transaction = transaction;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -178,11 +186,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            DbCommandBuilder.BuildSelect<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = DbCommandBuilder.BuildSelect<TRecord>();
-        _transaction = transaction;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -215,10 +227,49 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         string commandText,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger
+        )
+    {
+    }
+
+
+
+    /// <summary>
+    /// Validates the provider-factory arguments and produces the connection this extractor owns.
+    /// </summary>
+    /// <remarks>
+    /// The validation lives here rather than in the constructor body because a constructor's
+    /// <c>this(...)</c> arguments are evaluated before its body runs. Keeping the checks in this
+    /// order preserves both the original <c>ParamName</c> for each argument and the guarantee that
+    /// no connection is created when any argument is null.
+    /// </remarks>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string applied to the new connection.</param>
+    /// <param name="commandText">The command text, validated here to preserve argument order.</param>
+    /// <returns>A new <see cref="DbConnection"/> owned by this extractor.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/>, <paramref name="connectionString"/> or
+    /// <paramref name="commandText"/> is <c>null</c>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="factory"/> produced a <c>null</c> connection.
+    /// </exception>
+    private static DbConnection CreateOwnedConnection
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText
+    )
     {
         if (factory == null) throw new ArgumentNullException(nameof(factory));
         if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
+        if (commandText == null) throw new ArgumentNullException(nameof(commandText));
 
         var conn = factory.CreateConnection()
             ?? throw new InvalidOperationException
@@ -227,9 +278,29 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 "The provider factory does not produce DbConnection instances."
             );
         conn.ConnectionString = connectionString;
-        _connection = conn;
-        _ownsConnection = true;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
+        return conn;
+    }
+
+
+
+    /// <summary>
+    /// The single initialization path. Every other constructor chains into this one, so the shared
+    /// fields are assigned in exactly one place and cannot drift between input shapes.
+    /// </summary>
+    private DbExtractor
+    (
+        DbConnection connection,
+        string commandText,
+        DbTransaction? transaction,
+        bool ownsConnection,
+        ILogger? logger
+    )
+    {
+        _connection = connection;
+        _commandText = commandText;
+        _transaction = transaction;
+        _ownsConnection = ownsConnection;
+        _logger = logger ?? NullLogger.Instance;
     }
 
 
