@@ -39,6 +39,11 @@ internal sealed class DbLoaderBuilder<T> : IDbLoaderBuilder<T>
     // Fluent setters
     // -----------------------------------------------------------------
 
+#pragma warning disable CS0618
+    // This builder configures an extractor/loader that already exists - it is handed the
+    // instance in its constructor, so there is no constructor of its own to route options
+    // through. Writing the (now deprecated) setters is the only available path until the
+    // builder is reshaped to construct the instance itself.
     public IDbLoaderBuilder<T> CommandType(CommandType commandType)
     {
         _loader.CommandType = commandType;
@@ -66,6 +71,10 @@ internal sealed class DbLoaderBuilder<T> : IDbLoaderBuilder<T>
     // -----------------------------------------------------------------
     // IEtlPipelineSink
     // -----------------------------------------------------------------
+
+
+#pragma warning restore CS0618
+
 
     public Task RunAsync(IProgress<EtlPipelineProgress>? progress = null, CancellationToken token = default)
     {

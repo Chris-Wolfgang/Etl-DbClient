@@ -366,6 +366,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public TimeSpan? CommandTimeout
     {
         get => _commandTimeout;
+        [Obsolete("Configure CommandTimeout through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value.HasValue && value.Value < TimeSpan.Zero)
@@ -396,7 +397,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// procedure by name per record (or per batch when <see cref="BatchSize"/>
     /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
     /// </summary>
-    public CommandType CommandType { get; set; } = CommandType.Text;
+    public CommandType CommandType { get; [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = CommandType.Text;
 
 
 
@@ -422,7 +423,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// left open — the loader only closes connections it itself opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get; set; }
+    public bool ManageConnection { get; [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -445,7 +446,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get; set; }
+    public bool ValidateSchemaOnStart { get; [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -489,6 +490,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int InsertBatchSize
     {
         get => _insertBatchSize;
+        [Obsolete("Configure InsertBatchSize through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 1)
@@ -551,7 +553,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// retry, so the load still aborts even in Skip mode when
     /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
     /// </remarks>
-    public RowErrorHandling ErrorHandling { get; set; } = RowErrorHandling.Abort;
+    public RowErrorHandling ErrorHandling { get; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = RowErrorHandling.Abort;
 
 
 
@@ -572,6 +574,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int MaxErrorCount
     {
         get => _maxErrorCount;
+        [Obsolete("Configure MaxErrorCount through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 0)
@@ -642,6 +645,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int BatchCommitSize
     {
         get => _batchCommitSize;
+        [Obsolete("Configure BatchCommitSize through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 0)
@@ -684,6 +688,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int BatchSize
     {
         get => _batchSize;
+        [Obsolete("Configure BatchSize through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 1)
@@ -1599,6 +1604,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <param name="options">The configuration to apply, or <c>null</c>.</param>
     private void ApplyOptions(DbLoaderOptions? options)
     {
+#pragma warning disable CS0618 // ApplyOptions is the supported replacement for these setters.
         if (options is null)
         {
             return;
@@ -1613,5 +1619,6 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         MaxErrorCount = options.MaxErrorCount;
         BatchCommitSize = options.BatchCommitSize;
         BatchSize = options.BatchSize;
+#pragma warning restore CS0618
     }
 }
