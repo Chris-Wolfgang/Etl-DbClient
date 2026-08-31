@@ -28,6 +28,11 @@ using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 using Xunit;
 
+// Constructs via the deprecated constructors. Migrating to the options overloads is
+// follow-up work; the deprecation exists to warn consumers, and the options constructors
+// are covered by DbOptionsDefaultsTests.
+#pragma warning disable CS0618
+
 // VSTHRD002: `Task.WaitAll` inside a `RunUnderCoyote(Action)` body is
 // intentional — the Coyote scheduler drives the exploration in a
 // synchronous body delegate. Rewriting these joins as `await` would

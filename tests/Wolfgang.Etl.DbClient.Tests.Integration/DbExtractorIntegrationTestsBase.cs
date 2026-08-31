@@ -2,6 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
+// Constructs via the deprecated constructors. Migrating to the options overloads is
+// follow-up work; the deprecation exists to warn consumers, and the options constructors
+// are covered by DbOptionsDefaultsTests.
+#pragma warning disable CS0618
+
 namespace Wolfgang.Etl.DbClient.Tests.Integration;
 
 /// <summary>
