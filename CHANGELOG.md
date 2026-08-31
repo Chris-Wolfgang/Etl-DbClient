@@ -9,7 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Configuration via options records.** `DbExtractor<TRecord>` and `DbLoader<TRecord>` gained
+  constructors taking `DbExtractorOptions` / `DbLoaderOptions`, so configuration travels through the
+  constructor instead of post-construction property assignment. One overload per existing input
+  shape; defaults live on the records' property initializers, so no constructor can diverge from
+  them. Neither record is generic — no setting depends on the record type.
+
+  Purely additive: every existing constructor and property still works exactly as before.
+
+  `DbLoaderOptions` carries no `IsDryRun`. That member implements `ISupportDryRun.IsDryRun`, which
+  declares a `set` accessor and so cannot become `init`-only while that interface stands; set it on
+  the loader after construction as before.
+
 ### Changed
+
+- **Source-compatibility note: a positional `null` in the transaction argument is now ambiguous.**
+  The new options overloads sit in the same position as the optional `DbTransaction?`, so a call
+  passing an untyped `null` there — `new DbExtractor<T>(conn, "SELECT 1", null)` — no longer compiles
+  (CS0121), because `null` is convertible to both `DbTransaction?` and the options record.
+
+  **This is source-only.** Already-compiled callers are unaffected: the signatures they bound to are
+  unchanged and still present, so there is no binary break and PackageValidation reports none.
+
+  The fix at each affected call site is to name the argument — `transaction: null` — or simply omit
+  it, since it is optional. Passing an explicit positional `null` for an optional parameter is
+  unusual; no call site in this repository does it.
 
 ### Deprecated
 

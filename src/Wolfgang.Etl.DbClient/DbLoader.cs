@@ -186,6 +186,86 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
 
 
 
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbLoader{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to write to.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbLoader
+    (
+        DbConnection connection,
+        string commandText,
+        DbLoaderOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+        : this(connection, commandText, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbLoader{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to write to.</param>
+    /// <param name="writeMode">Whether to generate an INSERT or an UPDATE.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbLoader
+    (
+        DbConnection connection,
+        WriteMode writeMode,
+        DbLoaderOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+        : this(connection, writeMode, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbLoader{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbLoader
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText,
+        DbLoaderOptions? options,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+        : this(factory, connectionString, commandText, logger)
+    {
+        ApplyOptions(options);
+    }
+
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this loader owns.
     /// </summary>
@@ -1510,5 +1590,28 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 CurrentItemCount
             );
         }
+    }
+
+    /// <summary>
+    /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves
+    /// every property at its default.
+    /// </summary>
+    /// <param name="options">The configuration to apply, or <c>null</c>.</param>
+    private void ApplyOptions(DbLoaderOptions? options)
+    {
+        if (options is null)
+        {
+            return;
+        }
+
+        CommandTimeout = options.CommandTimeout;
+        CommandType = options.CommandType;
+        ManageConnection = options.ManageConnection;
+        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
+        InsertBatchSize = options.InsertBatchSize;
+        ErrorHandling = options.ErrorHandling;
+        MaxErrorCount = options.MaxErrorCount;
+        BatchCommitSize = options.BatchCommitSize;
+        BatchSize = options.BatchSize;
     }
 }

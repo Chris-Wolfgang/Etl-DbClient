@@ -240,6 +240,113 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to read from.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbConnection connection,
+        string commandText,
+        DbExtractorOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+        : this(connection, commandText, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to read from.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="parameters">The command parameters.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbConnection connection,
+        string commandText,
+        IDictionary<string, object> parameters,
+        DbExtractorOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+        : this(connection, commandText, parameters, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to read from.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbConnection connection,
+        DbExtractorOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+        : this(connection, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText,
+        DbExtractorOptions? options,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+        : this(factory, connectionString, commandText, logger)
+    {
+        ApplyOptions(options);
+    }
+
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this extractor owns.
     /// </summary>
@@ -949,5 +1056,27 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 exception.Message
             );
         }
+    }
+
+    /// <summary>
+    /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves
+    /// every property at its default.
+    /// </summary>
+    /// <param name="options">The configuration to apply, or <c>null</c>.</param>
+    private void ApplyOptions(DbExtractorOptions? options)
+    {
+        if (options is null)
+        {
+            return;
+        }
+
+        CommandTimeout = options.CommandTimeout;
+        CommandType = options.CommandType;
+        ManageConnection = options.ManageConnection;
+        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
+        ServerOffset = options.ServerOffset;
+        ServerLimit = options.ServerLimit;
+        PagingClauseTemplate = options.PagingClauseTemplate;
+        TotalCountQuery = options.TotalCountQuery;
     }
 }
