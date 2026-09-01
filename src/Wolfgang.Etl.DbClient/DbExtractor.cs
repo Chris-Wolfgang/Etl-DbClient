@@ -71,7 +71,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // diverge. Dapper treats input-parameter DynamicParameters as read-only
     // during execution, so sharing is safe across this type's documented
     // single-use lifetime.
-    private readonly DynamicParameters? _dynamicParameters;
+    // Either the library's own dictionary handling (plain values only) or EtlParameterSet when
+    // the caller supplied EtlParameter / DbParameter values. Typed as the interface so both fit.
+    private readonly SqlMapper.IDynamicParameters? _dynamicParameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
     private readonly Stopwatch _stopwatch = new();
@@ -165,7 +167,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         // Defensive copy — see the field-level comment on _parameters.
         _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
-        _dynamicParameters = new DynamicParameters(_parameters);
+        _dynamicParameters = EtlParameterSet.IsNeededFor(_parameters)
+            ? new EtlParameterSet(_parameters)
+            : new DynamicParameters(_parameters);
     }
 
 
@@ -902,7 +906,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <c>System.ValueTuple</c> in the base targeting pack and we avoid the
     /// extra package reference.
     /// </remarks>
-    private void ApplyServerPaging(string commandText, DynamicParameters? param, out string pagedCommandText, out DynamicParameters? pagedParam)
+    private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
     {
         if (!ServerOffset.HasValue || !ServerLimit.HasValue)
         {
@@ -911,12 +915,24 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             return;
         }
 
-        var pagingParam = param ?? new DynamicParameters();
-        pagingParam.Add("@PageOffset", ServerOffset.Value);
-        pagingParam.Add("@PageLimit", ServerLimit.Value);
+        // Both parameter shapes accept additions, by different methods.
+        switch (param)
+        {
+            case EtlParameterSet set:
+                set.Add("@PageOffset", ServerOffset.Value);
+                set.Add("@PageLimit", ServerLimit.Value);
+                pagedParam = set;
+                break;
+
+            default:
+                var dynamic = param as DynamicParameters ?? new DynamicParameters();
+                dynamic.Add("@PageOffset", ServerOffset.Value);
+                dynamic.Add("@PageLimit", ServerLimit.Value);
+                pagedParam = dynamic;
+                break;
+        }
 
         pagedCommandText = commandText + " " + PagingClauseTemplate;
-        pagedParam = pagingParam;
     }
 
 

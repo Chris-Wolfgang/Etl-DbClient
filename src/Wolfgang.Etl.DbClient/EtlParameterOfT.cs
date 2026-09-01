@@ -8,23 +8,28 @@ namespace Wolfgang.Etl.DbClient;
 /// <typeparam name="T">The value type. Output values are converted to this type.</typeparam>
 /// <example>
 /// <code>
-/// var id    = new EtlParameter&lt;int&gt; { Value = 42 };
+/// // An input parameter carries its value.
+/// var id = new EtlParameter&lt;int&gt; { Value = 42 };
+///
+/// // An output parameter declares its type and direction instead; the value
+/// // arrives after the command runs.
 /// var total = new EtlParameter&lt;int&gt;
 /// {
-///     DbType = DbType.Int32,
-///     Direction = ParameterDirection.Output
+///     DbType = System.Data.DbType.Int32,
+///     Direction = System.Data.ParameterDirection.Output
 /// };
 ///
-/// var extractor = new DbExtractor&lt;Order&gt;
-/// (
-///     connection,
-///     "usp_GetOrdersForCustomer",
-///     new Dictionary&lt;string, object&gt; { ["@CustomerId"] = id, ["@TotalCount"] = total },
-///     new DbExtractorOptions { CommandType = CommandType.StoredProcedure }
-/// );
+/// // Supply them as dictionary values to a DbExtractor or DbLoader constructor,
+/// // alongside plain values, which continue to bind as inputs.
+/// var parameters = new System.Collections.Generic.Dictionary&lt;string, object&gt;
+/// {
+///     ["@CustomerId"] = id,
+///     ["@TotalCount"] = total,
+///     ["@Region"] = "EU"
+/// };
 ///
-/// await foreach (var order in extractor.ExtractAsync()) { }
-/// var count = total.Value;
+/// // After extraction completes:
+/// // var count = total.Value;
 /// </code>
 /// </example>
 public sealed class EtlParameter<T> : EtlParameter
