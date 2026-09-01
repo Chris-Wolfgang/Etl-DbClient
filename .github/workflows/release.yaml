@@ -625,6 +625,14 @@ jobs:
             echo "project=$proj" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify Docker is available
+        # Preflight so an unavailable daemon fails LOUDLY here. Without it the
+        # fixtures degrade to Skip.IfNot(...) on every test, dotnet test exits 0,
+        # and the whole chain reports success with zero DB round-trips (#357).
+        run: |
+          docker version
+          docker info
+
       - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
         if: steps.locate.outputs.found == 'true'
         run: |
@@ -636,6 +644,36 @@ jobs:
             --logger "console;verbosity=normal" \
             --logger "trx;LogFileName=integration-${{ matrix.rdbms }}-${{ matrix.tfm }}.trx" \
             --results-directory "./TestResults-Integration"
+
+
+      - name: Assert integration tests actually ran
+        # Second guard, independent of the Docker preflight: a run where every
+        # test reported Skipped exits 0 and looks identical to a passing run.
+        # Fail if nothing executed, or if anything was skipped on CI.
+        shell: bash
+        run: |
+          trx=$(find . -name 'integration-*.trx' -print -quit)
+          if [ -z "$trx" ]; then
+            echo "::error::No .trx produced - the integration run did not execute."
+            exit 1
+          fi
+          python - "$trx" <<'PY'
+          import re, sys, xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          ns = {'t': re.match(r'\{(.*)\}', root.tag).group(1)} if root.tag.startswith('{') else {}
+          c = root.find('.//t:Counters', ns) if ns else root.find('.//Counters')
+          if c is None:
+              print('::error::No <Counters> in the .trx - cannot verify the run.'); sys.exit(1)
+          total = int(c.get('total', 0)); executed = int(c.get('executed', 0))
+          passed = int(c.get('passed', 0)); skipped = total - executed
+          print(f'total={total} executed={executed} passed={passed} skipped={skipped}')
+          if total == 0:
+              print('::error::Zero tests in the .trx.'); sys.exit(1)
+          if executed == 0:
+              print('::error::Every test was skipped - Docker or the fixture is unavailable.'); sys.exit(1)
+          if skipped:
+              print(f'::error::{skipped} test(s) skipped on CI; integration tests must not skip here.'); sys.exit(1)
+          PY
 
       - name: Upload integration test results
         if: always() && steps.locate.outputs.found == 'true'
