@@ -105,3 +105,41 @@ public class EtlParameterTests
         Assert.Equal(5, p.Value);
     }
 }
+
+public enum ParameterProbeStatus { Unknown = 0, Active = 1 }
+
+public class EtlParameterEnumTests
+{
+    [Fact]
+    public void SetValue_converts_an_integral_provider_type_to_an_enum()
+    {
+        // a provider returns the underlying integral type for an enum-backed column
+        var p = new EtlParameter<ParameterProbeStatus>();
+
+        p.SetValue(1);
+
+        Assert.Equal(ParameterProbeStatus.Active, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_converts_a_widened_integral_to_an_enum()
+    {
+        var p = new EtlParameter<ParameterProbeStatus>();
+
+        p.SetValue(1L);
+
+        Assert.Equal(ParameterProbeStatus.Active, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_converts_a_string_to_an_enum()
+    {
+        var p = new EtlParameter<ParameterProbeStatus>();
+
+        p.SetValue("active");
+
+        Assert.Equal(ParameterProbeStatus.Active, p.Value);
+    }
+}

@@ -88,9 +88,23 @@ public abstract class EtlParameter
 
         try
         {
-            StoredValue = Convert.ChangeType(value, target, CultureInfo.InvariantCulture);
+            // Convert.ChangeType cannot target an enum - it throws InvalidCastException for
+            // integral and string sources alike - so enums are converted explicitly. Providers
+            // return the underlying integral type for a column storing an enum.
+            if (!target.IsEnum)
+            {
+                StoredValue = Convert.ChangeType(value, target, CultureInfo.InvariantCulture);
+            }
+            else if (value is string text)
+            {
+                StoredValue = Enum.Parse(target, text, ignoreCase: true);
+            }
+            else
+            {
+                StoredValue = Enum.ToObject(target, value);
+            }
         }
-        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException)
         {
             throw new InvalidOperationException
             (
