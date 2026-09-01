@@ -969,6 +969,7 @@ jobs:
           fi
 
       - name: Verify Docker is available
+        if: steps.locate.outputs.found == 'true'
         # Preflight so an unavailable daemon fails LOUDLY here. Without it the
         # fixtures degrade to Skip.IfNot(...) on every test, dotnet test exits 0,
         # and the whole chain reports success with zero DB round-trips (#357).
@@ -993,6 +994,7 @@ jobs:
 
 
       - name: Assert integration tests actually ran
+        if: steps.locate.outputs.found == 'true'
         # Second guard, independent of the Docker preflight: a run where every
         # test reported Skipped exits 0 and looks identical to a passing run.
         # Fail if nothing executed, or if anything was skipped on CI.
