@@ -143,3 +143,55 @@ public class EtlParameterEnumTests
         Assert.Equal(ParameterProbeStatus.Active, p.Value);
     }
 }
+
+
+/// <summary>
+/// <c>EtlParameter&lt;object&gt;</c> is the untyped mode — the reason the base class can stay
+/// abstract without denying callers an "I do not care about the type" option.
+/// </summary>
+public class EtlParameterOfObjectTests
+{
+    [Fact]
+    public void A_value_type_round_trips_through_the_object_declaration()
+    {
+        var p = new EtlParameter<object> { Value = 42 };
+
+        Assert.Equal(42, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_stores_a_value_type_unconverted()
+    {
+        var p = new EtlParameter<object>();
+
+        p.SetValue(7L);
+
+        // declared as object, so the provider's own type is kept rather than converted
+        Assert.Equal(7L, p.Value);
+        Assert.IsType<long>(p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_stores_a_reference_type_unconverted()
+    {
+        var p = new EtlParameter<object>();
+
+        p.SetValue("text");
+
+        Assert.Equal("text", p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_treats_DBNull_as_null()
+    {
+        var p = new EtlParameter<object> { Value = "before" };
+
+        p.SetValue(System.DBNull.Value);
+
+        Assert.Null(p.Value);
+    }
+}
+
