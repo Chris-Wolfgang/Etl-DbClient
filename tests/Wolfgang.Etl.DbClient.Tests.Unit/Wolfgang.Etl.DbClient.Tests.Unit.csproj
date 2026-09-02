@@ -125,17 +125,17 @@
   <!-- Shared dependencies (all TFMs) -->
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.11" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
     <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql.
          The bundle_e_sqlite3/core line pulls patched native lib.e_sqlite3
          3.50.3 transitively — don't pin lib.e_sqlite3 directly, that
          package line never reached 3.50.x itself. -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
-    <PackageReference Include="Wolfgang.Etl.ErrorPolicies" Version="0.22.0" />
-    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.22.0" />
-    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.22.0" />
+    <PackageReference Include="Wolfgang.Etl.ErrorPolicies" Version="0.23.4" />
+    <PackageReference Include="Wolfgang.Etl.TestKit" Version="0.23.4" />
+    <PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.23.4" />
   </ItemGroup>
 
   <!-- Copy native SQLite DLL to output for .NET Framework (no RID-based probing) -->
