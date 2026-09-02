@@ -852,11 +852,11 @@ jobs:
           failed_projects=""
           threshold=${CODECOV_MINIMUM:-90}
           
-          while read -r line; do
+          while IFS= read -r line; do
             # Match lines with module names and percentages
-            if echo "$line" | grep -qE '^[^ ].*[0-9]+%$' && ! echo "$line" | grep -q '^Summary'; then
+            if echo "$line" | grep -qE '^[^ ]+.*[0-9]+%$' && ! echo "$line" | grep -q '^Summary'; then
               module=$(echo "$line" | awk '{print $1}')
-              percent=$(echo "$line" | awk '{print $NF}' | tr -d '%')
+              percent=$(echo "$line" | grep -oE '[0-9]+(\.[0-9]+)?%' | tail -1 | grep -oE '^[0-9]+')
               
               echo "Checking module: '$module' - Coverage: ${percent}%"
               
