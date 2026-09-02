@@ -1,0 +1,197 @@
+using System;
+using System.Data;
+using Xunit;
+
+namespace Wolfgang.Etl.DbClient.Tests.Unit;
+
+public class EtlParameterTests
+{
+    [Fact]
+    public void Value_set_in_an_object_initializer_round_trips()
+    {
+        var p = new EtlParameter<int> { Value = 42 };
+
+        Assert.Equal(42, p.Value);
+        Assert.Equal(ParameterDirection.Input, p.Direction);
+    }
+
+
+    [Fact]
+    public void Output_parameter_can_be_declared_without_a_value()
+    {
+        var p = new EtlParameter<int> { DbType = DbType.Int32, Direction = ParameterDirection.Output };
+
+        Assert.Equal(default, p.Value);
+        Assert.Equal(ParameterDirection.Output, p.Direction);
+        Assert.Equal(DbType.Int32, p.DbType);
+    }
+
+
+    [Fact]
+    public void A_generic_parameter_is_reachable_as_the_non_generic_base()
+    {
+        // parameter binding dispatches on the base, so this must hold for every T
+        object boxed = new EtlParameter<string> { Value = "x" };
+
+        Assert.True(boxed is EtlParameter);
+    }
+
+
+    [Fact]
+    public void SetValue_stores_a_matching_type_unchanged()
+    {
+        var p = new EtlParameter<int>();
+
+        p.SetValue(7);
+
+        Assert.Equal(7, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_converts_a_widened_provider_type()
+    {
+        // SQLite returns long for INTEGER even when the caller declared int
+        var p = new EtlParameter<int>();
+
+        p.SetValue(7L);
+
+        Assert.Equal(7, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_converts_a_decimal_provider_type()
+    {
+        // SQL Server returns decimal for NUMERIC
+        var p = new EtlParameter<int>();
+
+        p.SetValue(7m);
+
+        Assert.Equal(7, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_treats_DBNull_as_null()
+    {
+        var p = new EtlParameter<string> { Value = "before" };
+
+        p.SetValue(DBNull.Value);
+
+        Assert.Null(p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_when_conversion_is_impossible_throws_naming_both_types()
+    {
+        var p = new EtlParameter<int>();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => p.SetValue("not a number"));
+
+        Assert.Contains("System.String", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("System.Int32", ex.Message, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public void SetValue_populates_a_nullable_declared_type()
+    {
+        var p = new EtlParameter<int?>();
+
+        p.SetValue(5L);
+
+        Assert.Equal(5, p.Value);
+    }
+}
+
+public enum ParameterProbeStatus { Unknown = 0, Active = 1 }
+
+public class EtlParameterEnumTests
+{
+    [Fact]
+    public void SetValue_converts_an_integral_provider_type_to_an_enum()
+    {
+        // a provider returns the underlying integral type for an enum-backed column
+        var p = new EtlParameter<ParameterProbeStatus>();
+
+        p.SetValue(1);
+
+        Assert.Equal(ParameterProbeStatus.Active, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_converts_a_widened_integral_to_an_enum()
+    {
+        var p = new EtlParameter<ParameterProbeStatus>();
+
+        p.SetValue(1L);
+
+        Assert.Equal(ParameterProbeStatus.Active, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_converts_a_string_to_an_enum()
+    {
+        var p = new EtlParameter<ParameterProbeStatus>();
+
+        p.SetValue("active");
+
+        Assert.Equal(ParameterProbeStatus.Active, p.Value);
+    }
+}
+
+
+/// <summary>
+/// <c>EtlParameter&lt;object&gt;</c> is the untyped mode — the reason the base class can stay
+/// abstract without denying callers an "I do not care about the type" option.
+/// </summary>
+public class EtlParameterOfObjectTests
+{
+    [Fact]
+    public void A_value_type_round_trips_through_the_object_declaration()
+    {
+        var p = new EtlParameter<object> { Value = 42 };
+
+        Assert.Equal(42, p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_stores_a_value_type_unconverted()
+    {
+        var p = new EtlParameter<object>();
+
+        p.SetValue(7L);
+
+        // declared as object, so the provider's own type is kept rather than converted
+        Assert.Equal(7L, p.Value);
+        Assert.IsType<long>(p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_stores_a_reference_type_unconverted()
+    {
+        var p = new EtlParameter<object>();
+
+        p.SetValue("text");
+
+        Assert.Equal("text", p.Value);
+    }
+
+
+    [Fact]
+    public void SetValue_treats_DBNull_as_null()
+    {
+        var p = new EtlParameter<object> { Value = "before" };
+
+        p.SetValue(System.DBNull.Value);
+
+        Assert.Null(p.Value);
+    }
+}
+
