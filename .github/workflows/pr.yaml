@@ -1005,7 +1005,11 @@ jobs:
             echo "::error::No .trx produced - the integration run did not execute."
             exit 1
           fi
-          python - "$trx" <<'PY'
+          # Runner images are not consistent about whether `python` is on PATH; `python3`
+          # is the reliable name. Same fallback shadow-regression.yaml already uses.
+          PYTHON_BIN=python3
+          command -v python3 >/dev/null 2>&1 || PYTHON_BIN=python
+          "$PYTHON_BIN" - "$trx" <<'PY'
           import re, sys, xml.etree.ElementTree as ET
           root = ET.parse(sys.argv[1]).getroot()
           ns = {'t': re.match(r'\{(.*)\}', root.tag).group(1)} if root.tag.startswith('{') else {}

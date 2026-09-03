@@ -191,7 +191,6 @@ Console.WriteLine("Done.");
 // to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
 // Several sites here assign after construction, so they cannot move to a constructor without
 // restructuring the test.
-#pragma warning disable CS0618
 
 namespace Wolfgang.Etl.DbClient.Example.EtlPipeline
 {
