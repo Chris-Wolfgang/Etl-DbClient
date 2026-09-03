@@ -65,7 +65,8 @@ public class DbOptionsDefaultsTests
 
         Assert.Null(sut.CommandTimeout);
         Assert.Equal(CommandType.Text, sut.CommandType);
-        Assert.Equal("LIMIT @PageLimit OFFSET @PageOffset", sut.PagingClauseTemplate);
+        // No dialect is assumed; see PagingClauseTemplates.None.
+        Assert.Null(sut.PagingClauseTemplate);
         Assert.False(sut.ManageConnection);
     }
 

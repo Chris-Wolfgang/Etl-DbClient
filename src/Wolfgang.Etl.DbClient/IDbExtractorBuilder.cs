@@ -78,8 +78,7 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// reject the form otherwise.
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException"><paramref name="template"/> is <see langword="null"/>.</exception>
-    IDbExtractorBuilder<T> PagingClauseTemplate(string template);
+    IDbExtractorBuilder<T> PagingClauseTemplate(string? template);
 
 
     /// <summary>

@@ -91,13 +91,10 @@ internal sealed class DbExtractorBuilder<T> : IDbExtractorBuilder<T>
 
 
 
-    public IDbExtractorBuilder<T> PagingClauseTemplate(string template)
+    public IDbExtractorBuilder<T> PagingClauseTemplate(string? template)
     {
-        if (template is null)
-        {
-            throw new ArgumentNullException(nameof(template));
-        }
-
+        // null is meaningful here: it is PagingClauseTemplates.None, "no dialect chosen".
+        // Rejecting it would make .PagingClauseTemplate(PagingClauseTemplates.None) throw.
         _extractor.PagingClauseTemplate = template;
         return this;
     }

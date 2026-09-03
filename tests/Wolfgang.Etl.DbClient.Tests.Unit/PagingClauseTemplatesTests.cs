@@ -20,7 +20,9 @@ public class PagingClauseTemplatesTests
         // to report which preset is actually wrong.
         foreach (var property in typeof(PagingClauseTemplates)
             .GetProperties(BindingFlags.Public | BindingFlags.Static)
-            .Where(p => p.PropertyType == typeof(string) && p.GetIndexParameters().Length == 0))
+            .Where(p => p.PropertyType == typeof(string)
+                && p.GetIndexParameters().Length == 0
+                && p.GetValue(null) is not null))
         {
             yield return new object[] { property.Name, (string)property.GetValue(null)! };
         }
@@ -68,12 +70,24 @@ public class PagingClauseTemplatesTests
 
 
     [Fact]
-    public void The_library_default_is_still_the_LimitOffset_form()
+    public void None_is_null_and_is_the_library_default()
     {
-        // DbExtractorOptions now initialises from PagingClauseTemplates.Sqlite, so comparing the
-        // two would be tautological. Assert the literal shape instead: changing the Sqlite preset
-        // silently changes the library-wide default, and that should be a deliberate act.
-        Assert.Equal("LIMIT @PageLimit OFFSET @PageOffset", new DbExtractorOptions().PagingClauseTemplate);
+        // There is no portable paging syntax, so the library does not guess a dialect. Any
+        // non-null default would be wrong on half the supported engines.
+        Assert.Null(PagingClauseTemplates.None);
+        Assert.Null(new DbExtractorOptions().PagingClauseTemplate);
+    }
+
+
+
+    [Fact]
+    public void None_is_excluded_from_the_discovered_presets()
+    {
+        // None is a public static string property but not a dialect, so the contract theory
+        // above must not try to assert @PageOffset/@PageLimit against it.
+        var discovered = AllPresets().Select(row => (string)row[0]).ToList();
+
+        Assert.DoesNotContain(nameof(PagingClauseTemplates.None), discovered);
     }
 
 

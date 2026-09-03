@@ -20,7 +20,7 @@ Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType.get -> System.Data.CommandT
 Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType.init -> void
 Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection.init -> void
-Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate.get -> string!
+Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate.get -> string?
 Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate.init -> void
 Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit.get -> long?
 Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit.init -> void
@@ -77,7 +77,7 @@ Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ManageConnection(bool manage) -> Wo
 Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.Parameters(Dapper.DynamicParameters! parameters) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
 Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerOffset(long? offset) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
 Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerLimit(long? limit) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
-Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string! template) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string? template) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
 Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.TotalCountQuery(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>! countQuery) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
 Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>
 Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.CommandType(System.Data.CommandType commandType) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
@@ -89,3 +89,6 @@ static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(this W
 static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(this Wolfgang.Etl.Abstractions.IEtlPipeline<T>! pipeline, System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
 static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(this Wolfgang.Etl.Abstractions.IEtlPipeline<T>! pipeline, Wolfgang.Etl.DbClient.DbLoader<T>! loader) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
 Wolfgang.Etl.DbClient.PagingClauseTemplates
+*REMOVED*Wolfgang.Etl.DbClient.DbExtractor<TRecord>.PagingClauseTemplate.get -> string!
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.PagingClauseTemplate.get -> string?
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.None.get -> string?

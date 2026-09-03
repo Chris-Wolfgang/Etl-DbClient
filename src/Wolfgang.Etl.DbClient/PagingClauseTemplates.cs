@@ -35,6 +35,20 @@ public static class PagingClauseTemplates
     private const string OffsetFetch = "OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY";
 
 
+    /// <summary>
+    /// No dialect chosen. This is the default, and it is <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// This does NOT disable paging — paging is controlled by <c>ServerOffset</c> and
+    /// <c>ServerLimit</c>, and applies only when both are set. <see cref="None"/> means the
+    /// dialect has not been named yet, so activating paging while it is in effect is an error
+    /// rather than a silent guess: there is no portable paging syntax, and any default this
+    /// library picked would be wrong on half the engines it supports.
+    /// </remarks>
+    public static string? None { get; }
+
+
+
     /// <summary>MySQL and MariaDB — <c>LIMIT … OFFSET …</c>.</summary>
     public static string MySql { get; } = LimitOffset;
 
