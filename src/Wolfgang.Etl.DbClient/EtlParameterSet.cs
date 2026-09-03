@@ -104,7 +104,32 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
     /// <summary>Adds a parameter the extractor supplies itself, without touching the caller's dictionary.</summary>
     /// <param name="name">The parameter name.</param>
     /// <param name="value">The parameter value.</param>
-    internal void Add(string name, object value) => _added[name] = value;
+    /// <exception cref="InvalidOperationException">
+    /// The caller's dictionary already contains <paramref name="name"/>.
+    /// </exception>
+    /// <remarks>
+    /// A collision is rejected rather than resolved. Emitting both would produce a duplicate
+    /// parameter name and the provider would reject the command; silently preferring one would
+    /// mean either the caller's value or the extractor's paging is quietly discarded. A caller who
+    /// supplies this name AND configures the feature that generates it has expressed two
+    /// conflicting intentions, and only they can say which was meant.
+    /// </remarks>
+    internal void Add(string name, object value)
+    {
+        if (_source.ContainsKey(name))
+        {
+            throw new InvalidOperationException
+            (
+                $"Parameter '{name}' was supplied in the parameters dictionary and is also " +
+                "generated automatically, so it cannot be applied twice. Server-side paging " +
+                $"generates '{name}' when ServerOffset and ServerLimit are set. Either remove " +
+                $"'{name}' from the dictionary and let paging supply it, or clear ServerOffset " +
+                "and ServerLimit and page through the command text yourself."
+            );
+        }
+
+        _added[name] = value;
+    }
 
 
     private IEnumerable<KeyValuePair<string, object>> Entries()
