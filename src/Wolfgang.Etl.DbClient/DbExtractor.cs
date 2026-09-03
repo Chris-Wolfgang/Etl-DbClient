@@ -625,6 +625,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
     /// (and ensure the base SQL ends with an <c>ORDER BY</c>).
     /// </para>
+    /// <para>
+    /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
+    /// </para>
     /// </remarks>
     public string PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = "LIMIT @PageLimit OFFSET @PageOffset";
 

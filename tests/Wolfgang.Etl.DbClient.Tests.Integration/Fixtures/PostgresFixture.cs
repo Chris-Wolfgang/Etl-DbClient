@@ -13,6 +13,8 @@ public sealed class PostgresFixture : DbProviderFixtureBase
 
     public override string ProviderName => "postgres";
 
+    public override string PagingClauseTemplate => PagingClauseTemplates.PostgreSql;
+
 
 
     protected override async Task StartAsync()

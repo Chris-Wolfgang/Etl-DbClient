@@ -13,6 +13,8 @@ public sealed class MySqlFixture : DbProviderFixtureBase
 
     public override string ProviderName => "mysql";
 
+    public override string PagingClauseTemplate => PagingClauseTemplates.MySql;
+
 
 
     protected override async Task StartAsync()

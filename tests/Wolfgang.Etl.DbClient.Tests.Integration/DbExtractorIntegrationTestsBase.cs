@@ -102,4 +102,152 @@ public abstract class DbExtractorIntegrationTestsBase
         Assert.Equal("Item1", results[0].Name);
         Assert.Equal("Item2", results[1].Name);
     }
+
+
+    // ---- Server-side paging -------------------------------------------------
+    //
+    // These run the fixture's own PagingClauseTemplate against its own engine, so a
+    // preset that is syntactically wrong for an RDBMS fails here instead of in a
+    // consumer's query. Every query orders by value: the OFFSET/FETCH form requires
+    // an ORDER BY, and paging without a total order is not deterministic anyway.
+
+    private const string OrderedSelect =
+        "SELECT name AS Name, value AS Value FROM contract_items ORDER BY value";
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_server_paging_is_configured_returns_the_expected_window()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
+
+        var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+        {
+            PagingClauseTemplate = Fixture.PagingClauseTemplate,
+            ServerOffset = 1,
+            ServerLimit = 2
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("Item2", results[0].Name);
+        Assert.Equal("Item3", results[1].Name);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_paging_through_the_whole_table_yields_every_row_exactly_once()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 7);
+
+        // 7 rows in pages of 3 deliberately leaves a partial final page.
+        const int pageSize = 3;
+        var seen = new List<int>();
+
+        for (var offset = 0; ; offset += pageSize)
+        {
+            var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+            {
+                PagingClauseTemplate = Fixture.PagingClauseTemplate,
+                ServerOffset = offset,
+                ServerLimit = pageSize
+            };
+
+            var page = await extractor.ExtractAsync().ToListAsync();
+
+            if (page.Count == 0)
+            {
+                break;
+            }
+
+            Assert.True(page.Count <= pageSize, $"page at offset {offset} returned {page.Count} rows");
+            seen.AddRange(page.Select(item => item.Value));
+        }
+
+        // No gaps, no duplicates, and in order — the three ways paging goes wrong.
+        Assert.Equal(Enumerable.Range(1, 7).Select(i => i * 10), seen);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_ServerLimit_exceeds_the_rows_remaining_returns_only_what_is_left()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
+
+        var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+        {
+            PagingClauseTemplate = Fixture.PagingClauseTemplate,
+            ServerOffset = 3,
+            ServerLimit = 100
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("Item4", results[0].Name);
+        Assert.Equal("Item5", results[1].Name);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_ServerOffset_is_past_the_last_row_yields_nothing()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
+
+        var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+        {
+            PagingClauseTemplate = Fixture.PagingClauseTemplate,
+            ServerOffset = 50,
+            ServerLimit = 10
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Empty(results);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_only_ServerLimit_is_set_does_not_page_at_all()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
+
+        // Paging is all-or-nothing: ApplyServerPaging is a no-op unless BOTH ServerOffset
+        // and ServerLimit are set. Pinning it because the failure mode is silent — a caller
+        // who sets only a limit gets every row rather than an error.
+        var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+        {
+            PagingClauseTemplate = Fixture.PagingClauseTemplate,
+            ServerLimit = 2
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(5, results.Count);
+    }
 }

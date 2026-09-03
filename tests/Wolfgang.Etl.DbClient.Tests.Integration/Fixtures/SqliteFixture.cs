@@ -20,6 +20,8 @@ public sealed class SqliteFixture : DbProviderFixtureBase
 
     public override string ProviderName => "sqlite";
 
+    public override string PagingClauseTemplate => PagingClauseTemplates.Sqlite;
+
     // SQLite uses an in-memory connection; no Docker daemon required.
     protected override bool RequiresDocker => false;
 

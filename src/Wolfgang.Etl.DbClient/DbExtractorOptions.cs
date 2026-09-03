@@ -74,6 +74,26 @@ public sealed record DbExtractorOptions
     /// Gets the dialect-specific paging clause appended when server paging is active.
     /// Defaults to <c>"LIMIT @PageLimit OFFSET @PageOffset"</c>.
     /// </summary>
+    /// <remarks>
+    /// <b>This is dialect-specific, not standard SQL.</b> The default is the PostgreSQL / MySQL /
+    /// SQLite form; <b>SQL Server rejects <c>LIMIT</c></b> and needs the SQL:2008
+    /// <c>OFFSET … ROWS FETCH NEXT … ROWS ONLY</c> form, as do Oracle 12c+ and Db2. Leaving the
+    /// default in place against those engines produces a runtime syntax error.
+    /// <para>
+    /// Use <see cref="PagingClauseTemplates"/> rather than writing the clause by hand:
+    /// <c>PagingClauseTemplate = PagingClauseTemplates.SqlServer</c>. Any string is accepted, so a
+    /// dialect with no preset can be supplied directly.
+    /// </para>
+    /// <para>
+    /// The <c>OFFSET … FETCH</c> form additionally requires the base SQL to end with an
+    /// <c>ORDER BY</c> — SQL Server and Oracle both reject it otherwise.
+    /// </para>
+    /// <para>
+    /// A custom template must reference both <c>@PageOffset</c> and <c>@PageLimit</c> — those are
+    /// the parameter names supplied when <see cref="ServerOffset"/> and <see cref="ServerLimit"/>
+    /// are set.
+    /// </para>
+    /// </remarks>
     public string PagingClauseTemplate { get; init; } = "LIMIT @PageLimit OFFSET @PageOffset";
 
 
