@@ -129,7 +129,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             supplied,
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var rows = new List<PersonRecord>();
@@ -164,7 +164,7 @@ public class EtlParameterBindingTests
                 ["@min"] = new EtlParameter<int> { Value = 0 },
                 ["@PageOffset"] = 99          // the name paging also generates
             },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -209,7 +209,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             new Dictionary<string, object> { ["@min"] = 0 },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var rows = new List<PersonRecord>();
@@ -236,7 +236,7 @@ public class EtlParameterBindingTests
                 ["@min"] = 0,
                 ["@PageOffset"] = 99
             },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -260,7 +260,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             new Dictionary<string, object> { ["@min"] = 0, ["@PageLimit"] = 5 },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -289,7 +289,7 @@ public class EtlParameterBindingTests
         (
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
-            options: new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            options: new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         )
         {
             Parameters = dynamic
@@ -323,7 +323,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             new Dictionary<string, object> { ["@min"] = 0, [suppliedName] = 99 },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -348,7 +348,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @PageOffsetCutoff ORDER BY age",
             new Dictionary<string, object> { ["@PageOffsetCutoff"] = 0 },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var results = await sut.ExtractAsync().ToListAsync();

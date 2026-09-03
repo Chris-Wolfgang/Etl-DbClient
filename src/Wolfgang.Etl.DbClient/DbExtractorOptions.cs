@@ -74,8 +74,7 @@ public sealed record DbExtractorOptions
 
     /// <summary>
     /// Gets the dialect-specific paging clause appended when server paging is active.
-    /// Defaults to <see cref="PagingClauseTemplates.Sqlite"/>
-    /// (<c>"LIMIT @PageLimit OFFSET @PageOffset"</c>).
+    /// Defaults to <see cref="PagingClauseTemplates.None"/> — no dialect chosen.
     /// </summary>
     /// <remarks>
     /// <b>This is dialect-specific, not standard SQL.</b> The default is the PostgreSQL / MySQL /
@@ -99,7 +98,7 @@ public sealed record DbExtractorOptions
     /// are set.
     /// </para>
     /// </remarks>
-    public string PagingClauseTemplate { get; init; } = PagingClauseTemplates.Sqlite;
+    public string? PagingClauseTemplate { get; init; } = PagingClauseTemplates.None;
 
 
 

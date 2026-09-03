@@ -613,7 +613,8 @@ public class DbExtractorTests
 
         Assert.Null(extractor.ServerOffset);
         Assert.Null(extractor.ServerLimit);
-        Assert.Equal("LIMIT @PageLimit OFFSET @PageOffset", extractor.PagingClauseTemplate);
+        // No dialect is assumed; see PagingClauseTemplates.None.
+        Assert.Null(extractor.PagingClauseTemplate);
     }
 
 
@@ -625,6 +626,7 @@ public class DbExtractorTests
 
         var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
         {
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
             ServerOffset = 0,
             ServerLimit = 5
         };
@@ -645,6 +647,7 @@ public class DbExtractorTests
 
         var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
         {
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
             ServerOffset = 10,
             ServerLimit = 5
         };
@@ -655,6 +658,49 @@ public class DbExtractorTests
         Assert.Equal(5, records.Count);
         Assert.Equal("First11", records[0].FirstName);
         Assert.Equal("First15", records[4].FirstName);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_paging_is_active_without_a_template_throws_and_names_the_fix()
+    {
+        // The whole point of defaulting to None: without this the caller gets a raw provider
+        // syntax error ("Incorrect syntax near 'LIMIT'" on SQL Server) instead of being told
+        // what to do. Assert the message actually carries the remedy.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 5);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People ORDER BY id")
+        {
+            ServerOffset = 0,
+            ServerLimit = 2
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in extractor.ExtractAsync()) { }
+        });
+
+        Assert.Contains("PagingClauseTemplate", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("PagingClauseTemplates", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("ServerOffset", ex.Message, StringComparison.Ordinal);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_paging_is_inactive_does_not_require_a_template()
+    {
+        // None is only an error when paging is actually switched on. Leaving it at the default
+        // while not paging must stay silent, or every non-paging caller would break.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 5);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People ORDER BY id");
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(5, records.Count);
+        Assert.Null(extractor.PagingClauseTemplate);
     }
 
 

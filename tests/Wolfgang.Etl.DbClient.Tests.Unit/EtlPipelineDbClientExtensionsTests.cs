@@ -113,6 +113,7 @@ public class EtlPipelineDbClientExtensionsTests
         await EtlPipeline
             .Create()
             .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
             .ServerOffset(1)
             .ServerLimit(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
@@ -201,6 +202,7 @@ public class EtlPipelineDbClientExtensionsTests
         await EtlPipeline
             .Create()
             .DbExtractor(extractor)
+            .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
             .ServerOffset(0)
             .ServerLimit(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
@@ -343,14 +345,19 @@ public class EtlPipelineDbClientExtensionsTests
 
 
     [Fact]
-    public void Extractor_builder_PagingClauseTemplate_null_throws_ArgumentNullException()
+    public void Extractor_builder_PagingClauseTemplate_accepts_null_as_None()
     {
+        // Reversed deliberately. null is no longer invalid — it is PagingClauseTemplates.None,
+        // "no dialect chosen". Rejecting it would make .PagingClauseTemplate(None) throw, which
+        // would be an obvious trap given None is the default.
         using var src = CreateSourceWithRows(1);
         var builder = EtlPipeline
             .Create()
             .DbExtractor<Widget>(src, "SELECT 1");
 
-        Assert.Throws<System.ArgumentNullException>(() => builder.PagingClauseTemplate(null!));
+        var returned = builder.PagingClauseTemplate(PagingClauseTemplates.None);
+
+        Assert.Same(builder, returned);
     }
 
 

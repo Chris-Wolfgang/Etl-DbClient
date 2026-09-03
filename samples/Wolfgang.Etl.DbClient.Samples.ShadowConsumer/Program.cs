@@ -80,6 +80,9 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
         "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id"
     )
     {
+        // The source here is SQLite. Paging syntax is dialect-specific and the library no
+        // longer guesses one, so the dialect has to be named.
+        PagingClauseTemplate = PagingClauseTemplates.Sqlite,
         ServerOffset = offset,
         ServerLimit = pageSize,
     };

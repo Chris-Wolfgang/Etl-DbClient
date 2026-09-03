@@ -622,8 +622,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Defaults to <see cref="PagingClauseTemplates.Sqlite"/>
-    /// (<c>LIMIT @PageLimit OFFSET @PageOffset</c>) — the SQLite / PostgreSQL / MySQL syntax.
+    /// Defaults to <see cref="PagingClauseTemplates.None"/>: no dialect is assumed, because
+    /// there is no portable paging syntax. Activating paging without choosing a template throws.
     /// </para>
     /// <para>
     /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
@@ -633,7 +633,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
     /// </para>
     /// </remarks>
-    public string PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.Sqlite;
+    public string? PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.None;
 
 
 
@@ -899,6 +899,33 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     }
 
     /// <summary>
+    /// Verifies a paging dialect was chosen before server-side paging is applied.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Paging is active but <see cref="PagingClauseTemplate"/> is
+    /// <see cref="PagingClauseTemplates.None"/>.
+    /// </exception>
+    private void EnsurePagingClauseTemplateChosen()
+    {
+        if (!string.IsNullOrWhiteSpace(PagingClauseTemplate))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException
+        (
+            "Server-side paging requires PagingClauseTemplate to be set, because paging syntax " +
+            "is dialect-specific and no portable form exists. Choose a preset from " +
+            "PagingClauseTemplates (for example PagingClauseTemplates.SqlServer, .PostgreSql, " +
+            ".MySql, .Sqlite, .Oracle or .Db2), or supply your own clause referencing " +
+            "@PageOffset and @PageLimit. To disable paging instead, clear ServerOffset and " +
+            "ServerLimit."
+        );
+    }
+
+
+
+    /// <summary>
     /// Rejects a caller-supplied parameter whose name server-side paging also generates.
     /// </summary>
     /// <remarks>
@@ -996,6 +1023,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             return;
         }
 
+        EnsurePagingClauseTemplateChosen();
         EnsurePagingParametersNotAlreadySupplied();
 
         // Both parameter shapes accept additions, by different methods.
