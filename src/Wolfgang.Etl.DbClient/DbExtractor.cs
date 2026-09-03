@@ -602,7 +602,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// include one — without a stable order, page contents drift.
     /// </para>
     /// <para>
-    /// Paging is applied only when <b>both</b> this and <see cref="ServerLimit"/> are set; setting one alone is a silent no-op.
+    /// Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.
     /// </para>
     /// </remarks>
     public long? ServerOffset { get; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
@@ -610,7 +610,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
-    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerOffset"/> are set; setting one alone is a silent no-op.</remarks>
+    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
     public long? ServerLimit { get; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
@@ -1016,12 +1016,29 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </exception>
     private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
     {
-        if (!ServerOffset.HasValue || !ServerLimit.HasValue)
+        if (!ServerLimit.HasValue)
         {
+            // An offset with no limit is the mirror of the bug this default fixes: the caller
+            // plainly wants paging, and no limit can be inferred (every template references
+            // @PageLimit). Silently returning every row from the top would ignore what they asked
+            // for, so say so instead.
+            if (ServerOffset.HasValue)
+            {
+                throw new InvalidOperationException
+                (
+                    "ServerOffset was set without ServerLimit, so server-side paging cannot be " +
+                    "applied — a page size is required and cannot be inferred. Set ServerLimit " +
+                    "to the number of rows per page, or clear ServerOffset."
+                );
+            }
+
             pagedCommandText = commandText;
             pagedParam = param;
             return;
         }
+
+        // ServerLimit alone is enough: an unspecified offset can only mean "start at the top".
+        var serverOffset = ServerOffset ?? 0L;
 
         EnsurePagingClauseTemplateChosen();
         EnsurePagingParametersNotAlreadySupplied();
@@ -1030,14 +1047,14 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         switch (param)
         {
             case EtlParameterSet set:
-                set.Add("@PageOffset", ServerOffset.Value);
+                set.Add("@PageOffset", serverOffset);
                 set.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = set;
                 break;
 
             default:
                 var dynamic = param as DynamicParameters ?? new DynamicParameters();
-                dynamic.Add("@PageOffset", ServerOffset.Value);
+                dynamic.Add("@PageOffset", serverOffset);
                 dynamic.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = dynamic;
                 break;

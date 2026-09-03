@@ -28,6 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING: `ServerLimit` alone now enables paging; `ServerOffset` defaults to `0` (#393).**
+  Setting only `ServerLimit` was previously a silent no-op — a caller who asked for 50 rows got
+  *every* row, with no error. `ServerLimit` now switches server-side paging on, and an unset
+  `ServerOffset` means "start at the top".
+
+  The mirror case is now loud too: setting `ServerOffset` without `ServerLimit` throws
+  `InvalidOperationException` instead of silently ignoring the offset, since no page size can be
+  inferred (every template in `PagingClauseTemplates` references `@PageLimit`).
+
+  Every paging caller must already revisit this code in this release to satisfy #391's template
+  requirement, so neither change can be reached silently.
+
 - **BREAKING: `PagingClauseTemplate` now defaults to `PagingClauseTemplates.None` (`null`)
   instead of the `LIMIT`/`OFFSET` form (#391).** There is no portable paging syntax, so any
   default privileges some engines and breaks the rest: the old default produced

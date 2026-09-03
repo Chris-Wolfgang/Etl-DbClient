@@ -50,14 +50,14 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// <see cref="PagingClauseTemplate"/>, the extractor appends the paging clause
     /// to the caller's SQL.
     /// </summary>
-    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerLimit"/> are set; setting one alone is a silent no-op.</remarks>
+    /// <remarks>Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.</remarks>
     IDbExtractorBuilder<T> ServerOffset(long? offset);
 
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.ServerLimit"/> for server-side paging.
     /// </summary>
-    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerOffset"/> are set; setting one alone is a silent no-op.</remarks>
+    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
     IDbExtractorBuilder<T> ServerLimit(long? limit);
 
 
