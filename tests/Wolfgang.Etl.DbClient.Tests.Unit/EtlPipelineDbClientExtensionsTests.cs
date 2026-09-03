@@ -470,6 +470,32 @@ public class EtlPipelineDbClientExtensionsTests
 
 
     [Fact]
+    public async Task ITransformWithCancellation_bare_overload_forwards_to_the_token_aware_one()
+    {
+        // The pipeline always calls the cancellation-aware overload, so the bare one that
+        // satisfies ITransformAsync<T,TOut> is never exercised through a pipeline. Calling it
+        // directly asserts the forwarding actually works rather than merely compiling.
+        var sut = new IdentityTransformWithCancellation();
+
+        var source = new[]
+        {
+            new Widget { Id = 1, Name = "a" },
+            new Widget { Id = 2, Name = "b" }
+        }.ToAsyncEnumerable();
+
+        var results = new List<Widget>();
+        await foreach (var w in sut.TransformAsync(source))
+        {
+            results.Add(w);
+        }
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("a", results[0].Name);
+        Assert.Equal("b", results[1].Name);
+    }
+
+
+    [Fact]
     public async Task Extractor_builder_Through_ITransformAsync_materializes_pipeline()
     {
         using var src = CreateSourceWithRows(3);
