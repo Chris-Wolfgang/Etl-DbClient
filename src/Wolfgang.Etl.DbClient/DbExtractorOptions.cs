@@ -59,6 +59,7 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row offset for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerLimit"/> are set; setting one alone is a silent no-op.</remarks>
     public long? ServerOffset { get; init; }
 
 
@@ -66,6 +67,7 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row limit for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerOffset"/> are set; setting one alone is a silent no-op.</remarks>
     public long? ServerLimit { get; init; }
 
 
@@ -85,8 +87,10 @@ public sealed record DbExtractorOptions
     /// dialect with no preset can be supplied directly.
     /// </para>
     /// <para>
-    /// The <c>OFFSET … FETCH</c> form additionally requires the base SQL to end with an
-    /// <c>ORDER BY</c> — SQL Server and Oracle both reject it otherwise.
+    /// The <c>OFFSET … FETCH</c> form additionally requires an <c>ORDER BY</c> at the end of the
+    /// command text <i>you supply</i> — the paging clause is appended after it, so the finished
+    /// statement ends with the paging clause, not the <c>ORDER BY</c>. SQL Server and Oracle both
+    /// reject the form otherwise.
     /// </para>
     /// <para>
     /// A custom template must reference both <c>@PageOffset</c> and <c>@PageLimit</c> — those are

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Xunit;
 
@@ -13,8 +14,13 @@ public class PagingClauseTemplatesTests
 {
     public static IEnumerable<object[]> AllPresets()
     {
+        // Filter to non-indexed string properties rather than casting blindly: if a
+        // non-string or indexed public static member is added later, an unconditional
+        // cast would throw inside the data generator and the whole theory would fail
+        // to report which preset is actually wrong.
         foreach (var property in typeof(PagingClauseTemplates)
-            .GetProperties(BindingFlags.Public | BindingFlags.Static))
+            .GetProperties(BindingFlags.Public | BindingFlags.Static)
+            .Where(p => p.PropertyType == typeof(string) && p.GetIndexParameters().Length == 0))
         {
             yield return new object[] { property.Name, (string)property.GetValue(null)! };
         }
@@ -31,6 +37,34 @@ public class PagingClauseTemplatesTests
         Assert.Contains("@PageOffset", template, StringComparison.Ordinal);
         Assert.Contains("@PageLimit", template, StringComparison.Ordinal);
     }
+
+
+    [Fact]
+    public void AllPresets_discovers_every_preset()
+    {
+        // The filter in AllPresets() could in principle exclude everything, which would leave
+        // the theory above passing vacuously. Assert the exact set rather than a count plus a
+        // couple of names: a count alone still passes if one preset disappears and an unrelated
+        // string property takes its place, which is precisely the substitution worth catching.
+        var discovered = AllPresets()
+            .Select(row => (string)row[0])
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToList();
+
+        var expected = new[]
+        {
+            nameof(PagingClauseTemplates.Db2),
+            nameof(PagingClauseTemplates.MySql),
+            nameof(PagingClauseTemplates.Oracle),
+            nameof(PagingClauseTemplates.PostgreSql),
+            nameof(PagingClauseTemplates.Sqlite),
+            nameof(PagingClauseTemplates.SqlServer)
+        }.OrderBy(name => name, StringComparer.Ordinal).ToList();
+
+        // Adding a preset is a deliberate act, so updating this list is part of that act.
+        Assert.Equal(expected, discovered);
+    }
+
 
 
     [Fact]
