@@ -622,8 +622,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Defaults to <c>LIMIT @PageLimit OFFSET @PageOffset</c> — the SQLite /
-    /// PostgreSQL / MySQL syntax.
+    /// Defaults to <see cref="PagingClauseTemplates.Sqlite"/>
+    /// (<c>LIMIT @PageLimit OFFSET @PageOffset</c>) — the SQLite / PostgreSQL / MySQL syntax.
     /// </para>
     /// <para>
     /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
@@ -633,7 +633,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
     /// </para>
     /// </remarks>
-    public string PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = "LIMIT @PageLimit OFFSET @PageOffset";
+    public string PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.Sqlite;
 
 
 

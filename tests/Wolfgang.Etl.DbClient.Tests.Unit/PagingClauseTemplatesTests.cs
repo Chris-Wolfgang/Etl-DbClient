@@ -68,11 +68,12 @@ public class PagingClauseTemplatesTests
 
 
     [Fact]
-    public void The_library_default_matches_the_Sqlite_preset()
+    public void The_library_default_is_still_the_LimitOffset_form()
     {
-        // The documented default is the LIMIT/OFFSET form; if one drifts from the other the docs
-        // become wrong silently.
-        Assert.Equal(PagingClauseTemplates.Sqlite, new DbExtractorOptions().PagingClauseTemplate);
+        // DbExtractorOptions now initialises from PagingClauseTemplates.Sqlite, so comparing the
+        // two would be tautological. Assert the literal shape instead: changing the Sqlite preset
+        // silently changes the library-wide default, and that should be a deliberate act.
+        Assert.Equal("LIMIT @PageLimit OFFSET @PageOffset", new DbExtractorOptions().PagingClauseTemplate);
     }
 
 
