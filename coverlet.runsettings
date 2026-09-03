@@ -5,6 +5,10 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
+          <!-- Test code is held to 100% line coverage: code that never executes has no purpose.
+               Without this, Summary.txt carries src rows only and test-code coverage is
+               unmeasured rather than good. -->
+          <IncludeTestAssembly>true</IncludeTestAssembly>
           <ExcludeByFile>**/bin/**/*.cs;**/obj/**/*.cs</ExcludeByFile>
           <ExcludeByAttribute>ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
         </Configuration>
