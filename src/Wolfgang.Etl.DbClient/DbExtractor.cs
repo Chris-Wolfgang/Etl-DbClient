@@ -921,8 +921,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         foreach (var generated in new[] { "@PageOffset", "@PageLimit" })
         {
-            // ContainsKey would use the caller's own comparer, which is ordinal by default and
-            // so would miss "@pagelimit". Scan explicitly with provider semantics instead.
+            // ContainsKey resolves against _parameters' own comparer, which is deliberately
+            // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
+            // Scan explicitly with the collision-safe comparison instead.
             var suppliedByDictionary = false;
             if (_parameters is not null)
             {
