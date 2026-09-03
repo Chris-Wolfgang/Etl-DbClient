@@ -64,12 +64,20 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.PagingClauseTemplate"/> — the SQL
     /// snippet appended when <b>both</b> <see cref="ServerOffset"/> and
-    /// <see cref="ServerLimit"/> are set. Default:
-    /// <c>LIMIT @PageLimit OFFSET @PageOffset</c>.
+    /// <see cref="ServerLimit"/> are set. Defaults to
+    /// <see cref="PagingClauseTemplates.None"/>.
     /// </summary>
+    /// <param name="template">
+    /// The paging clause, normally a preset from <see cref="PagingClauseTemplates"/>.
+    /// <see langword="null"/> is accepted and means <see cref="PagingClauseTemplates.None"/> —
+    /// no dialect chosen — which is the default.
+    /// </param>
     /// <remarks>
-    /// The clause is dialect-specific — the default does not work on SQL Server, Oracle or Db2.
-    /// Use a preset from <see cref="PagingClauseTemplates"/>, e.g.
+    /// The clause is dialect-specific and there is no portable form, so this library does not
+    /// guess one. Activating paging (setting <b>both</b> <see cref="ServerOffset"/> and
+    /// <see cref="ServerLimit"/>) while no template has been chosen throws
+    /// <see cref="System.InvalidOperationException"/> rather than emitting SQL that only some
+    /// engines accept. Use a preset, e.g.
     /// <c>.PagingClauseTemplate(PagingClauseTemplates.SqlServer)</c>.
     /// <para>
     /// The <c>OFFSET … FETCH</c> form additionally requires an <c>ORDER BY</c> at the end of the

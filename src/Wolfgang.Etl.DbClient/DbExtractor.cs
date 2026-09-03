@@ -899,25 +899,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     }
 
     /// <summary>
-    /// Rejects a caller-supplied parameter whose name server-side paging also generates.
-    /// </summary>
-    /// <remarks>
-    /// This cannot live inside either branch of <see cref="ApplyServerPaging"/>.
-    /// <c>EtlParameterSet</c> can detect a collision itself, but the <c>DynamicParameters</c>
-    /// branch cannot — its <c>Add</c> silently overwrites, so the caller's value would disappear
-    /// without a word.
-    /// <para>
-    /// Two routes can carry a caller's parameters and both are checked: the constructor
-    /// dictionary, and the obsolete <see cref="Parameters"/> property — which takes
-    /// <em>precedence</em> over the dictionary where the parameter set is resolved, so checking
-    /// only the dictionary would miss it entirely. Dapper stores names without the leading
-    /// <c>@</c>, hence both spellings are compared.
-    /// </para>
-    /// </remarks>
-    /// <exception cref="InvalidOperationException">
-    /// A generated paging parameter name was already supplied by the caller.
-    /// </exception>
-    /// <summary>
     /// Verifies a paging dialect was chosen before server-side paging is applied.
     /// </summary>
     /// <exception cref="InvalidOperationException">
@@ -944,6 +925,25 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+    /// <summary>
+    /// Rejects a caller-supplied parameter whose name server-side paging also generates.
+    /// </summary>
+    /// <remarks>
+    /// This cannot live inside either branch of <see cref="ApplyServerPaging"/>.
+    /// <c>EtlParameterSet</c> can detect a collision itself, but the <c>DynamicParameters</c>
+    /// branch cannot — its <c>Add</c> silently overwrites, so the caller's value would disappear
+    /// without a word.
+    /// <para>
+    /// Two routes can carry a caller's parameters and both are checked: the constructor
+    /// dictionary, and the obsolete <see cref="Parameters"/> property — which takes
+    /// <em>precedence</em> over the dictionary where the parameter set is resolved, so checking
+    /// only the dictionary would miss it entirely. Dapper stores names without the leading
+    /// <c>@</c>, hence both spellings are compared.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// A generated paging parameter name was already supplied by the caller.
+    /// </exception>
     private void EnsurePagingParametersNotAlreadySupplied()
     {
         foreach (var generated in new[] { "@PageOffset", "@PageLimit" })

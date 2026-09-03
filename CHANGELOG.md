@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING: `PagingClauseTemplate` now defaults to `PagingClauseTemplates.None` (`null`)
+  instead of the `LIMIT`/`OFFSET` form (#391).** There is no portable paging syntax, so any
+  default privileges some engines and breaks the rest: the old default produced
+  `Incorrect syntax near 'LIMIT'` on SQL Server, Oracle and Db2. Activating server-side paging
+  (setting **both** `ServerOffset` and `ServerLimit`) without choosing a template now throws
+  `InvalidOperationException` naming the presets, instead of emitting SQL only some engines
+  accept.
+
+  Callers on SQLite, PostgreSQL or MySQL who relied on the implicit default must name a
+  template — a one-line change, e.g. `PagingClauseTemplate = PagingClauseTemplates.Sqlite`.
+  `DbExtractor<TRecord>.PagingClauseTemplate` changed from `string` to `string?`, and the
+  builder's `PagingClauseTemplate(string?)` now accepts `null`, meaning `None`.
+
 - **Source-compatibility note: a positional `null` in the transaction argument is now ambiguous.**
   The new options overloads sit in the same position as the optional `DbTransaction?`, so a call
   passing an untyped `null` there — `new DbExtractor<T>(conn, "SELECT 1", null)` — no longer compiles

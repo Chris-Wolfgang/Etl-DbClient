@@ -45,7 +45,7 @@ public static class PagingClauseTemplates
     /// rather than a silent guess: there is no portable paging syntax, and any default this
     /// library picked would be wrong on half the engines it supports.
     /// </remarks>
-    public static string? None { get; }
+    public static string? None => null;
 
 
 
