@@ -50,18 +50,20 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// <see cref="PagingClauseTemplate"/>, the extractor appends the paging clause
     /// to the caller's SQL.
     /// </summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerLimit"/> are set; setting one alone is a silent no-op.</remarks>
     IDbExtractorBuilder<T> ServerOffset(long? offset);
 
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.ServerLimit"/> for server-side paging.
     /// </summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerOffset"/> are set; setting one alone is a silent no-op.</remarks>
     IDbExtractorBuilder<T> ServerLimit(long? limit);
 
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.PagingClauseTemplate"/> — the SQL
-    /// snippet appended when <see cref="ServerOffset"/> and/or
+    /// snippet appended when <b>both</b> <see cref="ServerOffset"/> and
     /// <see cref="ServerLimit"/> are set. Default:
     /// <c>LIMIT @PageLimit OFFSET @PageOffset</c>.
     /// </summary>
@@ -69,6 +71,10 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// The clause is dialect-specific — the default does not work on SQL Server, Oracle or Db2.
     /// Use a preset from <see cref="PagingClauseTemplates"/>, e.g.
     /// <c>.PagingClauseTemplate(PagingClauseTemplates.SqlServer)</c>.
+    /// <para>
+    /// The <c>OFFSET … FETCH</c> form additionally requires the command text to end with an
+    /// <c>ORDER BY</c> — SQL Server and Oracle both reject it otherwise.
+    /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="template"/> is <see langword="null"/>.</exception>
     IDbExtractorBuilder<T> PagingClauseTemplate(string template);

@@ -601,12 +601,16 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// SQLite, PostgreSQL, and MySQL don't require it but you should still
     /// include one — without a stable order, page contents drift.
     /// </para>
+    /// <para>
+    /// Paging is applied only when <b>both</b> this and <see cref="ServerLimit"/> are set; setting one alone is a silent no-op.
+    /// </para>
     /// </remarks>
     public long? ServerOffset { get; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
     /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerOffset"/> are set; setting one alone is a silent no-op.</remarks>
     public long? ServerLimit { get; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 

@@ -59,6 +59,7 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row offset for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerLimit"/> are set; setting one alone is a silent no-op.</remarks>
     public long? ServerOffset { get; init; }
 
 
@@ -66,6 +67,7 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row limit for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
+    /// <remarks>Paging is applied only when <b>both</b> this and <see cref="ServerOffset"/> are set; setting one alone is a silent no-op.</remarks>
     public long? ServerLimit { get; init; }
 
 

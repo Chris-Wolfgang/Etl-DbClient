@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Xunit;
 
@@ -13,8 +14,13 @@ public class PagingClauseTemplatesTests
 {
     public static IEnumerable<object[]> AllPresets()
     {
+        // Filter to non-indexed string properties rather than casting blindly: if a
+        // non-string or indexed public static member is added later, an unconditional
+        // cast would throw inside the data generator and the whole theory would fail
+        // to report which preset is actually wrong.
         foreach (var property in typeof(PagingClauseTemplates)
-            .GetProperties(BindingFlags.Public | BindingFlags.Static))
+            .GetProperties(BindingFlags.Public | BindingFlags.Static)
+            .Where(p => p.PropertyType == typeof(string) && p.GetIndexParameters().Length == 0))
         {
             yield return new object[] { property.Name, (string)property.GetValue(null)! };
         }
@@ -31,6 +37,21 @@ public class PagingClauseTemplatesTests
         Assert.Contains("@PageOffset", template, StringComparison.Ordinal);
         Assert.Contains("@PageLimit", template, StringComparison.Ordinal);
     }
+
+
+    [Fact]
+    public void AllPresets_discovers_every_preset()
+    {
+        // The filter in AllPresets() could in principle exclude everything, which would
+        // leave the theory above passing vacuously. Pin the count so a preset that stops
+        // being discovered fails loudly instead of silently going untested.
+        var discovered = AllPresets().Select(row => (string)row[0]).ToList();
+
+        Assert.Equal(6, discovered.Count);
+        Assert.Contains(nameof(PagingClauseTemplates.SqlServer), discovered);
+        Assert.Contains(nameof(PagingClauseTemplates.MySql), discovered);
+    }
+
 
 
     [Fact]
