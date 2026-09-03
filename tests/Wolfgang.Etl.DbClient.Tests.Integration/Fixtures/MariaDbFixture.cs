@@ -18,6 +18,9 @@ public sealed class MariaDbFixture : DbProviderFixtureBase
 
     public override string ProviderName => "mariadb";
 
+    // MariaDB is MySQL-compatible for paging syntax; no separate preset is warranted.
+    public override string PagingClauseTemplate => PagingClauseTemplates.MySql;
+
 
 
     protected override async Task StartAsync()
