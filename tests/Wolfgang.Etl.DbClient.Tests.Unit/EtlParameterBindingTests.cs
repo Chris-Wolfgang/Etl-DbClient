@@ -246,4 +246,61 @@ public class EtlParameterBindingTests
 
         Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
     }
+
+
+    [Fact]
+    public async Task A_caller_supplied_PageLimit_is_rejected_too()
+    {
+        // Both generated names are checked in production; testing only @PageOffset would let a
+        // typo that drops @PageLimit from the guard pass unnoticed.
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            new Dictionary<string, object> { ["@min"] = 0, ["@PageLimit"] = 5 },
+            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageLimit", ex.Message, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public async Task A_paging_name_supplied_via_the_obsolete_Parameters_property_is_rejected()
+    {
+        // The third route: the Parameters property takes precedence over the constructor
+        // dictionary where the parameter set is resolved, so a guard checking only the
+        // dictionary would miss this entirely.
+        using var conn = Seeded();
+
+        var dynamic = new Dapper.DynamicParameters();
+        dynamic.Add("@min", 0);
+        dynamic.Add("@PageOffset", 99);
+
+#pragma warning disable CS0618 // Exercising the obsolete route is the point of this test.
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            options: new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        )
+        {
+            Parameters = dynamic
+        };
+#pragma warning restore CS0618
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
+    }
 }
