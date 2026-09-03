@@ -470,7 +470,7 @@ public class EtlPipelineDbClientExtensionsTests
 
 
     [Fact]
-    public async Task ITransformWithCancellation_bare_overload_forwards_to_the_token_aware_one()
+    public async Task ITransformWithCancellationAsync_bare_overload_forwards_to_the_token_aware_one()
     {
         // The pipeline always calls the cancellation-aware overload, so the bare one that
         // satisfies ITransformAsync<T,TOut> is never exercised through a pipeline. Calling it
