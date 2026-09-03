@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Third-party notices are now packed into the package (#353).** `THIRD-PARTY-NOTICES.md`
+  ships at the package root, listing every runtime dependency and its licence. Previously the
+  `license-audit` workflow generated this file as a build artifact only, so consumers installing
+  the package never received it.
+
 - **Configuration via options records.** `DbExtractor<TRecord>` and `DbLoader<TRecord>` gained
   constructors taking `DbExtractorOptions` / `DbLoaderOptions`, so configuration travels through the
   constructor instead of post-construction property assignment. One overload per existing input

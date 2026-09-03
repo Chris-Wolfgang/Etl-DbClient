@@ -4,7 +4,9 @@
 declares the runtime dependencies below. Their licences are reproduced or linked here
 for attribution.
 
-Generated against the dependency set as of **Wolfgang.Etl.DbClient 0.10.0**. The
+Reflects the runtime dependency versions declared in
+`src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj`, which are listed explicitly below
+rather than tied to a package version that would drift. The
 `license-audit` workflow regenerates this list and fails the build if any dependency
 declares a licence outside `.github/license/allowed-licenses.json`.
 
