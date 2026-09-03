@@ -72,8 +72,10 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// Use a preset from <see cref="PagingClauseTemplates"/>, e.g.
     /// <c>.PagingClauseTemplate(PagingClauseTemplates.SqlServer)</c>.
     /// <para>
-    /// The <c>OFFSET … FETCH</c> form additionally requires the command text to end with an
-    /// <c>ORDER BY</c> — SQL Server and Oracle both reject it otherwise.
+    /// The <c>OFFSET … FETCH</c> form additionally requires an <c>ORDER BY</c> at the end of the
+    /// command text <i>you supply</i> — the paging clause is appended after it, so the finished
+    /// statement ends with the paging clause, not the <c>ORDER BY</c>. SQL Server and Oracle both
+    /// reject the form otherwise.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="template"/> is <see langword="null"/>.</exception>

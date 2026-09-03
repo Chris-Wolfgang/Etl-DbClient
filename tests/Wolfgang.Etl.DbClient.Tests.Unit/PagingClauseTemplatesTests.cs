@@ -42,14 +42,27 @@ public class PagingClauseTemplatesTests
     [Fact]
     public void AllPresets_discovers_every_preset()
     {
-        // The filter in AllPresets() could in principle exclude everything, which would
-        // leave the theory above passing vacuously. Pin the count so a preset that stops
-        // being discovered fails loudly instead of silently going untested.
-        var discovered = AllPresets().Select(row => (string)row[0]).ToList();
+        // The filter in AllPresets() could in principle exclude everything, which would leave
+        // the theory above passing vacuously. Assert the exact set rather than a count plus a
+        // couple of names: a count alone still passes if one preset disappears and an unrelated
+        // string property takes its place, which is precisely the substitution worth catching.
+        var discovered = AllPresets()
+            .Select(row => (string)row[0])
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToList();
 
-        Assert.Equal(6, discovered.Count);
-        Assert.Contains(nameof(PagingClauseTemplates.SqlServer), discovered);
-        Assert.Contains(nameof(PagingClauseTemplates.MySql), discovered);
+        var expected = new[]
+        {
+            nameof(PagingClauseTemplates.Db2),
+            nameof(PagingClauseTemplates.MySql),
+            nameof(PagingClauseTemplates.Oracle),
+            nameof(PagingClauseTemplates.PostgreSql),
+            nameof(PagingClauseTemplates.Sqlite),
+            nameof(PagingClauseTemplates.SqlServer)
+        }.OrderBy(name => name, StringComparer.Ordinal).ToList();
+
+        // Adding a preset is a deliberate act, so updating this list is part of that act.
+        Assert.Equal(expected, discovered);
     }
 
 
