@@ -15,6 +15,8 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
 {
     public abstract string ProviderName { get; }
 
+    public abstract string PagingClauseTemplate { get; }
+
     public bool Available { get; private set; }
 
     public string? UnavailableReason { get; private set; }

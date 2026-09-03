@@ -65,6 +65,11 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// <see cref="ServerLimit"/> are set. Default:
     /// <c>LIMIT @PageLimit OFFSET @PageOffset</c>.
     /// </summary>
+    /// <remarks>
+    /// The clause is dialect-specific — the default does not work on SQL Server, Oracle or Db2.
+    /// Use a preset from <see cref="PagingClauseTemplates"/>, e.g.
+    /// <c>.PagingClauseTemplate(PagingClauseTemplates.SqlServer)</c>.
+    /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="template"/> is <see langword="null"/>.</exception>
     IDbExtractorBuilder<T> PagingClauseTemplate(string template);
 

@@ -142,4 +142,165 @@ public class EtlParameterBindingTests
         Assert.Single(supplied);
         Assert.True(supplied.ContainsKey("@min"));
     }
+
+
+    [Fact]
+    public async Task A_caller_supplied_paging_parameter_name_is_rejected_rather_than_duplicated()
+    {
+        // Regression guard: Entries() yields the caller's dictionary then the paging overlay, and
+        // AddParameters added both unconditionally - so supplying @PageOffset while paging is
+        // configured emitted the name twice and the provider rejected the command.
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            new Dictionary<string, object>
+            {
+                // An EtlParameter is what routes binding through EtlParameterSet; with only plain
+                // values the constructor builds a DynamicParameters instead and this path is never
+                // reached. The collision is a property of the EtlParameterSet route.
+                ["@min"] = new EtlParameter<int> { Value = 0 },
+                ["@PageOffset"] = 99          // the name paging also generates
+            },
+            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("ServerOffset", ex.Message, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public async Task A_caller_supplied_paging_name_is_fine_when_paging_is_not_configured()
+    {
+        // The guard must not fire on a name that merely LOOKS like a paging parameter - it is only
+        // a conflict when paging would actually generate it.
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @PageOffset ORDER BY age",
+            new Dictionary<string, object> { ["@PageOffset"] = 0 },
+            options: null
+        );
+
+        var rows = new List<PersonRecord>();
+        await foreach (var r in sut.ExtractAsync()) rows.Add(r);
+
+        Assert.Equal(2, rows.Count);
+    }
+
+
+    [Fact]
+    public async Task Paging_still_works_when_the_caller_supplies_no_conflicting_name()
+    {
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            new Dictionary<string, object> { ["@min"] = 0 },
+            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var rows = new List<PersonRecord>();
+        await foreach (var r in sut.ExtractAsync()) rows.Add(r);
+
+        Assert.Single(rows);
+        Assert.Equal("Bob", rows[0].FirstName);
+    }
+
+
+    [Fact]
+    public async Task A_caller_supplied_paging_name_collides_on_the_plain_value_path_too()
+    {
+        // The same conflict, but with only plain values - which routes through DynamicParameters
+        // rather than EtlParameterSet. Documents whether that path is guarded as well.
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            new Dictionary<string, object>
+            {
+                ["@min"] = 0,
+                ["@PageOffset"] = 99
+            },
+            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public async Task A_caller_supplied_PageLimit_is_rejected_too()
+    {
+        // Both generated names are checked in production; testing only @PageOffset would let a
+        // typo that drops @PageLimit from the guard pass unnoticed.
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            new Dictionary<string, object> { ["@min"] = 0, ["@PageLimit"] = 5 },
+            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageLimit", ex.Message, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public async Task A_paging_name_supplied_via_the_obsolete_Parameters_property_is_rejected()
+    {
+        // The third route: the Parameters property takes precedence over the constructor
+        // dictionary where the parameter set is resolved, so a guard checking only the
+        // dictionary would miss this entirely.
+        using var conn = Seeded();
+
+        var dynamic = new Dapper.DynamicParameters();
+        dynamic.Add("@min", 0);
+        dynamic.Add("@PageOffset", 99);
+
+#pragma warning disable CS0618 // Exercising the obsolete route is the point of this test.
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            options: new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+        )
+        {
+            Parameters = dynamic
+        };
+#pragma warning restore CS0618
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
+    }
 }

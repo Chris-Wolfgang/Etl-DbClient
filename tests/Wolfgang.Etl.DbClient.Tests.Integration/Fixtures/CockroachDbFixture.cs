@@ -22,6 +22,9 @@ public sealed class CockroachDbFixture : DbProviderFixtureBase
 
     public override string ProviderName => "cockroachdb";
 
+    // CockroachDB speaks the PostgreSQL wire protocol and shares its paging syntax.
+    public override string PagingClauseTemplate => PagingClauseTemplates.PostgreSql;
+
 
 
     protected override async Task StartAsync()
