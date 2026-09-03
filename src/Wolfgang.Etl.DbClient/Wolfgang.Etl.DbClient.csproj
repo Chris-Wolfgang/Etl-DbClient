@@ -60,6 +60,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Condition="Exists('..\..\THIRD-PARTY-NOTICES.md')">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
