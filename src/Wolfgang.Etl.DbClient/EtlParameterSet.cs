@@ -108,15 +108,20 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
     /// The caller's dictionary already contains <paramref name="name"/>.
     /// </exception>
     /// <remarks>
-    /// A collision is rejected rather than resolved. Emitting both would produce a duplicate
-    /// parameter name and the provider would reject the command; silently preferring one would
-    /// mean either the caller's value or the extractor's paging is quietly discarded. A caller who
+    /// A collision is rejected rather than resolved. Emitting both does NOT reliably fail:
+    /// SQL Server, PostgreSQL and MySQL resolve parameter names case-insensitively and quietly
+    /// use whichever arrived last, so the query returns wrong rows with no error at all. Silently
+    /// preferring one here would mean the caller's value or the extractor's paging is discarded
+    /// just as quietly. Names are matched conservatively — case-insensitive, leading <c>@</c>
+    /// optional — so <c>@pagelimit</c> collides with <c>@PageLimit</c>. That is stricter than
+    /// SQLite, which alone treats the two as distinct; see <see cref="ParameterName"/> for why
+    /// the stricter rule is preferred. A caller who
     /// supplies this name AND configures the feature that generates it has expressed two
     /// conflicting intentions, and only they can say which was meant.
     /// </remarks>
     internal void Add(string name, object value)
     {
-        if (_source.ContainsKey(name))
+        if (ContainsMatching(name))
         {
             throw new InvalidOperationException
             (
@@ -129,6 +134,21 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
         }
 
         _added[name] = value;
+    }
+
+
+
+    private bool ContainsMatching(string name)
+    {
+        foreach (var key in _source.Keys)
+        {
+            if (ParameterName.Matches(key, name))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
