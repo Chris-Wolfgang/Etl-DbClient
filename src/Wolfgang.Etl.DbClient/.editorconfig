@@ -1,0 +1,19 @@
+root = false
+
+[*.cs]
+
+# RS0016/RS0017/RS0037 — PublicApiAnalyzers defaults these BELOW warning on 5.x, so public
+# API can drift unrecorded through a fully green build. That is exactly what happened: 41
+# symbols were missing when this was raised (#364), including two members removed and never
+# recorded as removed. Raising them makes the drift impossible rather than fixed once.
+#
+# Etl-Csv cannot do this (Chris-Wolfgang/ETL-Csv#263): its record types' compiler-generated
+# <Clone>$ members are neither recordable nor suppressible. This repo has no such members —
+# verified by harvesting at error severity and getting zero diagnostics — so enforcement is
+# available here where it is not there.
+#
+# TreatWarningsAsErrors is on for Release, so CI treats these as errors while local Debug
+# builds still only warn.
+dotnet_diagnostic.RS0016.severity = warning
+dotnet_diagnostic.RS0017.severity = warning
+dotnet_diagnostic.RS0037.severity = warning
