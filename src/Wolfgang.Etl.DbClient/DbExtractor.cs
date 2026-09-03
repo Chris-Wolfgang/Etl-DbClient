@@ -921,7 +921,20 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         foreach (var generated in new[] { "@PageOffset", "@PageLimit" })
         {
-            var suppliedByDictionary = _parameters?.ContainsKey(generated) == true;
+            // ContainsKey would use the caller's own comparer, which is ordinal by default and
+            // so would miss "@pagelimit". Scan explicitly with provider semantics instead.
+            var suppliedByDictionary = false;
+            if (_parameters is not null)
+            {
+                foreach (var key in _parameters.Keys)
+                {
+                    if (ParameterName.Matches(key, generated))
+                    {
+                        suppliedByDictionary = true;
+                        break;
+                    }
+                }
+            }
 
             var suppliedByProperty = false;
             var names = Parameters?.ParameterNames;
@@ -929,8 +942,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             {
                 foreach (var name in names)
                 {
-                    if (string.Equals(name, generated, StringComparison.Ordinal)
-                        || string.Equals("@" + name, generated, StringComparison.Ordinal))
+                    if (ParameterName.Matches(name, generated))
                     {
                         suppliedByProperty = true;
                         break;
