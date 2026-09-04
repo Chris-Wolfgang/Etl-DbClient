@@ -229,7 +229,7 @@ public abstract class DbExtractorIntegrationTestsBase
 
 
     [SkippableFact]
-    public async Task ExtractAsync_when_only_ServerLimit_is_set_does_not_page_at_all()
+    public async Task ExtractAsync_when_only_ServerLimit_is_set_pages_from_the_top()
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
@@ -237,9 +237,9 @@ public abstract class DbExtractorIntegrationTestsBase
         await Fixture.ResetSchemaAsync(conn);
         await Fixture.SeedAsync(conn, rowCount: 5);
 
-        // Paging is all-or-nothing: ApplyServerPaging is a no-op unless BOTH ServerOffset
-        // and ServerLimit are set. Pinning it because the failure mode is silent — a caller
-        // who sets only a limit gets every row rather than an error.
+        // Reversed deliberately. This previously asserted that a limit with no offset was a
+        // silent no-op returning all 5 rows — the caller asking for 2 and getting everything.
+        // ServerLimit now switches paging on and an unset offset means 0.
         var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
         {
             PagingClauseTemplate = Fixture.PagingClauseTemplate,
@@ -248,6 +248,8 @@ public abstract class DbExtractorIntegrationTestsBase
 
         var results = await extractor.ExtractAsync().ToListAsync();
 
-        Assert.Equal(5, results.Count);
+        Assert.Equal(2, results.Count);
+        Assert.Equal("Item1", results[0].Name);
+        Assert.Equal("Item2", results[1].Name);
     }
 }

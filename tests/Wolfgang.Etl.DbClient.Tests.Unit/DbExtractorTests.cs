@@ -706,19 +706,44 @@ public class DbExtractorTests
 
 
     [Fact]
-    public async Task ExtractAsync_with_only_ServerOffset_does_not_apply_paging()
+    public async Task ExtractAsync_with_only_ServerOffset_throws_because_no_page_size_can_be_inferred()
     {
-        // The clause is only appended when BOTH are set.
+        // Reversed: this used to return all 10 rows, silently ignoring the offset the caller
+        // asked for. An offset with no limit is the mirror of the limit-with-no-offset bug —
+        // the caller clearly wants paging, and no page size can be inferred.
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
 
         var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
         {
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
             ServerOffset = 5
+        };
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in extractor.ExtractAsync()) { }
+        });
+
+        Assert.Contains("ServerLimit", ex.Message, StringComparison.Ordinal);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_with_only_ServerLimit_pages_from_offset_zero()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 10);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
+        {
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+            ServerLimit = 3
         };
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
-        Assert.Equal(10, records.Count); // all rows — paging disabled
+        Assert.Equal(3, records.Count);
+        Assert.Equal("First1", records[0].FirstName);
     }
 
 
