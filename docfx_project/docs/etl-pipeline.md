@@ -44,12 +44,13 @@ Every configurable property on `DbExtractor<T>` has a matching builder setter:
 | `ManageConnection(bool)` | `DbExtractor<T>.ManageConnection` | When `true`, extractor opens/closes the connection. |
 | `Parameters(DynamicParameters)` | `DbExtractor<T>.Parameters` | Dapper parameter bag; overrides constructor `Parameters`. |
 | `ServerOffset(long?)` | `DbExtractor<T>.ServerOffset` | Row offset for server-side paging. |
-| `ServerLimit(long?)` | `DbExtractor<T>.ServerLimit` | Page size in rows. |
-| `PagingClauseTemplate(string)` | `DbExtractor<T>.PagingClauseTemplate` | SQL appended when both offset+limit are set (default `LIMIT @PageLimit OFFSET @PageOffset`). |
+| `ServerLimit(long?)` | `DbExtractor<T>.ServerLimit` | Page size in rows. Setting this switches paging on. |
+| `PagingClauseTemplate(string?)` | `DbExtractor<T>.PagingClauseTemplate` | Dialect-specific SQL appended when paging is active. Defaults to `PagingClauseTemplates.None` — it must be set, or paging throws. |
 | `TotalCountQuery(Func<CancellationToken, Task<int>>)` | `DbExtractor<T>.TotalCountQuery` | Snapshot the total row count for progress reporting. |
 
-Server-side paging kicks in only when **both** `ServerOffset` and `ServerLimit`
-are set — matching the underlying `DbExtractor.ApplyServerPaging` semantics.
+Server-side paging is switched on by `ServerLimit`; `ServerOffset` defaults to `0`
+when not set. Setting `ServerOffset` without `ServerLimit` throws, because no page
+size can be inferred.
 
 ## Loader knobs
 
@@ -128,9 +129,8 @@ await EtlPipeline
     .RunAsync();
 ```
 
-When both `ServerOffset` and `ServerLimit` are set, the extractor appends
-`PagingClauseTemplate` to the command text and adds `@PageOffset` / `@PageLimit`
-to the parameter set.
+When paging is active, the extractor appends `PagingClauseTemplate` to the command
+text and adds `@PageOffset` / `@PageLimit` to the parameter set.
 
 `PagingClauseTemplate` **must be set** — it defaults to `PagingClauseTemplates.None`.
 Paging syntax is dialect-specific and no portable form exists, so the library does

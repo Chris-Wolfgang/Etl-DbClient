@@ -13,13 +13,17 @@ Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandType.get -> System.Data.Comman
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CommandType.set -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CountAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, Wolfgang.Etl.DbClient.DbExtractorOptions? options, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, string! commandText, System.Collections.Generic.IDictionary<string!, object!>! parameters, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, string! commandText, System.Collections.Generic.IDictionary<string!, object!>! parameters, Wolfgang.Etl.DbClient.DbExtractorOptions? options, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection! connection, string! commandText, Wolfgang.Etl.DbClient.DbExtractorOptions? options, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbProviderFactory! factory, string! connectionString, string! commandText, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbProviderFactory! factory, string! connectionString, string! commandText, Wolfgang.Etl.DbClient.DbExtractorOptions? options, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DefaultTotalCountQuery.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>!
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ManageConnection.set -> void
-Wolfgang.Etl.DbClient.DbExtractor<TRecord>.PagingClauseTemplate.get -> string!
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.PagingClauseTemplate.get -> string?
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.PagingClauseTemplate.set -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.Parameters.get -> Dapper.DynamicParameters?
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.Parameters.set -> void
@@ -29,6 +33,27 @@ Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ServerOffset.get -> long?
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ServerOffset.set -> void
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.TotalCountQuery.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>?
 Wolfgang.Etl.DbClient.DbExtractor<TRecord>.TotalCountQuery.set -> void
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart.get -> bool
+Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ValidateSchemaOnStart.set -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions
+Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout.get -> System.TimeSpan?
+Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType.get -> System.Data.CommandType
+Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection.get -> bool
+Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate.get -> string?
+Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit.get -> long?
+Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset.get -> long?
+Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery.get -> System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>?
+Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart.get -> bool
+Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart.init -> void
+Wolfgang.Etl.DbClient.DbKeyAttribute
+Wolfgang.Etl.DbClient.DbKeyAttribute.DbKeyAttribute() -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.BatchCommitSize.set -> void
@@ -41,8 +66,11 @@ Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandType.get -> System.Data.CommandTy
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CommandType.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.CurrentErrorCount.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection! connection, Wolfgang.Etl.DbClient.WriteMode writeMode, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection! connection, Wolfgang.Etl.DbClient.WriteMode writeMode, Wolfgang.Etl.DbClient.DbLoaderOptions? options, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection! connection, string! commandText, Wolfgang.Etl.DbClient.DbLoaderOptions? options, System.Data.Common.DbTransaction? transaction = null, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbProviderFactory! factory, string! connectionString, string! commandText, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbProviderFactory! factory, string! connectionString, string! commandText, Wolfgang.Etl.DbClient.DbLoaderOptions? options, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>!>? logger = null) -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.ErrorHandling.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.InsertBatchSize.get -> int
@@ -54,15 +82,63 @@ Wolfgang.Etl.DbClient.DbLoader<TRecord>.ManageConnection.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.get -> int
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.MaxErrorCount.set -> void
 Wolfgang.Etl.DbClient.DbLoader<TRecord>.RowFailed -> System.EventHandler<Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>!>?
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart.get -> bool
+Wolfgang.Etl.DbClient.DbLoader<TRecord>.ValidateSchemaOnStart.set -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions
+Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize.get -> int
+Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize.get -> int
+Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout.get -> System.TimeSpan?
+Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType.get -> System.Data.CommandType
+Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
+Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize.get -> int
+Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection.get -> bool
+Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount.get -> int
+Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart.get -> bool
+Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart.init -> void
 Wolfgang.Etl.DbClient.DbReport
 Wolfgang.Etl.DbClient.DbReport.CommandText.get -> string!
 Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount.get -> int
 Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds) -> void
 Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds, int? totalItemCount) -> void
 Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds.get -> long
+Wolfgang.Etl.DbClient.DbSchemaValidator
 Wolfgang.Etl.DbClient.DbTableAttribute
 Wolfgang.Etl.DbClient.DbTableAttribute.DbTableAttribute(string! name) -> void
 Wolfgang.Etl.DbClient.DbTableAttribute.Name.get -> string!
+Wolfgang.Etl.DbClient.EtlParameter
+Wolfgang.Etl.DbClient.EtlParameter.DbType.get -> System.Data.DbType?
+Wolfgang.Etl.DbClient.EtlParameter.DbType.init -> void
+Wolfgang.Etl.DbClient.EtlParameter.Direction.get -> System.Data.ParameterDirection
+Wolfgang.Etl.DbClient.EtlParameter.Direction.init -> void
+Wolfgang.Etl.DbClient.EtlParameter.EtlParameter() -> void
+Wolfgang.Etl.DbClient.EtlParameter.Size.get -> int?
+Wolfgang.Etl.DbClient.EtlParameter.Size.init -> void
+Wolfgang.Etl.DbClient.EtlParameter<T>
+Wolfgang.Etl.DbClient.EtlParameter<T>.EtlParameter() -> void
+Wolfgang.Etl.DbClient.EtlParameter<T>.Value.get -> T?
+Wolfgang.Etl.DbClient.EtlParameter<T>.Value.init -> void
+Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.CommandType(System.Data.CommandType commandType) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ManageConnection(bool manage) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string? template) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.Parameters(Dapper.DynamicParameters! parameters) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerLimit(long? limit) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.ServerOffset(long? offset) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.TotalCountQuery(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<int>!>! countQuery) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.CommandType(System.Data.CommandType commandType) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ErrorHandling(Wolfgang.Etl.DbClient.RowErrorHandling handling) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>.ManageConnection(bool manage) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+Wolfgang.Etl.DbClient.PagingClauseTemplates
 Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.RowErrorHandling.Abort = 0 -> Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.RowErrorHandling.Skip = 1 -> Wolfgang.Etl.DbClient.RowErrorHandling
@@ -72,11 +148,24 @@ Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.ItemIndex.get -> long
 Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.Record.get -> TRecord
 Wolfgang.Etl.DbClient.RowFailedEventArgs<TRecord>.RowFailedEventArgs(TRecord record, System.Exception! exception, long itemIndex) -> void
 Wolfgang.Etl.DbClient.WriteMode
+Wolfgang.Etl.DbClient.WriteMode.Insert = 0 -> Wolfgang.Etl.DbClient.WriteMode
+Wolfgang.Etl.DbClient.WriteMode.Update = 1 -> Wolfgang.Etl.DbClient.WriteMode
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ExtractWorkerAsync(System.Threading.CancellationToken token) -> System.Collections.Generic.IAsyncEnumerable<TRecord>!
 override Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
 override Wolfgang.Etl.DbClient.DbLoader<TRecord>.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable<TRecord>! items, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
 static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.get -> bool
 static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.set -> void
-Wolfgang.Etl.DbClient.WriteMode.Insert = 0 -> Wolfgang.Etl.DbClient.WriteMode
-Wolfgang.Etl.DbClient.WriteMode.Update = 1 -> Wolfgang.Etl.DbClient.WriteMode
+static Wolfgang.Etl.DbClient.DbSchemaValidator.Validate<TRecord>(System.Data.Common.DbConnection! connection) -> void
+static Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync<TRecord>(System.Data.Common.DbConnection! connection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(this Wolfgang.Etl.Abstractions.EtlPipeline! pipeline, System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(this Wolfgang.Etl.Abstractions.EtlPipeline! pipeline, Wolfgang.Etl.DbClient.DbExtractor<T>! extractor) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(this Wolfgang.Etl.Abstractions.IEtlPipeline<T>! pipeline, System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbLoader<T>(this Wolfgang.Etl.Abstractions.IEtlPipeline<T>! pipeline, Wolfgang.Etl.DbClient.DbLoader<T>! loader) -> Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>!
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2.get -> string!
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql.get -> string!
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.None.get -> string?
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle.get -> string!
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql.get -> string!
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer.get -> string!
+static Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite.get -> string!

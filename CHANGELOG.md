@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [0.10.0] - 2026-09-04
+
+> **The server-side paging API is provisional in this release.** It arrived across #385, #391
+> and #393 and is still settling: in particular the two guard clauses — activating paging
+> without a `PagingClauseTemplate`, and setting `ServerOffset` without `ServerLimit` — both
+> currently throw, and a follow-up (#398) may relax them so a missing template degrades to
+> client-side work with a warning instead. Relaxing a throw cannot break code that already
+> works, so nothing here is a trap; but if you are building on paging, expect it to get more
+> permissive rather than less. The surface itself — `PagingClauseTemplates`, the `string?`
+> template property, the builder overload — is settled.
+
+### Added
+
 - **Third-party notices are now packed into the package (#353).** `THIRD-PARTY-NOTICES.md`
   ships at the package root, listing every runtime dependency and its licence. Previously the
   `license-audit` workflow generated this file as a build artifact only, so consumers installing
