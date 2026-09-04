@@ -172,6 +172,35 @@ public abstract class DbExtractorIntegrationTestsBase
 
 
     [SkippableFact]
+    public async Task ExtractAsync_when_paging_folds_SkipItemCount_into_the_offset()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 10);
+
+        // The skip is applied by the database, not here — but the observable result must be
+        // identical on every dialect, which is what this checks. A dialect where OFFSET means
+        // something subtly different would show up as the wrong first row.
+        var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+        {
+            PagingClauseTemplate = Fixture.PagingClauseTemplate,
+            ServerLimit = 3,
+            SkipItemCount = 4
+        };
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(6, results.Count);
+        Assert.Equal("Item5", results[0].Name);
+        Assert.Equal("Item10", results[5].Name);
+        Assert.Equal(4, extractor.CurrentSkippedItemCount);
+    }
+
+
+
+    [SkippableFact]
     public async Task ExtractAsync_when_ServerLimit_exceeds_the_rows_remaining_returns_only_what_is_left()
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);

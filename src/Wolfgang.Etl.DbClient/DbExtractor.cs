@@ -606,6 +606,14 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// include one — without a stable order, page contents drift.
     /// </para>
     /// <para>
+    /// <b>Skipping is done by the database when paging is on.</b> <c>SkipItemCount</c> is
+    /// normally applied here, after the rows arrive — so a large skip drags every skipped row
+    /// across the wire only to discard it. With paging active the skip is folded into the
+    /// starting offset instead (<see cref="ServerOffset"/> + <c>SkipItemCount</c>) and those
+    /// rows are never sent. Without paging there is no offset to fold into, so the rows are
+    /// fetched and discarded as before and a warning is logged.
+    /// </para>
+    /// <para>
     /// <b>Two costs to know about.</b> Most engines implement <c>OFFSET n</c> by scanning and
     /// discarding those <c>n</c> rows, so walking a large table page by page is quadratic in
     /// server-side work; a keyset ("seek") predicate on the command text is the cheaper shape
@@ -807,6 +815,33 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             var pageOffset = ServerOffset ?? 0L;
             var pageSize = ServerLimit;
 
+            // The database can do the skipping for us whenever paging is active: start at
+            // ServerOffset + SkipItemCount and the skipped rows are never sent at all. Without
+            // paging there is no offset to fold into, so they have to be fetched and discarded
+            // one by one — which for a large skip is worth warning about.
+            var skipServerSide = pageSize.HasValue && SkipItemCount > 0;
+            if (skipServerSide)
+            {
+                pageOffset += SkipItemCount;
+
+                // Those rows were skipped, just not here. Leaving the counter at zero would make
+                // the progress report say "skipped 0" to someone who asked to skip a million,
+                // which reads as the setting having been ignored.
+                //
+                // ExtractorBase only exposes a parameterless increment, so this is O(SkipItemCount)
+                // — roughly 10ms for a million, against the seconds saved by not transferring
+                // those rows. A bulk increment upstream would remove the loop; until then a
+                // truthful report is worth more than the microseconds.
+                for (var skipped = 0; skipped < SkipItemCount; skipped++)
+                {
+                    IncrementCurrentSkippedItemCount();
+                }
+            }
+            else if (SkipItemCount > 0)
+            {
+                LogWarningClientSideSkip();
+            }
+
             // Once per extraction, not once per page. ApplyServerPaging adds @PageOffset and
             // @PageLimit INTO the caller's own DynamicParameters when the obsolete Parameters
             // property is used, so a per-page collision check would see paging's own names on
@@ -828,7 +863,12 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 var pageLimit = pageSize;
                 if (pageSize.HasValue)
                 {
-                    var stillNeeded = (long)SkipItemCount + MaximumItemCount - rowIndex;
+                    // Skipping server-side means nothing is fetched-then-discarded, so the
+                    // SkipItemCount term simply does not apply — the rows we receive are the
+                    // rows we yield.
+                    var stillNeeded = skipServerSide
+                        ? MaximumItemCount - CurrentItemCount
+                        : (long)SkipItemCount + MaximumItemCount - rowIndex;
                     if (stillNeeded <= 0)
                     {
                         break;
@@ -904,7 +944,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
                     rowIndex++;
 
-                    if (rowIndex <= SkipItemCount)
+                    if (!skipServerSide && rowIndex <= SkipItemCount)
                     {
                         IncrementCurrentSkippedItemCount();
                         LogDebugRowSkipped(rowIndex);
@@ -1253,6 +1293,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 "Skipping row {RowIndex} ({SkippedCount}/{SkipItemCount})",
                 rowIndex,
                 CurrentSkippedItemCount,
+                SkipItemCount
+            );
+        }
+    }
+
+
+
+    private void LogWarningClientSideSkip()
+    {
+        if (_logger.IsEnabled(LogLevel.Warning))
+        {
+            _logger.LogWarning
+            (
+                "SkipItemCount ({SkipItemCount}) is being applied client-side: every skipped row " +
+                "is fetched from the database and discarded. Set ServerLimit and " +
+                "PagingClauseTemplate to have the database skip them instead.",
                 SkipItemCount
             );
         }

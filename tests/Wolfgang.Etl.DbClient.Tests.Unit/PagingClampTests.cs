@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
@@ -94,11 +95,12 @@ public class PagingClampTests
 
 
     [Fact]
-    public async Task SkipItemCount_is_included_in_what_the_page_asks_for()
+    public async Task SkipItemCount_is_pushed_into_the_offset_instead_of_being_fetched()
     {
-        // The trap. SkipItemCount is applied client-side AFTER the rows arrive, so a run that
-        // needs 30 yielded rows with 10 skipped must fetch 40. Clamping to MaximumItemCount
-        // alone would request 30, silently yield 20, and still look plausible.
+        // Reversed by #398. This used to request (0, 40) — fetch the 10 skipped rows and throw
+        // them away here. The database can skip them instead, so the request is (10, 30) and
+        // those rows never cross the wire. The SkipItemCount term in the clamp disappears with
+        // them: nothing is fetched-then-discarded, so received == yielded.
         var logger = new SpyLogger<DbExtractor<PersonRecord>>();
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 500);
 
@@ -122,7 +124,7 @@ public class PagingClampTests
 
         Assert.Equal(30, records.Count);
         Assert.Equal("First11", records[0].FirstName);
-        Assert.Equal(new[] { (0L, 40L) }, RequestedPages(logger));
+        Assert.Equal(new[] { (10L, 30L) }, RequestedPages(logger));
     }
 
 
@@ -156,5 +158,99 @@ public class PagingClampTests
         Assert.Equal(17, records.Count);
         Assert.Equal("First4", records[0].FirstName);
         Assert.All(RequestedPages(logger), page => Assert.Equal(5L, page.Limit));
+    }
+
+
+    [Fact]
+    public async Task Server_side_skip_composes_with_ServerOffset()
+    {
+        // Start at 25, then skip 10 more → the database is asked for offset 35.
+        var logger = new SpyLogger<DbExtractor<PersonRecord>>();
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 500);
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                ServerOffset = 25,
+                ServerLimit = 10
+            },
+            logger: logger
+        )
+        {
+            SkipItemCount = 10,
+            MaximumItemCount = 5
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        // Rows are 1-based, so offset 35 is First36.
+        Assert.Equal(5, records.Count);
+        Assert.Equal("First36", records[0].FirstName);
+        Assert.Equal(new[] { (35L, 5L) }, RequestedPages(logger));
+    }
+
+
+
+    [Fact]
+    public async Task Server_side_skip_still_reports_the_skipped_count()
+    {
+        // The rows were skipped, just not locally. Reporting 0 here would read as the setting
+        // having been ignored.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 50);
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                ServerLimit = 10
+            }
+        )
+        {
+            SkipItemCount = 7
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(43, records.Count);
+        Assert.Equal("First8", records[0].FirstName);
+        Assert.Equal(7, extractor.CurrentSkippedItemCount);
+    }
+
+
+
+    [Fact]
+    public async Task Skipping_without_paging_warns_that_it_is_the_slow_path()
+    {
+        // No ServerLimit means no offset to fold into, so the rows have to be fetched and
+        // discarded. That still works — it is just worth telling the caller there is a faster way.
+        var logger = new SpyLogger<DbExtractor<PersonRecord>>();
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions(),
+            logger: logger
+        )
+        {
+            SkipItemCount = 5
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(15, records.Count);
+        Assert.Equal("First6", records[0].FirstName);
+
+        var warning = Assert.Single(logger.Entries.Where(e => e.Level == LogLevel.Warning));
+        Assert.Contains("ServerLimit", warning.Message, StringComparison.Ordinal);
+        Assert.Contains("PagingClauseTemplate", warning.Message, StringComparison.Ordinal);
     }
 }
