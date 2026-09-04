@@ -807,6 +807,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             var pageOffset = ServerOffset ?? 0L;
             var pageSize = ServerLimit;
 
+            // Once per extraction, not once per page. ApplyServerPaging adds @PageOffset and
+            // @PageLimit INTO the caller's own DynamicParameters when the obsolete Parameters
+            // property is used, so a per-page collision check would see paging's own names on
+            // the second page and throw — breaking paging for every extractor configured that
+            // way. The question these answer ("did the caller already supply these?") is settled
+            // before the first page and cannot change afterwards.
+            if (pageSize.HasValue)
+            {
+                EnsurePagingClauseTemplateChosen();
+                EnsurePagingParametersNotAlreadySupplied();
+            }
+
             while (true)
             {
                 // Ask the database only for rows that can still be used: anything past
@@ -1118,9 +1130,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             pagedParam = param;
             return;
         }
-
-        EnsurePagingClauseTemplateChosen();
-        EnsurePagingParametersNotAlreadySupplied();
 
         // Both parameter shapes accept additions, by different methods.
         switch (param)
