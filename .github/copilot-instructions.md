@@ -86,7 +86,6 @@ root/
 ### Key Configuration Files
 - **`.editorconfig`**: Code style rules (C# file-scoped namespaces, var preferences, analyzer severity)
 - **`.gitignore`**: Comprehensive .NET gitignore (Visual Studio, build artifacts, packages)
-- **`REPO-INSTRUCTIONS.md`**: Template setup instructions (delete after setup)
 - **`CONTRIBUTING.md`**: Contribution guidelines
 - **`CODE_OF_CONDUCT.md`**: Standard Contributor Covenant v2.0
 
@@ -106,7 +105,7 @@ The workflow runs on pull requests to `main` branch and includes:
 4. **Branch Protection**: Configured to require this workflow to pass before merging
 
 ### Branch Protection Configuration
-Branch protection rules are configured by running the local PowerShell script `scripts/Setup-BranchRuleset.ps1`. The script prompts you to choose repository settings during setup.
+Branch protection rules are configured through the repository's ruleset in GitHub Settings; the one-time bootstrap scripts this repo was created with have since been removed.
 
 **Single-Developer Configuration (Default):**
 - No PR approvals required (you can merge your own PRs)
@@ -123,21 +122,16 @@ Branch protection rules are configured by running the local PowerShell script `s
 - Restrict deletions and block force pushes
 - Require code scanning (CodeQL High+ severity)
 
-**Branch Protection Setup Instructions:**
-1. Install GitHub CLI (gh) from https://cli.github.com/
-2. Authenticate: `gh auth login`
-3. From PowerShell 7+ (for example, using `pwsh`), run the branch protection setup script:
-   ```powershell
-   pwsh -File ./scripts/Setup-BranchRuleset.ps1
-   ```
-4. When prompted by the script, choose single-developer or multi-developer settings
+**Branch Protection Setup:** the ruleset is already configured on this repository. Review or
+change it under Settings → Rules → Rulesets. `scripts/Fix-BranchRuleset.ps1` remains for
+repairing a drifted ruleset; the original one-time bootstrap script was removed once setup was
+complete.
 
 ## Key Files and Locations
 
 ### Root Directory Files
 - `README.md` - Basic template description (update for your project)
 - `LICENSE` - MIT License
-- `REPO-INSTRUCTIONS.md` - Template setup instructions (delete after setup)
 - `.editorconfig` - Code style configuration
 - `.gitignore` - .NET-specific gitignore
 
@@ -161,7 +155,7 @@ Branch protection rules are configured by running the local PowerShell script `s
 This information has been validated against the template structure and GitHub workflows. **Only search for additional information if these instructions are incomplete or found to be incorrect.**
 
 ### When Working with This Template
-1. **Creating New Projects**: Follow the structure outlined in `REPO-INSTRUCTIONS.md`
+1. **Creating New Projects**: Follow the structure outlined in `CONTRIBUTING.md`
 2. **Adding Dependencies**: Use `dotnet add package` commands
 3. **Code Style**: Follow `.editorconfig` rules (file-scoped namespaces, explicit typing)
 4. **Testing**: Ensure test projects follow `*Test*.csproj` naming convention
