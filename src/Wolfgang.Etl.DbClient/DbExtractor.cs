@@ -595,11 +595,24 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Use server-side paging for very large tables where streaming
-    /// everything to the client is wasteful. SQL Server requires an
-    /// <c>ORDER BY</c> in the command text for paging to be deterministic;
-    /// SQLite, PostgreSQL, and MySQL don't require it but you should still
+    /// Extraction reads through a <see cref="System.Data.Common.DbDataReader"/> and streams row
+    /// by row whether paging is on or not, so paging is <b>not</b> what keeps memory bounded.
+    /// What it buys is bounded work per query: no single long-running statement over a huge
+    /// table, and therefore fewer server-side timeouts and shorter-lived read locks.
+    /// </para>
+    /// <para>
+    /// SQL Server requires an <c>ORDER BY</c> in the command text for paging to be
+    /// deterministic; SQLite, PostgreSQL, and MySQL don't require it but you should still
     /// include one — without a stable order, page contents drift.
+    /// </para>
+    /// <para>
+    /// <b>Two costs to know about.</b> Most engines implement <c>OFFSET n</c> by scanning and
+    /// discarding those <c>n</c> rows, so walking a large table page by page is quadratic in
+    /// server-side work; a keyset ("seek") predicate on the command text is the cheaper shape
+    /// where the query allows it. And paging by offset is not stable under concurrent writes:
+    /// rows inserted or deleted between pages shift the window, so a row can be skipped or
+    /// returned twice even with an <c>ORDER BY</c>. Neither matters for a static table; both
+    /// matter for a live one.
     /// </para>
     /// <para>
     /// Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.
@@ -609,8 +622,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
-    /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
-    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
+    /// <summary>Rows per page. See <see cref="ServerOffset"/>.</summary>
+    /// <remarks>
+    /// Setting this switches server-side paging on; <see cref="ServerOffset"/> defaults to
+    /// <c>0</c>. This is the size of each round-trip, <b>not</b> a cap on the total — the
+    /// extractor advances the offset itself and keeps requesting pages until the source is
+    /// exhausted. To cap the total, set <c>MaximumItemCount</c>; the page actually requested is
+    /// then shortened to whatever is still needed, so the database never produces rows that
+    /// would be discarded on arrival.
+    /// </remarks>
     public long? ServerLimit { get; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
@@ -774,88 +794,158 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
             }
 
-            ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
-
             if (TotalCountQuery != null)
             {
                 _totalItemCount = await TotalCountQuery(token).ConfigureAwait(false);
             }
 
+            // rowIndex counts rows RECEIVED from the database across every page — not rows
+            // yielded. SkipItemCount is applied client-side below, so the two diverge the moment
+            // a skip is configured, and clamping the page size against the yielded count is how
+            // a paged extract silently returns too few rows.
             long rowIndex = 0;
+            var pageOffset = ServerOffset ?? 0L;
+            var pageSize = ServerLimit;
 
-            // The reader is driven with a manual ReadAsync loop, and row mapping
-            // goes through a standalone Dapper row-parser delegate, rather than
-            // Dapper's own QueryUnbufferedAsync<T> IAsyncEnumerable. That matters:
-            // QueryUnbufferedAsync's read-and-map loop lives inside ONE compiler-
-            // generated async-iterator state machine. When mapping throws mid-loop,
-            // the iterator's finally block runs and the state machine transitions
-            // to "finished" — so even catching the exception at the call site,
-            // the NEXT MoveNextAsync just returns false. Skip would silently
-            // truncate the result set after the first bad row instead of
-            // continuing past it. Reading via our own loop keeps ReadAsync's
-            // cursor alive across a caught mapping failure, so Skip actually
-            // skips-and-continues.
-            var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
-            using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
-            var parseRow = reader.GetRowParser<TRecord>();
-
-            while (await reader.ReadAsync(token).ConfigureAwait(false))
+            // Once per extraction, not once per page. ApplyServerPaging adds @PageOffset and
+            // @PageLimit INTO the caller's own DynamicParameters when the obsolete Parameters
+            // property is used, so a per-page collision check would see paging's own names on
+            // the second page and throw — breaking paging for every extractor configured that
+            // way. The question these answer ("did the caller already supply these?") is settled
+            // before the first page and cannot change afterwards.
+            if (pageSize.HasValue)
             {
-                token.ThrowIfCancellationRequested();
+                EnsurePagingClauseTemplateChosen();
+                EnsurePagingParametersNotAlreadySupplied();
+            }
 
-                TRecord record;
-                try
+            while (true)
+            {
+                // Ask the database only for rows that can still be used: anything past
+                // SkipItemCount + MaximumItemCount would be fetched and then thrown away here.
+                // Computed in long deliberately — MaximumItemCount defaults to int.MaxValue, so
+                // adding SkipItemCount to it overflows int whenever a skip is configured.
+                var pageLimit = pageSize;
+                if (pageSize.HasValue)
                 {
-                    record = parseRow(reader);
-                }
-                catch (System.Data.DataException ex)
-                {
-                    // Scoped to DataException — the type Dapper wraps row-materialization
-                    // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
-                    // sees per-row failures. Catching every exception type here would also
-                    // catch connection-level failures (a dropped connection, a syntax error
-                    // surfacing lazily); those aren't per-row, and ReadAsync would likely keep
-                    // throwing the same fault on every subsequent call, so routing them
-                    // through ItemErrorAction.Skip would spin the loop instead of terminating.
-                    rowIndex++;
-                    var action = HandleItemError
-                    (
-                        new ItemErrorContext
-                        (
-                            rowIndex,
-                            ex,
-                            rawContent: null
-                        )
-                    );
-                    if (action == ItemErrorAction.Abort)
+                    var stillNeeded = (long)SkipItemCount + MaximumItemCount - rowIndex;
+                    if (stillNeeded <= 0)
                     {
-                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+                        break;
                     }
-                    // ItemErrorAction.Skip — HandleItemError already incremented
-                    // the error-item counter on the base. Log and continue.
-                    LogDebugRowErrorSkipped(rowIndex, ex);
-                    continue;
+
+                    pageLimit = Math.Min(pageSize.Value, stillNeeded);
                 }
 
-                rowIndex++;
-
-                if (rowIndex <= SkipItemCount)
+                if (pageLimit.HasValue)
                 {
-                    IncrementCurrentSkippedItemCount();
-                    LogDebugRowSkipped(rowIndex);
-                    continue;
+                    LogDebugPageRequested(pageOffset, pageLimit.Value);
                 }
 
+                ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, pageOffset, pageLimit, out var commandText, out var param);
+
+                long rowsThisPage = 0;
+
+                // The reader is driven with a manual ReadAsync loop, and row mapping
+                // goes through a standalone Dapper row-parser delegate, rather than
+                // Dapper's own QueryUnbufferedAsync<T> IAsyncEnumerable. That matters:
+                // QueryUnbufferedAsync's read-and-map loop lives inside ONE compiler-
+                // generated async-iterator state machine. When mapping throws mid-loop,
+                // the iterator's finally block runs and the state machine transitions
+                // to "finished" — so even catching the exception at the call site,
+                // the NEXT MoveNextAsync just returns false. Skip would silently
+                // truncate the result set after the first bad row instead of
+                // continuing past it. Reading via our own loop keeps ReadAsync's
+                // cursor alive across a caught mapping failure, so Skip actually
+                // skips-and-continues.
+                var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
+                using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+                var parseRow = reader.GetRowParser<TRecord>();
+
+                while (await reader.ReadAsync(token).ConfigureAwait(false))
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    rowsThisPage++;
+
+                    TRecord record;
+                    try
+                    {
+                        record = parseRow(reader);
+                    }
+                    catch (System.Data.DataException ex)
+                    {
+                        // Scoped to DataException — the type Dapper wraps row-materialization
+                        // failures in (e.g. "Error parsing column N") — so ErrorPolicy only ever
+                        // sees per-row failures. Catching every exception type here would also
+                        // catch connection-level failures (a dropped connection, a syntax error
+                        // surfacing lazily); those aren't per-row, and ReadAsync would likely keep
+                        // throwing the same fault on every subsequent call, so routing them
+                        // through ItemErrorAction.Skip would spin the loop instead of terminating.
+                        rowIndex++;
+                        var action = HandleItemError
+                        (
+                            new ItemErrorContext
+                            (
+                                rowIndex,
+                                ex,
+                                rawContent: null
+                            )
+                        );
+                        if (action == ItemErrorAction.Abort)
+                        {
+                            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+                        }
+                        // ItemErrorAction.Skip — HandleItemError already incremented
+                        // the error-item counter on the base. Log and continue.
+                        LogDebugRowErrorSkipped(rowIndex, ex);
+                        continue;
+                    }
+
+                    rowIndex++;
+
+                    if (rowIndex <= SkipItemCount)
+                    {
+                        IncrementCurrentSkippedItemCount();
+                        LogDebugRowSkipped(rowIndex);
+                        continue;
+                    }
+
+                    if (CurrentItemCount >= MaximumItemCount)
+                    {
+                        LogDebugMaxReached();
+                        LogExtractionCompleted();
+                        yield break;
+                    }
+
+                    LogDebugRowExtracted(rowIndex);
+                    IncrementCurrentItemCount();
+                    yield return record;
+                }
+
+                // Paging off: the single pass above was the whole extraction.
+                if (!pageLimit.HasValue)
+                {
+                    break;
+                }
+
+                // Order matters. The clamp above deliberately shortens the final page, so a short
+                // page no longer implies the source ran out — checking exhaustion first would read
+                // a clamped last page as "no more rows" and be right by accident, then wrong the
+                // moment the clamp is not what ended it.
                 if (CurrentItemCount >= MaximumItemCount)
                 {
                     LogDebugMaxReached();
-                    LogExtractionCompleted();
-                    yield break;
+                    break;
                 }
 
-                LogDebugRowExtracted(rowIndex);
-                IncrementCurrentItemCount();
-                yield return record;
+                // Fewer rows than asked for means the source is exhausted.
+                if (rowsThisPage < pageLimit.Value)
+                {
+                    break;
+                }
+
+                pageOffset += rowsThisPage;
             }
 
             LogExtractionCompleted();
@@ -993,12 +1083,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
-    /// If <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are both
-    /// set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
-    /// (returned via <paramref name="pagedCommandText"/>) and add
-    /// <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set (returned
-    /// via <paramref name="pagedParam"/>). Otherwise returns the inputs
-    /// unchanged.
+    /// Builds the command for one page: appends <see cref="PagingClauseTemplate"/> to
+    /// <paramref name="commandText"/> (returned via <paramref name="pagedCommandText"/>) and adds
+    /// <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set (returned via
+    /// <paramref name="pagedParam"/>). With no <paramref name="pageLimit"/> paging is off and the
+    /// inputs come back unchanged.
     /// </summary>
     /// <remarks>
     /// out parameters instead of a tuple — net462 doesn't ship
@@ -1007,6 +1096,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </remarks>
     /// <param name="commandText">The command text to page.</param>
     /// <param name="param">The parameter set to add the paging parameters to, or <c>null</c>.</param>
+    /// <param name="pageOffset">Zero-based row offset for this page.</param>
+    /// <param name="pageLimit">
+    /// Rows to request for this page, already clamped to what is still needed, or <c>null</c>
+    /// when paging is off.
+    /// </param>
     /// <param name="pagedCommandText">The command text with the paging clause appended.</param>
     /// <param name="pagedParam">The parameter set including the paging parameters.</param>
     /// <exception cref="InvalidOperationException">
@@ -1014,9 +1108,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// which server-side paging also generates. Emitting both would duplicate the name, and
     /// silently preferring one would discard either the caller's value or the paging.
     /// </exception>
-    private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
+    private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, long pageOffset, long? pageLimit, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
     {
-        if (!ServerLimit.HasValue)
+        if (!pageLimit.HasValue)
         {
             // An offset with no limit is the mirror of the bug this default fixes: the caller
             // plainly wants paging, and no limit can be inferred (every template references
@@ -1037,25 +1131,19 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             return;
         }
 
-        // ServerLimit alone is enough: an unspecified offset can only mean "start at the top".
-        var serverOffset = ServerOffset ?? 0L;
-
-        EnsurePagingClauseTemplateChosen();
-        EnsurePagingParametersNotAlreadySupplied();
-
         // Both parameter shapes accept additions, by different methods.
         switch (param)
         {
             case EtlParameterSet set:
-                set.Add("@PageOffset", serverOffset);
-                set.Add("@PageLimit", ServerLimit.Value);
+                set.Add("@PageOffset", pageOffset);
+                set.Add("@PageLimit", pageLimit.Value);
                 pagedParam = set;
                 break;
 
             default:
                 var dynamic = param as DynamicParameters ?? new DynamicParameters();
-                dynamic.Add("@PageOffset", serverOffset);
-                dynamic.Add("@PageLimit", ServerLimit.Value);
+                dynamic.Add("@PageOffset", pageOffset);
+                dynamic.Add("@PageLimit", pageLimit.Value);
                 pagedParam = dynamic;
                 break;
         }
@@ -1166,6 +1254,21 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 rowIndex,
                 CurrentSkippedItemCount,
                 SkipItemCount
+            );
+        }
+    }
+
+
+
+    private void LogDebugPageRequested(long pageOffset, long pageLimit)
+    {
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug
+            (
+                "Requesting page: PageOffset={PageOffset}, PageLimit={PageLimit}",
+                pageOffset,
+                pageLimit
             );
         }
     }

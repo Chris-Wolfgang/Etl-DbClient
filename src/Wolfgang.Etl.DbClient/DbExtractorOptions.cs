@@ -67,7 +67,12 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row limit for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
-    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
+    /// <remarks>
+    /// Setting this switches server-side paging on; <see cref="ServerOffset"/> defaults to
+    /// <c>0</c>. This is the size of each round-trip, <b>not</b> a cap on the total — the
+    /// extractor advances the offset itself until the source is exhausted. Cap the total with
+    /// <c>MaximumItemCount</c>.
+    /// </remarks>
     public long? ServerLimit { get; init; }
 
 

@@ -355,4 +355,36 @@ public class EtlParameterBindingTests
 
         Assert.Single(results);
     }
+
+
+    [Fact]
+    public async Task Paging_across_multiple_pages_works_when_configured_via_the_Parameters_property()
+    {
+        // Regression guard. ApplyServerPaging adds @PageOffset/@PageLimit INTO the caller's
+        // DynamicParameters when the obsolete Parameters property is used. Running the collision
+        // guard once per page then sees paging's own names in Parameters.ParameterNames on the
+        // second page and throws — breaking paging for every extractor configured this way,
+        // stored procedures with OUT params included. The guard belongs before the page loop.
+        using var conn = Seeded();
+
+        var dynamic = new Dapper.DynamicParameters();
+        dynamic.Add("@min", 0);
+
+#pragma warning disable CS0618
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            options: new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerLimit = 1 }
+        )
+        {
+            Parameters = dynamic
+        };
+#pragma warning restore CS0618
+
+        // Seeded() has 2 rows, so a page size of 1 forces a second page — where the bug bit.
+        var results = await sut.ExtractAsync().ToListAsync();
+
+        Assert.Equal(2, results.Count);
+    }
 }

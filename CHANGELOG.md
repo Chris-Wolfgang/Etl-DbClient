@@ -28,6 +28,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING: server-side paging now advances through pages itself (#394).** `ServerLimit` is
+  the size of each round-trip, not a cap on the total: one extractor walks the whole result set,
+  advancing the offset until the source is exhausted. Previously one extractor returned exactly
+  one page and the caller wrote the loop — as this repo's own sample and integration test both
+  did, which is why the loop moved into the library.
+
+  Cap the total with `MaximumItemCount`. "Exactly 50 rows starting at 25" is
+  `ServerOffset = 25`, `ServerLimit = 50`, `MaximumItemCount = 50`.
+
+  The page actually requested is shortened to what is still needed, so the database never
+  produces rows that would be discarded on arrival: with a page size of 100 and a maximum of
+  150, the requests are 100 then 50. `SkipItemCount` is counted in, since it discards rows
+  client-side after they arrive.
+
+  Two costs are now the library's rather than the caller's, and are documented on
+  `ServerOffset`: `OFFSET n` makes most engines scan and discard `n` rows, so walking a large
+  table is quadratic in server-side work; and offset paging is not stable under concurrent
+  writes, where a row can be skipped or returned twice between pages.
+
 - **BREAKING: `ServerLimit` alone now enables paging; `ServerOffset` defaults to `0` (#393).**
   Setting only `ServerLimit` was previously a silent no-op — a caller who asked for 50 rows got
   *every* row, with no error. `ServerLimit` now switches server-side paging on, and an unset

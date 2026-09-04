@@ -57,7 +57,12 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.ServerLimit"/> for server-side paging.
     /// </summary>
-    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
+    /// <remarks>
+    /// Setting this switches server-side paging on; <see cref="ServerOffset"/> defaults to
+    /// <c>0</c>. This is the size of each round-trip, <b>not</b> a cap on the total — the
+    /// extractor advances the offset itself until the source is exhausted. Cap the total with
+    /// <c>MaximumItemCount</c>.
+    /// </remarks>
     IDbExtractorBuilder<T> ServerLimit(long? limit);
 
 
