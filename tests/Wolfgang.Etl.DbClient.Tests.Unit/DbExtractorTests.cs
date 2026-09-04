@@ -620,8 +620,10 @@ public class DbExtractorTests
 
 
     [Fact]
-    public async Task ExtractAsync_with_ServerLimit_caps_rows_at_the_database()
+    public async Task ExtractAsync_with_ServerLimit_pages_through_the_whole_table()
     {
+        // ServerLimit is the page size, not a cap: the extractor keeps requesting pages until
+        // the source runs out. Capping the total is MaximumItemCount's job — see the test below.
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
 
         var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
@@ -633,15 +635,35 @@ public class DbExtractorTests
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
-        Assert.Equal(5, records.Count);
+        Assert.Equal(20, records.Count);
         Assert.Equal("First1", records[0].FirstName);
-        Assert.Equal("First5", records[4].FirstName);
+        Assert.Equal("First20", records[19].FirstName);
     }
 
 
 
     [Fact]
-    public async Task ExtractAsync_with_ServerOffset_and_ServerLimit_returns_a_page()
+    public async Task ExtractAsync_with_MaximumItemCount_caps_the_total_across_pages()
+    {
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
+
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
+        {
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+            ServerLimit = 5,
+            MaximumItemCount = 12
+        };
+
+        var records = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal(12, records.Count);
+        Assert.Equal("First12", records[11].FirstName);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_with_ServerOffset_pages_from_there_to_the_end()
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
 
@@ -654,10 +676,10 @@ public class DbExtractorTests
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
-        // Skipped 10, took 5 → First11..First15.
-        Assert.Equal(5, records.Count);
+        // Starts at row 11 and pages to the end in chunks of 5 → First11..First20.
+        Assert.Equal(10, records.Count);
         Assert.Equal("First11", records[0].FirstName);
-        Assert.Equal("First15", records[4].FirstName);
+        Assert.Equal("First20", records[9].FirstName);
     }
 
 
@@ -742,8 +764,11 @@ public class DbExtractorTests
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
-        Assert.Equal(3, records.Count);
+        // Offset defaults to 0 and paging advances, so all 10 arrive in pages of 3 —
+        // including a final short page of 1.
+        Assert.Equal(10, records.Count);
         Assert.Equal("First1", records[0].FirstName);
+        Assert.Equal("First10", records[9].FirstName);
     }
 
 

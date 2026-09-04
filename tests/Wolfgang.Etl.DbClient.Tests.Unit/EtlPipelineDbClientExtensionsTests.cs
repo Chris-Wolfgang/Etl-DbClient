@@ -105,8 +105,8 @@ public class EtlPipelineDbClientExtensionsTests
     [Fact]
     public async Task Extractor_builder_setters_propagate_to_the_underlying_extractor()
     {
-        // Server-side paging via the builder: ServerLimit=2, ServerOffset=1 →
-        // pipeline yields exactly rows 2 and 3.
+        // Server-side paging via the builder: page size 2 starting at offset 1, which now
+        // advances to the end → rows 2..5.
         using var src = CreateSourceWithRows(5);
         using var dest = CreateEmptyDestination();
 
@@ -120,7 +120,7 @@ public class EtlPipelineDbClientExtensionsTests
             .RunAsync()
             ;
 
-        Assert.Equal(2L, CountRows(dest, "dest"));
+        Assert.Equal(4L, CountRows(dest, "dest"));
 
         using var check = dest.CreateCommand();
         check.CommandText = "SELECT Id FROM dest ORDER BY Id;";
@@ -196,9 +196,8 @@ public class EtlPipelineDbClientExtensionsTests
         var extractor = new DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id");
         Assert.Null(extractor.ServerLimit);
 
-        // DbExtractor's paging is gated on BOTH ServerOffset AND ServerLimit
-        // being set (see DbExtractor.ApplyServerPaging), so setting both
-        // proves the setter path AND exercises paging end-to-end.
+        // Setting the paging knobs through the builder proves the setter path AND exercises
+        // paging end-to-end: 3 rows in pages of 2 means two round-trips, the second short.
         await EtlPipeline
             .Create()
             .DbExtractor(extractor)
@@ -212,7 +211,9 @@ public class EtlPipelineDbClientExtensionsTests
         // Setter on the builder mutated the caller's extractor.
         Assert.Equal(0L, extractor.ServerOffset);
         Assert.Equal(2L, extractor.ServerLimit);
-        Assert.Equal(2L, CountRows(dest, "dest"));
+
+        // All 3 rows, not one page of 2 — paging advances to the end.
+        Assert.Equal(3L, CountRows(dest, "dest"));
     }
 
 

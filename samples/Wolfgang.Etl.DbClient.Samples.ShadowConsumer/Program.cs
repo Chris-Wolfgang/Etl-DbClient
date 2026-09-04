@@ -72,26 +72,28 @@ var sw = Stopwatch.StartNew();
 long extracted = 0;
 long loaded = 0;
 
-for (long offset = 0; offset < totalRows; offset += pageSize)
+// One extractor walks the whole table: it advances the page offset itself, so the caller no
+// longer writes the loop. The source here is SQLite — paging syntax is dialect-specific and
+// the library does not guess one, so the dialect has to be named.
+var extractor = new DbExtractor<SourceWidget>
+(
+    src,
+    "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id"
+)
 {
-    var extractor = new DbExtractor<SourceWidget>
-    (
-        src,
-        "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id"
-    )
-    {
-        // The source here is SQLite. Paging syntax is dialect-specific and the library no
-        // longer guesses one, so the dialect has to be named.
-        PagingClauseTemplate = PagingClauseTemplates.Sqlite,
-        ServerOffset = offset,
-        ServerLimit = pageSize,
-    };
+    PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+    ServerLimit = pageSize,
+};
 
-    var page = new List<DestWidget>(pageSize);
-    await foreach (var s in extractor.ExtractAsync())
+// Extraction streams, but the load is still batched — flush a full page at a time so this
+// workload keeps the same allocation shape it had when the paging loop was hand-rolled.
+var page = new List<DestWidget>(pageSize);
+
+async Task FlushAsync()
+{
+    if (page.Count == 0)
     {
-        page.Add(new DestWidget { Id = s.Id, UpperName = s.Name.ToUpperInvariant(), Price = s.Price });
-        extracted++;
+        return;
     }
 
     var loader = new DbLoader<DestWidget>
@@ -104,7 +106,21 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
     };
     await loader.LoadAsync(AsAsync(page));
     loaded += page.Count;
+    page.Clear();
 }
+
+await foreach (var s in extractor.ExtractAsync())
+{
+    page.Add(new DestWidget { Id = s.Id, UpperName = s.Name.ToUpperInvariant(), Price = s.Price });
+    extracted++;
+
+    if (page.Count == pageSize)
+    {
+        await FlushAsync();
+    }
+}
+
+await FlushAsync();
 
 sw.Stop();
 

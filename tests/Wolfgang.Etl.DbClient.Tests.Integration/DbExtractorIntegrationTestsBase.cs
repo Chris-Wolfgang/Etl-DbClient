@@ -125,11 +125,14 @@ public abstract class DbExtractorIntegrationTestsBase
         await Fixture.ResetSchemaAsync(conn);
         await Fixture.SeedAsync(conn, rowCount: 5);
 
+        // A bounded window is offset + page size + MaximumItemCount. ServerLimit alone would
+        // page on to the end of the table, so the cap is what makes this a window.
         var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
         {
             PagingClauseTemplate = Fixture.PagingClauseTemplate,
             ServerOffset = 1,
-            ServerLimit = 2
+            ServerLimit = 2,
+            MaximumItemCount = 2
         };
 
         var results = await extractor.ExtractAsync().ToListAsync();
@@ -150,31 +153,19 @@ public abstract class DbExtractorIntegrationTestsBase
         await Fixture.ResetSchemaAsync(conn);
         await Fixture.SeedAsync(conn, rowCount: 7);
 
-        // 7 rows in pages of 3 deliberately leaves a partial final page.
-        const int pageSize = 3;
-        var seen = new List<int>();
-
-        for (var offset = 0; ; offset += pageSize)
+        // 7 rows in pages of 3 deliberately leaves a partial final page. The loop this test
+        // used to hand-roll now lives in the extractor — one extractor walks the whole table.
+        var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
         {
-            var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
-            {
-                PagingClauseTemplate = Fixture.PagingClauseTemplate,
-                ServerOffset = offset,
-                ServerLimit = pageSize
-            };
+            PagingClauseTemplate = Fixture.PagingClauseTemplate,
+            ServerLimit = 3
+        };
 
-            var page = await extractor.ExtractAsync().ToListAsync();
+        var seen = await extractor.ExtractAsync().Select(item => item.Value).ToListAsync();
 
-            if (page.Count == 0)
-            {
-                break;
-            }
-
-            Assert.True(page.Count <= pageSize, $"page at offset {offset} returned {page.Count} rows");
-            seen.AddRange(page.Select(item => item.Value));
-        }
-
-        // No gaps, no duplicates, and in order — the three ways paging goes wrong.
+        // No gaps, no duplicates, and in order — the three ways paging goes wrong. Now it also
+        // covers the page-advance itself: a bad offset step would show up here as a gap or a
+        // repeat, on every engine.
         Assert.Equal(Enumerable.Range(1, 7).Select(i => i * 10), seen);
     }
 
@@ -229,7 +220,7 @@ public abstract class DbExtractorIntegrationTestsBase
 
 
     [SkippableFact]
-    public async Task ExtractAsync_when_only_ServerLimit_is_set_pages_from_the_top()
+    public async Task ExtractAsync_when_only_ServerLimit_is_set_pages_from_the_top_to_the_end()
     {
         Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
@@ -237,9 +228,8 @@ public abstract class DbExtractorIntegrationTestsBase
         await Fixture.ResetSchemaAsync(conn);
         await Fixture.SeedAsync(conn, rowCount: 5);
 
-        // Reversed deliberately. This previously asserted that a limit with no offset was a
-        // silent no-op returning all 5 rows — the caller asking for 2 and getting everything.
-        // ServerLimit now switches paging on and an unset offset means 0.
+        // ServerLimit switches paging on, an unset offset means 0, and paging advances — so
+        // all 5 rows arrive in pages of 2, the last page short.
         var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
         {
             PagingClauseTemplate = Fixture.PagingClauseTemplate,
@@ -248,8 +238,8 @@ public abstract class DbExtractorIntegrationTestsBase
 
         var results = await extractor.ExtractAsync().ToListAsync();
 
-        Assert.Equal(2, results.Count);
+        Assert.Equal(5, results.Count);
         Assert.Equal("Item1", results[0].Name);
-        Assert.Equal("Item2", results[1].Name);
+        Assert.Equal("Item5", results[4].Name);
     }
 }
