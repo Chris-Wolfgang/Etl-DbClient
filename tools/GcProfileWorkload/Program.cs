@@ -135,7 +135,6 @@ static async IAsyncEnumerable<Widget> GenerateBatch(int count)
 // to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
 // Several sites here assign after construction, so they cannot move to a constructor without
 // restructuring the test.
-#pragma warning disable CS0618
 
 namespace Wolfgang.Etl.DbClient.Tools.GcProfileWorkload
 {
