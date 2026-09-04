@@ -13,6 +13,8 @@ public sealed class SqlServerFixture : DbProviderFixtureBase
 
     public override string ProviderName => "sqlserver";
 
+    public override string PagingClauseTemplate => PagingClauseTemplates.SqlServer;
+
 
 
     protected override async Task StartAsync()

@@ -601,12 +601,16 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// SQLite, PostgreSQL, and MySQL don't require it but you should still
     /// include one — without a stable order, page contents drift.
     /// </para>
+    /// <para>
+    /// Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.
+    /// </para>
     /// </remarks>
     public long? ServerOffset { get; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
     /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
+    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
     public long? ServerLimit { get; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
@@ -618,15 +622,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Defaults to <c>LIMIT @PageLimit OFFSET @PageOffset</c> — the SQLite /
-    /// PostgreSQL / MySQL syntax.
+    /// Defaults to <see cref="PagingClauseTemplates.None"/>: no dialect is assumed, because
+    /// there is no portable paging syntax. Activating paging without choosing a template throws.
     /// </para>
     /// <para>
     /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
     /// (and ensure the base SQL ends with an <c>ORDER BY</c>).
     /// </para>
+    /// <para>
+    /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
+    /// </para>
     /// </remarks>
-    public string PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = "LIMIT @PageLimit OFFSET @PageOffset";
+    public string? PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.None;
 
 
 
@@ -892,6 +899,33 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     }
 
     /// <summary>
+    /// Verifies a paging dialect was chosen before server-side paging is applied.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Paging is active but <see cref="PagingClauseTemplate"/> is
+    /// <see cref="PagingClauseTemplates.None"/>.
+    /// </exception>
+    private void EnsurePagingClauseTemplateChosen()
+    {
+        if (!string.IsNullOrWhiteSpace(PagingClauseTemplate))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException
+        (
+            "Server-side paging requires PagingClauseTemplate to be set, because paging syntax " +
+            "is dialect-specific and no portable form exists. Choose a preset from " +
+            "PagingClauseTemplates (for example PagingClauseTemplates.SqlServer, .PostgreSql, " +
+            ".MySql, .Sqlite, .Oracle or .Db2), or supply your own clause referencing " +
+            "@PageOffset and @PageLimit. To disable paging instead, clear ServerOffset and " +
+            "ServerLimit."
+        );
+    }
+
+
+
+    /// <summary>
     /// Rejects a caller-supplied parameter whose name server-side paging also generates.
     /// </summary>
     /// <remarks>
@@ -914,7 +948,21 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     {
         foreach (var generated in new[] { "@PageOffset", "@PageLimit" })
         {
-            var suppliedByDictionary = _parameters?.ContainsKey(generated) == true;
+            // ContainsKey resolves against _parameters' own comparer, which is deliberately
+            // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
+            // Scan explicitly with the collision-safe comparison instead.
+            var suppliedByDictionary = false;
+            if (_parameters is not null)
+            {
+                foreach (var key in _parameters.Keys)
+                {
+                    if (ParameterName.Matches(key, generated))
+                    {
+                        suppliedByDictionary = true;
+                        break;
+                    }
+                }
+            }
 
             var suppliedByProperty = false;
             var names = Parameters?.ParameterNames;
@@ -922,8 +970,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             {
                 foreach (var name in names)
                 {
-                    if (string.Equals(name, generated, StringComparison.Ordinal)
-                        || string.Equals("@" + name, generated, StringComparison.Ordinal))
+                    if (ParameterName.Matches(name, generated))
                     {
                         suppliedByProperty = true;
                         break;
@@ -969,27 +1016,45 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </exception>
     private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
     {
-        if (!ServerOffset.HasValue || !ServerLimit.HasValue)
+        if (!ServerLimit.HasValue)
         {
+            // An offset with no limit is the mirror of the bug this default fixes: the caller
+            // plainly wants paging, and no limit can be inferred (every template references
+            // @PageLimit). Silently returning every row from the top would ignore what they asked
+            // for, so say so instead.
+            if (ServerOffset.HasValue)
+            {
+                throw new InvalidOperationException
+                (
+                    "ServerOffset was set without ServerLimit, so server-side paging cannot be " +
+                    "applied — a page size is required and cannot be inferred. Set ServerLimit " +
+                    "to the number of rows per page, or clear ServerOffset."
+                );
+            }
+
             pagedCommandText = commandText;
             pagedParam = param;
             return;
         }
 
+        // ServerLimit alone is enough: an unspecified offset can only mean "start at the top".
+        var serverOffset = ServerOffset ?? 0L;
+
+        EnsurePagingClauseTemplateChosen();
         EnsurePagingParametersNotAlreadySupplied();
 
         // Both parameter shapes accept additions, by different methods.
         switch (param)
         {
             case EtlParameterSet set:
-                set.Add("@PageOffset", ServerOffset.Value);
+                set.Add("@PageOffset", serverOffset);
                 set.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = set;
                 break;
 
             default:
                 var dynamic = param as DynamicParameters ?? new DynamicParameters();
-                dynamic.Add("@PageOffset", ServerOffset.Value);
+                dynamic.Add("@PageOffset", serverOffset);
                 dynamic.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = dynamic;
                 break;

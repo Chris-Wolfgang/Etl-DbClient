@@ -129,7 +129,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             supplied,
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var rows = new List<PersonRecord>();
@@ -164,7 +164,7 @@ public class EtlParameterBindingTests
                 ["@min"] = new EtlParameter<int> { Value = 0 },
                 ["@PageOffset"] = 99          // the name paging also generates
             },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -209,7 +209,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             new Dictionary<string, object> { ["@min"] = 0 },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var rows = new List<PersonRecord>();
@@ -236,7 +236,7 @@ public class EtlParameterBindingTests
                 ["@min"] = 0,
                 ["@PageOffset"] = 99
             },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -260,7 +260,7 @@ public class EtlParameterBindingTests
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
             new Dictionary<string, object> { ["@min"] = 0, ["@PageLimit"] = 5 },
-            new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -289,7 +289,7 @@ public class EtlParameterBindingTests
         (
             conn,
             "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
-            options: new DbExtractorOptions { ServerOffset = 1, ServerLimit = 1 }
+            options: new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
         )
         {
             Parameters = dynamic
@@ -302,5 +302,57 @@ public class EtlParameterBindingTests
         });
 
         Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
+    }
+
+
+    [Theory]
+    [InlineData("@pageoffset")]   // lower
+    [InlineData("@PAGEOFFSET")]   // upper
+    [InlineData("PageOffset")]    // no leading @, as Dapper stores it
+    [InlineData("pageoffset")]    // both at once
+    public async Task A_caller_supplied_name_collides_regardless_of_case_or_at_sign(string suppliedName)
+    {
+        // Measured against live engines: SQL Server, PostgreSQL and MySQL all resolve parameter
+        // names case-insensitively and quietly use whichever value arrived last, so an ordinal
+        // guard lets the caller's "@pageoffset" shadow the generated "@PageOffset" and the query
+        // returns wrong rows with NO error. Only SQLite treats the two as distinct.
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @min ORDER BY age",
+            new Dictionary<string, object> { ["@min"] = 0, [suppliedName] = 99 },
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in sut.ExtractAsync()) { }
+        });
+
+        Assert.Contains("@PageOffset", ex.Message, StringComparison.Ordinal);
+    }
+
+
+
+    [Fact]
+    public async Task A_caller_supplied_name_that_merely_shares_a_prefix_is_not_rejected()
+    {
+        // The guard must not over-reach: normalising the leading @ and ignoring case should not
+        // make "@PageOffsetCutoff" look like "@PageOffset".
+        using var conn = Seeded();
+
+        var sut = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name, last_name, age FROM People WHERE age > @PageOffsetCutoff ORDER BY age",
+            new Dictionary<string, object> { ["@PageOffsetCutoff"] = 0 },
+            new DbExtractorOptions { PagingClauseTemplate = PagingClauseTemplates.Sqlite, ServerOffset = 1, ServerLimit = 1 }
+        );
+
+        var results = await sut.ExtractAsync().ToListAsync();
+
+        Assert.Single(results);
     }
 }

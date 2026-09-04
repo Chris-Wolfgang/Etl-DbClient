@@ -92,6 +92,7 @@ using (var cmd = page.CreateCommand())
 await EtlPipeline
     .Create()
     .DbExtractor<Order>(src, "SELECT Id, Customer, Total FROM Orders ORDER BY Id")
+    .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
     .ServerOffset(5)
     .ServerLimit(5)
     .DbLoader<Order>(page, "INSERT INTO OrdersPage (Id, Customer, Total) VALUES (@Id, @Customer, @Total)")

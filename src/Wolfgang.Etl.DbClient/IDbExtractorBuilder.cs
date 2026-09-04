@@ -50,23 +50,43 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// <see cref="PagingClauseTemplate"/>, the extractor appends the paging clause
     /// to the caller's SQL.
     /// </summary>
+    /// <remarks>Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.</remarks>
     IDbExtractorBuilder<T> ServerOffset(long? offset);
 
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.ServerLimit"/> for server-side paging.
     /// </summary>
+    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
     IDbExtractorBuilder<T> ServerLimit(long? limit);
 
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.PagingClauseTemplate"/> — the SQL
-    /// snippet appended when <see cref="ServerOffset"/> and/or
-    /// <see cref="ServerLimit"/> are set. Default:
-    /// <c>LIMIT @PageLimit OFFSET @PageOffset</c>.
+    /// snippet appended when <b>both</b> <see cref="ServerOffset"/> and
+    /// <see cref="ServerLimit"/> are set. Defaults to
+    /// <see cref="PagingClauseTemplates.None"/>.
     /// </summary>
-    /// <exception cref="ArgumentNullException"><paramref name="template"/> is <see langword="null"/>.</exception>
-    IDbExtractorBuilder<T> PagingClauseTemplate(string template);
+    /// <param name="template">
+    /// The paging clause, normally a preset from <see cref="PagingClauseTemplates"/>.
+    /// <see langword="null"/> is accepted and means <see cref="PagingClauseTemplates.None"/> —
+    /// no dialect chosen — which is the default.
+    /// </param>
+    /// <remarks>
+    /// The clause is dialect-specific and there is no portable form, so this library does not
+    /// guess one. Activating paging (setting <b>both</b> <see cref="ServerOffset"/> and
+    /// <see cref="ServerLimit"/>) while no template has been chosen throws
+    /// <see cref="System.InvalidOperationException"/> rather than emitting SQL that only some
+    /// engines accept. Use a preset, e.g.
+    /// <c>.PagingClauseTemplate(PagingClauseTemplates.SqlServer)</c>.
+    /// <para>
+    /// The <c>OFFSET … FETCH</c> form additionally requires an <c>ORDER BY</c> at the end of the
+    /// command text <i>you supply</i> — the paging clause is appended after it, so the finished
+    /// statement ends with the paging clause, not the <c>ORDER BY</c>. SQL Server and Oracle both
+    /// reject the form otherwise.
+    /// </para>
+    /// </remarks>
+    IDbExtractorBuilder<T> PagingClauseTemplate(string? template);
 
 
     /// <summary>

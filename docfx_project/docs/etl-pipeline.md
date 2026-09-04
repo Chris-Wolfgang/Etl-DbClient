@@ -107,6 +107,7 @@ var extractor = serviceProvider.GetRequiredService<DbExtractor<Person>>();
 await EtlPipeline
     .Create()
     .DbExtractor(extractor)           // reuse the DI-registered instance
+    .PagingClauseTemplate(PagingClauseTemplates.PostgreSql)
     .ServerOffset(0)                  // mutates `extractor.ServerOffset`
     .ServerLimit(500)
     .DbLoader<Person>(destConn, insertSql)
@@ -120,6 +121,7 @@ await EtlPipeline
     .Create()
     .DbExtractor<Invoice>(conn, "SELECT * FROM Invoices WHERE Status = @Status")
     .Parameters(new DynamicParameters(new { Status = "paid" }))
+    .PagingClauseTemplate(PagingClauseTemplates.PostgreSql)
     .ServerOffset(1000)
     .ServerLimit(500)
     .DbLoader<Invoice>(destConn, "INSERT INTO PaidInvoicesPage2 ...")
@@ -127,10 +129,14 @@ await EtlPipeline
 ```
 
 When both `ServerOffset` and `ServerLimit` are set, the extractor appends
-`PagingClauseTemplate` (default `LIMIT @PageLimit OFFSET @PageOffset`) to the
-command text and adds `@PageOffset` / `@PageLimit` to the parameter set. For
-databases that use a different paging dialect (e.g. SQL Server's
-`OFFSET n ROWS FETCH NEXT m ROWS ONLY`), override the template:
+`PagingClauseTemplate` to the command text and adds `@PageOffset` / `@PageLimit`
+to the parameter set.
+
+`PagingClauseTemplate` **must be set** — it defaults to `PagingClauseTemplates.None`.
+Paging syntax is dialect-specific and no portable form exists, so the library does
+not guess one; activating paging without a template throws
+`InvalidOperationException` rather than emitting SQL only some engines accept.
+Use a preset, or supply your own clause referencing `@PageOffset` and `@PageLimit`:
 
 ```csharp
 await EtlPipeline
@@ -138,7 +144,7 @@ await EtlPipeline
     .DbExtractor<Invoice>(conn, "SELECT * FROM Invoices ORDER BY Id")
     .ServerOffset(0)
     .ServerLimit(500)
-    .PagingClauseTemplate("OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY")
+    .PagingClauseTemplate(PagingClauseTemplates.SqlServer)
     .DbLoader<Invoice>(destConn, "...")
     .RunAsync();
 ```

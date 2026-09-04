@@ -15,6 +15,16 @@ public interface IDbProviderFixture
 
 
     /// <summary>
+    /// The paging clause this engine requires — normally a preset from
+    /// <see cref="PagingClauseTemplates"/>. Declared per fixture so the paging contract
+    /// tests exercise the real preset against the real engine: if a preset is wrong for
+    /// this RDBMS, the paging tests fail here rather than in a consumer's production query.
+    /// </summary>
+    string PagingClauseTemplate { get; }
+
+
+
+    /// <summary>
     /// True when the underlying environment (e.g. Docker daemon) was reachable
     /// and the schema was provisioned. Tests <c>Skip.IfNot(Available, ...)</c> on
     /// this so a developer without Docker can still run the rest of the suite.
