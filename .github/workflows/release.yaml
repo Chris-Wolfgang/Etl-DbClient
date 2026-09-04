@@ -654,7 +654,9 @@ jobs:
         # Fail if nothing executed, or if anything was skipped on CI.
         shell: bash
         run: |
-          trx=$(find . -name 'integration-*.trx' -print -quit)
+          # Scoped to the directory the test step actually writes to, and tolerant of it
+          # missing so the explicit message below is what surfaces, not a find error.
+          trx=$(find ./TestResults-Integration -name 'integration-*.trx' -print -quit 2>/dev/null || true)
           if [ -z "$trx" ]; then
             echo "::error::No .trx produced - the integration run did not execute."
             exit 1
