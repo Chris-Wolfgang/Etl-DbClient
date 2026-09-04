@@ -63,8 +63,7 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.PagingClauseTemplate"/> — the SQL
-    /// snippet appended when <b>both</b> <see cref="ServerOffset"/> and
-    /// <see cref="ServerLimit"/> are set. Defaults to
+    /// snippet appended when <see cref="ServerLimit"/> switches paging on. Defaults to
     /// <see cref="PagingClauseTemplates.None"/>.
     /// </summary>
     /// <param name="template">
@@ -74,8 +73,8 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// </param>
     /// <remarks>
     /// The clause is dialect-specific and there is no portable form, so this library does not
-    /// guess one. Activating paging (setting <b>both</b> <see cref="ServerOffset"/> and
-    /// <see cref="ServerLimit"/>) while no template has been chosen throws
+    /// guess one. Activating paging (setting <see cref="ServerLimit"/>) while no template has
+    /// been chosen throws
     /// <see cref="System.InvalidOperationException"/> rather than emitting SQL that only some
     /// engines accept. Use a preset, e.g.
     /// <c>.PagingClauseTemplate(PagingClauseTemplates.SqlServer)</c>.

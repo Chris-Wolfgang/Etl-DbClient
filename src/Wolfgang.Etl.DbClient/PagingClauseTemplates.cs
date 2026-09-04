@@ -39,8 +39,8 @@ public static class PagingClauseTemplates
     /// No dialect chosen. This is the default, and it is <see langword="null"/>.
     /// </summary>
     /// <remarks>
-    /// This does NOT disable paging — paging is controlled by <c>ServerOffset</c> and
-    /// <c>ServerLimit</c>, and applies only when both are set. <see cref="None"/> means the
+    /// This does NOT disable paging — paging is switched on by <c>ServerLimit</c>, with
+    /// <c>ServerOffset</c> defaulting to <c>0</c>. <see cref="None"/> means the
     /// dialect has not been named yet, so activating paging while it is in effect is an error
     /// rather than a silent guess: there is no portable paging syntax, and any default this
     /// library picked would be wrong on half the engines it supports.

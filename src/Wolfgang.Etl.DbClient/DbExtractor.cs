@@ -586,9 +586,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
-    /// When both <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are
-    /// set, the extractor appends <see cref="PagingClauseTemplate"/> to the
-    /// command text before sending it. Default <see langword="null"/> disables
+    /// When <see cref="ServerLimit"/> is set, the extractor appends
+    /// <see cref="PagingClauseTemplate"/> to the command text before sending it, using this
+    /// offset — or <c>0</c> when this is unset. Default <see langword="null"/> disables
     /// server-side paging (the v0.4.0 behavior — the full result set comes
     /// back and <c>SkipItemCount</c>/<c>MaximumItemCount</c> filter
     /// client-side).
@@ -993,8 +993,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
-    /// If <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are both
-    /// set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
+    /// If <see cref="ServerLimit"/> is set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
     /// (returned via <paramref name="pagedCommandText"/>) and add
     /// <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set (returned
     /// via <paramref name="pagedParam"/>). Otherwise returns the inputs

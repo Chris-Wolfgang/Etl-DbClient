@@ -59,7 +59,11 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row offset for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
-    /// <remarks>Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.</remarks>
+    /// <remarks>
+    /// The property itself stays <see langword="null"/> unless set; when paging is active an
+    /// unset offset is treated as <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>,
+    /// so an offset with no limit throws — no page size can be inferred.
+    /// </remarks>
     public long? ServerOffset { get; init; }
 
 
@@ -67,7 +71,10 @@ public sealed record DbExtractorOptions
     /// <summary>
     /// Gets the server-side row limit for paging. Defaults to <see langword="null"/> (no paging).
     /// </summary>
-    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
+    /// <remarks>
+    /// Setting this switches server-side paging on. An unset <see cref="ServerOffset"/> is then
+    /// treated as <c>0</c>, though the property itself remains <see langword="null"/>.
+    /// </remarks>
     public long? ServerLimit { get; init; }
 
 
