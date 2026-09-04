@@ -97,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## [0.9.1] - 2026-08-19
+## [0.9.1] - 2026-08-21
 
 PATCH release. Sweeps the repo's open code-scanning alerts down from 67
 to ~0 across four tools (InspectCode, Scorecard, zizmor, Semgrep OSS).
