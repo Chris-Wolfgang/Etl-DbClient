@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`SkipItemCount` is now applied by the database when paging is active (#398).** It was
+  applied client-side, so every skipped row was fetched and discarded — `SkipItemCount = 1_000_000`
+  dragged a million rows across the wire to throw them all away. With paging on, the skip is
+  folded into the starting offset (`ServerOffset + SkipItemCount`) and those rows are never sent.
+
+  Without paging there is no offset to fold into, so the client-side path remains and a warning
+  is logged naming `ServerLimit` + `PagingClauseTemplate` as the faster route.
+
+  `CurrentSkippedItemCount` still reports the skip, so progress reporting is unchanged. One
+  behavioural difference: a row that fails to parse inside the skip window used to consume a
+  skip slot; skipped server-side, such rows never materialise, so the window is measured purely
+  in source rows.
+
 - **BREAKING: server-side paging now advances through pages itself (#394).** `ServerLimit` is
   the size of each round-trip, not a cap on the total: one extractor walks the whole result set,
   advancing the offset until the source is exhausted. Previously one extractor returned exactly
