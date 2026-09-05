@@ -48,7 +48,7 @@
          once the version being released here is live on the flatcontainer CDN,
          never to the in-flight version (the pack step downloads the baseline). -->
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>0.9.1</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>0.10.0</PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <ItemGroup>
