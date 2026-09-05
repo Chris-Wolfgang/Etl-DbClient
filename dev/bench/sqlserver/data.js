@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787329437467,
+  "lastUpdate": 1788616769971,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlserver)": [
@@ -624,6 +624,48 @@ window.BENCHMARK_DATA = {
             "value": 5304475.607291667,
             "unit": "ns",
             "range": "± 57175.75626768481"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a05e3f7649da16741892650411cd094ee78a396",
+          "message": "Merge pull request #405 from Chris-Wolfgang/vNext\n\nRelease v0.10.0 — options-record constructors, ORM-independent parameters, paging presets",
+          "timestamp": "2026-09-05T09:53:41-04:00",
+          "tree_id": "36aad2c86a8aeb73f4095f12d7b81dbd77ceb175",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/6a05e3f7649da16741892650411cd094ee78a396"
+        },
+        "date": 1788616766994,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 181915.86429036458,
+            "unit": "ns",
+            "range": "± 2817.2850375068974"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 410342.63200495794,
+            "unit": "ns",
+            "range": "± 11178.59489361451"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 2688627.8177083335,
+            "unit": "ns",
+            "range": "± 350527.41761421476"
           }
         ]
       }
