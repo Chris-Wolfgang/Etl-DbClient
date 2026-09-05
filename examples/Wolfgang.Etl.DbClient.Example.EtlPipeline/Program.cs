@@ -9,6 +9,11 @@ using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.DbClient;
 using Wolfgang.Etl.DbClient.Example.EtlPipeline;
 
+// Configures through the deprecated property setters; migrating to the options constructors
+// is follow-up work. Placed at the top of the file rather than before the namespace: these
+// are top-level-statement programs, so the executable code precedes the namespace.
+#pragma warning disable CS0618
+
 // ---------------------------------------------------------------
 // Example: fluent EtlPipeline chain over DbExtractor / DbLoader (#280)
 //
@@ -87,6 +92,7 @@ using (var cmd = page.CreateCommand())
 await EtlPipeline
     .Create()
     .DbExtractor<Order>(src, "SELECT Id, Customer, Total FROM Orders ORDER BY Id")
+    .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
     .ServerOffset(5)
     .ServerLimit(5)
     .DbLoader<Order>(page, "INSERT INTO OrdersPage (Id, Customer, Total) VALUES (@Id, @Customer, @Total)")
@@ -180,6 +186,12 @@ Console.WriteLine("Done.");
 // -----------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------
+
+// This file still configures through the deprecated property setters. Migrating it to the
+// options constructors is follow-up work, tracked separately - the deprecation's purpose is
+// to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
+// Several sites here assign after construction, so they cannot move to a constructor without
+// restructuring the test.
 
 namespace Wolfgang.Etl.DbClient.Example.EtlPipeline
 {

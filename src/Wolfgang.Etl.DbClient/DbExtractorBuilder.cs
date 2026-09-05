@@ -41,6 +41,11 @@ internal sealed class DbExtractorBuilder<T> : IDbExtractorBuilder<T>
     // Fluent setters
     // -----------------------------------------------------------------
 
+#pragma warning disable CS0618
+    // This builder configures an extractor/loader that already exists - it is handed the
+    // instance in its constructor, so there is no constructor of its own to route options
+    // through. Writing the (now deprecated) setters is the only available path until the
+    // builder is reshaped to construct the instance itself.
     public IDbExtractorBuilder<T> CommandType(CommandType commandType)
     {
         _extractor.CommandType = commandType;
@@ -86,13 +91,10 @@ internal sealed class DbExtractorBuilder<T> : IDbExtractorBuilder<T>
 
 
 
-    public IDbExtractorBuilder<T> PagingClauseTemplate(string template)
+    public IDbExtractorBuilder<T> PagingClauseTemplate(string? template)
     {
-        if (template is null)
-        {
-            throw new ArgumentNullException(nameof(template));
-        }
-
+        // null is meaningful here: it is PagingClauseTemplates.None, "no dialect chosen".
+        // Rejecting it would make .PagingClauseTemplate(PagingClauseTemplates.None) throw.
         _extractor.PagingClauseTemplate = template;
         return this;
     }
@@ -117,6 +119,10 @@ internal sealed class DbExtractorBuilder<T> : IDbExtractorBuilder<T>
     // extractor is passed by reference so any further setter calls on
     // this builder still influence enumeration (see class remarks).
     // -----------------------------------------------------------------
+
+
+#pragma warning restore CS0618
+
 
     public IEtlPipeline<TOut> Through<TOut>(ITransformAsync<T, TOut> transformer)
         where TOut : notnull

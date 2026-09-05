@@ -24,6 +24,13 @@ using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
 using Xunit;
 
+// This file still configures through the deprecated property setters. Migrating it to the
+// options constructors is follow-up work, tracked separately - the deprecation's purpose is
+// to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
+// Several sites here assign after construction, so they cannot move to a constructor without
+// restructuring the test.
+#pragma warning disable CS0618
+
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 public class EtlPipelineDbClientExtensionsTests
@@ -106,6 +113,7 @@ public class EtlPipelineDbClientExtensionsTests
         await EtlPipeline
             .Create()
             .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
+            .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
             .ServerOffset(1)
             .ServerLimit(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
@@ -194,6 +202,7 @@ public class EtlPipelineDbClientExtensionsTests
         await EtlPipeline
             .Create()
             .DbExtractor(extractor)
+            .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
             .ServerOffset(0)
             .ServerLimit(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
@@ -336,14 +345,19 @@ public class EtlPipelineDbClientExtensionsTests
 
 
     [Fact]
-    public void Extractor_builder_PagingClauseTemplate_null_throws_ArgumentNullException()
+    public void Extractor_builder_PagingClauseTemplate_accepts_null_as_None()
     {
+        // Reversed deliberately. null is no longer invalid — it is PagingClauseTemplates.None,
+        // "no dialect chosen". Rejecting it would make .PagingClauseTemplate(None) throw, which
+        // would be an obvious trap given None is the default.
         using var src = CreateSourceWithRows(1);
         var builder = EtlPipeline
             .Create()
             .DbExtractor<Widget>(src, "SELECT 1");
 
-        Assert.Throws<System.ArgumentNullException>(() => builder.PagingClauseTemplate(null!));
+        var returned = builder.PagingClauseTemplate(PagingClauseTemplates.None);
+
+        Assert.Same(builder, returned);
     }
 
 
@@ -460,6 +474,32 @@ public class EtlPipelineDbClientExtensionsTests
             => TransformAsync(source, CancellationToken.None);
     }
 
+
+
+    [Fact]
+    public async Task ITransformWithCancellationAsync_bare_overload_forwards_to_the_token_aware_one()
+    {
+        // The pipeline always calls the cancellation-aware overload, so the bare one that
+        // satisfies ITransformAsync<T,TOut> is never exercised through a pipeline. Calling it
+        // directly asserts the forwarding actually works rather than merely compiling.
+        var sut = new IdentityTransformWithCancellation();
+
+        var source = new[]
+        {
+            new Widget { Id = 1, Name = "a" },
+            new Widget { Id = 2, Name = "b" }
+        }.ToAsyncEnumerable();
+
+        var results = new List<Widget>();
+        await foreach (var w in sut.TransformAsync(source))
+        {
+            results.Add(w);
+        }
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("a", results[0].Name);
+        Assert.Equal("b", results[1].Name);
+    }
 
 
     [Fact]

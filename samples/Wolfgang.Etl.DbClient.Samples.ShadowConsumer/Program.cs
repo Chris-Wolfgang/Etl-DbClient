@@ -28,6 +28,11 @@ using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 using Wolfgang.Etl.DbClient.Samples.ShadowConsumer;
 
+// Configures through the deprecated property setters; migrating to the options constructors
+// is follow-up work. Placed at the top of the file rather than before the namespace: these
+// are top-level-statement programs, so the executable code precedes the namespace.
+#pragma warning disable CS0618
+
 const int totalRows = 100_000;
 const int pageSize = 1_000;
 const int batchSize = 100;
@@ -75,6 +80,9 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
         "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id"
     )
     {
+        // The source here is SQLite. Paging syntax is dialect-specific and the library no
+        // longer guesses one, so the dialect has to be named.
+        PagingClauseTemplate = PagingClauseTemplates.Sqlite,
         ServerOffset = offset,
         ServerLimit = pageSize,
     };
@@ -172,6 +180,12 @@ static async IAsyncEnumerable<T> AsAsync<T>(IEnumerable<T> source)
 // -----------------------------------------------------------------
 // Types (namespaced to satisfy MA0047)
 // -----------------------------------------------------------------
+
+// This file still configures through the deprecated property setters. Migrating it to the
+// options constructors is follow-up work, tracked separately - the deprecation's purpose is
+// to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
+// Several sites here assign after construction, so they cannot move to a constructor without
+// restructuring the test.
 
 namespace Wolfgang.Etl.DbClient.Samples.ShadowConsumer
 {

@@ -71,7 +71,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // diverge. Dapper treats input-parameter DynamicParameters as read-only
     // during execution, so sharing is safe across this type's documented
     // single-use lifetime.
-    private readonly DynamicParameters? _dynamicParameters;
+    // Either the library's own dictionary handling (plain values only) or EtlParameterSet when
+    // the caller supplied EtlParameter / DbParameter values. Typed as the interface so both fit.
+    private readonly SqlMapper.IDynamicParameters? _dynamicParameters;
     private readonly DbTransaction? _transaction;
     private readonly ILogger _logger;
     private readonly Stopwatch _stopwatch = new();
@@ -104,6 +106,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/> or <paramref name="commandText"/> is null.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbConnection connection,
@@ -111,11 +114,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _transaction = transaction;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -135,6 +142,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/>, <paramref name="commandText"/>, or <paramref name="parameters"/> is null.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbConnection connection,
@@ -143,9 +151,15 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
         if (parameters == null)
         {
             throw new ArgumentNullException(nameof(parameters));
@@ -153,9 +167,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
         // Defensive copy — see the field-level comment on _parameters.
         _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
-        _dynamicParameters = new DynamicParameters(_parameters);
-        _transaction = transaction;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
+        _dynamicParameters = EtlParameterSet.IsNeededFor(_parameters)
+            ? new EtlParameterSet(_parameters)
+            : new DynamicParameters(_parameters);
     }
 
 
@@ -172,17 +186,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="InvalidOperationException">
     /// <typeparamref name="TRecord"/> does not have a <c>[Table]</c> attribute.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbConnection connection,
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            DbCommandBuilder.BuildSelect<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = DbCommandBuilder.BuildSelect<TRecord>();
-        _transaction = transaction;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -208,6 +227,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <paramref name="factory"/> returned a null connection from
     /// <see cref="DbProviderFactory.CreateConnection"/>.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbExtractorOptions. This constructor will be removed in a future release.")]
     public DbExtractor
     (
         DbProviderFactory factory,
@@ -215,10 +235,164 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         string commandText,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger
+        )
+    {
+    }
+
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to read from.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbConnection connection,
+        string commandText,
+        DbExtractorOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(connection, commandText, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to read from.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="parameters">The command parameters.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbConnection connection,
+        string commandText,
+        IDictionary<string, object> parameters,
+        DbExtractorOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(connection, commandText, parameters, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to read from.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbConnection connection,
+        DbExtractorOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(connection, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbExtractor{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbExtractor
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText,
+        DbExtractorOptions? options,
+        ILogger<DbExtractor<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(factory, connectionString, commandText, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+    /// <summary>
+    /// Validates the provider-factory arguments and produces the connection this extractor owns.
+    /// </summary>
+    /// <remarks>
+    /// The validation lives here rather than in the constructor body because a constructor's
+    /// <c>this(...)</c> arguments are evaluated before its body runs. Keeping the checks in this
+    /// order preserves both the original <c>ParamName</c> for each argument and the guarantee that
+    /// no connection is created when any argument is null.
+    /// </remarks>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string applied to the new connection.</param>
+    /// <param name="commandText">The command text, validated here to preserve argument order.</param>
+    /// <returns>A new <see cref="DbConnection"/> owned by this extractor.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/>, <paramref name="connectionString"/> or
+    /// <paramref name="commandText"/> is <c>null</c>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="factory"/> produced a <c>null</c> connection.
+    /// </exception>
+    private static DbConnection CreateOwnedConnection
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText
+    )
     {
         if (factory == null) throw new ArgumentNullException(nameof(factory));
         if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
+        if (commandText == null) throw new ArgumentNullException(nameof(commandText));
 
         var conn = factory.CreateConnection()
             ?? throw new InvalidOperationException
@@ -227,9 +401,29 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 "The provider factory does not produce DbConnection instances."
             );
         conn.ConnectionString = connectionString;
-        _connection = conn;
-        _ownsConnection = true;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
+        return conn;
+    }
+
+
+
+    /// <summary>
+    /// The single initialization path. Every other constructor chains into this one, so the shared
+    /// fields are assigned in exactly one place and cannot drift between input shapes.
+    /// </summary>
+    private DbExtractor
+    (
+        DbConnection connection,
+        string commandText,
+        DbTransaction? transaction,
+        bool ownsConnection,
+        ILogger? logger
+    )
+    {
+        _connection = connection;
+        _commandText = commandText;
+        _transaction = transaction;
+        _ownsConnection = ownsConnection;
+        _logger = logger ?? NullLogger.Instance;
     }
 
 
@@ -262,6 +456,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     public TimeSpan? CommandTimeout
     {
         get => _commandTimeout;
+        [Obsolete("Configure CommandTimeout through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value.HasValue && value.Value < TimeSpan.Zero)
@@ -300,7 +495,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// through — but most consumers should stick to <c>Text</c> or
     /// <c>StoredProcedure</c>.
     /// </remarks>
-    public CommandType CommandType { get; set; } = CommandType.Text;
+    public CommandType CommandType { get; [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = CommandType.Text;
 
 
 
@@ -328,7 +523,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get; set; }
+    public bool ManageConnection { get; [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -352,7 +547,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get; set; }
+    public bool ValidateSchemaOnStart { get; [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -386,14 +581,14 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </code>
     /// </para>
     /// </remarks>
-    public DynamicParameters? Parameters { get; set; }
+    public DynamicParameters? Parameters { get; [Obsolete("Configure Parameters through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
     /// <summary>
-    /// When both <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are
-    /// set, the extractor appends <see cref="PagingClauseTemplate"/> to the
-    /// command text before sending it. Default <see langword="null"/> disables
+    /// When <see cref="ServerLimit"/> is set, the extractor appends
+    /// <see cref="PagingClauseTemplate"/> to the command text before sending it, using this
+    /// offset — or <c>0</c> when this is unset. Default <see langword="null"/> disables
     /// server-side paging (the v0.4.0 behavior — the full result set comes
     /// back and <c>SkipItemCount</c>/<c>MaximumItemCount</c> filter
     /// client-side).
@@ -406,13 +601,17 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// SQLite, PostgreSQL, and MySQL don't require it but you should still
     /// include one — without a stable order, page contents drift.
     /// </para>
+    /// <para>
+    /// Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.
+    /// </para>
     /// </remarks>
-    public long? ServerOffset { get; set; }
+    public long? ServerOffset { get; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
     /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
-    public long? ServerLimit { get; set; }
+    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
+    public long? ServerLimit { get; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -423,15 +622,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Defaults to <c>LIMIT @PageLimit OFFSET @PageOffset</c> — the SQLite /
-    /// PostgreSQL / MySQL syntax.
+    /// Defaults to <see cref="PagingClauseTemplates.None"/>: no dialect is assumed, because
+    /// there is no portable paging syntax. Activating paging without choosing a template throws.
     /// </para>
     /// <para>
     /// For SQL Server, set to <c>OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY</c>
     /// (and ensure the base SQL ends with an <c>ORDER BY</c>).
     /// </para>
+    /// <para>
+    /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
+    /// </para>
     /// </remarks>
-    public string PagingClauseTemplate { get; set; } = "LIMIT @PageLimit OFFSET @PageOffset";
+    public string? PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.None;
 
 
 
@@ -442,7 +644,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).
     /// </summary>
-    public Func<CancellationToken, Task<int>>? TotalCountQuery { get; set; }
+    public Func<CancellationToken, Task<int>>? TotalCountQuery { get; [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -696,11 +898,102 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token));
     }
 
+    /// <summary>
+    /// Verifies a paging dialect was chosen before server-side paging is applied.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Paging is active but <see cref="PagingClauseTemplate"/> is
+    /// <see cref="PagingClauseTemplates.None"/>.
+    /// </exception>
+    private void EnsurePagingClauseTemplateChosen()
+    {
+        if (!string.IsNullOrWhiteSpace(PagingClauseTemplate))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException
+        (
+            "Server-side paging requires PagingClauseTemplate to be set, because paging syntax " +
+            "is dialect-specific and no portable form exists. Choose a preset from " +
+            "PagingClauseTemplates (for example PagingClauseTemplates.SqlServer, .PostgreSql, " +
+            ".MySql, .Sqlite, .Oracle or .Db2), or supply your own clause referencing " +
+            "@PageOffset and @PageLimit. To disable paging instead, clear ServerOffset and " +
+            "ServerLimit."
+        );
+    }
+
 
 
     /// <summary>
-    /// If <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are both
-    /// set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
+    /// Rejects a caller-supplied parameter whose name server-side paging also generates.
+    /// </summary>
+    /// <remarks>
+    /// This cannot live inside either branch of <see cref="ApplyServerPaging"/>.
+    /// <c>EtlParameterSet</c> can detect a collision itself, but the <c>DynamicParameters</c>
+    /// branch cannot — its <c>Add</c> silently overwrites, so the caller's value would disappear
+    /// without a word.
+    /// <para>
+    /// Two routes can carry a caller's parameters and both are checked: the constructor
+    /// dictionary, and the obsolete <see cref="Parameters"/> property — which takes
+    /// <em>precedence</em> over the dictionary where the parameter set is resolved, so checking
+    /// only the dictionary would miss it entirely. Dapper stores names without the leading
+    /// <c>@</c>, hence both spellings are compared.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// A generated paging parameter name was already supplied by the caller.
+    /// </exception>
+    private void EnsurePagingParametersNotAlreadySupplied()
+    {
+        foreach (var generated in new[] { "@PageOffset", "@PageLimit" })
+        {
+            // ContainsKey resolves against _parameters' own comparer, which is deliberately
+            // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
+            // Scan explicitly with the collision-safe comparison instead.
+            var suppliedByDictionary = false;
+            if (_parameters is not null)
+            {
+                foreach (var key in _parameters.Keys)
+                {
+                    if (ParameterName.Matches(key, generated))
+                    {
+                        suppliedByDictionary = true;
+                        break;
+                    }
+                }
+            }
+
+            var suppliedByProperty = false;
+            var names = Parameters?.ParameterNames;
+            if (names is not null)
+            {
+                foreach (var name in names)
+                {
+                    if (ParameterName.Matches(name, generated))
+                    {
+                        suppliedByProperty = true;
+                        break;
+                    }
+                }
+            }
+
+            if (suppliedByDictionary || suppliedByProperty)
+            {
+                throw new InvalidOperationException
+                (
+                    $"Parameter '{generated}' was supplied by the caller and is also generated by " +
+                    "server-side paging, so it cannot be applied twice. Either stop supplying " +
+                    $"'{generated}' and let paging provide it, or clear ServerOffset and " +
+                    "ServerLimit and page through the command text yourself."
+                );
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// If <see cref="ServerLimit"/> is set, append <see cref="PagingClauseTemplate"/> to <paramref name="commandText"/>
     /// (returned via <paramref name="pagedCommandText"/>) and add
     /// <c>@PageOffset</c> / <c>@PageLimit</c> to the parameter set (returned
     /// via <paramref name="pagedParam"/>). Otherwise returns the inputs
@@ -711,21 +1004,62 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <c>System.ValueTuple</c> in the base targeting pack and we avoid the
     /// extra package reference.
     /// </remarks>
-    private void ApplyServerPaging(string commandText, DynamicParameters? param, out string pagedCommandText, out DynamicParameters? pagedParam)
+    /// <param name="commandText">The command text to page.</param>
+    /// <param name="param">The parameter set to add the paging parameters to, or <c>null</c>.</param>
+    /// <param name="pagedCommandText">The command text with the paging clause appended.</param>
+    /// <param name="pagedParam">The parameter set including the paging parameters.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The caller's parameter dictionary already contains <c>@PageOffset</c> or <c>@PageLimit</c>,
+    /// which server-side paging also generates. Emitting both would duplicate the name, and
+    /// silently preferring one would discard either the caller's value or the paging.
+    /// </exception>
+    private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
     {
-        if (!ServerOffset.HasValue || !ServerLimit.HasValue)
+        if (!ServerLimit.HasValue)
         {
+            // An offset with no limit is the mirror of the bug this default fixes: the caller
+            // plainly wants paging, and no limit can be inferred (every template references
+            // @PageLimit). Silently returning every row from the top would ignore what they asked
+            // for, so say so instead.
+            if (ServerOffset.HasValue)
+            {
+                throw new InvalidOperationException
+                (
+                    "ServerOffset was set without ServerLimit, so server-side paging cannot be " +
+                    "applied — a page size is required and cannot be inferred. Set ServerLimit " +
+                    "to the number of rows per page, or clear ServerOffset."
+                );
+            }
+
             pagedCommandText = commandText;
             pagedParam = param;
             return;
         }
 
-        var pagingParam = param ?? new DynamicParameters();
-        pagingParam.Add("@PageOffset", ServerOffset.Value);
-        pagingParam.Add("@PageLimit", ServerLimit.Value);
+        // ServerLimit alone is enough: an unspecified offset can only mean "start at the top".
+        var serverOffset = ServerOffset ?? 0L;
+
+        EnsurePagingClauseTemplateChosen();
+        EnsurePagingParametersNotAlreadySupplied();
+
+        // Both parameter shapes accept additions, by different methods.
+        switch (param)
+        {
+            case EtlParameterSet set:
+                set.Add("@PageOffset", serverOffset);
+                set.Add("@PageLimit", ServerLimit.Value);
+                pagedParam = set;
+                break;
+
+            default:
+                var dynamic = param as DynamicParameters ?? new DynamicParameters();
+                dynamic.Add("@PageOffset", serverOffset);
+                dynamic.Add("@PageLimit", ServerLimit.Value);
+                pagedParam = dynamic;
+                break;
+        }
 
         pagedCommandText = commandText + " " + PagingClauseTemplate;
-        pagedParam = pagingParam;
     }
 
 
@@ -878,5 +1212,29 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
                 exception.Message
             );
         }
+    }
+
+    /// <summary>
+    /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves
+    /// every property at its default.
+    /// </summary>
+    /// <param name="options">The configuration to apply, or <c>null</c>.</param>
+    private void ApplyOptions(DbExtractorOptions? options)
+    {
+#pragma warning disable CS0618 // ApplyOptions is the supported replacement for these setters.
+        if (options is null)
+        {
+            return;
+        }
+
+        CommandTimeout = options.CommandTimeout;
+        CommandType = options.CommandType;
+        ManageConnection = options.ManageConnection;
+        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
+        ServerOffset = options.ServerOffset;
+        ServerLimit = options.ServerLimit;
+        PagingClauseTemplate = options.PagingClauseTemplate;
+        TotalCountQuery = options.TotalCountQuery;
+#pragma warning restore CS0618
     }
 }

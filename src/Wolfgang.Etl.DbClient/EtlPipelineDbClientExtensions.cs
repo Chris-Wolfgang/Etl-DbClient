@@ -78,7 +78,7 @@ public static class EtlPipelineDbClientExtensions
             throw new ArgumentNullException(nameof(commandText));
         }
 
-        var extractor = new DbExtractor<T>(connection, commandText, transaction);
+        var extractor = new DbExtractor<T>(connection, commandText, options: null, transaction);
         return new DbExtractorBuilder<T>(pipeline, extractor);
     }
 
@@ -169,7 +169,7 @@ public static class EtlPipelineDbClientExtensions
             throw new ArgumentNullException(nameof(commandText));
         }
 
-        var loader = new DbLoader<T>(connection, commandText, transaction);
+        var loader = new DbLoader<T>(connection, commandText, options: null, transaction);
         var sink = pipeline.To(loader);
         return new DbLoaderBuilder<T>(sink, loader);
     }

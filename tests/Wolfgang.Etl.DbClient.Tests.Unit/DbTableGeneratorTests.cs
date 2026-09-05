@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Dapper;
 using JetBrains.Annotations;
@@ -22,6 +23,7 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 // "cannot resolve symbol" false positives for every Insert/Update/Delete
 // /Bind reference in this file.
 
+[ExcludeFromCodeCoverage]
 [DbTable("people")]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedPerson
@@ -33,6 +35,7 @@ public partial record GeneratedPerson
 
 
 
+[ExcludeFromCodeCoverage]
 [DbTable("orders")]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedOrder
@@ -55,6 +58,7 @@ public partial record GeneratedOrder
 
 // Single-key fixture — verifies Update/Delete emit against a single
 // [DbKey] property with a [DbColumn] override on the key column.
+[ExcludeFromCodeCoverage]
 [DbTable("widgets")]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedWidget
@@ -71,6 +75,7 @@ public partial record GeneratedWidget
 
 // Composite-key fixture — two [DbKey] properties in declaration order.
 // The WHERE clause preserves that order.
+[ExcludeFromCodeCoverage]
 [DbTable("order_lines")]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedOrderLine
@@ -91,6 +96,7 @@ public partial record GeneratedOrderLine
 
 // Key-only fixture — no non-key columns. Update MUST NOT be emitted
 // (nothing to SET). Delete is still emitted.
+[ExcludeFromCodeCoverage]
 [DbTable("tokens")]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 public partial record GeneratedTokenOnly

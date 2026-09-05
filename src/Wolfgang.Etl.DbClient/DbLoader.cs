@@ -85,6 +85,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <exception cref="ArgumentNullException">
     /// <paramref name="connection"/> or <paramref name="commandText"/> is null.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.")]
     public DbLoader
     (
         DbConnection connection,
@@ -92,12 +93,15 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
-        _callerTransaction = transaction;
-        _ownsTransaction = transaction == null;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -120,6 +124,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <paramref name="writeMode"/> is <see cref="WriteMode.Update"/> and no <c>[Key]</c>
     /// properties exist.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.")]
     public DbLoader
     (
         DbConnection connection,
@@ -127,14 +132,17 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            writeMode == WriteMode.Update
+                ? DbCommandBuilder.BuildUpdate<TRecord>()
+                : DbCommandBuilder.BuildInsert<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger
+        )
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        _commandText = writeMode == WriteMode.Update
-            ? DbCommandBuilder.BuildUpdate<TRecord>()
-            : DbCommandBuilder.BuildInsert<TRecord>();
-        _callerTransaction = transaction;
-        _ownsTransaction = transaction == null;
-        _logger = logger ?? (ILogger)NullLogger.Instance;
     }
 
 
@@ -160,6 +168,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// <paramref name="factory"/> returned a null connection from
     /// <see cref="DbProviderFactory.CreateConnection"/>.
     /// </exception>
+    [Obsolete("Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.")]
     public DbLoader
     (
         DbProviderFactory factory,
@@ -167,10 +176,135 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         string commandText,
         ILogger<DbLoader<TRecord>>? logger = null
     )
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger
+        )
+    {
+    }
+
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbLoader{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to write to.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbLoader
+    (
+        DbConnection connection,
+        string commandText,
+        DbLoaderOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(connection, commandText, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbLoader{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="connection">The connection to write to.</param>
+    /// <param name="writeMode">Whether to generate an INSERT or an UPDATE.</param>
+    /// <param name="transaction">An optional ambient transaction.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbLoader
+    (
+        DbConnection connection,
+        WriteMode writeMode,
+        DbLoaderOptions? options,
+        DbTransaction? transaction = null,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(connection, writeMode, transaction, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbLoader{TRecord}"/> class configured from an
+    /// options record.
+    /// </summary>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string.</param>
+    /// <param name="commandText">The command to execute.</param>
+    /// <param name="options">The configuration to apply. When <c>null</c>, the documented defaults apply.</param>
+    /// <param name="logger">
+    /// An optional logger instance for diagnostic output. When <c>null</c> — or omitted —
+    /// <see cref="NullLogger.Instance"/> is used and logging is disabled.
+    /// </param>
+    public DbLoader
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText,
+        DbLoaderOptions? options,
+        ILogger<DbLoader<TRecord>>? logger = null
+    )
+#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
+        : this(factory, connectionString, commandText, logger)
+    {
+        ApplyOptions(options);
+    }
+#pragma warning restore CS0618
+
+    /// <summary>
+    /// Validates the provider-factory arguments and produces the connection this loader owns.
+    /// </summary>
+    /// <remarks>
+    /// The validation lives here rather than in the constructor body because a constructor's
+    /// <c>this(...)</c> arguments are evaluated before its body runs. Keeping the checks in this
+    /// order preserves both the original <c>ParamName</c> for each argument and the guarantee that
+    /// no connection is created when any argument is null.
+    /// </remarks>
+    /// <param name="factory">The provider factory used to create the connection.</param>
+    /// <param name="connectionString">The connection string applied to the new connection.</param>
+    /// <param name="commandText">The command text, validated here to preserve argument order.</param>
+    /// <returns>A new <see cref="DbConnection"/> owned by this loader.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/>, <paramref name="connectionString"/> or
+    /// <paramref name="commandText"/> is <c>null</c>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="factory"/> produced a <c>null</c> connection.
+    /// </exception>
+    private static DbConnection CreateOwnedConnection
+    (
+        DbProviderFactory factory,
+        string connectionString,
+        string commandText
+    )
     {
         if (factory == null) throw new ArgumentNullException(nameof(factory));
         if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
-        _commandText = commandText ?? throw new ArgumentNullException(nameof(commandText));
+        if (commandText == null) throw new ArgumentNullException(nameof(commandText));
 
         var conn = factory.CreateConnection()
             ?? throw new InvalidOperationException
@@ -179,10 +313,36 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 "The provider factory does not produce DbConnection instances."
             );
         conn.ConnectionString = connectionString;
-        _connection = conn;
-        _ownsConnection = true;
-        _ownsTransaction = true;  // auto-managed transaction inside the owned connection
-        _logger = logger ?? (ILogger)NullLogger.Instance;
+        return conn;
+    }
+
+
+
+    /// <summary>
+    /// The single initialization path. Every other constructor chains into this one, so the shared
+    /// fields are assigned in exactly one place and cannot drift between input shapes.
+    /// </summary>
+    /// <remarks>
+    /// <c>_ownsTransaction</c> is derived here rather than passed in. The two connection-based
+    /// constructors set it to <c>transaction == null</c>, and the provider-factory constructor set
+    /// it unconditionally to <c>true</c> while supplying no transaction — so the single derivation
+    /// below reproduces all three cases exactly.
+    /// </remarks>
+    private DbLoader
+    (
+        DbConnection connection,
+        string commandText,
+        DbTransaction? transaction,
+        bool ownsConnection,
+        ILogger? logger
+    )
+    {
+        _connection = connection;
+        _commandText = commandText;
+        _callerTransaction = transaction;
+        _ownsTransaction = transaction is null;
+        _ownsConnection = ownsConnection;
+        _logger = logger ?? NullLogger.Instance;
     }
 
 
@@ -215,6 +375,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public TimeSpan? CommandTimeout
     {
         get => _commandTimeout;
+        [Obsolete("Configure CommandTimeout through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value.HasValue && value.Value < TimeSpan.Zero)
@@ -245,7 +406,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// procedure by name per record (or per batch when <see cref="BatchSize"/>
     /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
     /// </summary>
-    public CommandType CommandType { get; set; } = CommandType.Text;
+    public CommandType CommandType { get; [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = CommandType.Text;
 
 
 
@@ -271,7 +432,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// left open — the loader only closes connections it itself opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get; set; }
+    public bool ManageConnection { get; [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -294,7 +455,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get; set; }
+    public bool ValidateSchemaOnStart { get; [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
 
 
 
@@ -338,6 +499,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int InsertBatchSize
     {
         get => _insertBatchSize;
+        [Obsolete("Configure InsertBatchSize through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 1)
@@ -400,7 +562,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// retry, so the load still aborts even in Skip mode when
     /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
     /// </remarks>
-    public RowErrorHandling ErrorHandling { get; set; } = RowErrorHandling.Abort;
+    public RowErrorHandling ErrorHandling { get; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = RowErrorHandling.Abort;
 
 
 
@@ -421,6 +583,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int MaxErrorCount
     {
         get => _maxErrorCount;
+        [Obsolete("Configure MaxErrorCount through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 0)
@@ -491,6 +654,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int BatchCommitSize
     {
         get => _batchCommitSize;
+        [Obsolete("Configure BatchCommitSize through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 0)
@@ -533,6 +697,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     public int BatchSize
     {
         get => _batchSize;
+        [Obsolete("Configure BatchSize through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
         set
         {
             if (value < 1)
@@ -1439,5 +1604,30 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
                 CurrentItemCount
             );
         }
+    }
+
+    /// <summary>
+    /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves
+    /// every property at its default.
+    /// </summary>
+    /// <param name="options">The configuration to apply, or <c>null</c>.</param>
+    private void ApplyOptions(DbLoaderOptions? options)
+    {
+#pragma warning disable CS0618 // ApplyOptions is the supported replacement for these setters.
+        if (options is null)
+        {
+            return;
+        }
+
+        CommandTimeout = options.CommandTimeout;
+        CommandType = options.CommandType;
+        ManageConnection = options.ManageConnection;
+        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
+        InsertBatchSize = options.InsertBatchSize;
+        ErrorHandling = options.ErrorHandling;
+        MaxErrorCount = options.MaxErrorCount;
+        BatchCommitSize = options.BatchCommitSize;
+        BatchSize = options.BatchSize;
+#pragma warning restore CS0618
     }
 }
