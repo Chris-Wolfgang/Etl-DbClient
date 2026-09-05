@@ -64,6 +64,20 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbExtractorOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbExtractorOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbExtractorOptions",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbExtractorOptions.yml\" sourcestartlinenumber=\"1\">Options for the <xref href=\"Wolfgang.Etl.DbClient.DbExtractor%601\" data-throw-if-not-resolved=\"false\"></xref> constructors.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/Wolfgang.Etl.DbClient.DbKeyAttribute.yml",
       "output": {
         ".html": {
@@ -89,6 +103,20 @@
       "IsMRef": true,
       "Title": "Wolfgang.Etl.DbClient.DbLoader<TRecord>",
       "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbLoader-1.yml\" sourcestartlinenumber=\"1\">Loads records into a database via INSERT or UPDATE commands.\nUses Dapper for parameter mapping from POCO properties.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.DbLoaderOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.DbLoaderOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.DbLoaderOptions",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.DbLoaderOptions.yml\" sourcestartlinenumber=\"1\">Options for the <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref> constructors.</p>\n"
     },
     {
       "type": "ManagedReference",
@@ -134,6 +162,34 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.EtlParameter-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.EtlParameter-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.EtlParameter<T>",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.EtlParameter-1.yml\" sourcestartlinenumber=\"1\">A command parameter with a typed value.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.EtlParameter.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.EtlParameter.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.EtlParameter",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.EtlParameter.yml\" sourcestartlinenumber=\"1\">Base class for a command parameter described independently of any ORM or provider.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.yml",
       "output": {
         ".html": {
@@ -173,6 +229,20 @@
       "IsMRef": true,
       "Title": "Wolfgang.Etl.DbClient.IDbLoaderBuilder<T>",
       "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.IDbLoaderBuilder-1.yml\" sourcestartlinenumber=\"1\">Fluent builder for a <xref href=\"Wolfgang.Etl.DbClient.DbLoader%601\" data-throw-if-not-resolved=\"false\"></xref> that terminates a\ngeneric <xref href=\"Wolfgang.Etl.Abstractions.EtlPipeline\" data-throw-if-not-resolved=\"false\"></xref> chain. Extends <xref href=\"Wolfgang.Etl.Abstractions.IEtlPipelineSink\" data-throw-if-not-resolved=\"false\"></xref>,\nso a consumer transitions from configuring the loader to running the\npipeline simply by calling\n<xref href=\"Wolfgang.Etl.Abstractions.IEtlPipelineSink.RunAsync(System.IProgress%7bWolfgang.Etl.Abstractions.EtlPipelineProgress%7d%2cSystem.Threading.CancellationToken)\" data-throw-if-not-resolved=\"false\"></xref>\n— no explicit <code>Build()</code> step.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Wolfgang.Etl.DbClient.PagingClauseTemplates.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Wolfgang.Etl.DbClient.PagingClauseTemplates",
+      "Summary": "<p sourcefile=\"api/Wolfgang.Etl.DbClient.PagingClauseTemplates.yml\" sourcestartlinenumber=\"1\">Ready-made values for <xref href=\"Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate\" data-throw-if-not-resolved=\"false\"></xref>, one per supported\ndatabase.</p>\n"
     },
     {
       "type": "ManagedReference",

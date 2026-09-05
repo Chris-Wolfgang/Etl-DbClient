@@ -96,6 +96,11 @@ generated SQL.</p>
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html">DbExtractorOptions</a></dt>
+      <dd><p>Options for the <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a> constructors.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbExtractor-1.html">DbExtractor&lt;TRecord&gt;</a></dt>
       <dd><p>Extracts records from a database query as an asynchronous stream.
 Uses Dapper for column-to-property mapping, supporting <code>[Column]</code> attribute
@@ -108,6 +113,11 @@ and convention-based name matching.</p>
 part of the row's identifying key. The <code>DbTableGenerator</code> source
 generator uses <code>[DbKey]</code> properties to build the WHERE clause of
 the generated <code>Update</code> and <code>Delete</code> SQL constants.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html">DbLoaderOptions</a></dt>
+      <dd><p>Options for the <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> constructors.</p>
 </dd>
     </dl>
     <dl class="jumplist">
@@ -139,12 +149,28 @@ reflection-free <code>Insert</code> SQL + parameter-binding helpers.</p>
 </dd>
     </dl>
     <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.EtlParameter.html">EtlParameter</a></dt>
+      <dd><p>Base class for a command parameter described independently of any ORM or provider.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.EtlParameter-1.html">EtlParameter&lt;T&gt;</a></dt>
+      <dd><p>A command parameter with a typed value.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
       <dt><a class="xref" href="Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html">EtlPipelineDbClientExtensions</a></dt>
       <dd><p>Class-named DbClient factories + terminators for the fluent
 <span class="xref">Wolfgang.Etl.Abstractions.EtlPipeline</span> chain. Enables
 <code>EtlPipeline.Create().DbExtractor&lt;Order&gt;(conn, sql).DbLoader&lt;Order&gt;(destConn, insertSql).RunAsync()</code>
 alongside the sibling factories shipped by other format packages
 (<code>CsvExtractor</code>, <code>JsonLineLoader</code>, etc.).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Wolfgang.Etl.DbClient.PagingClauseTemplates.html">PagingClauseTemplates</a></dt>
+      <dd><p>Ready-made values for <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_PagingClauseTemplate">PagingClauseTemplate</a>, one per supported
+database.</p>
 </dd>
     </dl>
     <dl class="jumplist">

@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.9.1/docfx_project/docs/etl-pipeline.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/docfx_project/docs/etl-pipeline.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -134,12 +134,12 @@ pipeline interfaces.</p>
 <tr>
 <td><code>ServerLimit(long?)</code></td>
 <td><code>DbExtractor&lt;T&gt;.ServerLimit</code></td>
-<td>Page size in rows.</td>
+<td>Page size in rows. Setting this switches paging on.</td>
 </tr>
 <tr>
-<td><code>PagingClauseTemplate(string)</code></td>
+<td><code>PagingClauseTemplate(string?)</code></td>
 <td><code>DbExtractor&lt;T&gt;.PagingClauseTemplate</code></td>
-<td>SQL appended when both offset+limit are set (default <code>LIMIT @PageLimit OFFSET @PageOffset</code>).</td>
+<td>Dialect-specific SQL appended when paging is active. Defaults to <code>PagingClauseTemplates.None</code> — it must be set, or paging throws.</td>
 </tr>
 <tr>
 <td><code>TotalCountQuery(Func&lt;CancellationToken, Task&lt;int&gt;&gt;)</code></td>
@@ -148,8 +148,9 @@ pipeline interfaces.</p>
 </tr>
 </tbody>
 </table>
-<p>Server-side paging kicks in only when <strong>both</strong> <code>ServerOffset</code> and <code>ServerLimit</code>
-are set — matching the underlying <code>DbExtractor.ApplyServerPaging</code> semantics.</p>
+<p>Server-side paging is switched on by <code>ServerLimit</code>; <code>ServerOffset</code> defaults to <code>0</code>
+when not set. Setting <code>ServerOffset</code> without <code>ServerLimit</code> throws, because no page
+size can be inferred.</p>
 <h2 id="loader-knobs">Loader knobs</h2>
 <table>
 <thead>
@@ -214,6 +215,7 @@ override:</p>
 await EtlPipeline
     .Create()
     .DbExtractor(extractor)           // reuse the DI-registered instance
+    .PagingClauseTemplate(PagingClauseTemplates.PostgreSql)
     .ServerOffset(0)                  // mutates `extractor.ServerOffset`
     .ServerLimit(500)
     .DbLoader&lt;Person&gt;(destConn, insertSql)
@@ -224,22 +226,25 @@ await EtlPipeline
     .Create()
     .DbExtractor&lt;Invoice&gt;(conn, &quot;SELECT * FROM Invoices WHERE Status = @Status&quot;)
     .Parameters(new DynamicParameters(new { Status = &quot;paid&quot; }))
+    .PagingClauseTemplate(PagingClauseTemplates.PostgreSql)
     .ServerOffset(1000)
     .ServerLimit(500)
     .DbLoader&lt;Invoice&gt;(destConn, &quot;INSERT INTO PaidInvoicesPage2 ...&quot;)
     .RunAsync();
 </code></pre>
-<p>When both <code>ServerOffset</code> and <code>ServerLimit</code> are set, the extractor appends
-<code>PagingClauseTemplate</code> (default <code>LIMIT @PageLimit OFFSET @PageOffset</code>) to the
-command text and adds <code>@PageOffset</code> / <code>@PageLimit</code> to the parameter set. For
-databases that use a different paging dialect (e.g. SQL Server's
-<code>OFFSET n ROWS FETCH NEXT m ROWS ONLY</code>), override the template:</p>
+<p>When paging is active, the extractor appends <code>PagingClauseTemplate</code> to the command
+text and adds <code>@PageOffset</code> / <code>@PageLimit</code> to the parameter set.</p>
+<p><code>PagingClauseTemplate</code> <strong>must be set</strong> — it defaults to <code>PagingClauseTemplates.None</code>.
+Paging syntax is dialect-specific and no portable form exists, so the library does
+not guess one; activating paging without a template throws
+<code>InvalidOperationException</code> rather than emitting SQL only some engines accept.
+Use a preset, or supply your own clause referencing <code>@PageOffset</code> and <code>@PageLimit</code>:</p>
 <pre><code class="lang-csharp">await EtlPipeline
     .Create()
     .DbExtractor&lt;Invoice&gt;(conn, &quot;SELECT * FROM Invoices ORDER BY Id&quot;)
     .ServerOffset(0)
     .ServerLimit(500)
-    .PagingClauseTemplate(&quot;OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY&quot;)
+    .PagingClauseTemplate(PagingClauseTemplates.SqlServer)
     .DbLoader&lt;Invoice&gt;(destConn, &quot;...&quot;)
     .RunAsync();
 </code></pre>
@@ -296,7 +301,7 @@ runnable project.</li>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.9.1/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

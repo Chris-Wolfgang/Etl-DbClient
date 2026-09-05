@@ -77,6 +77,116 @@ references:
   isSpec: "True"
   fullName: Wolfgang.Etl.DbClient.DbColumnAttribute.Skip
   nameWithType: DbColumnAttribute.Skip
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions
+  name: DbExtractorOptions
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html
+  commentId: T:Wolfgang.Etl.DbClient.DbExtractorOptions
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions
+  nameWithType: DbExtractorOptions
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout
+  name: CommandTimeout
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_CommandTimeout
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout
+  nameWithType: DbExtractorOptions.CommandTimeout
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout*
+  name: CommandTimeout
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_CommandTimeout_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout
+  nameWithType: DbExtractorOptions.CommandTimeout
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType
+  name: CommandType
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_CommandType
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType
+  nameWithType: DbExtractorOptions.CommandType
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType*
+  name: CommandType
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_CommandType_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType
+  nameWithType: DbExtractorOptions.CommandType
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection
+  name: ManageConnection
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ManageConnection
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection
+  nameWithType: DbExtractorOptions.ManageConnection
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection*
+  name: ManageConnection
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ManageConnection_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection
+  nameWithType: DbExtractorOptions.ManageConnection
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate
+  name: PagingClauseTemplate
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_PagingClauseTemplate
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate
+  nameWithType: DbExtractorOptions.PagingClauseTemplate
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate*
+  name: PagingClauseTemplate
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_PagingClauseTemplate_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate
+  nameWithType: DbExtractorOptions.PagingClauseTemplate
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit
+  name: ServerLimit
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerLimit
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit
+  nameWithType: DbExtractorOptions.ServerLimit
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit*
+  name: ServerLimit
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerLimit_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit
+  nameWithType: DbExtractorOptions.ServerLimit
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset
+  name: ServerOffset
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerOffset
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset
+  nameWithType: DbExtractorOptions.ServerOffset
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset*
+  name: ServerOffset
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerOffset_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset
+  nameWithType: DbExtractorOptions.ServerOffset
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery
+  name: TotalCountQuery
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_TotalCountQuery
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery
+  nameWithType: DbExtractorOptions.TotalCountQuery
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery*
+  name: TotalCountQuery
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_TotalCountQuery_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery
+  nameWithType: DbExtractorOptions.TotalCountQuery
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ValidateSchemaOnStart
+  commentId: P:Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart
+  nameWithType: DbExtractorOptions.ValidateSchemaOnStart
+- uid: Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart*
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ValidateSchemaOnStart_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart
+  nameWithType: DbExtractorOptions.ValidateSchemaOnStart
 - uid: Wolfgang.Etl.DbClient.DbExtractor`1
   name: DbExtractor<TRecord>
   href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html
@@ -104,6 +214,15 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbConnection, String, System.Collections.Generic.IDictionary(Of String, Object), System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
   nameWithType: DbExtractor<TRecord>.DbExtractor(DbConnection, string, IDictionary<string, object>, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
   nameWithType.vb: DbExtractor(Of TRecord).New(DbConnection, String, IDictionary(Of String, Object), DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,System.Collections.Generic.IDictionary{System.String,System.Object},Wolfgang.Etl.DbClient.DbExtractorOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name: DbExtractor(DbConnection, string, IDictionary<string, object>, DbExtractorOptions?, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_System_String_System_Collections_Generic_IDictionary_System_String_System_Object__Wolfgang_Etl_DbClient_DbExtractorOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,System.Collections.Generic.IDictionary{System.String,System.Object},Wolfgang.Etl.DbClient.DbExtractorOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name.vb: New(DbConnection, String, IDictionary(Of String, Object), DbExtractorOptions, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection, string, System.Collections.Generic.IDictionary<string, object>, Wolfgang.Etl.DbClient.DbExtractorOptions?, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbConnection, String, System.Collections.Generic.IDictionary(Of String, Object), Wolfgang.Etl.DbClient.DbExtractorOptions, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
+  nameWithType: DbExtractor<TRecord>.DbExtractor(DbConnection, string, IDictionary<string, object>, DbExtractorOptions?, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
+  nameWithType.vb: DbExtractor(Of TRecord).New(DbConnection, String, IDictionary(Of String, Object), DbExtractorOptions, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
 - uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
   name: DbExtractor(DbConnection, string, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
   href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___
@@ -113,6 +232,24 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbConnection, String, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
   nameWithType: DbExtractor<TRecord>.DbExtractor(DbConnection, string, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
   nameWithType.vb: DbExtractor(Of TRecord).New(DbConnection, String, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,Wolfgang.Etl.DbClient.DbExtractorOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name: DbExtractor(DbConnection, string, DbExtractorOptions?, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_System_String_Wolfgang_Etl_DbClient_DbExtractorOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,System.String,Wolfgang.Etl.DbClient.DbExtractorOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name.vb: New(DbConnection, String, DbExtractorOptions, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection, string, Wolfgang.Etl.DbClient.DbExtractorOptions?, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbConnection, String, Wolfgang.Etl.DbClient.DbExtractorOptions, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
+  nameWithType: DbExtractor<TRecord>.DbExtractor(DbConnection, string, DbExtractorOptions?, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
+  nameWithType.vb: DbExtractor(Of TRecord).New(DbConnection, String, DbExtractorOptions, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.DbExtractorOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name: DbExtractor(DbConnection, DbExtractorOptions?, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_DbExtractorOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.DbExtractorOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name.vb: New(DbConnection, DbExtractorOptions, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.DbExtractorOptions?, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.DbExtractorOptions, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
+  nameWithType: DbExtractor<TRecord>.DbExtractor(DbConnection, DbExtractorOptions?, DbTransaction?, ILogger<DbExtractor<TRecord>>?)
+  nameWithType.vb: DbExtractor(Of TRecord).New(DbConnection, DbExtractorOptions, DbTransaction, ILogger(Of DbExtractor(Of TRecord)))
 - uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
   name: DbExtractor(DbProviderFactory, string, string, ILogger<DbExtractor<TRecord>>?)
   href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbProviderFactory_System_String_System_String_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___
@@ -122,6 +259,15 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbProviderFactory, String, String, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
   nameWithType: DbExtractor<TRecord>.DbExtractor(DbProviderFactory, string, string, ILogger<DbExtractor<TRecord>>?)
   nameWithType.vb: DbExtractor(Of TRecord).New(DbProviderFactory, String, String, ILogger(Of DbExtractor(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Wolfgang.Etl.DbClient.DbExtractorOptions,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name: DbExtractor(DbProviderFactory, string, string, DbExtractorOptions?, ILogger<DbExtractor<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_System_Data_Common_DbProviderFactory_System_String_System_String_Wolfgang_Etl_DbClient_DbExtractorOptions_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbExtractor__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbExtractor`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Wolfgang.Etl.DbClient.DbExtractorOptions,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbExtractor{`0}})
+  name.vb: New(DbProviderFactory, String, String, DbExtractorOptions, ILogger(Of DbExtractor(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbExtractor<TRecord>.DbExtractor(System.Data.Common.DbProviderFactory, string, string, Wolfgang.Etl.DbClient.DbExtractorOptions?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbExtractor<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbExtractor(Of TRecord).New(System.Data.Common.DbProviderFactory, String, String, Wolfgang.Etl.DbClient.DbExtractorOptions, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbExtractor(Of TRecord)))
+  nameWithType: DbExtractor<TRecord>.DbExtractor(DbProviderFactory, string, string, DbExtractorOptions?, ILogger<DbExtractor<TRecord>>?)
+  nameWithType.vb: DbExtractor(Of TRecord).New(DbProviderFactory, String, String, DbExtractorOptions, ILogger(Of DbExtractor(Of TRecord)))
 - uid: Wolfgang.Etl.DbClient.DbExtractor`1.#ctor*
   name: DbExtractor
   href: api/Wolfgang.Etl.DbClient.DbExtractor-1.html#Wolfgang_Etl_DbClient_DbExtractor_1__ctor_
@@ -376,6 +522,129 @@ references:
   commentId: T:Wolfgang.Etl.DbClient.DbKeyAttribute
   fullName: Wolfgang.Etl.DbClient.DbKeyAttribute
   nameWithType: DbKeyAttribute
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions
+  name: DbLoaderOptions
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html
+  commentId: T:Wolfgang.Etl.DbClient.DbLoaderOptions
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions
+  nameWithType: DbLoaderOptions
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize
+  name: BatchCommitSize
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_BatchCommitSize
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize
+  nameWithType: DbLoaderOptions.BatchCommitSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize*
+  name: BatchCommitSize
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_BatchCommitSize_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize
+  nameWithType: DbLoaderOptions.BatchCommitSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize
+  name: BatchSize
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_BatchSize
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize
+  nameWithType: DbLoaderOptions.BatchSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize*
+  name: BatchSize
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_BatchSize_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize
+  nameWithType: DbLoaderOptions.BatchSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout
+  name: CommandTimeout
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_CommandTimeout
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout
+  nameWithType: DbLoaderOptions.CommandTimeout
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout*
+  name: CommandTimeout
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_CommandTimeout_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout
+  nameWithType: DbLoaderOptions.CommandTimeout
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType
+  name: CommandType
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_CommandType
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType
+  nameWithType: DbLoaderOptions.CommandType
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType*
+  name: CommandType
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_CommandType_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType
+  nameWithType: DbLoaderOptions.CommandType
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling
+  name: ErrorHandling
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ErrorHandling
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling
+  nameWithType: DbLoaderOptions.ErrorHandling
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling*
+  name: ErrorHandling
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ErrorHandling_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling
+  nameWithType: DbLoaderOptions.ErrorHandling
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize
+  name: InsertBatchSize
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_InsertBatchSize
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize
+  nameWithType: DbLoaderOptions.InsertBatchSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize*
+  name: InsertBatchSize
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_InsertBatchSize_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize
+  nameWithType: DbLoaderOptions.InsertBatchSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection
+  name: ManageConnection
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ManageConnection
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection
+  nameWithType: DbLoaderOptions.ManageConnection
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection*
+  name: ManageConnection
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ManageConnection_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection
+  nameWithType: DbLoaderOptions.ManageConnection
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount
+  name: MaxErrorCount
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_MaxErrorCount
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount
+  nameWithType: DbLoaderOptions.MaxErrorCount
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount*
+  name: MaxErrorCount
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_MaxErrorCount_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount
+  nameWithType: DbLoaderOptions.MaxErrorCount
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ValidateSchemaOnStart
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart
+  nameWithType: DbLoaderOptions.ValidateSchemaOnStart
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart*
+  name: ValidateSchemaOnStart
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ValidateSchemaOnStart_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart
+  nameWithType: DbLoaderOptions.ValidateSchemaOnStart
 - uid: Wolfgang.Etl.DbClient.DbLoader`1
   name: DbLoader<TRecord>
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html
@@ -394,6 +663,15 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New(System.Data.Common.DbConnection, String, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord)))
   nameWithType: DbLoader<TRecord>.DbLoader(DbConnection, string, DbTransaction?, ILogger<DbLoader<TRecord>>?)
   nameWithType.vb: DbLoader(Of TRecord).New(DbConnection, String, DbTransaction, ILogger(Of DbLoader(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,System.String,Wolfgang.Etl.DbClient.DbLoaderOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
+  name: DbLoader(DbConnection, string, DbLoaderOptions?, DbTransaction?, ILogger<DbLoader<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_System_String_Wolfgang_Etl_DbClient_DbLoaderOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,System.String,Wolfgang.Etl.DbClient.DbLoaderOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
+  name.vb: New(DbConnection, String, DbLoaderOptions, DbTransaction, ILogger(Of DbLoader(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection, string, Wolfgang.Etl.DbClient.DbLoaderOptions?, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New(System.Data.Common.DbConnection, String, Wolfgang.Etl.DbClient.DbLoaderOptions, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord)))
+  nameWithType: DbLoader<TRecord>.DbLoader(DbConnection, string, DbLoaderOptions?, DbTransaction?, ILogger<DbLoader<TRecord>>?)
+  nameWithType.vb: DbLoader(Of TRecord).New(DbConnection, String, DbLoaderOptions, DbTransaction, ILogger(Of DbLoader(Of TRecord)))
 - uid: Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
   name: DbLoader(DbConnection, WriteMode, DbTransaction?, ILogger<DbLoader<TRecord>>?)
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_WriteMode_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___
@@ -403,6 +681,15 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.WriteMode, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord)))
   nameWithType: DbLoader<TRecord>.DbLoader(DbConnection, WriteMode, DbTransaction?, ILogger<DbLoader<TRecord>>?)
   nameWithType.vb: DbLoader(Of TRecord).New(DbConnection, WriteMode, DbTransaction, ILogger(Of DbLoader(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,Wolfgang.Etl.DbClient.DbLoaderOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
+  name: DbLoader(DbConnection, WriteMode, DbLoaderOptions?, DbTransaction?, ILogger<DbLoader<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_WriteMode_Wolfgang_Etl_DbClient_DbLoaderOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,Wolfgang.Etl.DbClient.DbLoaderOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
+  name.vb: New(DbConnection, WriteMode, DbLoaderOptions, DbTransaction, ILogger(Of DbLoader(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.WriteMode, Wolfgang.Etl.DbClient.DbLoaderOptions?, System.Data.Common.DbTransaction?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New(System.Data.Common.DbConnection, Wolfgang.Etl.DbClient.WriteMode, Wolfgang.Etl.DbClient.DbLoaderOptions, System.Data.Common.DbTransaction, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord)))
+  nameWithType: DbLoader<TRecord>.DbLoader(DbConnection, WriteMode, DbLoaderOptions?, DbTransaction?, ILogger<DbLoader<TRecord>>?)
+  nameWithType.vb: DbLoader(Of TRecord).New(DbConnection, WriteMode, DbLoaderOptions, DbTransaction, ILogger(Of DbLoader(Of TRecord)))
 - uid: Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
   name: DbLoader(DbProviderFactory, string, string, ILogger<DbLoader<TRecord>>?)
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbProviderFactory_System_String_System_String_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___
@@ -412,6 +699,15 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New(System.Data.Common.DbProviderFactory, String, String, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord)))
   nameWithType: DbLoader<TRecord>.DbLoader(DbProviderFactory, string, string, ILogger<DbLoader<TRecord>>?)
   nameWithType.vb: DbLoader(Of TRecord).New(DbProviderFactory, String, String, ILogger(Of DbLoader(Of TRecord)))
+- uid: Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Wolfgang.Etl.DbClient.DbLoaderOptions,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
+  name: DbLoader(DbProviderFactory, string, string, DbLoaderOptions?, ILogger<DbLoader<TRecord>>?)
+  href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbProviderFactory_System_String_System_String_Wolfgang_Etl_DbClient_DbLoaderOptions_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___
+  commentId: M:Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Wolfgang.Etl.DbClient.DbLoaderOptions,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})
+  name.vb: New(DbProviderFactory, String, String, DbLoaderOptions, ILogger(Of DbLoader(Of TRecord)))
+  fullName: Wolfgang.Etl.DbClient.DbLoader<TRecord>.DbLoader(System.Data.Common.DbProviderFactory, string, string, Wolfgang.Etl.DbClient.DbLoaderOptions?, Microsoft.Extensions.Logging.ILogger<Wolfgang.Etl.DbClient.DbLoader<TRecord>>?)
+  fullName.vb: Wolfgang.Etl.DbClient.DbLoader(Of TRecord).New(System.Data.Common.DbProviderFactory, String, String, Wolfgang.Etl.DbClient.DbLoaderOptions, Microsoft.Extensions.Logging.ILogger(Of Wolfgang.Etl.DbClient.DbLoader(Of TRecord)))
+  nameWithType: DbLoader<TRecord>.DbLoader(DbProviderFactory, string, string, DbLoaderOptions?, ILogger<DbLoader<TRecord>>?)
+  nameWithType.vb: DbLoader(Of TRecord).New(DbProviderFactory, String, String, DbLoaderOptions, ILogger(Of DbLoader(Of TRecord)))
 - uid: Wolfgang.Etl.DbClient.DbLoader`1.#ctor*
   name: DbLoader
   href: api/Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1__ctor_
@@ -809,6 +1105,77 @@ references:
   isSpec: "True"
   fullName: Wolfgang.Etl.DbClient.DbTableAttribute.Name
   nameWithType: DbTableAttribute.Name
+- uid: Wolfgang.Etl.DbClient.EtlParameter
+  name: EtlParameter
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html
+  commentId: T:Wolfgang.Etl.DbClient.EtlParameter
+  fullName: Wolfgang.Etl.DbClient.EtlParameter
+  nameWithType: EtlParameter
+- uid: Wolfgang.Etl.DbClient.EtlParameter.DbType
+  name: DbType
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html#Wolfgang_Etl_DbClient_EtlParameter_DbType
+  commentId: P:Wolfgang.Etl.DbClient.EtlParameter.DbType
+  fullName: Wolfgang.Etl.DbClient.EtlParameter.DbType
+  nameWithType: EtlParameter.DbType
+- uid: Wolfgang.Etl.DbClient.EtlParameter.DbType*
+  name: DbType
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html#Wolfgang_Etl_DbClient_EtlParameter_DbType_
+  commentId: Overload:Wolfgang.Etl.DbClient.EtlParameter.DbType
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.EtlParameter.DbType
+  nameWithType: EtlParameter.DbType
+- uid: Wolfgang.Etl.DbClient.EtlParameter.Direction
+  name: Direction
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html#Wolfgang_Etl_DbClient_EtlParameter_Direction
+  commentId: P:Wolfgang.Etl.DbClient.EtlParameter.Direction
+  fullName: Wolfgang.Etl.DbClient.EtlParameter.Direction
+  nameWithType: EtlParameter.Direction
+- uid: Wolfgang.Etl.DbClient.EtlParameter.Direction*
+  name: Direction
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html#Wolfgang_Etl_DbClient_EtlParameter_Direction_
+  commentId: Overload:Wolfgang.Etl.DbClient.EtlParameter.Direction
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.EtlParameter.Direction
+  nameWithType: EtlParameter.Direction
+- uid: Wolfgang.Etl.DbClient.EtlParameter.Size
+  name: Size
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html#Wolfgang_Etl_DbClient_EtlParameter_Size
+  commentId: P:Wolfgang.Etl.DbClient.EtlParameter.Size
+  fullName: Wolfgang.Etl.DbClient.EtlParameter.Size
+  nameWithType: EtlParameter.Size
+- uid: Wolfgang.Etl.DbClient.EtlParameter.Size*
+  name: Size
+  href: api/Wolfgang.Etl.DbClient.EtlParameter.html#Wolfgang_Etl_DbClient_EtlParameter_Size_
+  commentId: Overload:Wolfgang.Etl.DbClient.EtlParameter.Size
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.EtlParameter.Size
+  nameWithType: EtlParameter.Size
+- uid: Wolfgang.Etl.DbClient.EtlParameter`1
+  name: EtlParameter<T>
+  href: api/Wolfgang.Etl.DbClient.EtlParameter-1.html
+  commentId: T:Wolfgang.Etl.DbClient.EtlParameter`1
+  name.vb: EtlParameter(Of T)
+  fullName: Wolfgang.Etl.DbClient.EtlParameter<T>
+  fullName.vb: Wolfgang.Etl.DbClient.EtlParameter(Of T)
+  nameWithType: EtlParameter<T>
+  nameWithType.vb: EtlParameter(Of T)
+- uid: Wolfgang.Etl.DbClient.EtlParameter`1.Value
+  name: Value
+  href: api/Wolfgang.Etl.DbClient.EtlParameter-1.html#Wolfgang_Etl_DbClient_EtlParameter_1_Value
+  commentId: P:Wolfgang.Etl.DbClient.EtlParameter`1.Value
+  fullName: Wolfgang.Etl.DbClient.EtlParameter<T>.Value
+  fullName.vb: Wolfgang.Etl.DbClient.EtlParameter(Of T).Value
+  nameWithType: EtlParameter<T>.Value
+  nameWithType.vb: EtlParameter(Of T).Value
+- uid: Wolfgang.Etl.DbClient.EtlParameter`1.Value*
+  name: Value
+  href: api/Wolfgang.Etl.DbClient.EtlParameter-1.html#Wolfgang_Etl_DbClient_EtlParameter_1_Value_
+  commentId: Overload:Wolfgang.Etl.DbClient.EtlParameter`1.Value
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.EtlParameter<T>.Value
+  fullName.vb: Wolfgang.Etl.DbClient.EtlParameter(Of T).Value
+  nameWithType: EtlParameter<T>.Value
+  nameWithType.vb: EtlParameter(Of T).Value
 - uid: Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions
   name: EtlPipelineDbClientExtensions
   href: api/Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.html
@@ -910,13 +1277,13 @@ references:
   nameWithType: IDbExtractorBuilder<T>.ManageConnection
   nameWithType.vb: IDbExtractorBuilder(Of T).ManageConnection
 - uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate(System.String)
-  name: PagingClauseTemplate(string)
+  name: PagingClauseTemplate(string?)
   href: api/Wolfgang.Etl.DbClient.IDbExtractorBuilder-1.html#Wolfgang_Etl_DbClient_IDbExtractorBuilder_1_PagingClauseTemplate_System_String_
   commentId: M:Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate(System.String)
   name.vb: PagingClauseTemplate(String)
-  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string)
+  fullName: Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>.PagingClauseTemplate(string?)
   fullName.vb: Wolfgang.Etl.DbClient.IDbExtractorBuilder(Of T).PagingClauseTemplate(String)
-  nameWithType: IDbExtractorBuilder<T>.PagingClauseTemplate(string)
+  nameWithType: IDbExtractorBuilder<T>.PagingClauseTemplate(string?)
   nameWithType.vb: IDbExtractorBuilder(Of T).PagingClauseTemplate(String)
 - uid: Wolfgang.Etl.DbClient.IDbExtractorBuilder`1.PagingClauseTemplate*
   name: PagingClauseTemplate
@@ -1059,6 +1426,103 @@ references:
   fullName.vb: Wolfgang.Etl.DbClient.IDbLoaderBuilder(Of T).ManageConnection
   nameWithType: IDbLoaderBuilder<T>.ManageConnection
   nameWithType.vb: IDbLoaderBuilder(Of T).ManageConnection
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates
+  name: PagingClauseTemplates
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html
+  commentId: T:Wolfgang.Etl.DbClient.PagingClauseTemplates
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates
+  nameWithType: PagingClauseTemplates
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2
+  name: Db2
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_Db2
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2
+  nameWithType: PagingClauseTemplates.Db2
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2*
+  name: Db2
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_Db2_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2
+  nameWithType: PagingClauseTemplates.Db2
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql
+  name: MySql
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_MySql
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql
+  nameWithType: PagingClauseTemplates.MySql
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql*
+  name: MySql
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_MySql_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql
+  nameWithType: PagingClauseTemplates.MySql
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.None
+  name: None
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_None
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.None
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.None
+  nameWithType: PagingClauseTemplates.None
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.None*
+  name: None
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_None_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.None
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.None
+  nameWithType: PagingClauseTemplates.None
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle
+  name: Oracle
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_Oracle
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle
+  nameWithType: PagingClauseTemplates.Oracle
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle*
+  name: Oracle
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_Oracle_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle
+  nameWithType: PagingClauseTemplates.Oracle
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql
+  name: PostgreSql
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_PostgreSql
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql
+  nameWithType: PagingClauseTemplates.PostgreSql
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql*
+  name: PostgreSql
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_PostgreSql_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql
+  nameWithType: PagingClauseTemplates.PostgreSql
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer
+  name: SqlServer
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_SqlServer
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer
+  nameWithType: PagingClauseTemplates.SqlServer
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer*
+  name: SqlServer
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_SqlServer_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer
+  nameWithType: PagingClauseTemplates.SqlServer
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite
+  name: Sqlite
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_Sqlite
+  commentId: P:Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite
+  nameWithType: PagingClauseTemplates.Sqlite
+- uid: Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite*
+  name: Sqlite
+  href: api/Wolfgang.Etl.DbClient.PagingClauseTemplates.html#Wolfgang_Etl_DbClient_PagingClauseTemplates_Sqlite_
+  commentId: Overload:Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite
+  nameWithType: PagingClauseTemplates.Sqlite
 - uid: Wolfgang.Etl.DbClient.RowErrorHandling
   name: RowErrorHandling
   href: api/Wolfgang.Etl.DbClient.RowErrorHandling.html
