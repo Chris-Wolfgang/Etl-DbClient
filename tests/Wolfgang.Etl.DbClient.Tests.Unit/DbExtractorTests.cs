@@ -877,6 +877,33 @@ public class DbExtractorTests
 
 
 
+
+    [Fact]
+    public void ServerOffset_when_negative_throws_and_names_the_property()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => extractor.ServerOffset = -1);
+
+        Assert.Equal("ServerOffset", ex.ParamName);
+    }
+
+
+
+    [Fact]
+    public void ServerLimit_when_negative_throws_and_names_the_property()
+    {
+        using var conn = TestDb.CreateConnection();
+        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => extractor.ServerLimit = -1);
+
+        Assert.Equal("ServerLimit", ex.ParamName);
+    }
+
+
+
     [Fact]
     public void PageSize_below_one_throws()
     {

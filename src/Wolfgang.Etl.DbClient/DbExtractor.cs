@@ -684,11 +684,21 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </exception>
     private static int ToRowCount(long value, string propertyName)
     {
-        if (value < int.MinValue || value > int.MaxValue)
+        if (value < 0)
         {
             throw new ArgumentOutOfRangeException
             (
-                nameof(value),
+                propertyName,
+                value,
+                $"{propertyName} must be zero or greater."
+            );
+        }
+
+        if (value > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException
+            (
+                propertyName,
                 value,
                 $"{propertyName} does not fit in an Int32 and cannot be forwarded. Row counts are " +
                 "Int32-wide; see Chris-Wolfgang/ETL-Abstractions#454."
