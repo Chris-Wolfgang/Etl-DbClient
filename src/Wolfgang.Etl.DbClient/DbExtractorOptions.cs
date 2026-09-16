@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Wolfgang.Etl.Abstractions;
 
 namespace Wolfgang.Etl.DbClient;
 
@@ -17,13 +18,19 @@ namespace Wolfgang.Etl.DbClient;
 /// The record is not generic: none of these settings depends on the record type being extracted.
 /// </para>
 /// <para>
+/// Derives from <see cref="ExtractorOptions"/>, so the settings every extractor shares —
+/// <see cref="ExtractorOptions.ReportingInterval"/>, <see cref="ExtractorOptions.SkipItemCount"/>,
+/// <see cref="ExtractorOptions.MaximumItemCount"/> and <see cref="ExtractorOptions.ErrorPolicy"/> — are
+/// configured here as well (ADR-0009 in Wolfgang.Etl.Abstractions).
+/// </para>
+/// <para>
 /// This record deliberately exposes no <c>Parameters</c> property. Dapper's
 /// <c>DynamicParameters</c> is a third-party type, and keeping it off the public surface is what
 /// allows the ORM to be swapped later without a breaking change for consumers. Supply parameters
 /// through the constructor overload that takes an <c>IDictionary&lt;string, object&gt;</c>.
 /// </para>
 /// </remarks>
-public sealed record DbExtractorOptions
+public sealed record DbExtractorOptions : ExtractorOptions
 {
     /// <summary>
     /// Gets the command timeout. Defaults to <see langword="null"/>, meaning the provider's default.

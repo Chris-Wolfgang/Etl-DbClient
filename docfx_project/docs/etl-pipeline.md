@@ -60,9 +60,10 @@ size can be inferred.
 | `ManageConnection(bool)` | `DbLoader<T>.ManageConnection` | When `true`, loader opens/closes the connection. |
 | `ErrorHandling(RowErrorHandling)` | `DbLoader<T>.ErrorHandling` | `Abort` (default) or `Skip` (per-record path only). |
 
-Dry-run behaviour on `DbLoader<T>` flows through the shared `ISupportDryRun`
-pipeline hook — no builder-specific setter, consistent with the rest of the ETL
-family.
+Dry-run behaviour on `DbLoader<T>` is configured through
+[`DbLoaderOptions.IsDryRun`](xref:Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun)
+on the options record passed to the constructor. There is no builder-specific
+setter.
 
 ## Connection ownership
 

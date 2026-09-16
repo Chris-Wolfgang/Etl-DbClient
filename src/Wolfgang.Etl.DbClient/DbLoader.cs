@@ -47,7 +47,7 @@ namespace Wolfgang.Etl.DbClient;
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
-public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
+public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     where TRecord : notnull
 {
     // ------------------------------------------------------------------
@@ -93,14 +93,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            commandText ?? throw new ArgumentNullException(nameof(commandText)),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, commandText, options: null, transaction, logger)
     {
     }
 
@@ -132,16 +125,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            writeMode == WriteMode.Update
-                ? DbCommandBuilder.BuildUpdate<TRecord>()
-                : DbCommandBuilder.BuildInsert<TRecord>(),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, writeMode, options: null, transaction, logger)
     {
     }
 
@@ -176,14 +160,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         string commandText,
         ILogger<DbLoader<TRecord>>? logger = null
     )
-        : this
-        (
-            CreateOwnedConnection(factory, connectionString, commandText),
-            commandText,
-            transaction: null,
-            ownsConnection: true,
-            logger
-        )
+        : this(factory, connectionString, commandText, options: null, logger)
     {
     }
 
@@ -210,12 +187,18 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, commandText, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -239,12 +222,20 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbTransaction? transaction = null,
         ILogger<DbLoader<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, writeMode, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            writeMode == WriteMode.Update
+                ? DbCommandBuilder.BuildUpdate<TRecord>()
+                : DbCommandBuilder.BuildInsert<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -268,12 +259,18 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         DbLoaderOptions? options,
         ILogger<DbLoader<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(factory, connectionString, commandText, logger)
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this loader owns.
@@ -334,8 +331,10 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         string commandText,
         DbTransaction? transaction,
         bool ownsConnection,
-        ILogger? logger
+        ILogger? logger,
+        DbLoaderOptions? options
     )
+        : base(options)
     {
         _connection = connection;
         _commandText = commandText;
@@ -540,12 +539,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
     /// because no writes happen inside the transaction.
     /// </para>
     /// <para>
-    /// Default <see langword="false"/> preserves the prior behavior. This is
-    /// the implementation of <see cref="ISupportDryRun.IsDryRun"/> from
-    /// Wolfgang.Etl.Abstractions 0.15.0+.
+    /// Default <see langword="false"/> preserves the prior behavior. Configure it through
+    /// <see cref="DbLoaderOptions.IsDryRun"/> on the record passed to the constructor; the setter is
+    /// deprecated and will be removed in a later release.
     /// </para>
     /// </remarks>
-    public bool IsDryRun { get; set; }
+    public bool IsDryRun { get; [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")] set; }
 
 
 
@@ -1628,6 +1627,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>, ISupportDryRun
         MaxErrorCount = options.MaxErrorCount;
         BatchCommitSize = options.BatchCommitSize;
         BatchSize = options.BatchSize;
+        IsDryRun = options.IsDryRun;
 #pragma warning restore CS0618
     }
 }
