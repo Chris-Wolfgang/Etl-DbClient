@@ -114,14 +114,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            commandText ?? throw new ArgumentNullException(nameof(commandText)),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, commandText, options: null, transaction, logger)
     {
     }
 
@@ -151,25 +144,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            commandText ?? throw new ArgumentNullException(nameof(commandText)),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, commandText, parameters, options: null, transaction, logger)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
-        // Defensive copy — see the field-level comment on _parameters.
-        _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
-        _dynamicParameters = EtlParameterSet.IsNeededFor(_parameters)
-            ? new EtlParameterSet(_parameters)
-            : new DynamicParameters(_parameters);
     }
 
 
@@ -193,14 +169,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            DbCommandBuilder.BuildSelect<TRecord>(),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, options: null, transaction, logger)
     {
     }
 
@@ -235,14 +204,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         string commandText,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            CreateOwnedConnection(factory, connectionString, commandText),
-            commandText,
-            transaction: null,
-            ownsConnection: true,
-            logger
-        )
+        : this(factory, connectionString, commandText, options: null, logger)
     {
     }
 
@@ -269,12 +231,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, commandText, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -300,12 +268,29 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, commandText, parameters, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
+        if (parameters == null)
+        {
+            throw new ArgumentNullException(nameof(parameters));
+        }
+
+        // Defensive copy — see the field-level comment on _parameters.
+        _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
+        _dynamicParameters = EtlParameterSet.IsNeededFor(_parameters)
+            ? new EtlParameterSet(_parameters)
+            : new DynamicParameters(_parameters);
+
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -327,12 +312,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            DbCommandBuilder.BuildSelect<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -356,12 +347,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbExtractorOptions? options,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(factory, connectionString, commandText, logger)
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this extractor owns.
@@ -416,8 +413,10 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         string commandText,
         DbTransaction? transaction,
         bool ownsConnection,
-        ILogger? logger
+        ILogger? logger,
+        DbExtractorOptions? options
     )
+        : base(options)
     {
         _connection = connection;
         _commandText = commandText;

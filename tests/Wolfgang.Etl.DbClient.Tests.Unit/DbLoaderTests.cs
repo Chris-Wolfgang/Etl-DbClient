@@ -691,11 +691,9 @@ public class DbLoaderTests
         var loader = new DbLoader<PersonRecord>
         (
             conn,
-            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
-        )
-        {
-            IsDryRun = true
-        };
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
+            new DbLoaderOptions { IsDryRun = true }
+        );
 
         await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable());
 
@@ -1118,12 +1116,9 @@ public class DbLoaderTests
         var loader = new DbLoader<PersonRecord>
         (
             conn,
-            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
-        )
-        {
-            IsDryRun = true,
-            BatchSize = 3
-        };
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
+            new DbLoaderOptions { IsDryRun = true, BatchSize = 3 }
+        );
 
         await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
 

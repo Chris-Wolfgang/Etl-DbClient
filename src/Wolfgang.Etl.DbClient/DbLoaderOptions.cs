@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using Wolfgang.Etl.Abstractions;
 
 namespace Wolfgang.Etl.DbClient;
 
@@ -15,13 +16,13 @@ namespace Wolfgang.Etl.DbClient;
 /// The record is not generic: none of these settings depends on the record type being loaded.
 /// </para>
 /// <para>
-/// It carries no <c>IsDryRun</c> property. That member implements
-/// <see cref="Wolfgang.Etl.Abstractions.ISupportDryRun.IsDryRun"/>, which declares a
-/// <see langword="set"/> accessor, so it cannot become <see langword="init"/>-only while that
-/// interface stands. Set it on the loader after construction until the interface changes.
+/// Derives from <see cref="LoaderOptions"/>, so the settings every loader shares —
+/// <see cref="LoaderOptions.ReportingInterval"/>, <see cref="LoaderOptions.SkipItemCount"/>,
+/// <see cref="LoaderOptions.MaximumItemCount"/> and <see cref="LoaderOptions.ErrorPolicy"/> — are
+/// configured here as well (ADR-0009 in Wolfgang.Etl.Abstractions).
 /// </para>
 /// </remarks>
-public sealed record DbLoaderOptions
+public sealed record DbLoaderOptions : LoaderOptions
 {
     /// <summary>
     /// Gets the command timeout. Defaults to <see langword="null"/>, meaning the provider's default.
@@ -95,4 +96,16 @@ public sealed record DbLoaderOptions
     /// so the default here is <c>1</c> rather than the type default of <c>0</c>.
     /// </remarks>
     public int BatchSize { get; init; } = 1;
+
+
+
+    /// <summary>
+    /// Gets a value indicating whether the loader runs without writing to the database. Defaults to
+    /// <see langword="false"/>.
+    /// </summary>
+    /// <remarks>
+    /// Applied to <see cref="DbLoader{TRecord}.IsDryRun"/>: rows are consumed and counted and batches
+    /// are formed, but no command is executed against the destination table.
+    /// </remarks>
+    public bool IsDryRun { get; init; }
 }

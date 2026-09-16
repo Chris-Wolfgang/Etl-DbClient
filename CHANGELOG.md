@@ -9,9 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `DbExtractorOptions` now derives from `ExtractorOptions` and `DbLoaderOptions` from `LoaderOptions`
+  (Wolfgang.Etl.Abstractions 0.24.0, ADR-0009 there), so `ReportingInterval`, `SkipItemCount`,
+  `MaximumItemCount` and `ErrorPolicy` are configured on the record like the stage's own settings.
+- `DbLoaderOptions.IsDryRun`, applied to `DbLoader<T>.IsDryRun` by the constructor.
+
 ### Changed
 
+- Wolfgang.Etl.Abstractions / ErrorPolicies / TestKit / TestKit.Xunit 0.23.4 → 0.24.0.
+- `DbLoader<T>` no longer implements `ISupportDryRun`, which 0.24.0 removes; `IsDryRun` stays on the
+  loader (`CompatibilitySuppressions.xml`: CP0008).
+- The options constructors are now the single initialization path: the deprecated constructors
+  forward to them with a `null` record. No behavioral change.
+
 ### Deprecated
+
+- `DbLoader<T>.IsDryRun` setter — `[Obsolete]` on the **setter accessor** (reads stay warning-free),
+  pointing at `DbLoaderOptions.IsDryRun`. Nothing is removed; removal follows in a later release.
 
 ### Removed
 

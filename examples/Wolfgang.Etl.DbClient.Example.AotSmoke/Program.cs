@@ -86,11 +86,9 @@ internal static class Program
         var loader = new DbLoader<Widget>
         (
             conn,
-            "INSERT INTO widget (id, name, price) VALUES (@Id, @Name, @Price)"
-        )
-        {
-            IsDryRun = true
-        };
+            "INSERT INTO widget (id, name, price) VALUES (@Id, @Name, @Price)",
+            new DbLoaderOptions { IsDryRun = true }
+        );
 
         var toLoad = new[]
         {
