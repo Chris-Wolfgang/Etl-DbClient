@@ -42,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DbLoader<T>.IsDryRun` setter — `[Obsolete]` on the **setter accessor** (reads stay warning-free),
   pointing at `DbLoaderOptions.IsDryRun`. Nothing is removed; removal follows in a later release.
 
+### Security
+
+- `Microsoft.SourceLink.GitHub` 8.0.0 → 10.0.401 (#418), which drops the vulnerable `Microsoft.Build.Tasks.Git` 8.0.0
+  ([GHSA-23fw-v26w-5fgq](https://github.com/advisories/GHSA-23fw-v26w-5fgq)). Build-time only; the shipped package does not depend on
+  it. The PR benchmark workflow no longer audits the merge-base restore, so a base carrying an advisory cannot block the PR that fixes it.
+
+
 ## [0.10.0] - 2026-09-04
 
 > **The server-side paging API is provisional in this release.** It arrived across #385, #391
