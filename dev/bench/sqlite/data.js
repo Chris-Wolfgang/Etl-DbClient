@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788616621703,
+  "lastUpdate": 1789663311995,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlite)": [
@@ -666,6 +666,48 @@ window.BENCHMARK_DATA = {
             "value": 5311940.505580357,
             "unit": "ns",
             "range": "± 7969.990614391777"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cb69a0a2f9bbd3ac1e3d8eac8419384aff6e14c9",
+          "message": "docs: examples and samples construct DbExtractor / DbLoader through the options record (#422) (#423)\n\n* docs: every example and sample constructs DbExtractor / DbLoader through the options record (#422)\n\nEvery constructor call in the README, the five example projects and the\nShadowConsumer sample bound an [Obsolete] overload (the record\nconstructors take the record positionally and none was passed) or set a\ndeprecated property in an object initializer. All now pass\nDbExtractorOptions / DbLoaderOptions: CommandTimeout, InsertBatchSize,\nReportingInterval, ValidateSchemaOnStart, and the paging trio in the\nsample. Every example and sample project builds with CS0618 un-\nsuppressed; the four runnable examples run.\n\nCloses #422\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n\n* docs(examples): drop the six file-level CS0618 suppressions and their stale justification (review on #423)\n\nEvery example and sample now builds with warnings as errors and no suppression, so a future deprecated binding fails the build instead of hiding.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-17T11:40:54-04:00",
+          "tree_id": "b8aac9a351c99a2d1d6be1c8a160c229c0cf5e84",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/cb69a0a2f9bbd3ac1e3d8eac8419384aff6e14c9"
+        },
+        "date": 1789663308582,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 61841.89906663161,
+            "unit": "ns",
+            "range": "± 92.55705005981329"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 548254.5217097356,
+            "unit": "ns",
+            "range": "± 2328.3372291744595"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 5284033.445913462,
+            "unit": "ns",
+            "range": "± 12368.713245808554"
           }
         ]
       }
