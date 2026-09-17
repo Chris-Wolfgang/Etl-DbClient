@@ -18,6 +18,9 @@
     <File Path=".github/ISSUE_TEMPLATE/feature_request.yaml" />
   </Folder>
   <Folder Name="/.root/.github/workflows/">
+    <File Path=".github/workflows/security-alerts.yml" />
+    <File Path=".github/workflows/sbom.yaml" />
+    <File Path=".github/workflows/actions-audit.yaml" />
     <File Path=".github/workflows/benchmarks.yaml" />
     <File Path=".github/workflows/build-all-versions.yaml" />
     <File Path=".github/workflows/codeql.yaml" />
@@ -29,6 +32,12 @@
     <File Path="docs/RELEASE-WORKFLOW-SETUP.md" />
   </Folder>
   <Folder Name="/.root/scripts/">
+    <File Path="scripts/tfm-parity.ps1" />
+    <File Path="scripts/security-alerts.ps1" />
+    <File Path="scripts/restack.ps1" />
+    <File Path="scripts/pin-actions.ps1" />
+    <File Path="scripts/changelog.ps1" />
+    <File Path="scripts/Validate-DocsDeploy.ps1" />
     <File Path="scripts/format.ps1" />
     <File Path="scripts/Setup-Labels.ps1" />
   </Folder>
