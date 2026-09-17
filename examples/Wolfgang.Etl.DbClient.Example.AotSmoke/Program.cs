@@ -19,13 +19,6 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 
-// This file still configures through the deprecated property setters. Migrating it to the
-// options constructors is follow-up work, tracked separately - the deprecation's purpose is
-// to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
-// Several sites here assign after construction, so they cannot move to a constructor without
-// restructuring the test.
-#pragma warning disable CS0618
-
 namespace Wolfgang.Etl.DbClient.Example.AotSmoke;
 
 // Widget's getters are read by Dapper's reflection-driven row
@@ -71,7 +64,12 @@ internal static class Program
             await create.ExecuteNonQueryAsync();
         }
 
-        var extractor = new DbExtractor<Widget>(conn, "SELECT id, name, price FROM widget ORDER BY id");
+        var extractor = new DbExtractor<Widget>
+        (
+            conn,
+            "SELECT id, name, price FROM widget ORDER BY id",
+            new DbExtractorOptions { ReportingInterval = 1 }
+        );
         int rowCount = 0;
         await foreach (var w in extractor.ExtractAsync())
         {
@@ -81,8 +79,8 @@ internal static class Program
 
         Console.WriteLine("[aot-smoke] extractor: CurrentItemCount=" + extractor.CurrentItemCount + " CurrentSkippedItemCount=" + extractor.CurrentSkippedItemCount);
 
-        // Loader construction + dry-run: exercise the loader ctor + ISupportDryRun
-        // path without needing to actually mutate the DB.
+        // Loader construction + dry-run through the options record: exercise the
+        // loader ctor without needing to actually mutate the DB.
         var loader = new DbLoader<Widget>
         (
             conn,
