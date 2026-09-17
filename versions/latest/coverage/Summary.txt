@@ -1,33 +1,33 @@
 Summary
-  Generated on: 9/5/2026 - 2:05:24 PM
-  Coverage date: 9/5/2026 - 2:05:17 PM - 9/5/2026 - 2:05:20 PM
+  Generated on: 9/17/2026 - 4:54:41 PM
+  Coverage date: 9/17/2026 - 4:54:35 PM - 9/17/2026 - 4:54:36 PM
   Parser: MultiReport (2x Cobertura)
   Assemblies: 2
-  Classes: 46
-  Files: 43
-  Line coverage: 98.7%
-  Covered lines: 3846
-  Uncovered lines: 50
-  Coverable lines: 3896
-  Total lines: 11219
-  Branch coverage: 90.8% (596 of 656)
-  Covered branches: 596
-  Total branches: 656
-  Method coverage: 98.5% (527 of 535)
-  Full method coverage: 95.3% (510 of 535)
-  Covered methods: 527
-  Fully covered methods: 510
-  Total methods: 535
+  Classes: 47
+  Files: 44
+  Line coverage: 99%
+  Covered lines: 3890
+  Uncovered lines: 38
+  Coverable lines: 3928
+  Total lines: 11325
+  Branch coverage: 90.8% (598 of 658)
+  Covered branches: 598
+  Total branches: 658
+  Method coverage: 99.2% (539 of 543)
+  Full method coverage: 96.5% (524 of 543)
+  Covered methods: 539
+  Fully covered methods: 524
+  Total methods: 543
 
-Wolfgang.Etl.DbClient                                                    96.1%
+Wolfgang.Etl.DbClient                                                    97.1%
   Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper                        96.8%
   Wolfgang.Etl.DbClient.DbClientOptions                                   100%
   Wolfgang.Etl.DbClient.DbColumnAttribute                                 100%
   Wolfgang.Etl.DbClient.DbCommandBuilder                                  100%
-  Wolfgang.Etl.DbClient.DbExtractor<T>                                   95.7%
+  Wolfgang.Etl.DbClient.DbExtractor<T>                                   97.5%
   Wolfgang.Etl.DbClient.DbExtractorBuilder<T>                            96.6%
   Wolfgang.Etl.DbClient.DbExtractorOptions                                100%
-  Wolfgang.Etl.DbClient.DbLoader<T>                                      95.1%
+  Wolfgang.Etl.DbClient.DbLoader<T>                                      96.3%
   Wolfgang.Etl.DbClient.DbLoaderBuilder<T>                                100%
   Wolfgang.Etl.DbClient.DbLoaderOptions                                   100%
   Wolfgang.Etl.DbClient.DbReport                                          100%
@@ -53,6 +53,7 @@ Wolfgang.Etl.DbClient.Tests.Unit                                         99.8%
   Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderSupportsDryRunContractTests    100%
   Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderTests                         99.8%
   Wolfgang.Etl.DbClient.Tests.Unit.DbOptionsDefaultsTests                 100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbOptionsRecordTests                   100%
   Wolfgang.Etl.DbClient.Tests.Unit.DbReportTests                          100%
   Wolfgang.Etl.DbClient.Tests.Unit.DbSchemaValidatorTests                 100%
   Wolfgang.Etl.DbClient.Tests.Unit.DbTableGeneratorTests                  100%

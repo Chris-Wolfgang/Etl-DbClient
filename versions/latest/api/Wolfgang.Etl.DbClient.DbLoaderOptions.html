@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.10.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbLoaderOptions.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbLoaderOptions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.11.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbLoaderOptions.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbLoaderOptions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,7 +75,7 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_DbLoaderOptions" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions" class="text-break">
-Class DbLoaderOptions  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L24"><i class="bi bi-code-slash"></i></a>
+Class DbLoaderOptions  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L25"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -88,7 +88,7 @@ Class DbLoaderOptions  <a class="header-action link-secondary" title="View sourc
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public sealed record DbLoaderOptions : IEquatable&lt;DbLoaderOptions&gt;</code></pre>
+    <pre><code class="lang-csharp hljs">public sealed record DbLoaderOptions : LoaderOptions, IEquatable&lt;LoaderOptions&gt;, IEquatable&lt;DbLoaderOptions&gt;</code></pre>
   </div>
 
 
@@ -98,6 +98,7 @@ Class DbLoaderOptions  <a class="header-action link-secondary" title="View sourc
     <dt>Inheritance</dt>
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">LoaderOptions</span></div>
       <div><span class="xref">DbLoaderOptions</span></div>
     </dd>
   </dl>
@@ -105,6 +106,7 @@ Class DbLoaderOptions  <a class="header-action link-secondary" title="View sourc
   <dl class="typelist implements">
     <dt>Implements</dt>
     <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<span class="xref">LoaderOptions</span>&gt;</div>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html">DbLoaderOptions</a>&gt;</div>
     </dd>
   </dl>
@@ -114,22 +116,40 @@ Class DbLoaderOptions  <a class="header-action link-secondary" title="View sourc
     <dt>Inherited Members</dt>
     <dd>
     <div>
-      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+      <span class="xref">LoaderOptions.ToString()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.GetHashCode()</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">LoaderOptions.Equals(object)</a>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.Equals(LoaderOptions)</span>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.&lt;Clone&gt;$()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.ReportingInterval</span>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.MaximumItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.SkipItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderOptions.ErrorPolicy</span>
     </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
-    </div>
-    <div>
-      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
     </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
     </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
-    </div>
-    <div>
-      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
     </div>
   </dd></dl>
 
@@ -145,10 +165,10 @@ constructor can accidentally diverge from them.</p>
 The record is not generic: none of these settings depends on the record type being loaded.
 </p>
 <p>
-It carries no <code>IsDryRun</code> property. That member implements
-<span class="xref">Wolfgang.Etl.Abstractions.ISupportDryRun.IsDryRun</span>, which declares a
-<a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/set">set</a> accessor, so it cannot become <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/init">init</a>-only while that
-interface stands. Set it on the loader after construction until the interface changes.
+Derives from <span class="xref">Wolfgang.Etl.Abstractions.LoaderOptions</span>, so the settings every loader shares —
+<span class="xref">Wolfgang.Etl.Abstractions.LoaderOptions.ReportingInterval</span>, <span class="xref">Wolfgang.Etl.Abstractions.LoaderOptions.SkipItemCount</span>,
+<span class="xref">Wolfgang.Etl.Abstractions.LoaderOptions.MaximumItemCount</span> and <span class="xref">Wolfgang.Etl.Abstractions.LoaderOptions.ErrorPolicy</span> — are
+configured here as well (ADR-0009 in Wolfgang.Etl.Abstractions).
 </p>
 </div>
 
@@ -161,7 +181,7 @@ interface stands. Set it on the loader after construction until the interface ch
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_BatchCommitSize" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.BatchCommitSize">
   BatchCommitSize
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L86"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L87"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets how many rows are written between transaction commits. Defaults to <code>0</code>,
@@ -194,7 +214,7 @@ meaning a single commit at the end.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_BatchSize" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.BatchSize">
   BatchSize
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L97"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L98"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the number of records buffered per round trip. Defaults to <code>1</code>.</p>
@@ -230,7 +250,7 @@ so the default here is <code>1</code> rather than the type default of <code>0</c
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_CommandTimeout" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout">
   CommandTimeout
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L29"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L30"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the command timeout. Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a>, meaning the provider's default.</p>
@@ -262,7 +282,7 @@ so the default here is <code>1</code> rather than the type default of <code>0</c
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_CommandType" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType">
   CommandType
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L36"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L37"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets how the command text is interpreted. Defaults to <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.commandtype#system-data-commandtype-text">Text</a>.</p>
@@ -294,7 +314,7 @@ so the default here is <code>1</code> rather than the type default of <code>0</c
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_ErrorHandling" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling">
   ErrorHandling
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L71"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L72"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the action taken when a row fails. Defaults to <a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Abort">Abort</a>.</p>
@@ -326,7 +346,7 @@ so the default here is <code>1</code> rather than the type default of <code>0</c
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_InsertBatchSize" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize">
   InsertBatchSize
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L64"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L65"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the number of rows bundled into a single multi-row INSERT. Defaults to <code>1</code>.</p>
@@ -359,11 +379,48 @@ loader throw. Takes precedence over <a class="xref" href="Wolfgang.Etl.DbClient.
 
 
 
+  <a id="Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun_" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun">
+  IsDryRun
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L110"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Gets a value indicating whether the loader runs without writing to the database. Defaults to
+<a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">false</a>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsDryRun { get; init; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Applied to <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_IsDryRun">IsDryRun</a>: rows are consumed and counted and batches
+are formed, but no command is executed against the destination table.</p>
+</div>
+
+
+
+
   <a id="Wolfgang_Etl_DbClient_DbLoaderOptions_ManageConnection_" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection*"></a>
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_ManageConnection" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection">
   ManageConnection
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L44"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L45"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets a value indicating whether the loader opens and closes the connection itself.
@@ -396,7 +453,7 @@ Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-referenc
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_MaxErrorCount" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount">
   MaxErrorCount
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L78"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L79"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the number of row failures tolerated before the load aborts. Defaults to <code>0</code>.</p>
@@ -428,7 +485,7 @@ Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-referenc
 
   <h3 id="Wolfgang_Etl_DbClient_DbLoaderOptions_ValidateSchemaOnStart" data-uid="Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart">
   ValidateSchemaOnStart
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L52"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L53"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets a value indicating whether the destination schema is validated before the first write.
@@ -461,7 +518,7 @@ Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-referenc
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L24" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbLoaderOptions.cs/#L25" class="edit-link">Edit this page</a>
         </div>
 
 

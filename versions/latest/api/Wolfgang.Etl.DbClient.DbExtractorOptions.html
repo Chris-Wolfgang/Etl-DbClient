@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.10.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbExtractorOptions.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbExtractorOptions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.11.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbExtractorOptions.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbExtractorOptions%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,7 +75,7 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_DbExtractorOptions" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions" class="text-break">
-Class DbExtractorOptions  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L26"><i class="bi bi-code-slash"></i></a>
+Class DbExtractorOptions  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L33"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
@@ -88,7 +88,7 @@ Class DbExtractorOptions  <a class="header-action link-secondary" title="View so
   <div class="markdown conceptual"></div>
 
   <div class="codewrapper">
-    <pre><code class="lang-csharp hljs">public sealed record DbExtractorOptions : IEquatable&lt;DbExtractorOptions&gt;</code></pre>
+    <pre><code class="lang-csharp hljs">public sealed record DbExtractorOptions : ExtractorOptions, IEquatable&lt;ExtractorOptions&gt;, IEquatable&lt;DbExtractorOptions&gt;</code></pre>
   </div>
 
 
@@ -98,6 +98,7 @@ Class DbExtractorOptions  <a class="header-action link-secondary" title="View so
     <dt>Inheritance</dt>
     <dd>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">ExtractorOptions</span></div>
       <div><span class="xref">DbExtractorOptions</span></div>
     </dd>
   </dl>
@@ -105,6 +106,7 @@ Class DbExtractorOptions  <a class="header-action link-secondary" title="View so
   <dl class="typelist implements">
     <dt>Implements</dt>
     <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<span class="xref">ExtractorOptions</span>&gt;</div>
       <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html">DbExtractorOptions</a>&gt;</div>
     </dd>
   </dl>
@@ -114,22 +116,40 @@ Class DbExtractorOptions  <a class="header-action link-secondary" title="View so
     <dt>Inherited Members</dt>
     <dd>
     <div>
-      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+      <span class="xref">ExtractorOptions.ToString()</span>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.GetHashCode()</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">ExtractorOptions.Equals(object)</a>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.Equals(ExtractorOptions)</span>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.&lt;Clone&gt;$()</span>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.ReportingInterval</span>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.MaximumItemCount</span>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.SkipItemCount</span>
+    </div>
+    <div>
+      <span class="xref">ExtractorOptions.ErrorPolicy</span>
     </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
-    </div>
-    <div>
-      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
     </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
     </div>
     <div>
       <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
-    </div>
-    <div>
-      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
     </div>
   </dd></dl>
 
@@ -143,6 +163,12 @@ apply — defaults live on the property initializers here rather than in constru
 constructor can accidentally diverge from them.</p>
 <p>
 The record is not generic: none of these settings depends on the record type being extracted.
+</p>
+<p>
+Derives from <span class="xref">Wolfgang.Etl.Abstractions.ExtractorOptions</span>, so the settings every extractor shares —
+<span class="xref">Wolfgang.Etl.Abstractions.ExtractorOptions.ReportingInterval</span>, <span class="xref">Wolfgang.Etl.Abstractions.ExtractorOptions.SkipItemCount</span>,
+<span class="xref">Wolfgang.Etl.Abstractions.ExtractorOptions.MaximumItemCount</span> and <span class="xref">Wolfgang.Etl.Abstractions.ExtractorOptions.ErrorPolicy</span> — are
+configured here as well (ADR-0009 in Wolfgang.Etl.Abstractions).
 </p>
 <p>
 This record deliberately exposes no <code>Parameters</code> property. Dapper's
@@ -161,7 +187,7 @@ through the constructor overload that takes an <code>IDictionary&lt;string, obje
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_CommandTimeout" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout">
   CommandTimeout
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L31"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L38"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the command timeout. Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a>, meaning the provider's default.</p>
@@ -193,7 +219,7 @@ through the constructor overload that takes an <code>IDictionary&lt;string, obje
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_CommandType" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType">
   CommandType
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L38"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L45"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets how the command text is interpreted. Defaults to <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.commandtype#system-data-commandtype-text">Text</a>.</p>
@@ -225,7 +251,7 @@ through the constructor overload that takes an <code>IDictionary&lt;string, obje
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_ManageConnection" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection">
   ManageConnection
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L46"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L53"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets a value indicating whether the extractor opens and closes the connection itself.
@@ -258,7 +284,7 @@ Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-referenc
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_PagingClauseTemplate" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate">
   PagingClauseTemplate
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L108"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L115"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the dialect-specific paging clause appended when server paging is active.
@@ -313,7 +339,7 @@ are set.
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_ServerLimit" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.ServerLimit">
   ServerLimit
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L78"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L85"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the server-side row limit for paging. Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a> (no paging).</p>
@@ -349,7 +375,7 @@ treated as <code>0</code>, though the property itself remains <a href="https://l
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_ServerOffset" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.ServerOffset">
   ServerOffset
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L67"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L74"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets the server-side row offset for paging. Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a> (no paging).</p>
@@ -386,7 +412,7 @@ so an offset with no limit throws — no page size can be inferred.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_TotalCountQuery" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.TotalCountQuery">
   TotalCountQuery
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L116"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L123"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets a callback returning the total row count, used to populate progress reports.
@@ -419,7 +445,7 @@ Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-referenc
 
   <h3 id="Wolfgang_Etl_DbClient_DbExtractorOptions_ValidateSchemaOnStart" data-uid="Wolfgang.Etl.DbClient.DbExtractorOptions.ValidateSchemaOnStart">
   ValidateSchemaOnStart
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L54"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L61"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Gets a value indicating whether the result-set schema is validated before the first row.
@@ -452,7 +478,7 @@ Defaults to <a href="https://learn.microsoft.com/dotnet/csharp/language-referenc
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L26" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/src/Wolfgang.Etl.DbClient/DbExtractorOptions.cs/#L33" class="edit-link">Edit this page</a>
         </div>
 
 

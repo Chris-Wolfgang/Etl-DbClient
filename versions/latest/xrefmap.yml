@@ -606,6 +606,19 @@ references:
   isSpec: "True"
   fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize
   nameWithType: DbLoaderOptions.InsertBatchSize
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun
+  name: IsDryRun
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun
+  commentId: P:Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun
+  nameWithType: DbLoaderOptions.IsDryRun
+- uid: Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun*
+  name: IsDryRun
+  href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun_
+  commentId: Overload:Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun
+  isSpec: "True"
+  fullName: Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun
+  nameWithType: DbLoaderOptions.IsDryRun
 - uid: Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection
   name: ManageConnection
   href: api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_ManageConnection

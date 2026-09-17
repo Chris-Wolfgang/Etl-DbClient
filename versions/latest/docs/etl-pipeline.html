@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/docfx_project/docs/etl-pipeline.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/docfx_project/docs/etl-pipeline.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -178,9 +178,10 @@ size can be inferred.</p>
 </tr>
 </tbody>
 </table>
-<p>Dry-run behaviour on <code>DbLoader&lt;T&gt;</code> flows through the shared <code>ISupportDryRun</code>
-pipeline hook — no builder-specific setter, consistent with the rest of the ETL
-family.</p>
+<p>Dry-run behaviour on <code>DbLoader&lt;T&gt;</code> is configured through
+<a class="xref" href="../api/Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun"><code>DbLoaderOptions.IsDryRun</code></a>
+on the options record passed to the constructor. There is no builder-specific
+setter.</p>
 <h2 id="connection-ownership">Connection ownership</h2>
 <p>The pipeline never overrides ownership. When <code>ManageConnection</code> is <code>false</code> (the
 default) the caller owns the connection lifetime, so the caller is responsible
@@ -301,7 +302,7 @@ runnable project.</li>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.10.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.11.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>
