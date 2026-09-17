@@ -9,11 +9,6 @@ using Wolfgang.Etl.Abstractions;
 using Wolfgang.Etl.DbClient;
 using Wolfgang.Etl.DbClient.Example.EtlPipeline;
 
-// Configures through the deprecated property setters; migrating to the options constructors
-// is follow-up work. Placed at the top of the file rather than before the namespace: these
-// are top-level-statement programs, so the executable code precedes the namespace.
-#pragma warning disable CS0618
-
 // ---------------------------------------------------------------
 // Example: fluent EtlPipeline chain over DbExtractor / DbLoader (#280)
 //

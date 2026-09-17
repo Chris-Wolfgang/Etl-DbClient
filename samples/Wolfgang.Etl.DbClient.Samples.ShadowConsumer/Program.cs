@@ -28,11 +28,6 @@ using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 using Wolfgang.Etl.DbClient.Samples.ShadowConsumer;
 
-// Configures through the deprecated property setters; migrating to the options constructors
-// is follow-up work. Placed at the top of the file rather than before the namespace: these
-// are top-level-statement programs, so the executable code precedes the namespace.
-#pragma warning disable CS0618
-
 const int totalRows = 100_000;
 const int pageSize = 1_000;
 const int batchSize = 100;
