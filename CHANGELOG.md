@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [0.11.0] - 2026-09-16
+
+### Added
+
 - `DbExtractorOptions` now derives from `ExtractorOptions` and `DbLoaderOptions` from `LoaderOptions`
   (Wolfgang.Etl.Abstractions 0.24.0, ADR-0009 there), so `ReportingInterval`, `SkipItemCount`,
   `MaximumItemCount` and `ErrorPolicy` are configured on the record like the stage's own settings.
@@ -26,13 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `DbLoader<T>.IsDryRun` setter — `[Obsolete]` on the **setter accessor** (reads stay warning-free),
   pointing at `DbLoaderOptions.IsDryRun`. Nothing is removed; removal follows in a later release.
-
-### Removed
-
-### Fixed
-
-### Security
-
 
 ## [0.10.0] - 2026-09-04
 
@@ -409,7 +417,8 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 - `DbExtractor<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload. The extractor creates the connection via the supplied `DbProviderFactory`, opens it lazily before the first command, and disposes it when extraction completes (or throws). Saves callers the `using var conn = …; await conn.OpenAsync();` boilerplate for one-off scenarios.
 - `DbLoader<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload with the same semantics (open lazily, dispose at end). Defaults to auto-managed transaction.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.10.0...v0.11.0
 [0.6.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.4.0

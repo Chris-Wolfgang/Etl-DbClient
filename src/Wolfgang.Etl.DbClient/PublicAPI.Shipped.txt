@@ -97,6 +97,8 @@ Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling.get -> Wolfgang.Etl.DbClient
 Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling.init -> void
 Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize.get -> int
 Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun.get -> bool
+Wolfgang.Etl.DbClient.DbLoaderOptions.IsDryRun.init -> void
 Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbLoaderOptions.ManageConnection.init -> void
 Wolfgang.Etl.DbClient.DbLoaderOptions.MaxErrorCount.get -> int
