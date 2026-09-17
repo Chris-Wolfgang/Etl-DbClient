@@ -137,11 +137,9 @@ using (var seed = dest.CreateCommand())
 var loader = new DbLoader<Order>
 (
     dest,
-    "INSERT INTO PaidOrders (Id, Customer, Total) VALUES (@Id, @Customer, @Total)"
-)
-{
-    InsertBatchSize = 1,
-};
+    "INSERT INTO PaidOrders (Id, Customer, Total) VALUES (@Id, @Customer, @Total)",
+    new DbLoaderOptions { InsertBatchSize = 1 }
+);
 
 await EtlPipeline
     .Create()

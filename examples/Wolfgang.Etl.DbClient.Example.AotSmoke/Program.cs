@@ -71,7 +71,12 @@ internal static class Program
             await create.ExecuteNonQueryAsync();
         }
 
-        var extractor = new DbExtractor<Widget>(conn, "SELECT id, name, price FROM widget ORDER BY id");
+        var extractor = new DbExtractor<Widget>
+        (
+            conn,
+            "SELECT id, name, price FROM widget ORDER BY id",
+            new DbExtractorOptions { ReportingInterval = 1 }
+        );
         int rowCount = 0;
         await foreach (var w in extractor.ExtractAsync())
         {
@@ -81,8 +86,8 @@ internal static class Program
 
         Console.WriteLine("[aot-smoke] extractor: CurrentItemCount=" + extractor.CurrentItemCount + " CurrentSkippedItemCount=" + extractor.CurrentSkippedItemCount);
 
-        // Loader construction + dry-run: exercise the loader ctor + ISupportDryRun
-        // path without needing to actually mutate the DB.
+        // Loader construction + dry-run through the options record: exercise the
+        // loader ctor without needing to actually mutate the DB.
         var loader = new DbLoader<Widget>
         (
             conn,

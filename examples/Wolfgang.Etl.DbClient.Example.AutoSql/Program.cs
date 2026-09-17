@@ -39,7 +39,7 @@ Console.WriteLine();
 
 // LOAD: Auto-generates INSERT INTO Products (name, category, price) VALUES (@Name, @Category, @Price)
 // Note: the [Key] + [DatabaseGenerated(Identity)] column 'product_id' is excluded from INSERT.
-var loader = new DbLoader<ProductRecord>(connection, WriteMode.Insert);
+var loader = new DbLoader<ProductRecord>(connection, WriteMode.Insert, new DbLoaderOptions { InsertBatchSize = 10 });
 Console.WriteLine($"Loader SQL: {loader.CommandText}");
 Console.WriteLine();
 
@@ -67,7 +67,7 @@ static async IAsyncEnumerable<ProductRecord> SeedProductsAsync()
 Console.WriteLine();
 
 // EXTRACT: Auto-generates SELECT product_id AS Id, name AS Name, category AS Category, price AS Price FROM Products
-var extractor = new DbExtractor<ProductRecord>(connection);
+var extractor = new DbExtractor<ProductRecord>(connection, new DbExtractorOptions { ValidateSchemaOnStart = true });
 Console.WriteLine($"Extractor SQL: {extractor.CommandText}");
 Console.WriteLine();
 

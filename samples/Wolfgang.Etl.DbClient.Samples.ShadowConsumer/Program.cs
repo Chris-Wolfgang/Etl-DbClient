@@ -77,15 +77,16 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
     var extractor = new DbExtractor<SourceWidget>
     (
         src,
-        "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id"
-    )
-    {
-        // The source here is SQLite. Paging syntax is dialect-specific and the library no
-        // longer guesses one, so the dialect has to be named.
-        PagingClauseTemplate = PagingClauseTemplates.Sqlite,
-        ServerOffset = offset,
-        ServerLimit = pageSize,
-    };
+        "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id",
+        new DbExtractorOptions
+        {
+            // The source here is SQLite. Paging syntax is dialect-specific and the library no
+            // longer guesses one, so the dialect has to be named.
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+            ServerOffset = offset,
+            ServerLimit = pageSize,
+        }
+    );
 
     var page = new List<DestWidget>(pageSize);
     await foreach (var s in extractor.ExtractAsync())
@@ -97,11 +98,9 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
     var loader = new DbLoader<DestWidget>
     (
         dest,
-        "INSERT INTO widget_projected (id, upper_name, price) VALUES (@Id, @UpperName, @Price)"
-    )
-    {
-        InsertBatchSize = batchSize,
-    };
+        "INSERT INTO widget_projected (id, upper_name, price) VALUES (@Id, @UpperName, @Price)",
+        new DbLoaderOptions { InsertBatchSize = batchSize }
+    );
     await loader.LoadAsync(AsAsync(page));
     loaded += page.Count;
 }

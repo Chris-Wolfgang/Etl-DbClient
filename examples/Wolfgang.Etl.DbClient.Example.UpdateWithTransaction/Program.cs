@@ -54,9 +54,11 @@ using var transaction = await connection.BeginTransactionAsync().ConfigureAwait(
 // Auto-generates:
 // UPDATE Inventory SET product_name = @ProductName, quantity = @Quantity, last_updated = @LastUpdated
 // WHERE sku = @Sku
-var loader = new DbLoader<InventoryRecord>(
+var loader = new DbLoader<InventoryRecord>
+(
     connection,
     WriteMode.Update,
+    new DbLoaderOptions { InsertBatchSize = 1 },
     transaction
 );
 
