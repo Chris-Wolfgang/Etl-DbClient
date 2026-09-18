@@ -35,13 +35,19 @@ public class DbExtractorTests
 
 
     /// <inheritdoc/>
-    protected override DbExtractor<ContractRecord> CreateSut(int itemCount)
+    protected override DbExtractor<ContractRecord> CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)
     {
         var conn = TestDb.CreateContractConnection(itemCount);
         return new DbExtractor<ContractRecord>
         (
             conn,
-            "SELECT Name, Value FROM ContractItems ORDER BY Value"
+            "SELECT Name, Value FROM ContractItems ORDER BY Value",
+            new DbExtractorOptions
+            {
+                MaximumItemCount = maximumItemCount,
+                SkipItemCount = skipItemCount,
+                ReportingInterval = reportingInterval,
+            }
         );
     }
 

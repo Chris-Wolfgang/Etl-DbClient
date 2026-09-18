@@ -21,13 +21,19 @@ public class DbLoaderTests
     // ------------------------------------------------------------------
 
     /// <inheritdoc/>
-    protected override DbLoader<ContractRecord> CreateSut(int itemCount)
+    protected override DbLoader<ContractRecord> CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)
     {
         var conn = TestDb.CreateContractLoaderConnection();
         return new DbLoader<ContractRecord>
         (
             conn,
-            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
+            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
+            new DbLoaderOptions
+            {
+                MaximumItemCount = maximumItemCount,
+                SkipItemCount = skipItemCount,
+                ReportingInterval = reportingInterval,
+            }
         );
     }
 
