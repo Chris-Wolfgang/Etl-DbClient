@@ -482,6 +482,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+    private CommandType _commandType = CommandType.Text;
+
     /// <summary>
     /// How <see cref="CommandText"/> is interpreted by the ADO.NET provider.
     /// Defaults to <see cref="CommandType.Text"/> (a SQL statement). Set to
@@ -494,9 +496,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// through — but most consumers should stick to <c>Text</c> or
     /// <c>StoredProcedure</c>.
     /// </remarks>
-    public CommandType CommandType { get; [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = CommandType.Text;
+    public CommandType CommandType { get => _commandType; [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _commandType = value; }
 
 
+
+    private bool _manageConnection;
 
     /// <summary>
     /// When <see langword="true"/>, the extractor opens the connection before
@@ -522,9 +526,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get; [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public bool ManageConnection { get => _manageConnection; [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _manageConnection = value; }
 
 
+
+    private bool _validateSchemaOnStart;
 
     /// <summary>
     /// When <see langword="true"/>, the extractor calls
@@ -546,9 +552,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get; [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public bool ValidateSchemaOnStart { get => _validateSchemaOnStart; [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _validateSchemaOnStart = value; }
 
 
+
+    private DynamicParameters? _parameterOverride;
 
     /// <summary>
     /// Optional override for the parameter set passed to Dapper. Setting this
@@ -580,9 +588,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </code>
     /// </para>
     /// </remarks>
-    public DynamicParameters? Parameters { get; [Obsolete("Configure Parameters through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public DynamicParameters? Parameters { get => _parameterOverride; [Obsolete("Configure Parameters through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _parameterOverride = value; }
 
 
+
+    private long? _serverOffset;
 
     /// <summary>
     /// When <see cref="ServerLimit"/> is set, the extractor appends
@@ -604,15 +614,19 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.
     /// </para>
     /// </remarks>
-    public long? ServerOffset { get; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public long? ServerOffset { get => _serverOffset; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _serverOffset = value; }
 
 
+
+    private long? _serverLimit;
 
     /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
     /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
-    public long? ServerLimit { get; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public long? ServerLimit { get => _serverLimit; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _serverLimit = value; }
 
 
+
+    private string? _pagingClauseTemplate = PagingClauseTemplates.None;
 
     /// <summary>
     /// SQL fragment appended to the command text when both
@@ -632,9 +646,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
     /// </para>
     /// </remarks>
-    public string? PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.None;
+    public string? PagingClauseTemplate { get => _pagingClauseTemplate; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _pagingClauseTemplate = value; }
 
 
+
+    private Func<CancellationToken, Task<int>>? _totalCountQuery;
 
     /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
@@ -643,7 +659,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).
     /// </summary>
-    public Func<CancellationToken, Task<int>>? TotalCountQuery { get; [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public Func<CancellationToken, Task<int>>? TotalCountQuery { get => _totalCountQuery; [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _totalCountQuery = value; }
 
 
 
@@ -1220,20 +1236,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <param name="options">The configuration to apply, or <c>null</c>.</param>
     private void ApplyOptions(DbExtractorOptions? options)
     {
-#pragma warning disable CS0618 // ApplyOptions is the supported replacement for these setters.
         if (options is null)
         {
             return;
         }
 
-        CommandTimeout = options.CommandTimeout;
-        CommandType = options.CommandType;
-        ManageConnection = options.ManageConnection;
-        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
-        ServerOffset = options.ServerOffset;
-        ServerLimit = options.ServerLimit;
-        PagingClauseTemplate = options.PagingClauseTemplate;
-        TotalCountQuery = options.TotalCountQuery;
-#pragma warning restore CS0618
+        _commandTimeout = options.CommandTimeout;
+        _commandType = options.CommandType;
+        _manageConnection = options.ManageConnection;
+        _validateSchemaOnStart = options.ValidateSchemaOnStart;
+        _serverOffset = options.ServerOffset;
+        _serverLimit = options.ServerLimit;
+        _pagingClauseTemplate = options.PagingClauseTemplate;
+        _totalCountQuery = options.TotalCountQuery;
     }
 }

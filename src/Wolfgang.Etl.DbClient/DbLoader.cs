@@ -398,6 +398,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
 
+    private CommandType _commandType = CommandType.Text;
+
     /// <summary>
     /// How <see cref="CommandText"/> is interpreted by the ADO.NET provider.
     /// Defaults to <see cref="CommandType.Text"/> (a SQL INSERT / UPDATE).
@@ -405,9 +407,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// procedure by name per record (or per batch when <see cref="BatchSize"/>
     /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
     /// </summary>
-    public CommandType CommandType { get; [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = CommandType.Text;
+    public CommandType CommandType { get => _commandType; [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _commandType = value; }
 
 
+
+    private bool _manageConnection;
 
     /// <summary>
     /// When <see langword="true"/>, the loader opens the connection before the
@@ -431,9 +435,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// left open — the loader only closes connections it itself opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get; [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public bool ManageConnection { get => _manageConnection; [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _manageConnection = value; }
 
 
+
+    private bool _validateSchemaOnStart;
 
     /// <summary>
     /// When <see langword="true"/>, the loader calls
@@ -454,7 +460,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get; [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public bool ValidateSchemaOnStart { get => _validateSchemaOnStart; [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _validateSchemaOnStart = value; }
 
 
 
@@ -518,6 +524,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
 
 
+    private bool _isDryRun;
+
     /// <summary>
     /// When <see langword="true"/>, the loader runs the full pipeline —
     /// enumerates the source, evaluates <c>SkipItemCount</c> /
@@ -544,9 +552,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// deprecated and will be removed in a later release.
     /// </para>
     /// </remarks>
-    public bool IsDryRun { get; [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")] set; }
+    public bool IsDryRun { get => _isDryRun; [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")] set => _isDryRun = value; }
 
 
+
+    private RowErrorHandling _errorHandling = RowErrorHandling.Abort;
 
     /// <summary>
     /// How the loader reacts when a single row's <c>ExecuteAsync</c> throws.
@@ -561,7 +571,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// retry, so the load still aborts even in Skip mode when
     /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
     /// </remarks>
-    public RowErrorHandling ErrorHandling { get; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = RowErrorHandling.Abort;
+    public RowErrorHandling ErrorHandling { get => _errorHandling; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _errorHandling = value; }
 
 
 
@@ -1612,22 +1622,20 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// <param name="options">The configuration to apply, or <c>null</c>.</param>
     private void ApplyOptions(DbLoaderOptions? options)
     {
-#pragma warning disable CS0618 // ApplyOptions is the supported replacement for these setters.
         if (options is null)
         {
             return;
         }
 
-        CommandTimeout = options.CommandTimeout;
-        CommandType = options.CommandType;
-        ManageConnection = options.ManageConnection;
-        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
-        InsertBatchSize = options.InsertBatchSize;
-        ErrorHandling = options.ErrorHandling;
-        MaxErrorCount = options.MaxErrorCount;
-        BatchCommitSize = options.BatchCommitSize;
-        BatchSize = options.BatchSize;
-        IsDryRun = options.IsDryRun;
-#pragma warning restore CS0618
+        _commandTimeout = options.CommandTimeout;
+        _commandType = options.CommandType;
+        _manageConnection = options.ManageConnection;
+        _validateSchemaOnStart = options.ValidateSchemaOnStart;
+        _insertBatchSize = options.InsertBatchSize;
+        _errorHandling = options.ErrorHandling;
+        _maxErrorCount = options.MaxErrorCount;
+        _batchCommitSize = options.BatchCommitSize;
+        _batchSize = options.BatchSize;
+        _isDryRun = options.IsDryRun;
     }
 }
