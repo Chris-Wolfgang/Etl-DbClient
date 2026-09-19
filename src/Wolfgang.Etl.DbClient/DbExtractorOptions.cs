@@ -35,7 +35,27 @@ public sealed record DbExtractorOptions : ExtractorOptions
     /// <summary>
     /// Gets the command timeout. Defaults to <see langword="null"/>, meaning the provider's default.
     /// </summary>
-    public TimeSpan? CommandTimeout { get; init; }
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The assigned value is negative.
+    /// </exception>
+    public TimeSpan? CommandTimeout
+    {
+        get;
+        init
+        {
+            if (value.HasValue && value.Value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException
+                (
+                    nameof(value),
+                    value,
+                    "CommandTimeout cannot be negative. Use null to fall back to the ADO.NET default."
+                );
+            }
+
+            field = value;
+        }
+    }
 
 
 

@@ -112,4 +112,99 @@ public class DbOptionsRecordTests
         Assert.Equal(empty.MaximumItemCount, without.MaximumItemCount);
         Assert.False(without.IsDryRun);
     }
+
+
+
+    [Fact]
+    public void DbExtractorOptions_CommandTimeout_when_init_to_a_negative_span_throws_ArgumentOutOfRangeException()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbExtractorOptions { CommandTimeout = TimeSpan.FromSeconds(-1) }
+        );
+
+        Assert.Equal("value", exception.ParamName);
+    }
+
+
+
+    [Fact]
+    public void DbLoaderOptions_CommandTimeout_when_init_to_a_negative_span_throws_ArgumentOutOfRangeException()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbLoaderOptions { CommandTimeout = TimeSpan.FromSeconds(-1) }
+        );
+
+        Assert.Equal("value", exception.ParamName);
+    }
+
+
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void DbLoaderOptions_InsertBatchSize_when_init_below_one_throws_ArgumentOutOfRangeException(int value)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbLoaderOptions { InsertBatchSize = value }
+        );
+    }
+
+
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void DbLoaderOptions_BatchSize_when_init_below_one_throws_ArgumentOutOfRangeException(int value)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbLoaderOptions { BatchSize = value }
+        );
+    }
+
+
+
+    [Fact]
+    public void DbLoaderOptions_MaxErrorCount_when_init_negative_throws_ArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbLoaderOptions { MaxErrorCount = -1 }
+        );
+    }
+
+
+
+    [Fact]
+    public void DbLoaderOptions_BatchCommitSize_when_init_negative_throws_ArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbLoaderOptions { BatchCommitSize = -1 }
+        );
+    }
+
+
+
+    [Fact]
+    public void DbLoaderOptions_when_init_with_the_minimum_valid_values_keeps_them()
+    {
+        var options = new DbLoaderOptions
+        {
+            CommandTimeout = TimeSpan.Zero,
+            InsertBatchSize = 1,
+            BatchSize = 1,
+            MaxErrorCount = 0,
+            BatchCommitSize = 0,
+        };
+
+        Assert.Equal(TimeSpan.Zero, options.CommandTimeout);
+        Assert.Equal(1, options.InsertBatchSize);
+        Assert.Equal(1, options.BatchSize);
+        Assert.Equal(0, options.MaxErrorCount);
+        Assert.Equal(0, options.BatchCommitSize);
+    }
 }
