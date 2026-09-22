@@ -10,8 +10,7 @@
       "progress",
       "html",
       "json",
-      "cleartext",
-      "cleartext-tree"
+      "cleartext"
     ],
     "mutation-level": "Standard",
     "concurrency": 4,
