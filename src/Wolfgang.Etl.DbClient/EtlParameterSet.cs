@@ -152,6 +152,7 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
     }
 
 
+
     private IEnumerable<KeyValuePair<string, object>> Entries()
     {
         foreach (var entry in _source)
@@ -164,6 +165,7 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
             yield return entry;
         }
     }
+
 
 
     private IDbDataParameter Materialize(IDbCommand command, string name, EtlParameter described)

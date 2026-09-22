@@ -390,6 +390,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         }
     }
 
+
+
     private TimeSpan? _commandTimeout;
 
     private int? CommandTimeoutSeconds => _commandTimeout.HasValue
@@ -520,6 +522,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         }
     }
 
+
+
     private int _insertBatchSize = 1;
 
 
@@ -608,6 +612,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         }
     }
 
+
+
     private int _maxErrorCount;
 
 
@@ -678,6 +684,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
             _batchCommitSize = value;
         }
     }
+
+
 
     private int _batchCommitSize;
 

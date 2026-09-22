@@ -471,6 +471,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         }
     }
 
+
+
     private TimeSpan? _commandTimeout;
 
     // Dapper's commandTimeout parameter is `int?` seconds. Centralized here so

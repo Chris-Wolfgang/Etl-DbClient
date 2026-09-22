@@ -184,6 +184,8 @@ public static class DbSchemaValidator
         columns = mapped;
     }
 
+
+
     private static bool EnsureOpen(DbConnection connection)
     {
         if (connection.State == ConnectionState.Open)
@@ -194,6 +196,8 @@ public static class DbSchemaValidator
         return true;
     }
 
+
+
     private static async Task<bool> EnsureOpenAsync(DbConnection connection, CancellationToken ct)
     {
         if (connection.State == ConnectionState.Open)
@@ -203,6 +207,8 @@ public static class DbSchemaValidator
         await connection.OpenAsync(ct).ConfigureAwait(false);
         return true;
     }
+
+
 
     private static DbDataReader TryExecuteReader(DbCommand cmd, string table)
     {
@@ -218,6 +224,8 @@ public static class DbSchemaValidator
                 ex);
         }
     }
+
+
 
     private static void AssertColumnsPresent(
         DbDataReader reader,
