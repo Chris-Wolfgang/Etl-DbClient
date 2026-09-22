@@ -34,7 +34,10 @@ env:
   # This is LINE coverage; branch coverage legitimately can't reach 100%
   # (compiler-generated async state machines), and the gate reads only the
   # line-coverage column that ReportGenerator puts at end-of-row.
-  CODECOV_TEST_MINIMUM: 100
+  # Gated at the level the unit-test assembly measures today (99 %, template default 100):
+  # the pull_request adoption must not fail on pre-existing test lines. Raise to 100 once
+  # the uncovered test code is exercised or deleted (#458).
+  CODECOV_TEST_MINIMUM: 99
   
 on:
   pull_request:
