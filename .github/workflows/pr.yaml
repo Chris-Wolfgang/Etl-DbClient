@@ -534,9 +534,12 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
+      # No explicit `ref`: this workflow runs on `pull_request`, so the default
+      # checkout is already the PR's own merge ref. Naming refs/pull/N/head here
+      # is the pull_request_target signature CodeQL's untrusted-checkout rule
+      # looks for, and on a `push` run it would expand to an invalid ref.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
           persist-credentials: false
           # Full history so the action's git-diff path against the base ref
           # works without falling back to the PR Files API.
@@ -547,10 +550,10 @@ jobs:
         id: filter
         with:
           # Compare against the PR's base branch so we see the full PR diff,
-          # not just the latest commit. With fetch-depth: 0 above and an
-          # explicit `ref`, the action uses git compare instead of the API.
+          # not just the latest commit; with fetch-depth: 0 above the action
+          # uses git compare instead of the API. Empty on a `push` run, where
+          # the action falls back to its before/after comparison.
           base: ${{ github.event.pull_request.base.ref }}
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
           filters: |
             code:
               - 'src/**'
@@ -1062,10 +1065,13 @@ jobs:
         tfm: [net8.0, net10.0]
 
     steps:
+      # No explicit `ref`: on `pull_request` the default checkout is already the
+      # PR's own merge ref (naming refs/pull/N/head is the pull_request_target
+      # signature CodeQL's untrusted-checkout rule flags), and this job holds
+      # contents: read only.
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/head
           persist-credentials: false
 
       - name: Setup .NET
