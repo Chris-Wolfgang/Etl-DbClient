@@ -218,7 +218,7 @@ See the [NuGet package page](https://www.nuget.org/packages/Wolfgang.Etl.DbClien
 
 ## 🔍 Code Quality & Static Analysis
 
-This project enforces **strict code quality standards** through **7 specialized analyzers** and custom async-first rules:
+This project enforces **strict code quality standards** through **8 specialized analyzers** and custom async-first rules:
 
 ### Analyzers in Use
 
@@ -229,6 +229,7 @@ This project enforces **strict code quality standards** through **7 specialized 
 5. **Microsoft.CodeAnalysis.BannedApiAnalyzers** - Prevents usage of banned synchronous APIs
 6. **Meziantou.Analyzer** - Comprehensive code quality rules
 7. **SonarAnalyzer.CSharp** - Industry-standard code analysis
+8. **Microsoft.CodeAnalysis.PublicApiAnalyzers** - Tracks the shipped public surface (RS0016/RS0017)
 
 ### Async-First Enforcement
 
