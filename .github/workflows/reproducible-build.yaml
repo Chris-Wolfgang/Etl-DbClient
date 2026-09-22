@@ -28,6 +28,10 @@ on:
       - '.github/workflows/reproducible-build.yaml'
   workflow_dispatch:
 
+concurrency:
+  group: reproducible-build-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

@@ -57,6 +57,10 @@ on:
 # Least-privilege default at the top level; individual jobs elevate
 # only if they need more. Satisfies Scorecard's TokenPermissionsID rule
 # which flags a missing top-level permissions block.
+concurrency:
+  group: aot-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: read-all
 
 jobs:
