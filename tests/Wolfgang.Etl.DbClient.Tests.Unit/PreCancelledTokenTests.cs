@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
@@ -28,16 +27,11 @@ public class PreCancelledTokenTests
     {
         internal int ItemsRead;
 
-        // The token is deliberately NOT observed here. If this source honoured cancellation it
+        // Deliberately takes no cancellation token. If this source honoured cancellation it
         // would throw on its own and the test would pass without proving anything about the
         // loader. Ignoring it is what makes "zero items read" attributable to the loader's
         // upfront guard rather than to the source's good behaviour.
-#pragma warning disable RCS1163 // Unused parameter - intentional, see above.
-        internal async IAsyncEnumerable<PersonRecord> ItemsAsync
-        (
-            [EnumeratorCancellation] CancellationToken token = default
-        )
-#pragma warning restore RCS1163
+        internal async IAsyncEnumerable<PersonRecord> ItemsAsync()
         {
             foreach (var name in new[] { "Alice", "Bob", "Carol" })
             {
@@ -78,7 +72,7 @@ public class PreCancelledTokenTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>
         (
-            () => sut.LoadAsync(source.ItemsAsync(cts.Token), cts.Token)
+            () => sut.LoadAsync(source.ItemsAsync(), cts.Token)
         );
 
         Assert.Equal(0, source.ItemsRead);
@@ -103,7 +97,7 @@ public class PreCancelledTokenTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>
         (
-            () => sut.LoadAsync(source.ItemsAsync(cts.Token), cts.Token)
+            () => sut.LoadAsync(source.ItemsAsync(), cts.Token)
         );
 
         using var count = conn.CreateCommand();

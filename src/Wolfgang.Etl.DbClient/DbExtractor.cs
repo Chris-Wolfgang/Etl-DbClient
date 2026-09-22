@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -380,6 +381,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <exception cref="InvalidOperationException">
     /// <paramref name="factory"/> produced a <c>null</c> connection.
     /// </exception>
+    // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local — commandText is checked here, before the
+    // connection exists, so a null command text throws without leaking the connection the chained ctor would receive.
     private static DbConnection CreateOwnedConnection
     (
         DbProviderFactory factory,
@@ -968,32 +971,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             // ContainsKey resolves against _parameters' own comparer, which is deliberately
             // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
             // Scan explicitly with the collision-safe comparison instead.
-            var suppliedByDictionary = false;
-            if (_parameters is not null)
-            {
-                foreach (var key in _parameters.Keys)
-                {
-                    if (ParameterName.Matches(key, generated))
-                    {
-                        suppliedByDictionary = true;
-                        break;
-                    }
-                }
-            }
-
-            var suppliedByProperty = false;
+            var suppliedByDictionary = _parameters?.Keys.Any(key => ParameterName.Matches(key, generated)) ?? false;
             var names = Parameters?.ParameterNames;
-            if (names is not null)
-            {
-                foreach (var name in names)
-                {
-                    if (ParameterName.Matches(name, generated))
-                    {
-                        suppliedByProperty = true;
-                        break;
-                    }
-                }
-            }
+            var suppliedByProperty = names?.Any(name => ParameterName.Matches(name, generated)) ?? false;
 
             if (suppliedByDictionary || suppliedByProperty)
             {

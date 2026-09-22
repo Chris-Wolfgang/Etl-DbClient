@@ -46,11 +46,11 @@ internal static class ParameterName
 
     private static string Normalize(string? name)
     {
-        if (string.IsNullOrEmpty(name))
+        if (name is null || name.Length == 0)
         {
             return string.Empty;
         }
 
-        return name![0] == '@' ? name.Substring(1) : name;
+        return name[0] == '@' ? name.Substring(1) : name;
     }
 }
