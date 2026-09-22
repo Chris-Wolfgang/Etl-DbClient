@@ -1111,11 +1111,16 @@ jobs:
 
       - name: Run ${{ matrix.rdbms }} integration tests (${{ matrix.tfm }})
         if: steps.locate.outputs.found == 'true'
+        env:
+          # Through env, not template expansion: a ${{ }} inside a run: script is
+          # substituted before the shell parses the line, so anything quote-like in
+          # the value becomes part of the command (zizmor template-injection).
+          PROJECT: ${{ steps.locate.outputs.project }}
         run: |
           # This job has no prior build step, so dotnet test compiles inline.
           # Pass -p:TreatWarningsAsErrors=true so analyzer warnings introduced
           # in the integration project still fail CI.
-          dotnet test "${{ steps.locate.outputs.project }}" \
+          dotnet test "$PROJECT" \
             --configuration Release \
             --framework ${{ matrix.tfm }} \
             --filter "Category=${{ matrix.rdbms }}" \

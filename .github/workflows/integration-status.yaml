@@ -23,8 +23,10 @@ on:
 # `contents: write` (it commits the per-RDBMS status JSONs to gh-pages).
 # `test-matrix` runs `dotnet test` and uploads artifacts — read-only is
 # sufficient. Scorecard's TokenPermissionsID rule wants top-level to be
-# no more than read.
-permissions: read-all
+# no more than read. `read-all` grants every read scope, which zizmor reports as
+# excessive-permissions - the matrix job only reads the repository.
+permissions:
+  contents: read
 
 concurrency:
   # Serialize against ourselves so two pushes to main never race the
@@ -83,13 +85,18 @@ jobs:
         if: steps.locate.outputs.found == 'true'
         continue-on-error: true
         shell: bash
+        env:
+          # Through env, not template expansion: a ${{ }} inside a run: script is
+          # substituted before the shell parses the line, so anything quote-like in
+          # the value becomes part of the command (zizmor template-injection).
+          PROJECT: ${{ steps.locate.outputs.project }}
         run: |
           # Capture dotnet test's output so we can distinguish a real failure
           # from "no tests matched the filter" — the latter exits non-zero on
           # newer SDKs but is not an actual regression (it happens transiently
           # while a new RDBMS Category trait is rolling out across stacked PRs).
           set +e
-          out=$(dotnet test "${{ steps.locate.outputs.project }}" \
+          out=$(dotnet test "$PROJECT" \
             --configuration Release \
             --framework ${{ matrix.tfm }} \
             --filter "Category=${{ matrix.rdbms }}" \
@@ -106,15 +113,21 @@ jobs:
 
       - name: Record cell outcome
         if: always()
+        env:
+          # Through env, not template expansion: a ${{ }} inside a run: script is
+          # substituted before the shell parses the line, so anything quote-like in
+          # the value becomes part of the command (zizmor template-injection).
+          NO_TESTS: ${{ steps.run-tests.outputs.no_tests }}
+          OUTCOME: ${{ steps.run-tests.outcome }}
         run: |
           mkdir -p _status
           # outcome is "success", "failure", "skipped", or — when the filter
           # matched zero tests — we override to "skipped" so the aggregator
           # doesn't treat a missing trait as a failing badge.
-          if [ "${{ steps.run-tests.outputs.no_tests }}" = "true" ]; then
+          if [ "$NO_TESTS" = "true" ]; then
             outcome="skipped"
           else
-            outcome="${{ steps.run-tests.outcome || 'skipped' }}"
+            outcome="${OUTCOME:-skipped}"
           fi
           echo "$outcome" > "_status/${{ matrix.rdbms }}__${{ matrix.tfm }}.txt"
 
