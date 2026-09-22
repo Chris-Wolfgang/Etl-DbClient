@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Built against Wolfgang.Etl.Abstractions / ErrorPolicies / TestKit / TestKit.Xunit 0.26.0 (trim- and native-AOT-compatible on net8.0+; no API change from 0.25.0), so the package now requires Abstractions 0.26.0 or later. (#453)
 - The options constructor assigns the stage's backing fields directly instead of going through the deprecated setters, so the `CS0618` suppressions that covered those writes are gone. The six validating setters' guards (`DbExtractorOptions.CommandTimeout`; `DbLoaderOptions.CommandTimeout` / `InsertBatchSize` / `MaxErrorCount` / `BatchCommitSize` / `BatchSize`) now also run on the records' init accessors, with tests; the extractor's `Parameters` backing field is named `_parameterOverride` because `_parameters` already holds the constructor dictionary. (#441) (#441)
+- Review polish: member spacing normalised in the extractor, loader and schema validator; the source generator's Roslyn pin is documented; the open InspectCode findings are resolved (LINQ `Any` parameter-name scans, a redundant Dapper interface entry, a redundant null-forgiving operator, and test-code tidy-ups); no behaviour change.
+
 
 ## [0.11.0] - 2026-09-16
 
