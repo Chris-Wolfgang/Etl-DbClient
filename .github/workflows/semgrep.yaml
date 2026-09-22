@@ -38,6 +38,10 @@ on:
 # elevates `security-events: write` locally for its SARIF upload.
 # Satisfies Scorecard's TokenPermissionsID rule which flags top-level
 # `security-events: write`.
+concurrency:
+  group: semgrep-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: read-all
 
 jobs:
