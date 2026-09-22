@@ -382,6 +382,13 @@ jobs:
           dotnet restore
           dotnet build --no-restore --configuration Release
 
+      # Renders each src project's transitive NuGet closure to obj/THIRD-PARTY-NOTICES.md;
+      # Directory.Build.props packs it at the package root. Runs from the tag, after
+      # restore (nuget-license reads project.assets.json) and before pack.
+      - name: Generate third-party notices
+        shell: pwsh
+        run: pwsh ./scripts/third-party-notices.ps1
+
       - name: Pack NuGet packages
         id: check-packages
         shell: pwsh
@@ -543,7 +550,10 @@ jobs:
         if: steps.check-packages.outputs.has-packages == 'true'
         shell: pwsh
         run: |
-          dotnet tool install --global CycloneDX
+          # CycloneDX is pinned in .config/dotnet-tools.json; once a manifest lists it the SDK
+          # routes `dotnet CycloneDX` through the manifest and refuses a global copy.
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { Write-Error "dotnet tool restore failed"; exit 1 }
 
           $sbomDir = Join-Path $PWD 'nuget-packages'
           $srcProjects = Get-ChildItem -Path 'src' -Filter '*.csproj' -Recurse -ErrorAction SilentlyContinue

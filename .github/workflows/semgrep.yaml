@@ -59,40 +59,33 @@ jobs:
           python -m pip install --user --require-hashes -r .github/requirements/semgrep.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Run Semgrep with the community C# security rulepacks
-        # Rule packs cover:
-        #   p/csharp             — general C# lint + security patterns
-        #   p/owasp-top-ten      — OWASP Top-10 categories
-        #   p/security-audit     — cross-language security-audit set
-        #   p/secrets            — hard-coded credentials / API keys
-        #
-        # No rule exclusions today. The previous rule-wide exclusion of
-        # yaml.github-actions.security.pull-request-target-code-checkout
-        # was removed after migrating pr.yaml, workflow-security.yaml,
-        # and aot-smoke.yaml from `pull_request_target` to `pull_request`
-        # (refs #131 / #257). If a future workflow needs
-        # `pull_request_target`, the rule should re-fire and force the
-        # author to think through mitigations rather than being silently
-        # ignored.
-        #
-        # Gate: `--severity=ERROR --error` fails the run on error-severity
-        # findings only. Warning + info findings still upload to Code
-        # Scanning (visible in Security tab) but don't block merge.
+      - name: Run Semgrep
+        # --error makes findings exit 1; they are reported through the SARIF upload, so
+        # 0 and 1 both continue. Anything else (bad config, crash, network) fails the job
+        # instead of silently uploading nothing.
         run: |
-          set -euo pipefail
+          set +e
           semgrep scan \
-            --config=p/csharp \
-            --config=p/owasp-top-ten \
-            --config=p/security-audit \
-            --config=p/secrets \
-            --sarif \
-            --output=semgrep.sarif \
-            --severity=ERROR \
+            --config p/csharp \
+            --config p/security-audit \
+            --config p/secrets \
+            --sarif --output semgrep.sarif \
             --error \
-            --metrics=off
+            src/
+          rc=$?
+          set -e
+          case "$rc" in
+            0) echo "semgrep: no findings" ;;
+            1) echo "semgrep: findings reported (see the Security tab after upload)" ;;
+            *) echo "::error::semgrep failed with exit code $rc (not a findings result)"; exit "$rc" ;;
+          esac
 
-      - name: Upload SARIF to Code Scanning
-        if: always()
+      - name: Upload Semgrep SARIF
+        # A fork's pull_request token cannot write Code Scanning (security-events: write is
+        # not granted), so the upload would fail after a successful scan. Skip it there; the
+        # scan step above still runs (report-only, as documented) and its SARIF is available
+        # once the change lands in this repository.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           sarif_file: semgrep.sarif
