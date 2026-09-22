@@ -20,6 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [0.12.0] - 2026-09-22
+
+### Added
+
+- Built against `Wolfgang.Etl.Abstractions` 0.25.0 (and TestKit / TestKit.Xunit 0.25.0): the base-stage `ReportingInterval` / `MaximumItemCount` / `SkipItemCount` setters are deprecated fleet-wide in favour of the options record, and `IncrementCurrentItemCount(int)` / `IncrementCurrentSkippedItemCount(int)` are available to derived stages. (#444)
+
+### Fixed
+
+- Packages ship one `THIRD-PARTY-NOTICES.md` - the per-package file generated from each project's own NuGet closure - instead of failing to pack (`NU5118`) because the repository-wide file was still added alongside it. (#451)
+
+### Internal
+
+- Built against Wolfgang.Etl.Abstractions / ErrorPolicies / TestKit / TestKit.Xunit 0.26.0 (trim- and native-AOT-compatible on net8.0+; no API change from 0.25.0), so the package now requires Abstractions 0.26.0 or later. (#453)
+- The options constructor assigns the stage's backing fields directly instead of going through the deprecated setters, so the `CS0618` suppressions that covered those writes are gone. The six validating setters' guards (`DbExtractorOptions.CommandTimeout`; `DbLoaderOptions.CommandTimeout` / `InsertBatchSize` / `MaxErrorCount` / `BatchCommitSize` / `BatchSize`) now also run on the records' init accessors, with tests; the extractor's `Parameters` backing field is named `_parameterOverride` because `_parameters` already holds the constructor dictionary. (#441) (#441)
+
 ## [0.11.0] - 2026-09-16
 
 ### Added
