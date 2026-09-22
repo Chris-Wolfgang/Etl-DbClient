@@ -154,7 +154,8 @@ public abstract class DbExtractorIntegrationTestsBase
         const int pageSize = 3;
         var seen = new List<int>();
 
-        for (var offset = 0; ; offset += pageSize)
+        var offset = 0;
+        while (true)
         {
             var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
             {
@@ -172,6 +173,7 @@ public abstract class DbExtractorIntegrationTestsBase
 
             Assert.True(page.Count <= pageSize, $"page at offset {offset} returned {page.Count} rows");
             seen.AddRange(page.Select(item => item.Value));
+            offset += pageSize;
         }
 
         // No gaps, no duplicates, and in order — the three ways paging goes wrong.
