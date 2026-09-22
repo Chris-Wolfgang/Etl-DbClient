@@ -1067,7 +1067,7 @@ jobs:
     needs: validate-release
     permissions:
       contents: write  # Required by docfx.yaml to push to gh-pages branch
-    uses: ./.github/workflows/docfx.yaml
+    uses: ./.github/workflows/docfx.yaml  # zizmor: ignore[self-repository]
     with:
       version: ${{ github.event.release.tag_name }}
 
