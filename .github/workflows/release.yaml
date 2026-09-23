@@ -288,9 +288,11 @@ jobs:
             exit 1
           }
           
-          dotnet tool install -g dotnet-reportgenerator-globaltool
+          # Pinned in .config/dotnet-tools.json at the tag; never installed unversioned.
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { Write-Error "dotnet tool restore failed"; exit 1 }
           
-          reportgenerator `
+          dotnet reportgenerator `
             -reports:"TestResults/**/coverage.cobertura.xml" `
             -targetdir:"CoverageReport" `
             -reporttypes:"TextSummary;Html"
