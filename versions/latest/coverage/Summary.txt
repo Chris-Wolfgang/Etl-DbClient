@@ -1,30 +1,30 @@
 Summary
-  Generated on: 9/17/2026 - 6:12:59 PM
-  Coverage date: 9/17/2026 - 6:12:51 PM - 9/17/2026 - 6:12:54 PM
+  Generated on: 9/23/2026 - 2:45:33 AM
+  Coverage date: 9/23/2026 - 2:45:25 AM - 9/23/2026 - 2:45:30 AM
   Parser: MultiReport (2x Cobertura)
   Assemblies: 2
   Classes: 47
   Files: 44
   Line coverage: 99%
-  Covered lines: 3890
+  Covered lines: 3997
   Uncovered lines: 38
-  Coverable lines: 3928
-  Total lines: 11325
-  Branch coverage: 90.8% (598 of 658)
-  Covered branches: 598
-  Total branches: 658
-  Method coverage: 99.2% (539 of 543)
-  Full method coverage: 96.5% (524 of 543)
-  Covered methods: 539
-  Fully covered methods: 524
-  Total methods: 543
+  Coverable lines: 4035
+  Total lines: 11567
+  Branch coverage: 91.1% (611 of 670)
+  Covered branches: 611
+  Total branches: 670
+  Method coverage: 99.2% (554 of 558)
+  Full method coverage: 96.5% (539 of 558)
+  Covered methods: 554
+  Fully covered methods: 539
+  Total methods: 558
 
-Wolfgang.Etl.DbClient                                                    97.1%
+Wolfgang.Etl.DbClient                                                    97.2%
   Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper                        96.8%
   Wolfgang.Etl.DbClient.DbClientOptions                                   100%
   Wolfgang.Etl.DbClient.DbColumnAttribute                                 100%
   Wolfgang.Etl.DbClient.DbCommandBuilder                                  100%
-  Wolfgang.Etl.DbClient.DbExtractor<T>                                   97.5%
+  Wolfgang.Etl.DbClient.DbExtractor<T>                                   97.4%
   Wolfgang.Etl.DbClient.DbExtractorBuilder<T>                            96.6%
   Wolfgang.Etl.DbClient.DbExtractorOptions                                100%
   Wolfgang.Etl.DbClient.DbLoader<T>                                      96.3%
