@@ -292,12 +292,13 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// <exception cref="InvalidOperationException">
     /// <paramref name="factory"/> produced a <c>null</c> connection.
     /// </exception>
-    // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local — commandText is checked here, before the
-    // connection exists, so a null command text throws without leaking the connection the chained ctor would receive.
     private static DbConnection CreateOwnedConnection
     (
         DbProviderFactory factory,
         string connectionString,
+        // commandText is checked here, before the connection exists, so a null command text throws
+        // without leaking the connection the chained ctor would otherwise receive.
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
         string commandText
     )
     {
