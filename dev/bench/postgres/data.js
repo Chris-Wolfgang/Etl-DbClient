@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789668217263,
+  "lastUpdate": 1790130995636,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (postgres)": [
@@ -750,6 +750,48 @@ window.BENCHMARK_DATA = {
             "value": 3950337.4754464286,
             "unit": "ns",
             "range": "± 68548.33937551003"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4ef8c8f78614168aada28cb590c14b7919720ece",
+          "message": "ci(release): call the manifest-local tools as `dotnet <tool>` (#470)\n\nThe move from global tool installs to `.config/dotnet-tools.json` landed here, but the call\nsites did not move with it. A manifest-local tool is not on PATH, so after `dotnet tool restore`\nthe bare invocation dies with \"The term 'reportgenerator' is not recognized as a name of a\ncmdlet, function, script file, or executable program\" and the Validate job fails — taking Pack,\nDocs, Publish, Attest and Attach down as skipped with it.\n\nCaught by ETL-Csv's v0.10.0 release run (35800394348), which failed at \"Verify coverage\nthreshold\" after restoring all eight tools successfully.\n\nrepo-template already reads `dotnet tool restore` + `dotnet reportgenerator`; this catches the\nrepository up to it.\n\nCo-authored-by: Claude Opus 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-22T21:03:19-04:00",
+          "tree_id": "853bfdc9cf566b46c06468fb37034e306a6cf8f0",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/4ef8c8f78614168aada28cb590c14b7919720ece"
+        },
+        "date": 1790130992828,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 294532.76998465403,
+            "unit": "ns",
+            "range": "± 1775.091085585782"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 621239.6457331731,
+            "unit": "ns",
+            "range": "± 4387.6082366560195"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 3926540.440848214,
+            "unit": "ns",
+            "range": "± 37450.08652065014"
           }
         ]
       }
