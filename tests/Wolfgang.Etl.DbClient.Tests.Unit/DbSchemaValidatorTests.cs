@@ -10,11 +10,14 @@
 //   5. Async companion behaves identically + honours cancellation.
 //   6. Connection state is restored (Closed → Closed) after Validate.
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Xunit;

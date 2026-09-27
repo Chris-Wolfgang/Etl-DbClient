@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 // Constructs via the deprecated constructors. Migrating to the options overloads is
