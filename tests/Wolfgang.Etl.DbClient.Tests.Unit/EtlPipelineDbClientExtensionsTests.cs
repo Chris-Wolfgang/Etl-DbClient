@@ -1,4 +1,4 @@
-﻿// End-to-end tests for the EtlPipeline DbClient extensions (#280).
+// End-to-end tests for the EtlPipeline DbClient extensions (#280).
 //
 // Coverage:
 //   1. Round-trip fixture: DbExtractor → DbLoader against the same

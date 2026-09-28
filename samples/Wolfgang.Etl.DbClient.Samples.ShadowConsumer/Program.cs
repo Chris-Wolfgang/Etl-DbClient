@@ -1,4 +1,4 @@
-﻿// Shadow-testing consumer — realistic DbClient workload for #130.
+// Shadow-testing consumer — realistic DbClient workload for #130.
 //
 // Scenario: a paged extract-transform-load loop. 100k rows in a source
 // SQLite table, paged out 1k at a time via server-side paging on the

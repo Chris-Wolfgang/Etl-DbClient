@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.ErrorPolicies;
 using Wolfgang.Etl.TestKit.Xunit;
