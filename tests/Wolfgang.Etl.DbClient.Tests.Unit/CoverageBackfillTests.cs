@@ -220,12 +220,9 @@ public class CoverageBackfillTests
         var loader = new DbLoader<PersonRecord>
         (
             conn,
-            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
-        )
-        {
-            InsertBatchSize = 3,
-            IsDryRun = true
-        };
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
+            new DbLoaderOptions { InsertBatchSize = 3, IsDryRun = true }
+        );
 
         await loader.LoadAsync(CreateRecords(5).ToAsyncEnumerable());
 

@@ -1,0 +1,15 @@
+{
+  "template": "Chris-Wolfgang/repo-template",
+  "commit": "dd12192a135e324e23065863fd6bf3aa87801f5c",
+  "updated": "2026-09-21",
+  "placeholders": {
+    "PACKAGE_NAME": "Wolfgang.Etl.DbClient",
+    "REPO_NAME": "Etl-DbClient",
+    "PROJECT_NAME": "Wolfgang.Etl.DbClient",
+    "GITHUB_REPO_URL": "https://github.com/Chris-Wolfgang/Etl-DbClient",
+    "DOCS_URL": "https://chris-wolfgang.github.io/Etl-DbClient/",
+    "GITHUB_OWNER": "Chris-Wolfgang",
+    "LICENSE_TYPE": "MIT"
+  },
+  "note": "Written by scripts/setup.ps1 and scripts/upgrade.ps1; the template commit this repository last took template-managed files from, and the placeholder values setup used."
+}

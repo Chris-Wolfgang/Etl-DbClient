@@ -57,6 +57,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [0.12.0] - 2026-09-22
+
+### Added
+
+- Built against `Wolfgang.Etl.Abstractions` 0.25.0 (and TestKit / TestKit.Xunit 0.25.0): the base-stage `ReportingInterval` / `MaximumItemCount` / `SkipItemCount` setters are deprecated fleet-wide in favour of the options record, and `IncrementCurrentItemCount(int)` / `IncrementCurrentSkippedItemCount(int)` are available to derived stages. (#444)
+
+### Fixed
+
+- Packages ship one `THIRD-PARTY-NOTICES.md` - the per-package file generated from each project's own NuGet closure - instead of failing to pack (`NU5118`) because the repository-wide file was still added alongside it. (#451)
+
+### Internal
+
+- Built against Wolfgang.Etl.Abstractions / ErrorPolicies / TestKit / TestKit.Xunit 0.26.0 (trim- and native-AOT-compatible on net8.0+; no API change from 0.25.0), so the package now requires Abstractions 0.26.0 or later. (#453)
+- The options constructor assigns the stage's backing fields directly instead of going through the deprecated setters, so the `CS0618` suppressions that covered those writes are gone. The six validating setters' guards (`DbExtractorOptions.CommandTimeout`; `DbLoaderOptions.CommandTimeout` / `InsertBatchSize` / `MaxErrorCount` / `BatchCommitSize` / `BatchSize`) now also run on the records' init accessors, with tests; the extractor's `Parameters` backing field is named `_parameterOverride` because `_parameters` already holds the constructor dictionary. (#441) (#441)
+- Review polish: member spacing normalised in the extractor, loader and schema validator; the source generator's Roslyn pin is documented; the open InspectCode findings are resolved (LINQ `Any` parameter-name scans, a redundant Dapper interface entry, a redundant null-forgiving operator, and test-code tidy-ups); no behaviour change.
+
+
+## [0.11.0] - 2026-09-16
+
+### Added
+
+- `DbExtractorOptions` now derives from `ExtractorOptions` and `DbLoaderOptions` from `LoaderOptions`
+  (Wolfgang.Etl.Abstractions 0.24.0, ADR-0009 there), so `ReportingInterval`, `SkipItemCount`,
+  `MaximumItemCount` and `ErrorPolicy` are configured on the record like the stage's own settings.
+- `DbLoaderOptions.IsDryRun`, applied to `DbLoader<T>.IsDryRun` by the constructor.
+
+### Changed
+
+- Wolfgang.Etl.Abstractions / ErrorPolicies / TestKit / TestKit.Xunit 0.23.4 → 0.24.0.
+- `DbLoader<T>` no longer implements `ISupportDryRun`, which 0.24.0 removes; `IsDryRun` stays on the
+  loader (`CompatibilitySuppressions.xml`: CP0008).
+- The options constructors are now the single initialization path: the deprecated constructors
+  forward to them with a `null` record. No behavioral change.
+
+### Deprecated
+
+- `DbLoader<T>.IsDryRun` setter — `[Obsolete]` on the **setter accessor** (reads stay warning-free),
+  pointing at `DbLoaderOptions.IsDryRun`. Nothing is removed; removal follows in a later release.
+
+### Security
+
+- `Microsoft.SourceLink.GitHub` 8.0.0 → 10.0.401 (#418), which drops the vulnerable `Microsoft.Build.Tasks.Git` 8.0.0
+  ([GHSA-23fw-v26w-5fgq](https://github.com/advisories/GHSA-23fw-v26w-5fgq)). Build-time only; the shipped package does not depend on
+  it. The PR benchmark workflow no longer audits the merge-base restore, so a base carrying an advisory cannot block the PR that fixes it.
+
+
 ## [0.10.0] - 2026-09-04
 
 > **The server-side paging API is provisional in this release.** It arrived across #385, #391
@@ -432,7 +478,8 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 - `DbExtractor<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload. The extractor creates the connection via the supplied `DbProviderFactory`, opens it lazily before the first command, and disposes it when extraction completes (or throws). Saves callers the `using var conn = …; await conn.OpenAsync();` boilerplate for one-off scenarios.
 - `DbLoader<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload with the same semantics (open lazily, dispose at end). Defaults to auto-managed transaction.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.10.0...v0.11.0
 [0.6.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.4.0

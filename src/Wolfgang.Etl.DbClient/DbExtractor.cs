@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -117,14 +118,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            commandText ?? throw new ArgumentNullException(nameof(commandText)),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, commandText, options: null, transaction, logger)
     {
     }
 
@@ -154,25 +148,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            commandText ?? throw new ArgumentNullException(nameof(commandText)),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, commandText, parameters, options: null, transaction, logger)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
-        // Defensive copy — see the field-level comment on _parameters.
-        _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
-        _dynamicParameters = EtlParameterSet.IsNeededFor(_parameters)
-            ? new EtlParameterSet(_parameters)
-            : new DynamicParameters(_parameters);
     }
 
 
@@ -196,14 +173,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            connection ?? throw new ArgumentNullException(nameof(connection)),
-            DbCommandBuilder.BuildSelect<TRecord>(),
-            transaction,
-            ownsConnection: false,
-            logger
-        )
+        : this(connection, options: null, transaction, logger)
     {
     }
 
@@ -238,14 +208,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         string commandText,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-        : this
-        (
-            CreateOwnedConnection(factory, connectionString, commandText),
-            commandText,
-            transaction: null,
-            ownsConnection: true,
-            logger
-        )
+        : this(factory, connectionString, commandText, options: null, logger)
     {
     }
 
@@ -272,12 +235,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, commandText, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -303,12 +272,29 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, commandText, parameters, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            commandText ?? throw new ArgumentNullException(nameof(commandText)),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
+        if (parameters == null)
+        {
+            throw new ArgumentNullException(nameof(parameters));
+        }
+
+        // Defensive copy — see the field-level comment on _parameters.
+        _parameters = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
+        _dynamicParameters = EtlParameterSet.IsNeededFor(_parameters)
+            ? new EtlParameterSet(_parameters)
+            : new DynamicParameters(_parameters);
+
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -330,12 +316,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbTransaction? transaction = null,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(connection, transaction, logger)
+        : this
+        (
+            connection ?? throw new ArgumentNullException(nameof(connection)),
+            DbCommandBuilder.BuildSelect<TRecord>(),
+            transaction,
+            ownsConnection: false,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
 
 
@@ -359,12 +351,18 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         DbExtractorOptions? options,
         ILogger<DbExtractor<TRecord>>? logger = null
     )
-#pragma warning disable CS0618 // Chains into the deprecated ctor deliberately: it is the single initialization path.
-        : this(factory, connectionString, commandText, logger)
+        : this
+        (
+            CreateOwnedConnection(factory, connectionString, commandText),
+            commandText,
+            transaction: null,
+            ownsConnection: true,
+            logger,
+            options
+        )
     {
         ApplyOptions(options);
     }
-#pragma warning restore CS0618
 
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this extractor owns.
@@ -390,6 +388,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     (
         DbProviderFactory factory,
         string connectionString,
+        // commandText is checked here, before the connection exists, so a null command text throws
+        // without leaking the connection the chained ctor would otherwise receive.
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
         string commandText
     )
     {
@@ -419,14 +420,43 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         string commandText,
         DbTransaction? transaction,
         bool ownsConnection,
-        ILogger? logger
+        ILogger? logger,
+        DbExtractorOptions? options
     )
+        : base(ResolveBaseOptions(options))
     {
         _connection = connection;
         _commandText = commandText;
         _transaction = transaction;
         _ownsConnection = ownsConnection;
         _logger = logger ?? NullLogger.Instance;
+    }
+
+
+
+    /// <summary>
+    /// Folds the deprecated <see cref="DbExtractorOptions.ServerOffset"/> alias into
+    /// <see cref="ExtractorOptions.SkipItemCount"/> before the base class reads the record, so the
+    /// skip lives in one place and is never assigned through the deprecated base setter.
+    /// </summary>
+    /// <param name="options">The caller's configuration, or <c>null</c>.</param>
+    /// <returns>
+    /// <paramref name="options"/> unchanged when it is <c>null</c> or carries no
+    /// <c>ServerOffset</c>; otherwise a copy whose <c>SkipItemCount</c> is the offset.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <c>ServerOffset</c> is negative or does not fit in an <see cref="int"/>.
+    /// </exception>
+    private static DbExtractorOptions? ResolveBaseOptions(DbExtractorOptions? options)
+    {
+#pragma warning disable CS0618 // Reads the deprecated ServerOffset alias in order to forward it to SkipItemCount.
+        var serverOffset = options?.ServerOffset;
+        const string propertyName = nameof(DbExtractorOptions.ServerOffset);
+#pragma warning restore CS0618
+
+        return serverOffset.HasValue
+            ? options! with { SkipItemCount = ToRowCount(serverOffset.Value, propertyName) }
+            : options;
     }
 
 
@@ -475,6 +505,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         }
     }
 
+
+
     private TimeSpan? _commandTimeout;
 
     // Dapper's commandTimeout parameter is `int?` seconds. Centralized here so
@@ -485,6 +517,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         : null;
 
 
+
+    private CommandType _commandType = CommandType.Text;
 
     /// <summary>
     /// How <see cref="CommandText"/> is interpreted by the ADO.NET provider.
@@ -498,9 +532,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// through — but most consumers should stick to <c>Text</c> or
     /// <c>StoredProcedure</c>.
     /// </remarks>
-    public CommandType CommandType { get; [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = CommandType.Text;
+    public CommandType CommandType { get => _commandType; [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _commandType = value; }
 
 
+
+    private bool _manageConnection;
 
     /// <summary>
     /// When <see langword="true"/>, the extractor opens the connection before
@@ -526,9 +562,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get; [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public bool ManageConnection { get => _manageConnection; [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _manageConnection = value; }
 
 
+
+    private bool _validateSchemaOnStart;
 
     /// <summary>
     /// When <see langword="true"/>, the extractor calls
@@ -550,9 +588,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get; [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public bool ValidateSchemaOnStart { get => _validateSchemaOnStart; [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _validateSchemaOnStart = value; }
 
 
+
+    private DynamicParameters? _parameterOverride;
 
     /// <summary>
     /// Optional override for the parameter set passed to Dapper. Setting this
@@ -584,7 +624,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </code>
     /// </para>
     /// </remarks>
-    public DynamicParameters? Parameters { get; [Obsolete("Configure Parameters through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public DynamicParameters? Parameters { get => _parameterOverride; [Obsolete("Configure Parameters through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _parameterOverride = value; }
 
 
 
@@ -711,6 +751,8 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+    private string? _pagingClauseTemplate = PagingClauseTemplates.None;
+
     /// <summary>
     /// SQL fragment appended to the command text when both
     /// <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are set.
@@ -729,9 +771,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
     /// </para>
     /// </remarks>
-    public string? PagingClauseTemplate { get; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; } = PagingClauseTemplates.None;
+    public string? PagingClauseTemplate { get => _pagingClauseTemplate; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _pagingClauseTemplate = value; }
 
 
+
+    private Func<CancellationToken, Task<int>>? _totalCountQuery;
 
     /// <summary>
     /// When non-null, this function is invoked before extraction begins to determine
@@ -740,7 +784,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).
     /// </summary>
-    public Func<CancellationToken, Task<int>>? TotalCountQuery { get; [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set; }
+    public Func<CancellationToken, Task<int>>? TotalCountQuery { get => _totalCountQuery; [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _totalCountQuery = value; }
 
 
 
@@ -1148,32 +1192,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             // ContainsKey resolves against _parameters' own comparer, which is deliberately
             // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
             // Scan explicitly with the collision-safe comparison instead.
-            var suppliedByDictionary = false;
-            if (_parameters is not null)
-            {
-                foreach (var key in _parameters.Keys)
-                {
-                    if (ParameterName.Matches(key, generated))
-                    {
-                        suppliedByDictionary = true;
-                        break;
-                    }
-                }
-            }
-
-            var suppliedByProperty = false;
+            var suppliedByDictionary = _parameters?.Keys.Any(key => ParameterName.Matches(key, generated)) ?? false;
             var names = Parameters?.ParameterNames;
-            if (names is not null)
-            {
-                foreach (var name in names)
-                {
-                    if (ParameterName.Matches(name, generated))
-                    {
-                        suppliedByProperty = true;
-                        break;
-                    }
-                }
-            }
+            var suppliedByProperty = names?.Any(name => ParameterName.Matches(name, generated)) ?? false;
 
             if (suppliedByDictionary || suppliedByProperty)
             {
@@ -1390,28 +1411,24 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// <param name="options">The configuration to apply, or <c>null</c>.</param>
     private void ApplyOptions(DbExtractorOptions? options)
     {
-#pragma warning disable CS0618 // ApplyOptions is the supported replacement for these setters.
         if (options is null)
         {
             return;
         }
 
-        CommandTimeout = options.CommandTimeout;
-        CommandType = options.CommandType;
-        ManageConnection = options.ManageConnection;
-        ValidateSchemaOnStart = options.ValidateSchemaOnStart;
-        PagingClauseTemplate = options.PagingClauseTemplate;
+        _commandTimeout = options.CommandTimeout;
+        _commandType = options.CommandType;
+        _manageConnection = options.ManageConnection;
+        _validateSchemaOnStart = options.ValidateSchemaOnStart;
+        _pagingClauseTemplate = options.PagingClauseTemplate;
 
-        // PageSize wins over the obsolete ServerLimit; ServerOffset lands on SkipItemCount,
-        // which is the same idea and now the only place it lives.
+        // PageSize wins over the obsolete ServerLimit. ServerOffset is not handled here: it lands
+        // on SkipItemCount, which the base class owns, so ResolveBaseOptions folds it into the
+        // record before the base constructor reads it.
+#pragma warning disable CS0618 // Reads the deprecated ServerLimit alias in order to forward it to PageSize.
         PageSize = options.PageSize
             ?? (options.ServerLimit.HasValue ? ToRowCount(options.ServerLimit.Value, nameof(DbExtractorOptions.ServerLimit)) : (int?)null);
-
-        if (options.ServerOffset.HasValue)
-        {
-            SkipItemCount = ToRowCount(options.ServerOffset.Value, nameof(DbExtractorOptions.ServerOffset));
-        }
-        TotalCountQuery = options.TotalCountQuery;
 #pragma warning restore CS0618
+        _totalCountQuery = options.TotalCountQuery;
     }
 }

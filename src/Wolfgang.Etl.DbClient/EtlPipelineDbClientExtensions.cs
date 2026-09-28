@@ -23,9 +23,9 @@ namespace Wolfgang.Etl.DbClient;
 /// there is no file handle created by the factory itself.
 /// </para>
 /// <para>
-/// Dry-run behaviour on the loader flows through the shared
-/// <see cref="ISupportDryRun"/> pipeline hook rather than a DbClient-specific
-/// setter, consistent with the other loaders.
+/// Dry-run behaviour on the loader is configured through
+/// <see cref="DbLoaderOptions.IsDryRun"/> on the record passed to the constructor,
+/// consistent with the other loaders.
 /// </para>
 /// </remarks>
 public static class EtlPipelineDbClientExtensions
