@@ -954,10 +954,9 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             {
                 // The rows genuinely were skipped, just not by us. Leaving the counter at zero
                 // would silently change an observable the moment the skip moved server-side.
-                for (var skipped = 0; skipped < SkipItemCount; skipped++)
-                {
-                    IncrementCurrentSkippedItemCount();
-                }
+                // One interlocked add rather than SkipItemCount single increments; serverSideSkip
+                // implies SkipItemCount > 0, so the bulk overload's zero/negative handling is moot.
+                IncrementCurrentSkippedItemCount(SkipItemCount);
             }
 
             var commandText = paging ? _commandText + " " + PagingClauseTemplate : _commandText;
