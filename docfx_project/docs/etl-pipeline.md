@@ -43,14 +43,20 @@ Every configurable property on `DbExtractor<T>` has a matching builder setter:
 | `CommandType(CommandType)` | `DbExtractor<T>.CommandType` | `Text` (default) or `StoredProcedure`. |
 | `ManageConnection(bool)` | `DbExtractor<T>.ManageConnection` | When `true`, extractor opens/closes the connection. |
 | `Parameters(DynamicParameters)` | `DbExtractor<T>.Parameters` | Dapper parameter bag; overrides constructor `Parameters`. |
-| `ServerOffset(long?)` | `DbExtractor<T>.ServerOffset` | Row offset for server-side paging. |
-| `ServerLimit(long?)` | `DbExtractor<T>.ServerLimit` | Page size in rows. Setting this switches paging on. |
+| `SkipItemCount(int)` | `DbExtractor<T>.SkipItemCount` | Rows to skip. Pushed into the query's offset when a template is set. |
+| `MaximumItemCount(int)` | `DbExtractor<T>.MaximumItemCount` | Total rows to return. Pushed into the query's limit when a template is set. |
+| `PageSize(int?)` | `DbExtractor<T>.PageSize` | Rows per round-trip. Walks the result set page by page; requires a template. |
 | `PagingClauseTemplate(string?)` | `DbExtractor<T>.PagingClauseTemplate` | Dialect-specific SQL appended when paging is active. Defaults to `PagingClauseTemplates.None` — it must be set, or paging throws. |
 | `TotalCountQuery(Func<CancellationToken, Task<int>>)` | `DbExtractor<T>.TotalCountQuery` | Snapshot the total row count for progress reporting. |
 
-Server-side paging is switched on by `ServerLimit`; `ServerOffset` defaults to `0`
-when not set. Setting `ServerOffset` without `ServerLimit` throws, because no page
-size can be inferred.
+`PagingClauseTemplate` is the switch for server-side paging: with a template set,
+`SkipItemCount` and `MaximumItemCount` are pushed into the query, and `PageSize`
+splits it into round-trips of that size. Without a template the command runs as
+written and the skip and maximum are applied client-side.
+
+`ServerOffset(long?)` and `ServerLimit(long?)` are deprecated aliases of
+`SkipItemCount` and `MaximumItemCount` (total rows, not rows per round-trip) and
+will be removed in a future release.
 
 ## Loader knobs
 
@@ -110,8 +116,7 @@ await EtlPipeline
     .Create()
     .DbExtractor(extractor)           // reuse the DI-registered instance
     .PagingClauseTemplate(PagingClauseTemplates.PostgreSql)
-    .ServerOffset(0)                  // mutates `extractor.ServerOffset`
-    .ServerLimit(500)
+    .MaximumItemCount(500)            // mutates `extractor.MaximumItemCount`
     .DbLoader<Person>(destConn, insertSql)
     .RunAsync();
 ```
@@ -124,8 +129,8 @@ await EtlPipeline
     .DbExtractor<Invoice>(conn, "SELECT * FROM Invoices WHERE Status = @Status")
     .Parameters(new DynamicParameters(new { Status = "paid" }))
     .PagingClauseTemplate(PagingClauseTemplates.PostgreSql)
-    .ServerOffset(1000)
-    .ServerLimit(500)
+    .SkipItemCount(1000)
+    .MaximumItemCount(500)
     .DbLoader<Invoice>(destConn, "INSERT INTO PaidInvoicesPage2 ...")
     .RunAsync();
 ```
@@ -133,9 +138,9 @@ await EtlPipeline
 When paging is active, the extractor appends `PagingClauseTemplate` to the command
 text and adds `@PageOffset` / `@PageLimit` to the parameter set.
 
-`PagingClauseTemplate` **must be set** — it defaults to `PagingClauseTemplates.None`.
-Paging syntax is dialect-specific and no portable form exists, so the library does
-not guess one; activating paging without a template throws
+`PagingClauseTemplate` **must be set** for server-side paging — it defaults to
+`PagingClauseTemplates.None`. Paging syntax is dialect-specific and no portable form
+exists, so the library does not guess one; setting `PageSize` without a template throws
 `InvalidOperationException` rather than emitting SQL only some engines accept.
 Use a preset, or supply your own clause referencing `@PageOffset` and `@PageLimit`:
 
@@ -143,8 +148,7 @@ Use a preset, or supply your own clause referencing `@PageOffset` and `@PageLimi
 await EtlPipeline
     .Create()
     .DbExtractor<Invoice>(conn, "SELECT * FROM Invoices ORDER BY Id")
-    .ServerOffset(0)
-    .ServerLimit(500)
+    .MaximumItemCount(500)
     .PagingClauseTemplate(PagingClauseTemplates.SqlServer)
     .DbLoader<Invoice>(destConn, "...")
     .RunAsync();

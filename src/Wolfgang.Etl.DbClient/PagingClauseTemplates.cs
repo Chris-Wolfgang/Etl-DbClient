@@ -21,8 +21,8 @@ namespace Wolfgang.Etl.DbClient;
 /// <code>
 /// var options = new DbExtractorOptions
 /// {
-///     ServerOffset = 100,
-///     ServerLimit = 50,
+///     SkipItemCount = 100,
+///     MaximumItemCount = 50,
 ///     PagingClauseTemplate = PagingClauseTemplates.SqlServer
 /// };
 /// </code>

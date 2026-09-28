@@ -45,13 +45,16 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
 
 
     /// <summary>
-    /// Sets the rows to skip. An alias of <see cref="SkipItemCount"/>: it writes the same value.
+    /// Deprecated: use <see cref="SkipItemCount"/>. Sets the rows to skip; an alias of
+    /// <see cref="SkipItemCount"/> that writes the same value.
     /// </summary>
     /// <remarks>
-    /// Kept for source compatibility with 0.12.0. <see langword="null"/> means <c>0</c>. With a
-    /// <see cref="PagingClauseTemplate"/> set, the skip is pushed into the query's offset.
-    /// Because both methods write one value, whichever is called last wins.
+    /// Kept for source compatibility with 0.12.0 and will be removed in a future release.
+    /// <see langword="null"/> means <c>0</c>. With a <see cref="PagingClauseTemplate"/> set, the
+    /// skip is pushed into the query's offset. Because both methods write one value, whichever is
+    /// called last wins.
     /// </remarks>
+    [Obsolete("Use SkipItemCount instead. ServerOffset is an alias of SkipItemCount and will be removed in a future release.")]
     IDbExtractorBuilder<T> ServerOffset(long? offset);
 
 
@@ -89,14 +92,16 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
 
 
     /// <summary>
-    /// Sets the total number of rows to return. An alias of <see cref="MaximumItemCount"/>: it
-    /// writes the same value. For rows per round-trip use <see cref="PageSize"/>.
+    /// Deprecated: use <see cref="MaximumItemCount"/>. Sets the total number of rows to return; an
+    /// alias of <see cref="MaximumItemCount"/> that writes the same value. For rows per round-trip
+    /// use <see cref="PageSize"/>.
     /// </summary>
     /// <remarks>
-    /// Kept for source compatibility with 0.12.0, where it meant the total row count.
-    /// <see langword="null"/> restores the default of no limit. Because both methods write one
-    /// value, whichever is called last wins.
+    /// Kept for source compatibility with 0.12.0, where it meant the total row count, and will be
+    /// removed in a future release. <see langword="null"/> restores the default of no limit.
+    /// Because both methods write one value, whichever is called last wins.
     /// </remarks>
+    [Obsolete("Use MaximumItemCount (total rows) instead. For rows per round-trip use PageSize. ServerLimit is an alias of MaximumItemCount and will be removed in a future release.")]
     IDbExtractorBuilder<T> ServerLimit(long? limit);
 
 
