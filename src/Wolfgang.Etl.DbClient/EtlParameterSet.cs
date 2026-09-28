@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using Dapper;
 
 namespace Wolfgang.Etl.DbClient;
@@ -18,7 +19,7 @@ namespace Wolfgang.Etl.DbClient;
 /// back once the command completes, which parameter creation alone cannot do.
 /// </para>
 /// </remarks>
-internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.IParameterCallbacks
+internal sealed class EtlParameterSet : SqlMapper.IParameterCallbacks
 {
     private readonly IDictionary<string, object> _source;
     private readonly List<KeyValuePair<EtlParameter, IDbDataParameter>> _writeBack = new();
@@ -41,15 +42,7 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
     /// <returns><c>true</c> when any value is an <see cref="EtlParameter"/> or <see cref="DbParameter"/>.</returns>
     internal static bool IsNeededFor(IDictionary<string, object> source)
     {
-        foreach (var value in source.Values)
-        {
-            if (value is EtlParameter or DbParameter)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return source.Values.Any(static value => value is EtlParameter or DbParameter);
     }
 
 
@@ -140,16 +133,9 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
 
     private bool ContainsMatching(string name)
     {
-        foreach (var key in _source.Keys)
-        {
-            if (ParameterName.Matches(key, name))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return _source.Keys.Any(key => ParameterName.Matches(key, name));
     }
+
 
 
     private IEnumerable<KeyValuePair<string, object>> Entries()
@@ -164,6 +150,7 @@ internal sealed class EtlParameterSet : SqlMapper.IDynamicParameters, SqlMapper.
             yield return entry;
         }
     }
+
 
 
     private IDbDataParameter Materialize(IDbCommand command, string name, EtlParameter described)

@@ -39,7 +39,7 @@ internal sealed class FakeDbCommand : IDbCommand
     public int ExecuteNonQuery() => throw new NotSupportedException();
     public IDataReader ExecuteReader() => throw new NotSupportedException();
     public IDataReader ExecuteReader(CommandBehavior behavior) => throw new NotSupportedException();
-    public object? ExecuteScalar() => throw new NotSupportedException();
+    public object ExecuteScalar() => throw new NotSupportedException();
     public void Prepare() { }
     public void Dispose() { }
 }

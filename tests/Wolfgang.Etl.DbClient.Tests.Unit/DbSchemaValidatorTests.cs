@@ -76,8 +76,13 @@ public class DbSchemaValidatorTests
     [Fact]
     public void Validate_when_all_mapped_columns_exist_returns_normally()
     {
-        using var conn = CreateSeededConnection();
-        DbSchemaValidator.Validate<Widget>(conn);
+        var ex = Record.Exception(() =>
+        {
+            using var conn = CreateSeededConnection();
+            DbSchemaValidator.Validate<Widget>(conn);
+        });
+
+        Assert.Null(ex);
     }
 
     [Fact]
@@ -166,8 +171,13 @@ public class DbSchemaValidatorTests
     [Fact]
     public async Task ValidateAsync_when_all_mapped_columns_exist_returns_normally()
     {
-        using var conn = CreateSeededConnection();
-        await DbSchemaValidator.ValidateAsync<Widget>(conn);
+        var ex = await Record.ExceptionAsync(async () =>
+        {
+            using var conn = CreateSeededConnection();
+            await DbSchemaValidator.ValidateAsync<Widget>(conn);
+        });
+
+        Assert.Null(ex);
     }
 
     [Fact]

@@ -4,18 +4,12 @@ using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.TestKit.Xunit;
 
-// Constructs via the deprecated constructors. Migrating to the options overloads is
-// follow-up work; the deprecation exists to warn consumers, and the options constructors
-// are covered by DbOptionsDefaultsTests.
-#pragma warning disable CS0618
-
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
 
 /// <summary>
-/// Adopts <see cref="SupportsDryRunContractTests{TSut}"/> for
-/// <see cref="DbLoader{TRecord}"/>'s <c>ISupportDryRun</c> implementation.
-/// Adds the property-contract tests + the two behavioural tests
-/// (side effect suppressed on dry-run, side effect performed when off)
+/// Adopts <see cref="SupportsDryRunContractTests"/> for <see cref="DbLoader{TRecord}"/>'s
+/// dry-run behaviour, configured through <see cref="DbLoaderOptions.IsDryRun"/>: the two
+/// behavioural tests (side effect suppressed on dry-run, side effect performed when off)
 /// without duplicating what <see cref="DbLoaderTests"/> already covers.
 /// </summary>
 /// <remarks>
@@ -28,20 +22,8 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 /// in DbLoaderTests ARE subsumed and have been pruned from that file.
 /// </remarks>
 public sealed class DbLoaderSupportsDryRunContractTests
-    : SupportsDryRunContractTests<DbLoader<DryRunContractRecord>>
+    : SupportsDryRunContractTests
 {
-    protected override DbLoader<DryRunContractRecord> CreateSut()
-    {
-        var conn = OpenSeededConnection();
-        return new DbLoader<DryRunContractRecord>
-        (
-            conn,
-            "INSERT INTO contract_dryrun (id, name) VALUES (@Id, @Name)"
-        );
-    }
-
-
-
     protected override async Task<bool> RunAndReportSideEffectAsync(bool isDryRun)
     {
         // Each call gets its own SUT + connection so the "IsDryRun=false → rows
@@ -52,11 +34,9 @@ public sealed class DbLoaderSupportsDryRunContractTests
         var sut = new DbLoader<DryRunContractRecord>
         (
             conn,
-            "INSERT INTO contract_dryrun (id, name) VALUES (@Id, @Name)"
-        )
-        {
-            IsDryRun = isDryRun,
-        };
+            "INSERT INTO contract_dryrun (id, name) VALUES (@Id, @Name)",
+            new DbLoaderOptions { IsDryRun = isDryRun }
+        );
 
         await sut.LoadAsync(GenerateAsync(rowCount: 3));
 

@@ -72,10 +72,12 @@ using var connection = new SqliteConnection("Data Source=mydb.db");
 await connection.OpenAsync();
 
 // EXTRACT: stream rows from a query
-var extractor = new DbExtractor<EmployeeRecord>(
+var extractor = new DbExtractor<EmployeeRecord>
+(
     connection,
     "SELECT id, first_name, last_name, salary FROM Employees WHERE salary > @Min",
-    new Dictionary<string, object> { { "Min", 50000 } }
+    new Dictionary<string, object> { { "Min", 50000 } },
+    new DbExtractorOptions { CommandTimeout = TimeSpan.FromSeconds(30) }
 );
 
 await foreach (var employee in extractor.ExtractAsync())
@@ -84,9 +86,11 @@ await foreach (var employee in extractor.ExtractAsync())
 }
 
 // LOAD: insert records from an async stream
-var loader = new DbLoader<EmployeeRecord>(
+var loader = new DbLoader<EmployeeRecord>
+(
     connection,
-    WriteMode.Insert
+    WriteMode.Insert,
+    new DbLoaderOptions { InsertBatchSize = 100 }
 );
 
 await loader.LoadAsync(GetNewHiresAsync());
@@ -214,7 +218,7 @@ See the [NuGet package page](https://www.nuget.org/packages/Wolfgang.Etl.DbClien
 
 ## 🔍 Code Quality & Static Analysis
 
-This project enforces **strict code quality standards** through **7 specialized analyzers** and custom async-first rules:
+This project enforces **strict code quality standards** through **8 specialized analyzers** and custom async-first rules:
 
 ### Analyzers in Use
 
@@ -225,6 +229,7 @@ This project enforces **strict code quality standards** through **7 specialized 
 5. **Microsoft.CodeAnalysis.BannedApiAnalyzers** - Prevents usage of banned synchronous APIs
 6. **Meziantou.Analyzer** - Comprehensive code quality rules
 7. **SonarAnalyzer.CSharp** - Industry-standard code analysis
+8. **Microsoft.CodeAnalysis.PublicApiAnalyzers** - Tracks the shipped public surface (RS0016/RS0017)
 
 ### Async-First Enforcement
 

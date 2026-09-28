@@ -80,8 +80,12 @@ jobs:
           echo "Base merge-base SHA: $mb"
           git checkout "$mb"
           mkdir -p bench/base
+          # The base is an already-merged commit: it is the yardstick, not the
+          # code under review. Auditing its restore only blocks every PR while
+          # the base carries an advisory (NU1902) that the PR itself may be fixing.
+          # HEAD below is still audited.
           dotnet run --project benchmarks/Wolfgang.Etl.DbClient.Benchmarks \
-            -c Release -- \
+            -c Release --property:NuGetAudit=false -- \
             --filter '*ColumnAttributeTypeMapperBenchmarks*|*DbCommandBuilderBenchmarks*' \
             --job Short \
             --exporters json \

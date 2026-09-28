@@ -17,3 +17,12 @@ root = false
 dotnet_diagnostic.RS0016.severity = warning
 dotnet_diagnostic.RS0017.severity = warning
 dotnet_diagnostic.RS0037.severity = warning
+
+# S1133 ("remove this deprecated code someday") — every [Obsolete] member in this
+# project is a deliberate deprecation marker for the options-record migration, with a
+# dated removal wave (not before 2026-12-15). Sonar cannot know the removal is already
+# scheduled, so it reports all 26 of them as open technical debt on every scan. The rule
+# is wrong for the whole project until that wave lands; individual false positives
+# elsewhere still get an inline #pragma or [SuppressMessage] with a reason.
+# Matches Chris-Wolfgang/ETL-FixedWidth#478.
+dotnet_diagnostic.S1133.severity = none

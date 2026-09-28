@@ -21,13 +21,19 @@ public class DbLoaderTests
     // ------------------------------------------------------------------
 
     /// <inheritdoc/>
-    protected override DbLoader<ContractRecord> CreateSut(int itemCount)
+    protected override DbLoader<ContractRecord> CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)
     {
         var conn = TestDb.CreateContractLoaderConnection();
         return new DbLoader<ContractRecord>
         (
             conn,
-            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)"
+            "INSERT INTO ContractItems (Name, Value) VALUES (@Name, @Value)",
+            new DbLoaderOptions
+            {
+                MaximumItemCount = maximumItemCount,
+                SkipItemCount = skipItemCount,
+                ReportingInterval = reportingInterval,
+            }
         );
     }
 
@@ -691,11 +697,9 @@ public class DbLoaderTests
         var loader = new DbLoader<PersonRecord>
         (
             conn,
-            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
-        )
-        {
-            IsDryRun = true
-        };
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
+            new DbLoaderOptions { IsDryRun = true }
+        );
 
         await loader.LoadAsync(CreateTestRecords(5).ToAsyncEnumerable());
 
@@ -1118,12 +1122,9 @@ public class DbLoaderTests
         var loader = new DbLoader<PersonRecord>
         (
             conn,
-            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
-        )
-        {
-            IsDryRun = true,
-            BatchSize = 3
-        };
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)",
+            new DbLoaderOptions { IsDryRun = true, BatchSize = 3 }
+        );
 
         await loader.LoadAsync(CreateTestRecords(7).ToAsyncEnumerable());
 

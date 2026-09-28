@@ -28,11 +28,6 @@ using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 using Wolfgang.Etl.DbClient.Samples.ShadowConsumer;
 
-// Configures through the deprecated property setters; migrating to the options constructors
-// is follow-up work. Placed at the top of the file rather than before the namespace: these
-// are top-level-statement programs, so the executable code precedes the namespace.
-#pragma warning disable CS0618
-
 const int totalRows = 100_000;
 const int pageSize = 1_000;
 const int batchSize = 100;
@@ -77,15 +72,16 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
     var extractor = new DbExtractor<SourceWidget>
     (
         src,
-        "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id"
-    )
-    {
-        // The source here is SQLite. Paging syntax is dialect-specific and the library no
-        // longer guesses one, so the dialect has to be named.
-        PagingClauseTemplate = PagingClauseTemplates.Sqlite,
-        ServerOffset = offset,
-        ServerLimit = pageSize,
-    };
+        "SELECT id AS Id, name AS Name, price AS Price FROM widget ORDER BY id",
+        new DbExtractorOptions
+        {
+            // The source here is SQLite. Paging syntax is dialect-specific and the library no
+            // longer guesses one, so the dialect has to be named.
+            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+            ServerOffset = offset,
+            ServerLimit = pageSize,
+        }
+    );
 
     var page = new List<DestWidget>(pageSize);
     await foreach (var s in extractor.ExtractAsync())
@@ -97,11 +93,9 @@ for (long offset = 0; offset < totalRows; offset += pageSize)
     var loader = new DbLoader<DestWidget>
     (
         dest,
-        "INSERT INTO widget_projected (id, upper_name, price) VALUES (@Id, @UpperName, @Price)"
-    )
-    {
-        InsertBatchSize = batchSize,
-    };
+        "INSERT INTO widget_projected (id, upper_name, price) VALUES (@Id, @UpperName, @Price)",
+        new DbLoaderOptions { InsertBatchSize = batchSize }
+    );
     await loader.LoadAsync(AsAsync(page));
     loaded += page.Count;
 }

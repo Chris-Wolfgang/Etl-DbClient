@@ -10,13 +10,6 @@ using Wolfgang.Etl.DbClient.Example;
 
 // Set up an in-memory SQLite database
 using var connection = new SqliteConnection("Data Source=:memory:");
-// This file still configures through the deprecated property setters. Migrating it to the
-// options constructors is follow-up work, tracked separately - the deprecation's purpose is
-// to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
-// Several sites here assign after construction, so they cannot move to a constructor without
-// restructuring the test.
-#pragma warning disable CS0618
-
 await connection.OpenAsync().ConfigureAwait(false);
 
 // Create source and destination tables
@@ -51,14 +44,16 @@ var extractor = new DbExtractor<EmployeeRecord>
 (
     connection,
     "SELECT id AS Id, first_name AS FirstName, last_name AS LastName, salary AS Salary FROM Employees WHERE salary > @MinSalary",
-    new System.Collections.Generic.Dictionary<string, object>(StringComparer.Ordinal) { { "MinSalary", 80000 } }
+    new System.Collections.Generic.Dictionary<string, object>(StringComparer.Ordinal) { { "MinSalary", 80000 } },
+    new DbExtractorOptions { CommandTimeout = TimeSpan.FromSeconds(30) }
 );
 
 // LOAD: Insert into HighEarners table
 var loader = new DbLoader<HighEarnerRecord>
 (
     connection,
-    "INSERT INTO HighEarners (full_name, salary) VALUES (@FullName, @Salary)"
+    "INSERT INTO HighEarners (full_name, salary) VALUES (@FullName, @Salary)",
+    new DbLoaderOptions { InsertBatchSize = 50 }
 );
 
 // Transform in-flight: combine first + last name
