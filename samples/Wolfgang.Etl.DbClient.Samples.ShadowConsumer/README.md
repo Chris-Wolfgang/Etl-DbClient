@@ -8,7 +8,7 @@ detect regressions the synthetic BDN suite misses.
 ## Scenario
 
 Seeds a 100,000-row SQLite source table, then extracts it in 100 pages of
-1,000 rows via `DbExtractor<T>`'s `ServerOffset` / `ServerLimit`, projects
+1,000 rows from a single `DbExtractor<T>` configured with `PageSize`, projects
 each row through a small transform, and reloads the projection into a
 destination table via `DbLoader<T>` with `InsertBatchSize = 100`.
 

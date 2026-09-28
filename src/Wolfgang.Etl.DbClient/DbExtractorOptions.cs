@@ -84,24 +84,55 @@ public sealed record DbExtractorOptions : ExtractorOptions
 
 
     /// <summary>
-    /// Gets the server-side row offset for paging. Defaults to <see langword="null"/> (no paging).
+    /// Rows per round-trip. Setting this makes the extractor walk the result set one page at a
+    /// time; leaving it unset issues a single query.
     /// </summary>
     /// <remarks>
-    /// The property itself stays <see langword="null"/> unless set; when paging is active an
-    /// unset offset is treated as <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>,
-    /// so an offset with no limit throws — no page size can be inferred.
+    /// <para>
+    /// Paging is transport tuning, not a row filter: <c>SkipItemCount</c> and
+    /// <c>MaximumItemCount</c> decide which rows are yielded and yield the same rows either way.
+    /// What changes is the number of round-trips and the work the server does per query.
+    /// </para>
+    /// <para>
+    /// Requires <see cref="PagingClauseTemplate"/> — paging syntax is dialect-specific and no
+    /// portable form exists, so a page size without a template throws.
+    /// </para>
+    /// <para>
+    /// Paging costs more total server work, not less: <c>OFFSET n</c> is not a seek, so walking a
+    /// table of <c>N</c> rows scans roughly <c>N² / (2 × pageSize)</c> rows. What it buys is
+    /// bounded per-query work, shorter transactions and resumability. See
+    /// <see cref="DbExtractor{TRecord}.PageSize"/> for the full cost note.
+    /// </para>
     /// </remarks>
+    public int? PageSize { get; init; }
+
+
+
+    /// <summary>Rows to skip before the first yielded row. An alias of <see cref="ExtractorOptions.SkipItemCount"/>.</summary>
+    /// <remarks>
+    /// Maps to <see cref="ExtractorOptions.SkipItemCount"/>. When both are set,
+    /// <see cref="ExtractorOptions.SkipItemCount"/> wins: this alias is applied only while
+    /// <see cref="ExtractorOptions.SkipItemCount"/> is at its default of <c>0</c>. When a paging
+    /// template is set the skip is pushed into the query's offset, so the skipped rows are never
+    /// fetched. A negative value, or one that does not fit in an <see cref="int"/>, makes the
+    /// extractor constructor throw <see cref="ArgumentOutOfRangeException"/>.
+    /// </remarks>
+    [Obsolete("Use SkipItemCount on DbExtractorOptions instead. ServerOffset is an alias of SkipItemCount and will be removed in a future release.")]
     public long? ServerOffset { get; init; }
 
 
 
-    /// <summary>
-    /// Gets the server-side row limit for paging. Defaults to <see langword="null"/> (no paging).
-    /// </summary>
+    /// <summary>Total rows to return. An alias of <see cref="ExtractorOptions.MaximumItemCount"/>.</summary>
     /// <remarks>
-    /// Setting this switches server-side paging on. An unset <see cref="ServerOffset"/> is then
-    /// treated as <c>0</c>, though the property itself remains <see langword="null"/>.
+    /// Maps to <see cref="ExtractorOptions.MaximumItemCount"/>, which is what it meant in 0.12.0: a
+    /// cap on the total number of rows, not a round-trip size (that is <see cref="PageSize"/>).
+    /// When both are set, <see cref="ExtractorOptions.MaximumItemCount"/> wins: this alias is
+    /// applied only while <see cref="ExtractorOptions.MaximumItemCount"/> is at its default of
+    /// <see cref="int.MaxValue"/>. A value below 1, or one that does not fit in an
+    /// <see cref="int"/>, makes the extractor constructor throw
+    /// <see cref="ArgumentOutOfRangeException"/>.
     /// </remarks>
+    [Obsolete("Use MaximumItemCount (total rows) on DbExtractorOptions instead. For rows per round-trip use PageSize. ServerLimit is an alias of MaximumItemCount and will be removed in a future release.")]
     public long? ServerLimit { get; init; }
 
 
@@ -128,8 +159,7 @@ public sealed record DbExtractorOptions : ExtractorOptions
     /// </para>
     /// <para>
     /// A custom template must reference both <c>@PageOffset</c> and <c>@PageLimit</c> — those are
-    /// the parameter names supplied when <see cref="ServerOffset"/> and <see cref="ServerLimit"/>
-    /// are set.
+    /// the parameter names supplied whenever paging is active.
     /// </para>
     /// </remarks>
     public string? PagingClauseTemplate { get; init; } = PagingClauseTemplates.None;

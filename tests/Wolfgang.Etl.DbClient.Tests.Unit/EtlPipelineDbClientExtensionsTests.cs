@@ -105,8 +105,8 @@ public class EtlPipelineDbClientExtensionsTests
     [Fact]
     public async Task Extractor_builder_setters_propagate_to_the_underlying_extractor()
     {
-        // Server-side paging via the builder: ServerLimit=2, ServerOffset=1 →
-        // pipeline yields exactly rows 2 and 3.
+        // Server-side paging via the builder: skip 1, take 2 → rows 2 and 3. The skip goes
+        // into the query's offset because a template is set.
         using var src = CreateSourceWithRows(5);
         using var dest = CreateEmptyDestination();
 
@@ -114,8 +114,8 @@ public class EtlPipelineDbClientExtensionsTests
             .Create()
             .DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id")
             .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
-            .ServerOffset(1)
-            .ServerLimit(2)
+            .SkipItemCount(1)
+            .MaximumItemCount(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
             .RunAsync()
             ;
@@ -194,25 +194,46 @@ public class EtlPipelineDbClientExtensionsTests
         using var dest = CreateEmptyDestination();
 
         var extractor = new DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id");
-        Assert.Null(extractor.ServerLimit);
+        Assert.Null(extractor.PageSize);
 
-        // DbExtractor's paging is gated on BOTH ServerOffset AND ServerLimit
-        // being set (see DbExtractor.ApplyServerPaging), so setting both
-        // proves the setter path AND exercises paging end-to-end.
+        // Paging is gated on the template; PageSize tunes the round-trip and MaximumItemCount
+        // caps the total. Setting all three proves the setter path AND exercises paging
+        // end-to-end.
         await EtlPipeline
             .Create()
             .DbExtractor(extractor)
             .PagingClauseTemplate(PagingClauseTemplates.Sqlite)
-            .ServerOffset(0)
-            .ServerLimit(2)
+            .PageSize(2)
+            .MaximumItemCount(2)
             .DbLoader<Widget>(dest, "INSERT INTO dest (Id, Name) VALUES (@Id, @Name)")
             .RunAsync()
             ;
 
         // Setter on the builder mutated the caller's extractor.
-        Assert.Equal(0L, extractor.ServerOffset);
-        Assert.Equal(2L, extractor.ServerLimit);
+        Assert.Equal(2, extractor.PageSize);
+        Assert.Equal(2, extractor.MaximumItemCount);
         Assert.Equal(2L, CountRows(dest, "dest"));
+    }
+
+
+
+    [Fact]
+    public void Builder_ServerOffset_and_ServerLimit_forward_to_SkipItemCount_and_MaximumItemCount()
+    {
+        // The 0.12.0 builder methods alias the canonical names: ServerOffset is the skip and
+        // ServerLimit the TOTAL row count - not the round-trip size, which is PageSize.
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id");
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .ServerOffset(4)
+            .ServerLimit(3);
+
+        Assert.Equal(4, extractor.SkipItemCount);
+        Assert.Equal(3, extractor.MaximumItemCount);
+        Assert.Null(extractor.PageSize);
     }
 
 

@@ -84,12 +84,12 @@ public class DbOptionsDefaultsTests
             {
                 CommandTimeout = TimeSpan.FromSeconds(30),
                 ManageConnection = true,
-                ServerLimit = 100
+                PageSize = 100
             }
         );
 
         Assert.Equal(TimeSpan.FromSeconds(30), sut.CommandTimeout);
         Assert.True(sut.ManageConnection);
-        Assert.Equal(100, sut.ServerLimit);
+        Assert.Equal(100, sut.PageSize);
     }
 }

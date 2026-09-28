@@ -129,8 +129,7 @@ await EtlPipeline
     .DbExtractor<Invoice>(sourceConn, "SELECT * FROM Invoices WHERE Status = @Status")
     .Parameters(new DynamicParameters(new { Status = "paid" }))
     .PagingClauseTemplate(PagingClauseTemplates.SqlServer)  // required: paging syntax is dialect-specific
-    .ServerOffset(0)
-    .ServerLimit(1000)
+    .MaximumItemCount(1000)                                 // total rows; SkipItemCount(n) skips
     .DbLoader<Invoice>(destConn, "INSERT INTO PaidInvoices (Id, Total) VALUES (@Id, @Total)")
     .RunAsync();
 
