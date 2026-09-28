@@ -898,6 +898,42 @@ public class DbExtractorTests
 
 
     [Fact]
+    public void Constructor_when_options_ServerOffset_is_set_applies_it_to_SkipItemCount()
+    {
+        // The record's ServerOffset is folded into its SkipItemCount before the base constructor
+        // reads it, so the skip lives in one place whichever route configured it.
+        using var conn = TestDb.CreateConnection();
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName FROM People",
+            new DbExtractorOptions { ServerOffset = 7 }
+        );
+
+        Assert.Equal(7, extractor.SkipItemCount);
+        Assert.Equal(7L, extractor.ServerOffset);
+    }
+
+
+
+    [Fact]
+    public void Constructor_when_options_ServerOffset_is_negative_throws_and_names_the_property()
+    {
+        using var conn = TestDb.CreateConnection();
+        var options = new DbExtractorOptions { ServerOffset = -1 };
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People", options)
+        );
+
+        Assert.Equal("ServerOffset", ex.ParamName);
+    }
+
+
+
+    [Fact]
     public void ServerLimit_when_negative_throws_and_names_the_property()
     {
         using var conn = TestDb.CreateConnection();
