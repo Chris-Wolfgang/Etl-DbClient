@@ -218,6 +218,27 @@ public class EtlPipelineDbClientExtensionsTests
 
 
     [Fact]
+    public void Builder_ServerOffset_and_ServerLimit_forward_to_SkipItemCount_and_MaximumItemCount()
+    {
+        // The 0.12.0 builder methods alias the canonical names: ServerOffset is the skip and
+        // ServerLimit the TOTAL row count - not the round-trip size, which is PageSize.
+        using var src = CreateSourceWithRows(1);
+        var extractor = new DbExtractor<Widget>(src, "SELECT Id, Name FROM source ORDER BY Id");
+
+        _ = EtlPipeline
+            .Create()
+            .DbExtractor(extractor)
+            .ServerOffset(4)
+            .ServerLimit(3);
+
+        Assert.Equal(4, extractor.SkipItemCount);
+        Assert.Equal(3, extractor.MaximumItemCount);
+        Assert.Null(extractor.PageSize);
+    }
+
+
+
+    [Fact]
     public void DbExtractor_factories_throw_ArgumentNullException_on_null_inputs()
     {
         using var src = CreateSourceWithRows(1);

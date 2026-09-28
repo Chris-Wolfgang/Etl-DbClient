@@ -108,24 +108,31 @@ public sealed record DbExtractorOptions : ExtractorOptions
 
 
 
-    /// <summary>Rows to skip before the first yielded row, expressed as a server-side offset.</summary>
+    /// <summary>Rows to skip before the first yielded row. An alias of <see cref="ExtractorOptions.SkipItemCount"/>.</summary>
     /// <remarks>
-    /// Superseded by <c>SkipItemCount</c>, which this is applied to — the two were always the same
-    /// idea. When a paging template is set the skip is pushed into the query's offset, so the
-    /// skipped rows are never fetched.
+    /// Maps to <see cref="ExtractorOptions.SkipItemCount"/>. When both are set,
+    /// <see cref="ExtractorOptions.SkipItemCount"/> wins: this alias is applied only while
+    /// <see cref="ExtractorOptions.SkipItemCount"/> is at its default of <c>0</c>. When a paging
+    /// template is set the skip is pushed into the query's offset, so the skipped rows are never
+    /// fetched. A negative value, or one that does not fit in an <see cref="int"/>, makes the
+    /// extractor constructor throw <see cref="ArgumentOutOfRangeException"/>.
     /// </remarks>
-    [Obsolete("Use SkipItemCount on the extractor instead. ServerOffset is applied to it and will be removed in a future release.")]
+    [Obsolete("Use SkipItemCount on DbExtractorOptions instead. ServerOffset is an alias of SkipItemCount and will be removed in a future release.")]
     public long? ServerOffset { get; init; }
 
 
 
-    /// <summary>Rows per round-trip.</summary>
+    /// <summary>Total rows to return. An alias of <see cref="ExtractorOptions.MaximumItemCount"/>.</summary>
     /// <remarks>
-    /// Superseded by <see cref="PageSize"/>, which takes precedence when both are set. The name
-    /// changed because the meaning did: this is the size of each round-trip, not a cap on the
-    /// total number of rows returned — use <c>MaximumItemCount</c> for the total.
+    /// Maps to <see cref="ExtractorOptions.MaximumItemCount"/>, which is what it meant in 0.12.0: a
+    /// cap on the total number of rows, not a round-trip size (that is <see cref="PageSize"/>).
+    /// When both are set, <see cref="ExtractorOptions.MaximumItemCount"/> wins: this alias is
+    /// applied only while <see cref="ExtractorOptions.MaximumItemCount"/> is at its default of
+    /// <see cref="int.MaxValue"/>. A value below 1, or one that does not fit in an
+    /// <see cref="int"/>, makes the extractor constructor throw
+    /// <see cref="ArgumentOutOfRangeException"/>.
     /// </remarks>
-    [Obsolete("Use PageSize instead. ServerLimit is applied to it and will be removed in a future release. Note the meaning changed: this is rows per round-trip, not a cap on the total — use MaximumItemCount for that.")]
+    [Obsolete("Use MaximumItemCount (total rows) on DbExtractorOptions instead. For rows per round-trip use PageSize. ServerLimit is an alias of MaximumItemCount and will be removed in a future release.")]
     public long? ServerLimit { get; init; }
 
 
@@ -152,8 +159,7 @@ public sealed record DbExtractorOptions : ExtractorOptions
     /// </para>
     /// <para>
     /// A custom template must reference both <c>@PageOffset</c> and <c>@PageLimit</c> — those are
-    /// the parameter names supplied when <see cref="ServerOffset"/> and <see cref="ServerLimit"/>
-    /// are set.
+    /// the parameter names supplied whenever paging is active.
     /// </para>
     /// </remarks>
     public string? PagingClauseTemplate { get; init; } = PagingClauseTemplates.None;

@@ -45,12 +45,13 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
 
 
     /// <summary>
-    /// Sets <see cref="DbExtractor{TRecord}.ServerOffset"/> for server-side paging.
-    /// Combined with <see cref="ServerLimit"/> and
-    /// <see cref="PagingClauseTemplate"/>, the extractor appends the paging clause
-    /// to the caller's SQL.
+    /// Sets the rows to skip. An alias of <see cref="SkipItemCount"/>: it writes the same value.
     /// </summary>
-    /// <remarks>Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.</remarks>
+    /// <remarks>
+    /// Kept for source compatibility with 0.12.0. <see langword="null"/> means <c>0</c>. With a
+    /// <see cref="PagingClauseTemplate"/> set, the skip is pushed into the query's offset.
+    /// Because both methods write one value, whichever is called last wins.
+    /// </remarks>
     IDbExtractorBuilder<T> ServerOffset(long? offset);
 
 
@@ -88,15 +89,20 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
 
 
     /// <summary>
-    /// Sets <see cref="DbExtractor{TRecord}.ServerLimit"/> for server-side paging.
+    /// Sets the total number of rows to return. An alias of <see cref="MaximumItemCount"/>: it
+    /// writes the same value. For rows per round-trip use <see cref="PageSize"/>.
     /// </summary>
-    /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
+    /// <remarks>
+    /// Kept for source compatibility with 0.12.0, where it meant the total row count.
+    /// <see langword="null"/> restores the default of no limit. Because both methods write one
+    /// value, whichever is called last wins.
+    /// </remarks>
     IDbExtractorBuilder<T> ServerLimit(long? limit);
 
 
     /// <summary>
     /// Sets <see cref="DbExtractor{TRecord}.PagingClauseTemplate"/> — the SQL
-    /// snippet appended when <see cref="ServerLimit"/> switches paging on. Defaults to
+    /// snippet appended when paging is active (a skip, a maximum or a <see cref="PageSize"/>). Defaults to
     /// <see cref="PagingClauseTemplates.None"/>.
     /// </summary>
     /// <param name="template">
@@ -106,7 +112,7 @@ public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
     /// </param>
     /// <remarks>
     /// The clause is dialect-specific and there is no portable form, so this library does not
-    /// guess one. Activating paging (setting <see cref="ServerLimit"/>) while no template has
+    /// guess one. Setting <see cref="PageSize"/> while no template has
     /// been chosen throws
     /// <see cref="System.InvalidOperationException"/> rather than emitting SQL that only some
     /// engines accept. Use a preset, e.g.

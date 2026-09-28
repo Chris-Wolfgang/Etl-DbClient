@@ -696,11 +696,16 @@ public class DbExtractorTests
         // The ergonomics gap this closes: one extractor, no caller-written loop.
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
 
-        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
-        {
-            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
-            PageSize = 3
-        };
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                PageSize = 3
+            }
+        );
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
@@ -721,12 +726,17 @@ public class DbExtractorTests
         // still needed rather than a full page that would be partly discarded.
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
 
-        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
-        {
-            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
-            PageSize = 4,
-            MaximumItemCount = 10
-        };
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                PageSize = 4,
+                MaximumItemCount = 10
+            }
+        );
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
@@ -741,12 +751,17 @@ public class DbExtractorTests
     {
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
 
-        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id")
-        {
-            PagingClauseTemplate = PagingClauseTemplates.Sqlite,
-            SkipItemCount = 15,
-            PageSize = 2
-        };
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                SkipItemCount = 15,
+                PageSize = 2
+            }
+        );
 
         var records = await extractor.ExtractAsync().ToListAsync();
 
@@ -766,10 +781,12 @@ public class DbExtractorTests
         // scan that looks correct in development.
         using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 5);
 
-        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People ORDER BY id")
-        {
-            PageSize = 2
-        };
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName FROM People ORDER BY id",
+            new DbExtractorOptions { PageSize = 2 }
+        );
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
@@ -856,16 +873,24 @@ public class DbExtractorTests
 
 
     [Fact]
-    public void ServerLimit_forwards_to_PageSize()
+    public void ServerLimit_forwards_to_MaximumItemCount()
     {
+        // ServerLimit meant the TOTAL row count in 0.12.0, so it aliases MaximumItemCount, not
+        // PageSize (rows per round-trip).
         using var conn = TestDb.CreateConnection();
         var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
 
-        extractor.ServerLimit = 25;
-        Assert.Equal(25, extractor.PageSize);
+        Assert.Null(extractor.ServerLimit);
 
-        extractor.PageSize = 40;
+        extractor.ServerLimit = 25;
+        Assert.Equal(25, extractor.MaximumItemCount);
+        Assert.Null(extractor.PageSize);
+
+        extractor.MaximumItemCount = 40;
         Assert.Equal(40L, extractor.ServerLimit);
+
+        extractor.ServerLimit = null;
+        Assert.Equal(int.MaxValue, extractor.MaximumItemCount);
     }
 
 
@@ -934,6 +959,74 @@ public class DbExtractorTests
 
 
     [Fact]
+    public void Constructor_when_options_ServerLimit_is_set_applies_it_to_MaximumItemCount()
+    {
+        using var conn = TestDb.CreateConnection();
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName FROM People",
+            new DbExtractorOptions { ServerLimit = 7 }
+        );
+
+        Assert.Equal(7, extractor.MaximumItemCount);
+        Assert.Null(extractor.PageSize);
+    }
+
+
+
+    [Fact]
+    public void Constructor_when_options_ServerLimit_is_below_one_throws_and_names_the_property()
+    {
+        using var conn = TestDb.CreateConnection();
+        var options = new DbExtractorOptions { ServerLimit = 0 };
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People", options)
+        );
+
+        Assert.Equal("ServerLimit", ex.ParamName);
+    }
+
+
+
+    [Fact]
+    public void Constructor_when_options_set_both_SkipItemCount_and_ServerOffset_SkipItemCount_wins()
+    {
+        using var conn = TestDb.CreateConnection();
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName FROM People",
+            new DbExtractorOptions { SkipItemCount = 3, ServerOffset = 9 }
+        );
+
+        Assert.Equal(3, extractor.SkipItemCount);
+    }
+
+
+
+    [Fact]
+    public void Constructor_when_options_set_both_MaximumItemCount_and_ServerLimit_MaximumItemCount_wins()
+    {
+        using var conn = TestDb.CreateConnection();
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName FROM People",
+            new DbExtractorOptions { MaximumItemCount = 3, ServerLimit = 9 }
+        );
+
+        Assert.Equal(3, extractor.MaximumItemCount);
+    }
+
+
+
+    [Fact]
     public void ServerLimit_when_negative_throws_and_names_the_property()
     {
         using var conn = TestDb.CreateConnection();
@@ -950,9 +1043,12 @@ public class DbExtractorTests
     public void PageSize_below_one_throws()
     {
         using var conn = TestDb.CreateConnection();
-        var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People");
+        var options = new DbExtractorOptions { PageSize = 0 };
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => extractor.PageSize = 0);
+        Assert.Throws<ArgumentOutOfRangeException>
+        (
+            () => new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName FROM People", options)
+        );
     }
 
 

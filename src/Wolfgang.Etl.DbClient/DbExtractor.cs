@@ -435,28 +435,49 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
     /// <summary>
-    /// Folds the deprecated <see cref="DbExtractorOptions.ServerOffset"/> alias into
-    /// <see cref="ExtractorOptions.SkipItemCount"/> before the base class reads the record, so the
-    /// skip lives in one place and is never assigned through the deprecated base setter.
+    /// Folds the deprecated aliases on <paramref name="options"/> into the base record's properties
+    /// before the base class reads it: <see cref="DbExtractorOptions.ServerOffset"/> into
+    /// <see cref="ExtractorOptions.SkipItemCount"/> and <see cref="DbExtractorOptions.ServerLimit"/>
+    /// into <see cref="ExtractorOptions.MaximumItemCount"/>. The canonical property wins: an alias
+    /// is applied only while its target is still at its default (<c>0</c> and
+    /// <see cref="int.MaxValue"/> respectively).
     /// </summary>
     /// <param name="options">The caller's configuration, or <c>null</c>.</param>
     /// <returns>
-    /// <paramref name="options"/> unchanged when it is <c>null</c> or carries no
-    /// <c>ServerOffset</c>; otherwise a copy whose <c>SkipItemCount</c> is the offset.
+    /// <paramref name="options"/> unchanged when no alias applies; otherwise a copy with the alias
+    /// values moved onto their targets.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// <c>ServerOffset</c> is negative or does not fit in an <see cref="int"/>.
+    /// <c>ServerOffset</c> is negative, <c>ServerLimit</c> is less than 1, or either does not fit in
+    /// an <see cref="int"/>.
     /// </exception>
     private static DbExtractorOptions? ResolveBaseOptions(DbExtractorOptions? options)
     {
-#pragma warning disable CS0618 // Reads the deprecated ServerOffset alias in order to forward it to SkipItemCount.
-        var serverOffset = options?.ServerOffset;
-        const string propertyName = nameof(DbExtractorOptions.ServerOffset);
+        if (options is null)
+        {
+            return null;
+        }
+
+#pragma warning disable CS0618 // Reads the deprecated aliases in order to forward them to their targets.
+        var serverOffset = options.ServerOffset;
+        var serverLimit = options.ServerLimit;
+        const string offsetName = nameof(DbExtractorOptions.ServerOffset);
+        const string limitName = nameof(DbExtractorOptions.ServerLimit);
 #pragma warning restore CS0618
 
-        return serverOffset.HasValue
-            ? options! with { SkipItemCount = ToRowCount(serverOffset.Value, propertyName) }
-            : options;
+        var resolved = options;
+
+        if (serverOffset.HasValue && resolved.SkipItemCount == 0)
+        {
+            resolved = resolved with { SkipItemCount = ToRowCount(serverOffset.Value, offsetName) };
+        }
+
+        if (serverLimit.HasValue && resolved.MaximumItemCount == int.MaxValue)
+        {
+            resolved = resolved with { MaximumItemCount = ToTotalRowCount(serverLimit.Value, limitName) };
+        }
+
+        return resolved;
     }
 
 
@@ -662,30 +683,43 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     public int? PageSize
     {
         get => _pageSize;
-        set
-        {
-            if (value.HasValue && value.Value < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), "PageSize cannot be less than 1.");
-            }
-
-            _pageSize = value;
-        }
+        [Obsolete("Configure PageSize through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _pageSize = ValidatePageSize(value, nameof(value));
     }
 
 
 
-    /// <summary>Rows to skip before the first yielded row, expressed as a server-side offset.</summary>
+    /// <summary>
+    /// Rejects a page size below 1. Shared by the <see cref="PageSize"/> setter and the options
+    /// constructor so both routes validate identically.
+    /// </summary>
+    /// <param name="value">The page size to check.</param>
+    /// <param name="paramName">The parameter name reported by the exception.</param>
+    /// <returns><paramref name="value"/>, unchanged.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is less than 1.</exception>
+    private static int? ValidatePageSize(int? value, string paramName)
+    {
+        if (value.HasValue && value.Value < 1)
+        {
+            throw new ArgumentOutOfRangeException(paramName, "PageSize cannot be less than 1.");
+        }
+
+        return value;
+    }
+
+
+
+    /// <summary>Rows to skip before the first yielded row. An alias of <c>SkipItemCount</c>.</summary>
     /// <remarks>
-    /// Superseded by <c>SkipItemCount</c>, which this property forwards to — the two were
-    /// always the same idea, so there is one value rather than two that can disagree. When a
-    /// paging template is set the skip is pushed into the query's offset, so the skipped rows are
-    /// never fetched.
+    /// Maps to <c>SkipItemCount</c>: reading returns it and writing sets it, so there is one value
+    /// rather than two that can disagree. <see langword="null"/> writes <c>0</c>. When a paging
+    /// template is set the skip is pushed into the query's offset, so the skipped rows are never
+    /// fetched. Configure <c>SkipItemCount</c> on <see cref="DbExtractorOptions"/> instead.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// The specified value does not fit in an <see cref="int"/>.
+    /// The specified value is negative or does not fit in an <see cref="int"/>.
     /// </exception>
-    [Obsolete("Use SkipItemCount instead. ServerOffset forwards to it and will be removed in a future release.")]
+    [Obsolete("Use SkipItemCount on DbExtractorOptions instead. ServerOffset is an alias of SkipItemCount and will be removed in a future release.")]
     public long? ServerOffset
     {
         get => SkipItemCount;
@@ -694,20 +728,22 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
-    /// <summary>Rows per round-trip.</summary>
+    /// <summary>Total rows to return. An alias of <c>MaximumItemCount</c>.</summary>
     /// <remarks>
-    /// Superseded by <see cref="PageSize"/>, which this property forwards to. The name changed
-    /// because the meaning did: this is the size of each round-trip, not a cap on the total number
-    /// of rows returned. Use <c>MaximumItemCount</c> for the total.
+    /// Maps to <c>MaximumItemCount</c>, which is what it meant in 0.12.0: a cap on the total number
+    /// of rows, not a round-trip size (that is <see cref="PageSize"/>). Reading returns
+    /// <see langword="null"/> while <c>MaximumItemCount</c> is at its default of
+    /// <see cref="int.MaxValue"/>; writing <see langword="null"/> restores that default.
+    /// Configure <c>MaximumItemCount</c> on <see cref="DbExtractorOptions"/> instead.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// The specified value does not fit in an <see cref="int"/>.
+    /// The specified value is less than 1 or does not fit in an <see cref="int"/>.
     /// </exception>
-    [Obsolete("Use PageSize instead. ServerLimit forwards to it and will be removed in a future release. Note the meaning changed: this is rows per round-trip, not a cap on the total — use MaximumItemCount for that.")]
+    [Obsolete("Use MaximumItemCount (total rows) on DbExtractorOptions instead. For rows per round-trip use PageSize. ServerLimit is an alias of MaximumItemCount and will be removed in a future release.")]
     public long? ServerLimit
     {
-        get => PageSize;
-        set => PageSize = value.HasValue ? ToRowCount(value.Value, nameof(ServerLimit)) : (int?)null;
+        get => MaximumItemCount == int.MaxValue ? null : MaximumItemCount;
+        set => MaximumItemCount = value.HasValue ? ToTotalRowCount(value.Value, nameof(ServerLimit)) : int.MaxValue;
     }
 
 
@@ -750,12 +786,39 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
 
 
 
+    /// <summary>
+    /// Narrows a <see cref="long"/> total row count from an obsolete alias of
+    /// <c>MaximumItemCount</c>, which must be at least 1.
+    /// </summary>
+    /// <param name="value">The row count to narrow.</param>
+    /// <param name="propertyName">The obsolete property the value came from, for the message.</param>
+    /// <returns>The value as an <see cref="int"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="value"/> is less than 1 or does not fit in an <see cref="int"/>.
+    /// </exception>
+    private static int ToTotalRowCount(long value, string propertyName)
+    {
+        if (value < 1)
+        {
+            throw new ArgumentOutOfRangeException
+            (
+                propertyName,
+                value,
+                $"{propertyName} must be at least 1. It is an alias of MaximumItemCount, the total number of rows to return."
+            );
+        }
+
+        return ToRowCount(value, propertyName);
+    }
+
+
+
 
     private string? _pagingClauseTemplate = PagingClauseTemplates.None;
 
     /// <summary>
-    /// SQL fragment appended to the command text when both
-    /// <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are set.
+    /// SQL fragment appended to the command text when paging is active — that is, when a
+    /// <c>SkipItemCount</c>, a <c>MaximumItemCount</c> or a <see cref="PageSize"/> is set.
     /// Bound as Dapper parameters <c>@PageOffset</c> and <c>@PageLimit</c>.
     /// </summary>
     /// <remarks>
@@ -1421,13 +1484,11 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
         _validateSchemaOnStart = options.ValidateSchemaOnStart;
         _pagingClauseTemplate = options.PagingClauseTemplate;
 
-        // PageSize wins over the obsolete ServerLimit. ServerOffset is not handled here: it lands
-        // on SkipItemCount, which the base class owns, so ResolveBaseOptions folds it into the
+        _pageSize = ValidatePageSize(options.PageSize, nameof(DbExtractorOptions.PageSize));
+
+        // ServerOffset and ServerLimit are not handled here: they alias SkipItemCount and
+        // MaximumItemCount, which the base class owns, so ResolveBaseOptions folds them into the
         // record before the base constructor reads it.
-#pragma warning disable CS0618 // Reads the deprecated ServerLimit alias in order to forward it to PageSize.
-        PageSize = options.PageSize
-            ?? (options.ServerLimit.HasValue ? ToRowCount(options.ServerLimit.Value, nameof(DbExtractorOptions.ServerLimit)) : (int?)null);
-#pragma warning restore CS0618
         _totalCountQuery = options.TotalCountQuery;
     }
 }
