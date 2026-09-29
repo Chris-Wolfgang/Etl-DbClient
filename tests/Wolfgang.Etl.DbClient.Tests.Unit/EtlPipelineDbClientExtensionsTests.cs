@@ -17,8 +17,13 @@
 // CsvExtractor pipeline extension yet (sibling issue). Will land in
 // a follow-up once ETL-Csv catches up.
 
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.Abstractions;
