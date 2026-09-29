@@ -33,6 +33,7 @@ public sealed class CockroachDbFixture : DbProviderFixtureBase
         // moving to a new minor.
         _container = new ContainerBuilder()
             .WithImage("cockroachdb/cockroach:v24.3.5")
+            .WithEntrypoint("/cockroach/cockroach")
             .WithCommand("start-single-node", "--insecure")
             .WithPortBinding(CockroachSqlPort, true)
             // Wait by actually executing a SQL probe inside the container —
