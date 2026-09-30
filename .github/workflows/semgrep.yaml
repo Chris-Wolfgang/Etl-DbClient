@@ -60,7 +60,9 @@ jobs:
       - name: Install semgrep (from PyPI, no account required)
         run: |
           # Hash-pinned (OSSF Scorecard pinned-dependencies); Dependabot bumps .github/requirements/semgrep.txt
-          python -m pip install --user --require-hashes -r .github/requirements/semgrep.txt
+          # --no-deps: the tree overrides one of semgrep's own pins (see semgrep-overrides.txt),
+          # which pip's resolver would otherwise re-apply.
+          python -m pip install --user --no-deps --require-hashes -r .github/requirements/semgrep.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Run Semgrep
