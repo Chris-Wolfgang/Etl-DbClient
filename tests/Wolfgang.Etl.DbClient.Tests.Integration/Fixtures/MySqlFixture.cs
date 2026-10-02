@@ -1,12 +1,10 @@
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using MySqlConnector;
 using Testcontainers.MySql;
 
 namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 
-[ExcludeFromCodeCoverage]
 public sealed class MySqlFixture : DbProviderFixtureBase
 {
     private MySqlContainer? _container;

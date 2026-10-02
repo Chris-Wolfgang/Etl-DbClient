@@ -10,7 +10,6 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 /// SQLite gets the same matrix row treatment as the container-backed providers.
 /// No Docker required, so this fixture is always <c>Available</c>.
 /// </summary>
-[ExcludeFromCodeCoverage]
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",
     Justification = "Lifetime is managed by xunit via IAsyncLifetime.DisposeAsync, which disposes _holdOpen in StopAsync.")]
 public sealed class SqliteFixture : DbProviderFixtureBase
