@@ -22,7 +22,7 @@ public sealed class DocExamplesTests
     // Discovered once, at test-discovery time.
     public static IEnumerable<object?[]> Snippets()
     {
-        var srcRoot = LocateSrcRoot();
+        var srcRoot = LocateSrcRoot(AppContext.BaseDirectory);
         foreach (var file in Directory.EnumerateFiles(srcRoot, "*.cs", SearchOption.AllDirectories))
         {
             // Skip generated / obj / bin.
@@ -44,6 +44,32 @@ public sealed class DocExamplesTests
     [MemberData(nameof(Snippets))]
     public void XmlDocCodeBlock_compiles(string file, int line, string snippet)
     {
+        var errors = CompileErrors(file, line, snippet);
+
+        Assert.True(errors.Length == 0, DescribeCompileFailure(file, line, snippet, errors));
+    }
+
+
+
+    [Fact]
+    public void CompileErrors_when_snippet_does_not_compile_reports_each_diagnostic_with_its_location()
+    {
+        const string snippet = "var x = UndefinedSymbol;";
+
+        var errors = CompileErrors("Broken.cs", 7, snippet);
+        var message = DescribeCompileFailure("Broken.cs", 7, snippet, errors);
+
+        Assert.Contains(errors, d => string.Equals(d.Id, "CS0103", StringComparison.Ordinal));
+        Assert.Contains("Doc example at Broken.cs:7 does not compile.", message, StringComparison.Ordinal);
+        Assert.Contains(snippet, message, StringComparison.Ordinal);
+        Assert.Contains("CS0103:", message, StringComparison.Ordinal);
+        Assert.Contains("at Broken.cs:7 line ", message, StringComparison.Ordinal);
+    }
+
+
+
+    private static Diagnostic[] CompileErrors(string file, int line, string snippet)
+    {
         var wrapped = Harness.Wrap(file, line, snippet);
         var tree = CSharpSyntaxTree.ParseText(wrapped, path: $"{file}:{line}");
 
@@ -56,33 +82,36 @@ public sealed class DocExamplesTests
                 allowUnsafe: false,
                 nullableContextOptions: NullableContextOptions.Enable));
 
-        var errors = compilation
+        return compilation
             .GetDiagnostics()
             .Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToArray();
+    }
 
-        if (errors.Length > 0)
+
+
+    private static string DescribeCompileFailure(string file, int line, string snippet, Diagnostic[] errors)
+    {
+        var msg = new StringBuilder();
+        msg.AppendLine($"Doc example at {file}:{line} does not compile.");
+        msg.AppendLine();
+        msg.AppendLine("Original snippet:");
+        msg.AppendLine("---");
+        msg.AppendLine(snippet);
+        msg.AppendLine("---");
+        msg.AppendLine();
+        msg.AppendLine("Roslyn diagnostics:");
+        foreach (var d in errors)
         {
-            var msg = new StringBuilder();
-            msg.AppendLine($"Doc example at {file}:{line} does not compile.");
-            msg.AppendLine();
-            msg.AppendLine("Original snippet:");
-            msg.AppendLine("---");
-            msg.AppendLine(snippet);
-            msg.AppendLine("---");
-            msg.AppendLine();
-            msg.AppendLine("Roslyn diagnostics:");
-            foreach (var d in errors)
+            msg.AppendLine($"  {d.Id}: {d.GetMessage()}");
+            var span = d.Location.GetLineSpan();
+            if (span.IsValid)
             {
-                msg.AppendLine($"  {d.Id}: {d.GetMessage()}");
-                var span = d.Location.GetLineSpan();
-                if (span.IsValid)
-                {
-                    msg.AppendLine($"    at {span.Path} line {span.StartLinePosition.Line + 1}");
-                }
+                msg.AppendLine($"    at {span.Path} line {span.StartLinePosition.Line + 1}");
             }
-            Assert.Fail(msg.ToString());
         }
+
+        return msg.ToString();
     }
 
     // ------------------------------------------------------------------
@@ -150,13 +179,13 @@ public sealed class DocExamplesTests
     // ------------------------------------------------------------------
     // Repo layout
 
-    private static string LocateSrcRoot()
+    internal static string LocateSrcRoot(string startDirectory)
     {
         // Walk up from AppContext.BaseDirectory (the test host's output
         // directory) looking for a folder that contains src/Wolfgang.Etl.DbClient/.
         // Deliberately does NOT use CallerFilePath: CI's deterministic-path
         // rewrite turns that into "/_/" — see reference_callerfilepath_ci_deterministic_paths.
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        var dir = new DirectoryInfo(startDirectory);
         while (dir is not null)
         {
             var candidate = Path.Combine(dir.FullName, "src", "Wolfgang.Etl.DbClient");
@@ -167,7 +196,27 @@ public sealed class DocExamplesTests
             dir = dir.Parent;
         }
         throw new DirectoryNotFoundException(
-            "Could not locate src/Wolfgang.Etl.DbClient/ walking up from " + AppContext.BaseDirectory);
+            "Could not locate src/Wolfgang.Etl.DbClient/ walking up from " + startDirectory);
+    }
+
+
+
+    [Fact]
+    public void LocateSrcRoot_when_no_ancestor_contains_the_src_project_throws_DirectoryNotFoundException()
+    {
+        var start = Path.Combine(Path.GetTempPath(), "dbclient-docexamples-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(start);
+
+        try
+        {
+            var ex = Assert.Throws<DirectoryNotFoundException>(() => LocateSrcRoot(start));
+
+            Assert.Contains(start, ex.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(start);
+        }
     }
 }
 
@@ -246,11 +295,9 @@ internal static class Harness
             {
                 return;
             }
-            try
-            {
-                refs.Add(MetadataReference.CreateFromFile(dll));
-            }
-            catch (BadImageFormatException) { /* native / resource-only */ }
+            // CreateFromFile defers reading the image, so it does not throw for a
+            // non-managed file; a bad reference would surface as a compile error.
+            refs.Add(MetadataReference.CreateFromFile(dll));
         }
 
         // 1. The trusted-platform-assemblies list — every BCL DLL the runtime

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -11,7 +10,6 @@ public class MySqlCollection : ICollectionFixture<MySqlFixture> { }
 
 [Collection("MySql")]
 [Trait("Category", "mysql")]
-[ExcludeFromCodeCoverage]
 public sealed class MySqlExtractorTests : DbExtractorIntegrationTestsBase
 {
     private readonly MySqlFixture _fixture;
@@ -23,7 +21,6 @@ public sealed class MySqlExtractorTests : DbExtractorIntegrationTestsBase
 
 [Collection("MySql")]
 [Trait("Category", "mysql")]
-[ExcludeFromCodeCoverage]
 public sealed class MySqlLoaderTests : DbLoaderIntegrationTestsBase
 {
     private readonly MySqlFixture _fixture;

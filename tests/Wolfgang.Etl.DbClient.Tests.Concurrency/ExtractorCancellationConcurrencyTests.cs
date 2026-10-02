@@ -20,7 +20,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
@@ -51,7 +50,6 @@ using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Concurrency;
 
-[ExcludeFromCodeCoverage]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 [Table("cancel_probe")]
 internal sealed class CancelProbe
@@ -98,7 +96,6 @@ public class ExtractorCancellationConcurrencyTests
                 "SELECT id AS Id, value AS Value FROM cancel_probe ORDER BY id");
 
             using var cts = new CancellationTokenSource();
-            var observed = 0;
 
             // Fire cancellation concurrently. Coyote's scheduler decides
             // when the cancel Task and the enumeration Task advance
@@ -110,22 +107,16 @@ public class ExtractorCancellationConcurrencyTests
                 cts.Cancel();
             });
 
-            var enumerateTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await foreach (var _ in extractor.ExtractAsync(cts.Token).ConfigureAwait(false))
-                    {
-                        observed++;
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // expected — cancellation is a valid termination path
-                }
-            });
+            var enumerateTask = Task.Run(() => Outcome.DrainAsync(extractor.ExtractAsync(cts.Token)));
 
             Task.WaitAll(cancelTask, enumerateTask);
+            var (observed, fault) = enumerateTask.Result;
+
+            // Cancellation is a valid termination path; any other fault is a bug.
+            Microsoft.Coyote.Specifications.Specification.Assert(
+                fault is null or OperationCanceledException,
+                "Enumeration ended with an unexpected exception: {0}",
+                fault);
 
             // Invariant: extractor's own counter never exceeds what the
             // consumer observed. If the extractor incremented the count
@@ -136,6 +127,83 @@ public class ExtractorCancellationConcurrencyTests
                 "Extractor CurrentItemCount ({0}) exceeded observed rows ({1}) — count/yield ordering bug.",
                 extractor.CurrentItemCount, observed);
         });
+    }
+
+
+
+    /// <summary>
+    /// The race's two extremes, pinned deterministically: with no cancellation
+    /// every row reaches the consumer and the counter matches it exactly.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Concurrency")]
+    public async Task ExtractAsync_when_never_cancelled_yields_every_row_and_counts_them()
+    {
+        await using var conn = await CreateSeededConnectionAsync();
+        var extractor = new DbExtractor<CancelProbe>(
+            conn,
+            "SELECT id AS Id, value AS Value FROM cancel_probe ORDER BY id");
+        var rows = new List<CancelProbe>();
+
+        var (observed, fault) = await Outcome.DrainAsync(Capture(extractor.ExtractAsync(CancellationToken.None), rows));
+
+        Assert.Null(fault);
+        Assert.Equal(5, observed);
+        Assert.Equal(5, extractor.CurrentItemCount);
+        Assert.Equal
+        (
+            new[] { "1:a", "2:b", "3:c", "4:d", "5:e" },
+            rows.Select(r => $"{r.Id}:{r.Value}")
+        );
+    }
+
+
+
+    /// <summary>
+    /// The other extreme: a token cancelled before the first row ends the
+    /// enumeration with <see cref="OperationCanceledException"/> and counts nothing.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Concurrency")]
+    public async Task ExtractAsync_when_cancelled_before_first_row_throws_OperationCanceledException_and_counts_nothing()
+    {
+        await using var conn = await CreateSeededConnectionAsync();
+        var extractor = new DbExtractor<CancelProbe>(
+            conn,
+            "SELECT id AS Id, value AS Value FROM cancel_probe ORDER BY id");
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var (observed, fault) = await Outcome.DrainAsync(extractor.ExtractAsync(cts.Token));
+
+        Assert.IsAssignableFrom<OperationCanceledException>(fault);
+        Assert.Equal(0, observed);
+        Assert.Equal(0, extractor.CurrentItemCount);
+    }
+
+
+
+    private static async Task<SqliteConnection> CreateSeededConnectionAsync()
+    {
+        var conn = new SqliteConnection("Data Source=:memory:");
+        await conn.OpenAsync();
+        await using var seed = conn.CreateCommand();
+        seed.CommandText =
+            "CREATE TABLE cancel_probe (id INTEGER PRIMARY KEY, value TEXT NOT NULL); " +
+            "INSERT INTO cancel_probe (id, value) VALUES (1,'a'), (2,'b'), (3,'c'), (4,'d'), (5,'e');";
+        await seed.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+
+
+    private static async IAsyncEnumerable<CancelProbe> Capture(IAsyncEnumerable<CancelProbe> source, List<CancelProbe> rows)
+    {
+        await foreach (var row in source.ConfigureAwait(false))
+        {
+            rows.Add(row);
+            yield return row;
+        }
     }
 
     // ------------------------------------------------------------------
