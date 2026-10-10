@@ -1,5 +1,8 @@
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 // Constructs via the deprecated constructors. Migrating to the options overloads is
