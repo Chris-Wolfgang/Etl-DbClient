@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -11,7 +10,6 @@ public class SqliteCollection : ICollectionFixture<SqliteFixture> { }
 
 [Collection("Sqlite")]
 [Trait("Category", "sqlite")]
-[ExcludeFromCodeCoverage]
 public sealed class SqliteExtractorTests : DbExtractorIntegrationTestsBase
 {
     private readonly SqliteFixture _fixture;
@@ -23,7 +21,6 @@ public sealed class SqliteExtractorTests : DbExtractorIntegrationTestsBase
 
 [Collection("Sqlite")]
 [Trait("Category", "sqlite")]
-[ExcludeFromCodeCoverage]
 public sealed class SqliteLoaderTests : DbLoaderIntegrationTestsBase
 {
     private readonly SqliteFixture _fixture;

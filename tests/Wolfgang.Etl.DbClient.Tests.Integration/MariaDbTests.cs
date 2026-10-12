@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -11,7 +10,6 @@ public class MariaDbCollection : ICollectionFixture<MariaDbFixture> { }
 
 [Collection("MariaDb")]
 [Trait("Category", "mariadb")]
-[ExcludeFromCodeCoverage]
 public sealed class MariaDbExtractorTests : DbExtractorIntegrationTestsBase
 {
     private readonly MariaDbFixture _fixture;
@@ -23,7 +21,6 @@ public sealed class MariaDbExtractorTests : DbExtractorIntegrationTestsBase
 
 [Collection("MariaDb")]
 [Trait("Category", "mariadb")]
-[ExcludeFromCodeCoverage]
 public sealed class MariaDbLoaderTests : DbLoaderIntegrationTestsBase
 {
     private readonly MariaDbFixture _fixture;

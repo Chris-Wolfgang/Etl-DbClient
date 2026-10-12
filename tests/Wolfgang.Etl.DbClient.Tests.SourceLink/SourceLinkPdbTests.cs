@@ -8,7 +8,6 @@
 // works by construction. If any breaks, the consumer's debugger silently
 // falls back to decompiled placeholders. Refs #144.
 
-using System.Net.Http;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text.Json;
@@ -94,101 +93,34 @@ public class SourceLinkPdbTests
     }
 
     /// <summary>
-    /// Best-effort reachability check: pick the first this-repo SourceLink
-    /// mapping, substitute the wildcard for a representative source path,
-    /// and verify github.com serves it (HTTP 200). Catches force-pushed /
-    /// deleted commits that would leave debuggers with a broken raw URL.
-    /// Runs only when the SourceLink URL has a concrete SHA (post-tag /
-    /// post-merge builds) — skipped on local dev where the URL still has
-    /// the "*" placeholder.
+    /// The SourceLink mapping for this repo must pin a concrete 40-hex commit
+    /// SHA. The value always ends in a <c>/*</c> path wildcard (the debugger
+    /// substitutes the document path there), so the only thing that can be
+    /// checked offline is that the segment before it is a real SHA rather than
+    /// a branch name or a placeholder. A branch name would make every debug
+    /// session fetch whatever the branch points at today, not the source the
+    /// binary was built from.
     /// </summary>
     [Fact]
-    public async Task Sourcelink_github_raw_url_resolves_when_sha_is_pinned()
+    public void Sourcelink_github_raw_url_pins_a_commit_sha()
     {
         var pdbPath = LocateRuntimePdb();
         using var stream = File.OpenRead(pdbPath);
         using var provider = MetadataReaderProvider.FromPortablePdbStream(stream);
         var reader = provider.GetMetadataReader();
 
-        var payload = ReadSourceLinkPayload(reader);
-        if (string.IsNullOrEmpty(payload))
-        {
-            // First test already failed with a specific diagnostic; nothing
-            // to check here.
-            return;
-        }
-
-        using var doc = JsonDocument.Parse(payload);
-        if (!doc.RootElement.TryGetProperty("documents", out var documents))
-        {
-            return;
-        }
-
-        var ourMapping = documents.EnumerateObject()
-            .Where(m => m.Value.GetString()?.Contains("Chris-Wolfgang/Etl-DbClient", StringComparison.OrdinalIgnoreCase) == true)
+        using var doc = JsonDocument.Parse(ReadSourceLinkPayload(reader));
+        var ourMapping = doc.RootElement
+            .GetProperty("documents")
+            .EnumerateObject()
             .Select(m => m.Value.GetString())
-            .FirstOrDefault();
+            .First(v => v?.Contains("Chris-Wolfgang/Etl-DbClient", StringComparison.OrdinalIgnoreCase) == true);
 
-        if (ourMapping is null)
-        {
-            return;
-        }
-
-        // A wildcard URL like `https://raw.githubusercontent.com/Chris-Wolfgang/Etl-DbClient/*/*`
-        // has no concrete SHA — skip on local dev / branch builds. Only
-        // exercise the reachability probe when the URL is fully resolved
-        // (as in tag / release builds where Microsoft.SourceLink.GitHub
-        // has substituted the commit SHA).
-        if (ourMapping.Contains('*', StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        // Pick a representative source path we know exists. Replace the
-        // trailing '*' segment (if the URL still had one it would have
-        // been skipped above) — take the URL as-is and probe.
-        var probeUrl = ourMapping.Replace(
-            "raw.githubusercontent.com/Chris-Wolfgang/Etl-DbClient",
-            "raw.githubusercontent.com/Chris-Wolfgang/Etl-DbClient",
-            StringComparison.Ordinal);
-
-        // Substitute the local path prefix from the JSON KEY into the URL.
-        // For simplicity, just HEAD the URL as-is and assert not-404.
-        //
-        // ShortLivedHttpClient: this HttpClient is created ONCE per test
-        // run, only for the SourceLink probe. Socket exhaustion is a
-        // service-class concern, not a one-shot test concern; the
-        // dispose-after-use pattern is correct here.
-        //
-        // UsingStatementResourceInitialization: the only initializer
-        // value (TimeSpan.FromSeconds(15)) is a value-type construction
-        // that cannot throw, so initializing inside the `using` header
-        // is safe — the "throw between construction and using" hazard
-        // the rule guards against does not apply.
-        // ReSharper disable once ShortLivedHttpClient
-        // ReSharper disable once UsingStatementResourceInitialization
-        using var http = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
-        using var req = new HttpRequestMessage(HttpMethod.Head, probeUrl);
-        try
-        {
-            using var response = await http.SendAsync(req);
-            // 200 or 302 are fine; 404 means the SHA no longer resolves
-            // (force-pushed / repo renamed). 429 (rate-limited) is not
-            // an assertion failure.
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                Assert.Fail($"SourceLink URL 404s — commit SHA no longer resolves: {probeUrl}");
-            }
-        }
-        catch (HttpRequestException)
-        {
-            // Network unavailable / GitHub outage — don't fail the test on
-            // infra hiccups; the deterministic checks above cover the
-            // per-PR gate.
-        }
+        Assert.Matches
+        (
+            @"^https://raw\.githubusercontent\.com/Chris-Wolfgang/Etl-DbClient/[0-9a-f]{40}/\*$",
+            ourMapping
+        );
     }
 
     // ------------------------------------------------------------------
@@ -201,19 +133,10 @@ public class SourceLinkPdbTests
         return Path.Combine(AppContext.BaseDirectory, "Wolfgang.Etl.DbClient.pdb");
     }
 
-    private static string ReadSourceLinkPayload(MetadataReader reader)
-    {
-        foreach (var handle in reader.CustomDebugInformation)
-        {
-            var cdi = reader.GetCustomDebugInformation(handle);
-            var kindGuid = reader.GetGuid(cdi.Kind);
-            if (kindGuid != SourceLinkGuid)
-            {
-                continue;
-            }
-            var blob = reader.GetBlobBytes(cdi.Value);
-            return System.Text.Encoding.UTF8.GetString(blob);
-        }
-        return string.Empty;
-    }
+    private static string ReadSourceLinkPayload(MetadataReader reader) =>
+        reader.CustomDebugInformation
+            .Select(reader.GetCustomDebugInformation)
+            .Where(cdi => reader.GetGuid(cdi.Kind) == SourceLinkGuid)
+            .Select(cdi => System.Text.Encoding.UTF8.GetString(reader.GetBlobBytes(cdi.Value)))
+            .FirstOrDefault() ?? string.Empty;
 }
