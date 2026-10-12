@@ -22,12 +22,14 @@ on:
       - 'tests/**'
       - 'examples/**'
       - '.github/workflows/semgrep.yaml'
+      - '.github/requirements/semgrep.*'
       - '.semgrepignore'
   push:
     branches: [main, vNext]
     paths:
       - 'src/**'
       - '.github/workflows/semgrep.yaml'
+      - '.github/requirements/semgrep.*'
       - '.semgrepignore'
   schedule:
     # Weekly Wed 05:37 UTC — catches new rule releases against unchanged code.
