@@ -22,12 +22,14 @@ on:
       - 'tests/**'
       - 'examples/**'
       - '.github/workflows/semgrep.yaml'
+      - '.github/requirements/semgrep.*'
       - '.semgrepignore'
   push:
     branches: [main, vNext]
     paths:
       - 'src/**'
       - '.github/workflows/semgrep.yaml'
+      - '.github/requirements/semgrep.*'
       - '.semgrepignore'
   schedule:
     # Weekly Wed 05:37 UTC — catches new rule releases against unchanged code.
@@ -60,8 +62,7 @@ jobs:
       - name: Install semgrep (from PyPI, no account required)
         run: |
           # Hash-pinned (OSSF Scorecard pinned-dependencies); Dependabot bumps .github/requirements/semgrep.txt
-          # --no-deps: the tree overrides one of semgrep's own pins (see semgrep-overrides.txt),
-          # which pip's resolver would otherwise re-apply.
+          # --no-deps: the file already lists the complete hash-pinned tree, so pip has nothing to resolve.
           python -m pip install --user --no-deps --require-hashes -r .github/requirements/semgrep.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
