@@ -20,7 +20,6 @@
 
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
@@ -51,7 +50,6 @@ using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Concurrency;
 
-[ExcludeFromCodeCoverage]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 internal sealed class LoadProbe
 {
@@ -95,19 +93,15 @@ public class LoaderCancellationConcurrencyTests
                 cts.Cancel();
             });
 
-            var loadTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    // expected — cancellation is a valid termination path
-                }
-            });
+            var loadTask = Task.Run(() => Outcome.FaultOfAsync(loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token)));
 
             Task.WaitAll(cancelTask, loadTask);
+
+            // Cancellation is a valid termination path; any other fault is a bug.
+            Microsoft.Coyote.Specifications.Specification.Assert(
+                loadTask.Result is null or OperationCanceledException,
+                "Load ended with an unexpected exception: {0}",
+                loadTask.Result);
 
             // Count what actually landed in the destination.
             int actualRows;
@@ -126,6 +120,84 @@ public class LoaderCancellationConcurrencyTests
                 loader.CurrentItemCount, actualRows);
         });
     }
+
+    /// <summary>
+    /// The race's two extremes, pinned deterministically: with no cancellation
+    /// every generated row is written and counted.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Concurrency")]
+    public async Task LoadAsync_when_never_cancelled_writes_and_counts_every_row()
+    {
+        await using var conn = await CreateTableAsync();
+        var loader = new DbLoader<LoadProbe>(
+            conn,
+            "INSERT INTO load_probe (value) VALUES (@Value)");
+
+        var fault = await Outcome.FaultOfAsync(loader.LoadAsync(GenerateAsync(5, CancellationToken.None), CancellationToken.None));
+
+        Assert.Null(fault);
+        Assert.Equal(5, loader.CurrentItemCount);
+        Assert.Equal
+        (
+            new[] { "item-0", "item-1", "item-2", "item-3", "item-4" },
+            await ReadValuesAsync(conn)
+        );
+    }
+
+
+
+    /// <summary>
+    /// The other extreme: a token cancelled before the load starts ends it with
+    /// <see cref="OperationCanceledException"/> and writes nothing.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Concurrency")]
+    public async Task LoadAsync_when_cancelled_before_start_throws_OperationCanceledException_and_writes_nothing()
+    {
+        await using var conn = await CreateTableAsync();
+        var loader = new DbLoader<LoadProbe>(
+            conn,
+            "INSERT INTO load_probe (value) VALUES (@Value)");
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var fault = await Outcome.FaultOfAsync(loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token));
+
+        Assert.IsAssignableFrom<OperationCanceledException>(fault);
+        Assert.Equal(0, loader.CurrentItemCount);
+        Assert.Empty(await ReadValuesAsync(conn));
+    }
+
+
+
+    private static async Task<SqliteConnection> CreateTableAsync()
+    {
+        var conn = new SqliteConnection("Data Source=:memory:");
+        await conn.OpenAsync();
+        await using var create = conn.CreateCommand();
+        create.CommandText = "CREATE TABLE load_probe (value TEXT NOT NULL);";
+        await create.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+
+
+    private static async Task<List<string>> ReadValuesAsync(SqliteConnection conn)
+    {
+        var values = new List<string>();
+        await using var select = conn.CreateCommand();
+        select.CommandText = "SELECT value FROM load_probe ORDER BY rowid;";
+        await using var reader = await select.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            values.Add(reader.GetString(0));
+        }
+
+        return values;
+    }
+
+
 
     private static async IAsyncEnumerable<LoadProbe> GenerateAsync(
         int count,

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -14,10 +13,27 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration;
 /// and supplies its own <see cref="IDbProviderFixture"/>. Tests are skipped (not
 /// failed) when the fixture's container could not start.
 /// </summary>
-[ExcludeFromCodeCoverage]
 public abstract class DbExtractorIntegrationTestsBase
 {
     protected abstract IDbProviderFixture Fixture { get; }
+
+
+
+    // The CI integration matrix selects each provider with --filter "Category=<rdbms>",
+    // and ProviderName names the provider in the Docker-unavailable skip reason. Pin
+    // that the two agree, so a renamed trait or fixture cannot drift apart unnoticed.
+    // Needs no database, so it runs (rather than skips) even without Docker.
+    [Fact]
+    public void Fixture_ProviderName_matches_the_Category_trait_of_the_test_class()
+    {
+        var category = GetType()
+            .CustomAttributes
+            .Single(a => a.AttributeType == typeof(TraitAttribute) && Equals(a.ConstructorArguments[0].Value, "Category"))
+            .ConstructorArguments[1]
+            .Value;
+
+        Assert.Equal(category, Fixture.ProviderName);
+    }
 
 
 

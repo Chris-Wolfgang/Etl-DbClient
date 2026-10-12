@@ -25,7 +25,6 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
@@ -56,7 +55,6 @@ using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Concurrency;
 
-[ExcludeFromCodeCoverage]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 [Table("owned_probe")]
 internal sealed class OwnedProbe
@@ -87,15 +85,7 @@ public class OwnedConnectionDisposalConcurrencyTests
             // Owned-connection ctor path: extractor creates + disposes
             // the connection internally. Each ExtractAsync call opens
             // a fresh connection via the factory, then disposes it.
-            var extractor = new DbExtractor<OwnedProbe>(
-                SqliteFactory.Instance,
-                "Data Source=:memory:",
-                // In-memory SQLite with no seed data — this test doesn't
-                // need rows, only the open/dispose lifecycle. The
-                // CREATE TABLE below reflects the DDL a real workload
-                // would run before extraction; with :memory: it's a
-                // no-op each run.
-                "SELECT id AS Id FROM sqlite_master WHERE 1=0");
+            var extractor = CreateOwnedExtractor();
 
             using var cts = new CancellationTokenSource();
 
@@ -104,42 +94,67 @@ public class OwnedConnectionDisposalConcurrencyTests
                 cts.Cancel();
             });
 
-            Exception? firstFault = null;
-            var enumTask = Task.Run(async () =>
-            {
-                try
-                {
-                    await foreach (var _ in extractor.ExtractAsync(cts.Token).ConfigureAwait(false))
-                    {
-                        // will never reach here — no seed rows.
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // expected termination path
-                }
-                catch (Exception ex)
-                {
-                    firstFault = ex;
-                }
-            });
+            var enumTask = Task.Run(() => Outcome.DrainAsync(extractor.ExtractAsync(cts.Token)));
 
             Task.WaitAll(cancelTask, enumTask);
+            var fault = enumTask.Result.Fault;
 
-            // First-run invariant: either it completed normally, or it
-            // was cancelled, or it threw a DB-related exception because
-            // the query executed against a table that doesn't exist.
-            // None of these are bugs; a Coyote-exposed disposal-race bug
-            // would surface here as an ObjectDisposedException / null-
-            // reference from inside the extractor's own state.
-            if (firstFault is not null)
-            {
-                Microsoft.Coyote.Specifications.Specification.Assert(
-                    firstFault is Microsoft.Data.Sqlite.SqliteException,
-                    "First enumeration threw an unexpected exception type: {0}",
-                    firstFault);
-            }
+            // Invariant: the run either completed normally or was cancelled.
+            // A disposal-race bug would surface here as an
+            // ObjectDisposedException / null-reference from inside the
+            // extractor's own state.
+            Microsoft.Coyote.Specifications.Specification.Assert(
+                fault is null or OperationCanceledException,
+                "First enumeration threw an unexpected exception type: {0}",
+                fault);
         });
+    }
+
+
+
+    /// <summary>
+    /// Without cancellation the owned connection opens, yields its row and is
+    /// disposed, and a second enumeration on the same extractor opens a fresh
+    /// connection and succeeds — the first run left no corrupted state.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Concurrency")]
+    public async Task ExtractAsync_owned_connection_when_never_cancelled_yields_the_row_on_every_run()
+    {
+        var extractor = CreateOwnedExtractor();
+        var rows = new List<OwnedProbe>();
+
+        var first = await Outcome.DrainAsync(Capture(extractor.ExtractAsync(CancellationToken.None), rows));
+
+        var second = await Outcome.DrainAsync(extractor.ExtractAsync(CancellationToken.None));
+
+        Assert.Null(first.Fault);
+        Assert.Equal(1, first.Observed);
+        Assert.Equal(1, Assert.Single(rows).Id);
+        Assert.Null(second.Fault);
+        Assert.Equal(1, second.Observed);
+    }
+
+
+
+    // Owned-connection ctor path: the extractor creates + disposes the
+    // connection internally. Each ExtractAsync call opens a fresh in-memory
+    // SQLite connection via the factory, so the query needs no table.
+    private static DbExtractor<OwnedProbe> CreateOwnedExtractor() =>
+        new(
+            SqliteFactory.Instance,
+            "Data Source=:memory:",
+            "SELECT 1 AS Id");
+
+
+
+    private static async IAsyncEnumerable<OwnedProbe> Capture(IAsyncEnumerable<OwnedProbe> source, List<OwnedProbe> rows)
+    {
+        await foreach (var row in source.ConfigureAwait(false))
+        {
+            rows.Add(row);
+            yield return row;
+        }
     }
 
     // ------------------------------------------------------------------

@@ -9,119 +9,115 @@
 //   AllKey               every column is Key          → Update SET is empty (throws)
 //   WithNotMapped        [NotMapped] column present   → skipped from SQL
 //   MixedCase            case-varied column names     → OrdinalIgnoreCase lookup
+//
+// The shapes are abstract with abstract properties: DbCommandBuilder only
+// ever reads their metadata through typeof(...), so no instance is created
+// and there are no accessor bodies that would sit unexecuted.
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 
 namespace Wolfgang.Etl.DbClient.Tests.Fuzz;
 
 internal static class Shape
 {
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("single")]
-    public sealed class SingleColumn
+    public abstract class SingleColumn
     {
-        [Column("value")] public string Value { get; set; } = "";
+        [Column("value")] public abstract string Value { get; set; }
     }
 
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("identity_only")]
-    public sealed class IdentityKeyOnly
+    public abstract class IdentityKeyOnly
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int Id { get; set; }
+        public abstract int Id { get; set; }
 
         [Column("payload")]
-        public string Payload { get; set; } = "";
+        public abstract string Payload { get; set; }
     }
 
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("standard")]
-    public sealed class IdentityKeyWithColumns
+    public abstract class IdentityKeyWithColumns
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int Id { get; set; }
+        public abstract int Id { get; set; }
 
         [Column("name")]
-        public string Name { get; set; } = "";
+        public abstract string Name { get; set; }
 
         [Column("value")]
-        public decimal Value { get; set; }
+        public abstract decimal Value { get; set; }
 
         [Column("created_utc")]
-        public DateTime CreatedUtc { get; set; }
+        public abstract DateTime CreatedUtc { get; set; }
     }
 
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("composite")]
-    public sealed class CompositeKey
+    public abstract class CompositeKey
     {
         [Key]
         [Column("outer_id")]
-        public int OuterId { get; set; }
+        public abstract int OuterId { get; set; }
 
         [Key]
         [Column("inner_id")]
-        public int InnerId { get; set; }
+        public abstract int InnerId { get; set; }
 
         [Column("payload")]
-        public string Payload { get; set; } = "";
+        public abstract string Payload { get; set; }
     }
 
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("all_key")]
-    public sealed class AllKey
+    public abstract class AllKey
     {
         [Key]
         [Column("a")]
-        public int A { get; set; }
+        public abstract int A { get; set; }
 
         [Key]
         [Column("b")]
-        public int B { get; set; }
+        public abstract int B { get; set; }
     }
 
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("notmapped")]
-    public sealed class WithNotMapped
+    public abstract class WithNotMapped
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int Id { get; set; }
+        public abstract int Id { get; set; }
 
         [Column("name")]
-        public string Name { get; set; } = "";
+        public abstract string Name { get; set; }
 
         [NotMapped]
-        public string DisplayName { get; set; } = "";
+        public abstract string DisplayName { get; set; }
     }
 
-    [ExcludeFromCodeCoverage]
     [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
     [Table("mixed_case")]
-    public sealed class MixedCase
+    public abstract class MixedCase
     {
         [Key]
         [Column("PK_ID")]
-        public int PkId { get; set; }
+        public abstract int PkId { get; set; }
 
         [Column("Field_Name")]
-        public string FieldName { get; set; } = "";
+        public abstract string FieldName { get; set; }
 
         [Column("field_value")]
-        public string FieldValue { get; set; } = "";
+        public abstract string FieldValue { get; set; }
     }
 }

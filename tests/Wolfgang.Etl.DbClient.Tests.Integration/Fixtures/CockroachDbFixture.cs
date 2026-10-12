@@ -1,5 +1,4 @@
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -13,7 +12,6 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 /// Testcontainers does not ship a dedicated <c>Testcontainers.CockroachDb</c>
 /// module, so this fixture uses the generic <see cref="ContainerBuilder"/>.
 /// </summary>
-[ExcludeFromCodeCoverage]
 public sealed class CockroachDbFixture : DbProviderFixtureBase
 {
     private const int CockroachSqlPort = 26257;

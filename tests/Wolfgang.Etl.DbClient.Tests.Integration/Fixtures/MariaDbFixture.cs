@@ -1,5 +1,4 @@
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using MySqlConnector;
 using Testcontainers.MariaDb;
@@ -11,7 +10,6 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 /// <see cref="MySqlFixture"/> because MariaDB and MySQL share the same wire
 /// protocol; the only difference here is the container image.
 /// </summary>
-[ExcludeFromCodeCoverage]
 public sealed class MariaDbFixture : DbProviderFixtureBase
 {
     private MariaDbContainer? _container;
