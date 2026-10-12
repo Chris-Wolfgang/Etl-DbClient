@@ -1,12 +1,10 @@
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 
-[ExcludeFromCodeCoverage]
 public sealed class PostgresFixture : DbProviderFixtureBase
 {
     private PostgreSqlContainer? _container;

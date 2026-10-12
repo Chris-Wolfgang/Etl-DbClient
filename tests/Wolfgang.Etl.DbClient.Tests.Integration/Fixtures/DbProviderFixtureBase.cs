@@ -10,7 +10,6 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 /// during xunit's <see cref="IAsyncLifetime.InitializeAsync"/> so tests can be skipped
 /// with a clear reason instead of crashing the whole collection.
 /// </summary>
-[ExcludeFromCodeCoverage]
 public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
 {
     public abstract string ProviderName { get; }
@@ -36,50 +35,30 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
         // Pre-probe Docker availability. Only "Docker daemon unreachable" should
         // turn into a skip — every other StartAsync failure (bad image tag,
         // schema regression, etc.) must propagate so CI fails loudly.
-        if (RequiresDocker)
-        {
-            var probe = await ProbeDockerAsync().ConfigureAwait(false);
-            if (probe is not null)
-            {
-                Available = false;
-                // Include the probe exception's type+message so a "skipped"
-                // test still gives the reader enough to diagnose TLS,
-                // permission, or socket-path problems — not just an
-                // unhelpful "not reachable".
-                UnavailableReason = $"{ProviderName} unavailable: Docker probe failed — {probe.GetType().Name}: {probe.Message}";
-                return;
-            }
-        }
+        UnavailableReason = RequiresDocker
+            ? await DockerUnavailableReasonAsync(ProviderName).ConfigureAwait(false)
+            : null;
 
-        try
+        if (UnavailableReason is null)
         {
-            await StartAsync().ConfigureAwait(false);
+            await StartOrCleanUpAsync(StartAsync, StopAsync).ConfigureAwait(false);
             Available = true;
-        }
-        catch
-        {
-            // Real failure: best-effort cleanup, then rethrow so the test run
-            // surfaces the error instead of silently skipping every test.
-            try
-            {
-                await StopAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                // Swallow secondary failures during emergency cleanup.
-            }
-
-            throw;
         }
     }
 
 
 
     /// <summary>
-    /// Pings the Docker daemon. Returns null on success, or the exception that
-    /// caused the probe to fail (TLS, permission, daemon-down, socket-path, ...).
+    /// Pings the Docker daemon. Returns null when it answers, or a skip reason
+    /// naming the probe failure (TLS, permission, daemon-down, socket-path, ...)
+    /// so a "skipped" test still gives the reader enough to diagnose it.
     /// </summary>
-    private static async Task<Exception?> ProbeDockerAsync()
+    /// <remarks>
+    /// Excluded from coverage: an infrastructure check whose failure branch only
+    /// runs on a machine without Docker, which is never the case on CI runners.
+    /// </remarks>
+    [ExcludeFromCodeCoverage]
+    private static async Task<string?> DockerUnavailableReasonAsync(string providerName)
     {
         try
         {
@@ -90,24 +69,53 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
         }
         catch (Exception ex)
         {
-            return ex;
+            return $"{providerName} unavailable: Docker probe failed — {ex.GetType().Name}: {ex.Message}";
         }
     }
 
 
 
-    public async Task DisposeAsync()
-    {
+    public Task DisposeAsync() =>
         // Always attempt teardown. StopAsync implementations are responsible
         // for tolerating a never-started state (e.g. _container is null).
+        StopQuietlyAsync(StopAsync);
+
+
+
+    /// <summary>
+    /// Runs <paramref name="start"/>. On failure, makes a best-effort
+    /// <paramref name="stop"/> and rethrows the start failure, so the test run
+    /// surfaces the error instead of silently skipping every test.
+    /// </summary>
+    internal static async Task StartOrCleanUpAsync(Func<Task> start, Func<Task> stop)
+    {
         try
         {
-            await StopAsync().ConfigureAwait(false);
+            await start().ConfigureAwait(false);
         }
         catch
         {
-            // Best-effort teardown — never fail a test pass because a container
-            // refused to stop cleanly.
+            await StopQuietlyAsync(stop).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+
+
+    /// <summary>
+    /// Runs <paramref name="stop"/>, swallowing any failure: teardown is
+    /// best-effort and must never fail a test pass or mask a start failure.
+    /// </summary>
+    internal static async Task StopQuietlyAsync(Func<Task> stop)
+    {
+        try
+        {
+            await stop().ConfigureAwait(false);
+        }
+        catch
+        {
+            // Best-effort teardown — a container that refuses to stop cleanly
+            // is not a test failure.
         }
     }
 
