@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Version>0.2.0</Version>
     <IsPackable>false</IsPackable>
-    <!-- Needs Linux containers (Testcontainers): pr.yaml Stages 2/3 (Windows/macOS) and release.yaml skip it; Stage 1 (Linux) runs it. -->
+    <!-- Needs Linux containers (Testcontainers). Marker for workflows that run container-backed suites only on Linux runners; nothing reads it until that workflow change is synced. -->
     <RequiresLinuxContainers>true</RequiresLinuxContainers>
     <IsTestProject>true</IsTestProject>
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
