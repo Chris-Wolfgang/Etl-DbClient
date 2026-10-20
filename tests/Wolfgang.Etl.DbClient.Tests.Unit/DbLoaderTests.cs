@@ -553,21 +553,23 @@ public class DbLoaderTests
 
 
 
-    private static async IAsyncEnumerable<PersonRecord> FailingSourceAsync(int succeedCount)
-    {
-        for (var i = 0; i < succeedCount; i++)
-        {
-            yield return new PersonRecord
-            {
-                FirstName = $"First{i + 1}",
-                LastName = $"Last{i + 1}",
-                Age = 20 + i + 1,
-            };
-        }
-
-        await Task.CompletedTask;
-        throw new InvalidOperationException("Simulated failure");
-    }
+    // Built from a LINQ projection rather than an async iterator: an iterator that ends in
+    // `throw` leaves its closing brace unexecuted, which costs the 100 % test-assembly gate.
+    private static IAsyncEnumerable<PersonRecord> FailingSourceAsync(int succeedCount) =>
+        Enumerable
+            .Range(1, succeedCount + 1)
+            .Select
+            (
+                i => i <= succeedCount
+                    ? new PersonRecord
+                    {
+                        FirstName = $"First{i}",
+                        LastName = $"Last{i}",
+                        Age = 20 + i,
+                    }
+                    : throw new InvalidOperationException("Simulated failure")
+            )
+            .ToAsyncEnumerable();
 
 
 
