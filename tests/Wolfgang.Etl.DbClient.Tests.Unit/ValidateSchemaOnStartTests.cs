@@ -85,12 +85,11 @@ public class ValidateSchemaOnStartTests
             ValidateSchemaOnStart = true,
         };
 
+        // The first MoveNextAsync must throw: the validator runs before any row is yielded.
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            await foreach (var _ in sut.ExtractAsync())
-            {
-                Assert.Fail("Validator should have thrown before yielding any row.");
-            }
+            await using var rows = sut.ExtractAsync().GetAsyncEnumerator();
+            await rows.MoveNextAsync();
         });
 
         Assert.Contains("does_not_exist", ex.Message, StringComparison.Ordinal);
