@@ -37,14 +37,19 @@ internal static class Outcome
 
 
     /// <summary>
-    /// Awaits <paramref name="operation"/>, returning the exception that ended it,
-    /// or <see langword="null"/> when it completed normally.
+    /// Starts and awaits <paramref name="operation"/>, returning the exception that
+    /// ended it, or <see langword="null"/> when it completed normally.
     /// </summary>
-    public static async Task<Exception?> FaultOfAsync(Task operation)
+    /// <remarks>
+    /// Takes a factory rather than a <see cref="Task"/> so the awaited task is one
+    /// this helper started (VSTHRD003), and so an operation that throws
+    /// synchronously, instead of returning a faulted task, is captured too.
+    /// </remarks>
+    public static async Task<Exception?> FaultOfAsync(Func<Task> operation)
     {
         try
         {
-            await operation.ConfigureAwait(false);
+            await operation().ConfigureAwait(false);
             return null;
         }
         catch (Exception ex)
