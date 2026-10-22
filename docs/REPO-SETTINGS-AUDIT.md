@@ -6,9 +6,11 @@ This document is **descriptive** — the source of truth lives in:
 - the **GitHub Ruleset** (`Protect main branch`) — ruleset id `14462276`
 - the **repo settings** (Settings → General → Pull Requests + Settings → Branches)
 
-To re-apply the canonical settings programmatically, see
-`scripts/Setup-BranchRuleset.ps1` and `scripts/Setup-GitHubPages.ps1` in the
-canonical `repo-template`.
+`scripts/Setup-BranchRuleset.ps1` and `scripts/Setup-GitHubPages.ps1` are no longer
+shipped. `scripts/Fix-BranchRuleset.ps1` in this repo repairs an existing ruleset.
+
+Last re-audited **2026-10-21** against the live ruleset and repo settings (`gh api
+repos/Chris-Wolfgang/Etl-DbClient/rulesets/14462276`, read-only).
 
 ## Branch-protection ruleset — `Protect main branch`
 
@@ -17,7 +19,7 @@ canonical `repo-template`.
 | `pull_request` (require PR) | ✅ |
 | `required_status_checks` | ✅ (8 checks, see below) |
 | `code_scanning` (CodeQL must succeed) | ✅ |
-| `copilot_code_review` (Copilot review required) | ✅ |
+| `copilot_code_review` (Copilot review required) | ❌ not in the ruleset (Copilot review still runs, but does not gate merge) |
 | `non_fast_forward` (no force-push) | ✅ |
 | `deletion` (no branch delete) | ✅ |
 | `code_quality` | ✅ |
@@ -35,6 +37,11 @@ canonical `repo-template`.
 | `Detect .NET Projects` | `pr.yaml` |
 | `Integration (all)` | `pr.yaml` (aggregator over the per-RDBMS matrix) |
 
+Checks that run on PRs but are **not** required: `Changelog Fragment Check`,
+`ReSharper InspectCode`, `actionlint` / `zizmor` (`actions-audit.yaml`) and
+`PublishAot + PublishTrimmed` (`aot-smoke.yaml`, path-filtered to `src/**`; see [#476](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/476)).
+Making any of them required is a ruleset change for the maintainer.
+
 ## Repo-level settings
 
 | Setting | Value |
@@ -50,7 +57,8 @@ canonical `repo-template`.
 
 ## Audit result
 
-**No drift.** Ruleset rule set, required status checks, and repo merge settings all match the canonical pattern. The `MERGE` default merge method is intentional — the maintainer's stacked-PR workflow relies on merge commits so the stack's history stays visible after each merge (squash would flatten it).
+As of the 2026-10-21 re-audit: the required status checks and repo merge settings match the
+table above; the ruleset no longer carries `copilot_code_review`. The `MERGE` default merge method is intentional — the maintainer's stacked-PR workflow relies on merge commits so the stack's history stays visible after each merge (squash would flatten it).
 
 ## Re-audit cadence
 
