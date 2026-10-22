@@ -29,9 +29,11 @@ internal sealed class EtlParameterSet : SqlMapper.IParameterCallbacks
     private readonly Dictionary<string, object> _added = new(StringComparer.Ordinal);
 
 
+
     /// <summary>Initializes a new instance binding <paramref name="source"/>.</summary>
     /// <param name="source">The caller's parameter dictionary.</param>
     internal EtlParameterSet(IDictionary<string, object> source) => _source = source;
+
 
 
     /// <summary>
@@ -44,6 +46,7 @@ internal sealed class EtlParameterSet : SqlMapper.IParameterCallbacks
     {
         return source.Values.Any(static value => value is EtlParameter or DbParameter);
     }
+
 
 
     /// <inheritdoc/>
@@ -79,6 +82,7 @@ internal sealed class EtlParameterSet : SqlMapper.IParameterCallbacks
     }
 
 
+
     /// <inheritdoc/>
     /// <remarks>
     /// Runs after the command completes. Only <see cref="EtlParameter"/> values need this — a
@@ -92,6 +96,7 @@ internal sealed class EtlParameterSet : SqlMapper.IParameterCallbacks
             pair.Key.SetValue(pair.Value.Value);
         }
     }
+
 
 
     /// <summary>Adds a parameter the extractor supplies itself, without touching the caller's dictionary.</summary>

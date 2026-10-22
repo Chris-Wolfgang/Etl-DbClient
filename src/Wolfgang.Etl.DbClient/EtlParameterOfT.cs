@@ -45,6 +45,7 @@ public sealed class EtlParameter<T> : EtlParameter
     }
 
 
+
     /// <inheritdoc/>
     internal override Type ValueType => typeof(T);
 }

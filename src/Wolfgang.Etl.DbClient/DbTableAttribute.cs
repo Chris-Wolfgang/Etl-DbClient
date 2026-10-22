@@ -38,6 +38,8 @@ public sealed class DbTableAttribute : Attribute
         Name = name ?? throw new ArgumentNullException(nameof(name));
     }
 
+
+
     /// <summary>The table name supplied to the constructor.</summary>
     public string Name { get; }
 }
