@@ -19,8 +19,8 @@ using Microsoft.Data.Sqlite;
 namespace Wolfgang.Etl.DbClient.Benchmarks;
 
 /// <summary>
-/// Compares per-record <c>ExecuteAsync</c> against the new <see cref="DbLoader{TRecord}.BatchSize"/>
-/// path. Runs against an in-memory SQLite connection — the gap on networked DBs
+/// Compares per-record <c>ExecuteAsync</c> against the <see cref="DbLoader{TRecord}.BatchSize"/>
+/// path and the multi-row <see cref="DbLoader{TRecord}.InsertBatchSize"/> path. Runs against an in-memory SQLite connection — the gap on networked DBs
 /// (SQL Server / PostgreSQL / MySQL) is much wider because each per-row round-trip
 /// pays full network latency, but in-memory SQLite gives a reproducible lower bound.
 /// </summary>
@@ -120,6 +120,25 @@ public class DbLoaderBatchSizeBenchmarks : IDisposable
     {
         var loader = new DbLoader<BenchmarkPerson>(_conn, WriteMode.Insert);
         loader.BatchSize = BatchSize;
+        return loader.LoadAsync(ToAsyncEnumerable(_records));
+    }
+
+
+
+    /// <summary>
+    /// The same load through <see cref="DbLoaderOptions.InsertBatchSize"/>: one multi-row
+    /// <c>INSERT … VALUES (…), (…), …</c> per chunk of <see cref="BatchSize"/> rows, instead of
+    /// <see cref="BatchSize"/> single-row executes.
+    /// </summary>
+    [Benchmark]
+    public Task Load1000RowsMultiRowInsert()
+    {
+        var loader = new DbLoader<BenchmarkPerson>
+        (
+            _conn,
+            WriteMode.Insert,
+            new DbLoaderOptions { InsertBatchSize = BatchSize }
+        );
         return loader.LoadAsync(ToAsyncEnumerable(_records));
     }
 
