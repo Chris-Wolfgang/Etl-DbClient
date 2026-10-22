@@ -51,7 +51,7 @@ var loader = new DbLoader<InventoryRecord>
 (
     connection,
     WriteMode.Update,
-    new DbLoaderOptions { InsertBatchSize = 1 },
+    new DbLoaderOptions(),  // defaults; BatchSize, CommandTimeout etc. go here
     transaction
 );
 

@@ -49,8 +49,9 @@ internal static class Program
         Console.WriteLine("[aot-smoke] Runtime : " + Environment.Version);
         Console.WriteLine("[aot-smoke] Version : " + typeof(DbExtractor<Widget>).Assembly.GetName().Version);
 
-        // In-memory SQLite so the smoke test needs no external service.
-        // "Shared cache" so extractor + loader can talk to the same store.
+        // In-memory SQLite so the smoke test needs no external service. The
+        // extractor and loader share this one open connection, so they see the
+        // same in-memory database.
         const string cs = "Data Source=:memory:";
         await using var conn = new SqliteConnection(cs);
         await conn.OpenAsync();
