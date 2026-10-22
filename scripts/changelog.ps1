@@ -12,6 +12,8 @@
               unless -Labels contains "no-changelog". Always validates every fragment's format.
     assemble  Insert a "## [<version>] - <date>" section under "## [Unreleased]" in CHANGELOG.md from the
               fragments, grouped by type, then delete the fragments. -Version defaults to the derived bump.
+              Also moves the footer's "[Unreleased]: .../compare/v<prev>...HEAD" link to the new version and
+              adds "[<version>]: .../compare/v<prev>...v<version>" below it.
     bump      Print the derived next version (from the newest "## [x.y.z]" heading and the fragment types):
               breaking -> major (0.x: minor), feature -> minor, fix/docs/internal -> patch.
 .PARAMETER Command
@@ -240,6 +242,23 @@ function Invoke-Assemble
 
     $block = @($section -split "`n") + @('')
     $lines.InsertRange($insertAt, [string[]]$block)
+
+    # Keep the Keep-a-Changelog footer maintained: point [Unreleased] at the new version and add the
+    # new version's compare link directly below it. Skipped (with a warning) when the footer has no
+    # [Unreleased] compare line to anchor on.
+    $footer = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^\[Unreleased\]: (?<repo>https://\S+)/compare/v(?<prev>[^.\s]+\.[^.\s]+\.[^.\s]+)\.\.\.HEAD\s*$') { $footer = $i; break } }
+    if ($footer -ge 0)
+    {
+        $repo = $Matches['repo']
+        $prev = $Matches['prev']
+        $lines[$footer] = "[Unreleased]: $repo/compare/v$Version...HEAD"
+        $lines.Insert($footer + 1, "[$Version]: $repo/compare/v$prev...v$Version")
+    }
+    else
+    {
+        Write-Warning "No '[Unreleased]: <repo>/compare/v<x.y.z>...HEAD' footer line in $ChangelogPath; compare links not updated."
+    }
     Set-Content -Path $ChangelogPath -Value ($lines -join "`n") -NoNewline
     Add-Content -Path $ChangelogPath -Value ''
 
