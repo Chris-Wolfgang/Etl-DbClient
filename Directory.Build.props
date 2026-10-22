@@ -128,6 +128,17 @@
     <PathMap Condition="'$(CI)' == 'true'">$(MSBuildThisFileDirectory)=/_/</PathMap>
   </PropertyGroup>
 
+  <ItemGroup Condition="$([MSBuild]::MakeRelative($(MSBuildThisFileDirectory), $(MSBuildProjectDirectory)).Replace('\', '/').StartsWith('src/')) and $(TargetFramework.StartsWith('net4'))">
+    <!-- Cross-OS reproducibility (#255): the portable PDB records every referenced
+         assembly's timestamp and MVID. For .NET Framework TFMs the SDK compiles against the
+         machine's installed targeting pack when there is one (Windows) and this NuGet package
+         when there is not (Linux). They are different builds of the same reference assemblies,
+         so the same commit produced different PDBs, and therefore different DLLs, per OS.
+         Referencing the package explicitly makes every OS compile against it.
+         Directory.Build.targets removes the other per-OS input (generated-source newlines). -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
   <ItemGroup Condition="$(_RelativeProjectDir.StartsWith('src/')) and Exists('$(MSBuildProjectDirectory)/obj/THIRD-PARTY-NOTICES.md')">
     <!-- Third-party attribution: scripts/third-party-notices.ps1 renders the
          package's transitive NuGet closure to obj/THIRD-PARTY-NOTICES.md
