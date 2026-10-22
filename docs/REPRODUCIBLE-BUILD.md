@@ -1,6 +1,8 @@
 # Reproducible-build guarantee
 
-`Wolfgang.Etl.DbClient` targets **reproducible builds**: building the same tagged commit twice — same source, same SDK version, different runner OS — should produce byte-identical `.dll` / `.pdb` / `.nupkg` outputs. Same-OS reproducibility is achieved today; cross-OS byte-identity is tracked as in-progress work (see [Gate mode](#gate-mode-informational-non-blocking-today) below and [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
+`Wolfgang.Etl.DbClient` targets **reproducible builds**: building the same tagged commit twice — same source, same SDK version, different runner OS — should produce byte-identical `.dll` / `.pdb` outputs, and CI fails when the Linux and Windows builds differ (see [Gate mode](#gate-mode-blocking) below and [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
+
+The guarantee covers the **assemblies and symbols**, not the package files: NuGet stamps the pack time into every zip entry, so two packs of the same commit, even on the same machine, give different `.nupkg` / `.snupkg` bytes while the `.dll` / `.pdb` inside them are identical.
 
 ## What "reproducible" means here
 
@@ -18,6 +20,13 @@ Set in `Directory.Build.props` and inherited by every csproj that ships:
 | `<EmbedUntrackedSources>` | `true` | Generated sources (source-generator output) embed into the PDB rather than referencing per-machine paths. |
 | `<IncludeSymbols>` + `<SymbolPackageFormat>snupkg</SymbolPackageFormat>` | | Separate `.snupkg` per NuGet convention; portable PDBs. |
 
+Two more inputs differed per OS and are removed explicitly:
+
+| Where | What | Why |
+|---|---|---|
+| `Directory.Build.targets` | `NormalizeGeneratedLineEndings` rewrites the SDK-generated `AssemblyInfo` / `AssemblyAttributes` / `GlobalUsings` sources to LF before `CoreCompile` (packable projects) | The SDK writes them with the OS newline; the PDB hashes and embeds them, so the PDB checksum and the DLL's MVID differed per OS. |
+| `Directory.Build.props` | `Microsoft.NETFramework.ReferenceAssemblies` (build-time only) for `src/` net4x builds | Windows compiled against the installed targeting pack, Linux against this package; the PDB records each reference's MVID. |
+
 `Microsoft.SourceLink.GitHub` (added via `Directory.Build.props`) rewrites source paths in the PDB to `https://raw.githubusercontent.com/Chris-Wolfgang/Etl-DbClient/<sha>/*`. Combined with `ContinuousIntegrationBuild`, this eliminates the runner-machine path variance that would otherwise break reproducibility.
 
 ## Automated verification
@@ -25,15 +34,13 @@ Set in `Directory.Build.props` and inherited by every csproj that ships:
 `.github/workflows/reproducible-build.yaml` runs on every PR that touches `src/**`, `Directory.Build.*`, or the workflow itself. It:
 
 1. Builds `src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj` on **`ubuntu-latest`** and **`windows-latest`** in parallel — same source, same SDK version, different OS.
-2. Computes `sha256sum` over the **produced own-binary artifacts** (`Wolfgang.Etl.DbClient.dll` + `.pdb` per TFM, plus the packed `.nupkg` / `.snupkg`). Transitive-dep DLLs from the runtime pack are deliberately excluded — those aren't part of this repo's reproducibility claim.
+2. Computes `sha256sum` over the **produced own-binary artifacts** (`Wolfgang.Etl.DbClient.dll` + `.pdb` per TFM; the packed `.nupkg` / `.snupkg` digests are listed too, for reference only). Transitive-dep DLLs from the runtime pack are deliberately excluded — those aren't part of this repo's reproducibility claim.
 3. Uploads each per-OS manifest as an artifact for 30 days.
-4. `diff -u`s the two manifests. The result is posted to the Step Summary tab.
+4. `diff -u`s the `.dll` / `.pdb` lines of the two manifests. The result is posted to the Step Summary tab.
 
-### Gate mode: informational (non-blocking) today
+### Gate mode: blocking
 
-The current tree isn't yet reproducible cross-OS — the deterministic knobs above are necessary but not sufficient. The Compare step reports divergence as a workflow warning + Step Summary section, but exits 0 so it doesn't block merges.
-
-The follow-up work to close the gap and flip the gate to blocking is tracked in [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255) (candidate causes: PathMap coverage, SDK-emitted AssemblyMetadata attributes, source-generator file ordering, `.nupkg` zip-format determinism).
+Any difference in a `.dll` / `.pdb` digest between the two OSes fails the Compare step, as does a manifest with no assembly digests at all. `.nupkg` / `.snupkg` lines are left out of the comparison (see the top of this page). If the gate fails, diff the per-TFM PDB documents and referenced-assembly records first: a generated source with a different newline, or a different reference assembly, were the two causes [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255) removed.
 
 ## Per-release manifest
 
@@ -115,17 +122,22 @@ curl -sSL -o "Wolfgang.Etl.DbClient.<version>.snupkg" \
 gh release download v<version> --repo Chris-Wolfgang/Etl-DbClient \
   --pattern reproducible-build-manifest.json
 
-# 4. Cross-check three ways:
-#    - your local rebuild vs the NuGet-published binaries
-sha256sum my-artifacts/Wolfgang.Etl.DbClient.<version>.nupkg Wolfgang.Etl.DbClient.<version>.nupkg
-sha256sum my-artifacts/Wolfgang.Etl.DbClient.<version>.snupkg Wolfgang.Etl.DbClient.<version>.snupkg
-#    - the NuGet-published binaries vs the manifest's declared hashes
+# 4. Cross-check:
+#    - your local rebuild vs the NuGet-published binaries. Compare the
+#      assemblies INSIDE the packages: the .nupkg files themselves differ,
+#      because NuGet stamps the pack time into every zip entry.
+mkdir -p mine published
+unzip -q -o my-artifacts/Wolfgang.Etl.DbClient.<version>.nupkg -d mine
+unzip -q -o Wolfgang.Etl.DbClient.<version>.nupkg -d published
+diff <(cd mine && find lib -type f | sort | xargs sha256sum) \
+     <(cd published && find lib -type f | sort | xargs sha256sum)
+#    - the NuGet-published package files vs the manifest's declared hashes
 #      (filenames must match what step 3 downloaded them as)
 jq -r '.artifacts[] | "\(.sha256)  \(.name)"' reproducible-build-manifest.json | \
   sha256sum -c --ignore-missing
 ```
 
-All three checks should match. If they don't:
+Both checks should match (the `diff` prints nothing). If they don't:
 
 - **Local rebuild ≠ NuGet-published**: either the tag doesn't correspond to the published binary (audit the release-workflow log for that tag) or a reproducibility knob regressed between publish time and now.
 - **NuGet-published ≠ manifest**: the release was tampered with after publish. This is a serious supply-chain event — file a [discrepancy issue](#file-a-discrepancy) immediately.
