@@ -100,9 +100,18 @@ public static class DbSchemaValidator
     /// validator if closed; state is restored on return.
     /// </param>
     /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <exception cref="ArgumentNullException"/>
-    /// <exception cref="InvalidOperationException"/>
-    /// <exception cref="OperationCanceledException"/>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="connection"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <typeparamref name="TRecord"/> has no <c>[Table]</c> attribute, the
+    /// table does not exist on the database, or one or more mapped column
+    /// names are not present on the table. The exception message names
+    /// the specific offender.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// <paramref name="cancellationToken"/> was canceled.
+    /// </exception>
     public static async Task ValidateAsync<TRecord>(
         DbConnection connection,
         CancellationToken cancellationToken = default)

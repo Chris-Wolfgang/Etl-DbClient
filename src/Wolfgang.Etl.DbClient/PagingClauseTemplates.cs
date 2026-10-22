@@ -14,8 +14,9 @@ namespace Wolfgang.Etl.DbClient;
 /// </para>
 /// <para>
 /// Every template must reference both <c>@PageOffset</c> and <c>@PageLimit</c>: those are the
-/// parameter names the extractor supplies when <see cref="DbExtractorOptions.ServerOffset"/> and
-/// <see cref="DbExtractorOptions.ServerLimit"/> are set.
+/// parameter names the extractor supplies when server paging is active, that is when
+/// <see cref="DbExtractorOptions.ServerLimit"/> is set (an unset
+/// <see cref="DbExtractorOptions.ServerOffset"/> binds as <c>0</c>).
 /// </para>
 /// </remarks>
 /// <example>
@@ -57,7 +58,7 @@ public static class PagingClauseTemplates
     public static string PostgreSql { get; } = LimitOffset;
 
 
-    /// <summary>SQLite — <c>LIMIT … OFFSET …</c>. This is also the library default.</summary>
+    /// <summary>SQLite — <c>LIMIT … OFFSET …</c>.</summary>
     public static string Sqlite { get; } = LimitOffset;
 
 

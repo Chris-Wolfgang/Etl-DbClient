@@ -15,12 +15,10 @@ namespace Wolfgang.Etl.DbClient;
 /// unless overridden with <see cref="DbColumnAttribute"/>.
 /// </para>
 /// <para>
-/// First v0.5.0 cut: <see cref="System.Type"/>-level analysis only — the
-/// generator emits a <c>public const string Insert</c> and a static
+/// The generator emits <c>public const string</c> <c>Insert</c> and
+/// <c>Select</c> statements, <c>Update</c> and <c>Delete</c> statements when the
+/// type has at least one <see cref="DbKeyAttribute"/> property, and a static
 /// <c>void Bind(Dapper.DynamicParameters parameters, T record)</c> helper.
-/// Future versions will expand to <c>Update</c>, <c>Delete</c>, and
-/// <c>Select</c> with proper integration into <c>DbExtractor</c> /
-/// <c>DbLoader</c>.
 /// </para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
