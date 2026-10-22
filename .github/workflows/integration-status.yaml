@@ -5,9 +5,9 @@ name: Integration Status (per-RDBMS badges → gh-pages)
 # README badges read those JSONs via https://img.shields.io/endpoint?url=...
 #
 # Why a dedicated workflow (rather than reusing pr.yaml's test-integration)?
-# pr.yaml uses `pull_request_target` and only runs on PR events. To keep the
-# per-RDBMS badges in sync with what's actually on main, we re-run the
-# matrix on every push to main and write fresh status JSONs.
+# pr.yaml runs on `pull_request` events only, so it never reports on main
+# itself. To keep the per-RDBMS badges in sync with what's actually on main,
+# we re-run the matrix on every push to main and write fresh status JSONs.
 #
 # Why aggregate per-RDBMS instead of per-cell (rdbms × tfm)? The "Tested
 # Databases" matrix in README has one row per RDBMS; users care whether
