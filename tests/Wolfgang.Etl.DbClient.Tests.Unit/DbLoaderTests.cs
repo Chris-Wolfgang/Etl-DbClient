@@ -1116,6 +1116,91 @@ public class DbLoaderTests
 
 
     [Fact]
+    public async Task LoadAsync_when_BatchCommitSize_and_MaximumItemCount_are_set_stops_reading_the_source_at_the_cap()
+    {
+        // #536: the chunked-commit path used to keep reading the source to
+        // exhaustion after MaximumItemCount was reached, committing an empty
+        // transaction per chunk.
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var source = new CountingSource(100);
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 3,
+            MaximumItemCount = 5
+        };
+
+        await loader.LoadAsync(source.ItemsAsync());
+
+        Assert.Equal(5, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(5, loader.CurrentItemCount);
+        Assert.Equal(5, source.ItemsRead);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_BatchCommitSize_SkipItemCount_and_MaximumItemCount_are_set_reads_only_skipped_plus_maximum()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var source = new CountingSource(100);
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 4,
+            SkipItemCount = 2,
+            MaximumItemCount = 5
+        };
+
+        await loader.LoadAsync(source.ItemsAsync());
+
+        Assert.Equal(5, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(5, loader.CurrentItemCount);
+        Assert.Equal(2, loader.CurrentSkippedItemCount);
+        Assert.Equal(7, source.ItemsRead);
+    }
+
+
+
+    // Counts how many items the loader actually pulled from the source.
+    private sealed class CountingSource
+    {
+        private readonly int _count;
+
+
+
+        internal CountingSource(int count) => _count = count;
+
+
+
+        internal int ItemsRead { get; private set; }
+
+
+
+        internal async IAsyncEnumerable<PersonRecord> ItemsAsync()
+        {
+            for (var i = 0; i < _count; i++)
+            {
+                ItemsRead++;
+                yield return new PersonRecord { FirstName = $"F{i}", LastName = "L", Age = i };
+                await Task.Yield();
+            }
+        }
+    }
+
+
+
+    [Fact]
     public async Task LoadAsync_when_IsDryRun_is_true_and_BatchSize_is_set_does_not_flush_batches()
     {
         using var conn = TestDb.CreateConnection();
