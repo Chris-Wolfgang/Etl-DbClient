@@ -27,8 +27,12 @@ public sealed class DbColumnAttribute : Attribute
         Name = name ?? throw new ArgumentNullException(nameof(name));
     }
 
+
+
     /// <summary>The column name supplied to the constructor.</summary>
     public string Name { get; }
+
+
 
     /// <summary>
     /// When <see langword="true"/>, the property is excluded from every

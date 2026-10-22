@@ -28,11 +28,13 @@ public abstract class EtlParameter
     private protected object? StoredValue;
 
 
+
     /// <summary>
     /// Gets the provider type. When <c>null</c> the provider infers it from the value — which is
     /// not possible for an output parameter, so outputs should set it explicitly.
     /// </summary>
     public DbType? DbType { get; init; }
+
 
 
     /// <summary>
@@ -47,16 +49,20 @@ public abstract class EtlParameter
     public ParameterDirection Direction { get; init; } = ParameterDirection.Input;
 
 
+
     /// <summary>Gets the parameter size, or <c>null</c> to let the provider decide.</summary>
     public int? Size { get; init; }
+
 
 
     /// <summary>The value as <see cref="object"/>, for binding code that does not know the type.</summary>
     internal object? BoxedValue => StoredValue;
 
 
+
     /// <summary>The declared value type, used to reconcile what the provider returns.</summary>
     internal abstract Type ValueType { get; }
+
 
 
     /// <summary>

@@ -36,6 +36,7 @@ public static class PagingClauseTemplates
     private const string OffsetFetch = "OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY";
 
 
+
     /// <summary>
     /// No dialect chosen. This is the default, and it is <see langword="null"/>.
     /// </summary>
@@ -54,20 +55,25 @@ public static class PagingClauseTemplates
     public static string MySql { get; } = LimitOffset;
 
 
+
     /// <summary>PostgreSQL — <c>LIMIT … OFFSET …</c>.</summary>
     public static string PostgreSql { get; } = LimitOffset;
+
 
 
     /// <summary>SQLite — <c>LIMIT … OFFSET …</c>.</summary>
     public static string Sqlite { get; } = LimitOffset;
 
 
+
     /// <summary>SQL Server 2012 and later — SQL:2008 <c>OFFSET … FETCH NEXT …</c>.</summary>
     public static string SqlServer { get; } = OffsetFetch;
 
 
+
     /// <summary>Oracle 12c and later — SQL:2008 <c>OFFSET … FETCH NEXT …</c>.</summary>
     public static string Oracle { get; } = OffsetFetch;
+
 
 
     /// <summary>Db2 — SQL:2008 <c>OFFSET … FETCH NEXT …</c>.</summary>
