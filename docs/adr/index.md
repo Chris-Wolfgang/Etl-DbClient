@@ -9,7 +9,7 @@ New ADRs land alongside the PR that introduces the decision; the ADR is part of 
 | ID | Title | Status | Date |
 |---|---|---|---|
 | [0001](0001-source-generator-ships-in-runtime-nuget.md) | Source generator ships in the runtime NuGet, not as a separate package | Accepted | 2026-07-01 |
-| [0002](0002-native-aot-row-mapping-and-binding.md) | Native AOT support: annotate TRecord, keep Dapper on the JIT, map and bind without Reflection.Emit under AOT | Proposed | 2026-10-30 |
+| [0003](0003-native-aot-row-mapping-and-binding.md) | Native AOT support: annotate TRecord, keep Dapper on the JIT, map and bind without Reflection.Emit under AOT | Proposed | 2026-10-30 |
 
 ## Statuses
 

@@ -1,4 +1,4 @@
-# ADR-0002: Native AOT support: annotate TRecord, keep Dapper on the JIT, map and bind without Reflection.Emit under AOT
+# ADR-0003: Native AOT support: annotate TRecord, keep Dapper on the JIT, map and bind without Reflection.Emit under AOT
 
 - **Status**: Proposed
 - **Date**: 2026-10-30
