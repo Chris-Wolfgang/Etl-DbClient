@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -27,7 +28,7 @@ internal static class DbCommandBuilder
     /// <exception cref="InvalidOperationException">
     /// Thrown when the type does not have a <see cref="TableAttribute"/>.
     /// </exception>
-    internal static string BuildSelect<T>() => TypeMetadataCache.For(typeof(T)).SelectSql;
+    internal static string BuildSelect<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>() => TypeMetadataCache.For<T>().SelectSql;
 
 
 
@@ -40,7 +41,7 @@ internal static class DbCommandBuilder
     /// Thrown when the type does not have a <see cref="TableAttribute"/> or has no
     /// mapped columns for INSERT.
     /// </exception>
-    internal static string BuildInsert<T>() => TypeMetadataCache.For(typeof(T)).InsertSql;
+    internal static string BuildInsert<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>() => TypeMetadataCache.For<T>().InsertSql;
 
 
 
@@ -52,7 +53,7 @@ internal static class DbCommandBuilder
     /// Thrown when the type does not have a <see cref="TableAttribute"/>, no <see cref="KeyAttribute"/>
     /// properties, or no non-key columns for the SET clause.
     /// </exception>
-    internal static string BuildUpdate<T>() => TypeMetadataCache.For(typeof(T)).UpdateSql;
+    internal static string BuildUpdate<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>() => TypeMetadataCache.For<T>().UpdateSql;
 
 
 
@@ -68,7 +69,16 @@ internal static class DbCommandBuilder
     {
         private static readonly ConcurrentDictionary<Type, TypeMetadata> Cache = new();
 
-        internal static TypeMetadata For(Type type) => Cache.GetOrAdd(type, BuildMetadata);
+        // Generic (not GetOrAdd(type, BuildMetadata)) so the trimmer can see that the
+        // public properties of T are kept for BuildMetadata's reflection: a method-group
+        // delegate over an annotated Type parameter would hide that flow.
+        internal static TypeMetadata For<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>()
+        {
+            var type = typeof(T);
+            return Cache.TryGetValue(type, out var metadata)
+                ? metadata
+                : Cache.GetOrAdd(type, BuildMetadata(type));
+        }
     }
 
 
@@ -110,7 +120,7 @@ internal static class DbCommandBuilder
     // more than it helps. The current shape — cache as a small nested type,
     // build logic at the outer class — keeps each concern visible.
 #pragma warning disable S3398
-    private static TypeMetadata BuildMetadata(Type type)
+    private static TypeMetadata BuildMetadata([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
     {
         var table = GetTableName(type);
         var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);

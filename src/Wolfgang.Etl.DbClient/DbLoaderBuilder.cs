@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace Wolfgang.Etl.DbClient;
 /// properties at <see cref="IEtlPipelineSink.RunAsync"/> time, not at
 /// construction.
 /// </remarks>
-internal sealed class DbLoaderBuilder<T> : IDbLoaderBuilder<T>
+internal sealed class DbLoaderBuilder<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T> : IDbLoaderBuilder<T>
     where T : notnull
 {
     private readonly IEtlPipelineSink _sink;

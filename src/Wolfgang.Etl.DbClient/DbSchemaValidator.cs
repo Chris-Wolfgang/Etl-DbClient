@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -62,7 +63,7 @@ public static class DbSchemaValidator
     /// names are not present on the table. The exception message names
     /// the specific offender.
     /// </exception>
-    public static void Validate<TRecord>(DbConnection connection)
+    public static void Validate<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>(DbConnection connection)
         where TRecord : notnull
     {
         if (connection is null)
@@ -103,7 +104,7 @@ public static class DbSchemaValidator
     /// <exception cref="ArgumentNullException"/>
     /// <exception cref="InvalidOperationException"/>
     /// <exception cref="OperationCanceledException"/>
-    public static async Task ValidateAsync<TRecord>(
+    public static async Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>(
         DbConnection connection,
         CancellationToken cancellationToken = default)
         where TRecord : notnull
@@ -152,7 +153,7 @@ public static class DbSchemaValidator
 
     // ------------------------------------------------------------------
 
-    private static void ExtractMapping(Type type, out string table, out IReadOnlyList<string> columns)
+    private static void ExtractMapping([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type, out string table, out IReadOnlyList<string> columns)
     {
         var tableAttr = type.GetCustomAttribute<TableAttribute>();
         if (tableAttr is null || string.IsNullOrWhiteSpace(tableAttr.Name))
