@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using Dapper;
@@ -35,7 +36,7 @@ internal static class ColumnAttributeTypeMapper
     /// <see cref="ColumnAttribute"/> first, then falls back to Dapper's default
     /// name-based matching. Thread-safe — each type is registered at most once.
     /// </summary>
-    internal static void Register<T>()
+    internal static void Register<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>()
     {
         var type = typeof(T);
 
@@ -62,11 +63,29 @@ internal static class ColumnAttributeTypeMapper
     /// Returns <see langword="null"/> if the type has no <see cref="ColumnAttribute"/>
     /// decorations, signalling that Dapper's default mapping should be used.
     /// </summary>
-    private static Dictionary<string, PropertyInfo>? BuildLookup(Type type)
+    private static Dictionary<string, PropertyInfo>? BuildLookup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
+    {
+        var lookup = BuildColumnLookup(type, out var hasColumnAttributes);
+        return hasColumnAttributes ? lookup : null;
+    }
+
+
+
+    /// <summary>
+    /// Builds the case-insensitive column-to-property lookup for <paramref name="type"/>:
+    /// every public instance property by name, overwritten by any <see cref="ColumnAttribute"/>
+    /// name. Shared by the Dapper type map and the reflection row mapper so both resolve
+    /// a column to the same property.
+    /// </summary>
+    internal static Dictionary<string, PropertyInfo> BuildColumnLookup
+    (
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type,
+        out bool hasColumnAttributes
+    )
     {
         var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var lookup = new Dictionary<string, PropertyInfo>(props.Length * 2, StringComparer.OrdinalIgnoreCase);
-        var hasColumnAttributes = false;
+        hasColumnAttributes = false;
 
         // First pass: property-name fallback entries.
         foreach (var prop in props)
@@ -87,12 +106,12 @@ internal static class ColumnAttributeTypeMapper
             lookup[attr.Name] = prop;
         }
 
-        return hasColumnAttributes ? lookup : null;
+        return lookup;
     }
 
 
 
-    private static PropertyInfo? ResolveColumn(Type type, string columnName, Dictionary<string, PropertyInfo> lookup)
+    internal static PropertyInfo? ResolveColumn(Type type, string columnName, Dictionary<string, PropertyInfo> lookup)
     {
         if (lookup.TryGetValue(columnName, out var prop))
         {

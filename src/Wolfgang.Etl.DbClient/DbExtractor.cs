@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -44,7 +45,7 @@ namespace Wolfgang.Etl.DbClient;
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
-public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
+public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord> : ExtractorBase<TRecord, DbReport>
     where TRecord : notnull
 {
     // ------------------------------------------------------------------
@@ -818,7 +819,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
             // skips-and-continues.
             var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
             using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
-            var parseRow = reader.GetRowParser<TRecord>();
+            var parseRow = CreateRowParser(reader);
 
             while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
@@ -909,6 +910,44 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Test hook: routes row mapping through <see cref="ReflectionRowMapper{TRecord}"/> on the
+    /// JIT too, so the Native AOT mapping path is exercised by the unit tests.
+    /// </summary>
+    internal bool ForceReflectionRowMapper { get; set; }
+
+
+
+    /// <summary>
+    /// Picks the row parser: Dapper's emitted parser where the runtime can generate code,
+    /// <see cref="ReflectionRowMapper{TRecord}"/> where it cannot (Native AOT), because
+    /// Dapper's parser is built with Reflection.Emit and throws
+    /// <see cref="PlatformNotSupportedException"/> there.
+    /// </summary>
+    /// <remarks>
+    /// <c>RuntimeFeature.IsDynamicCodeSupported</c> is a constant <see langword="false"/> to the
+    /// Native AOT compiler, so it removes the Dapper branch (and the Reflection.Emit code
+    /// behind it) from an AOT application instead of only skipping it at run time.
+    /// </remarks>
+    private Func<DbDataReader, TRecord> CreateRowParser(DbDataReader reader)
+    {
+#if NET5_0_OR_GREATER
+        if (RuntimeFeature.IsDynamicCodeSupported && !ForceReflectionRowMapper)
+        {
+            return reader.GetRowParser<TRecord>();
+        }
+
+        return ReflectionRowMapper<TRecord>.CreateParser(reader);
+#else
+        return ForceReflectionRowMapper
+            ? ReflectionRowMapper<TRecord>.CreateParser(reader)
+            : reader.GetRowParser<TRecord>();
+#endif
+    }
+
+
+
 
     private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
     {

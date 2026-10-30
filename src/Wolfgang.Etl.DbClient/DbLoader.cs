@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -47,7 +48,7 @@ namespace Wolfgang.Etl.DbClient;
 /// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
 /// </para>
 /// </remarks>
-public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
+public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord> : LoaderBase<TRecord, DbReport>
     where TRecord : notnull
 {
     // ------------------------------------------------------------------
