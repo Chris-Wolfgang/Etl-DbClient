@@ -107,6 +107,51 @@ public class DbExtractorLoggingTests
 
 
     [Fact]
+    public async Task ExtractAsync_when_SkipItemCount_is_set_without_a_template_logs_a_Warning_naming_PagingClauseTemplate()
+    {
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
+        using var conn = TestDb.CreateContractConnection(5);
+        var extractor = new DbExtractor<ContractRecord>
+        (
+            conn,
+            "SELECT Name, Value FROM ContractItems",
+            new DbExtractorOptions { SkipItemCount = 2 },
+            logger: logger
+        );
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        var warning = Assert.Single(logger.Entries, e => e.Level == LogLevel.Warning);
+        Assert.Contains("PagingClauseTemplate", warning.Message, StringComparison.Ordinal);
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_when_SkipItemCount_is_set_with_a_template_logs_no_Warning()
+    {
+        var logger = new SpyLogger<DbExtractor<ContractRecord>>();
+        using var conn = TestDb.CreateContractConnection(5);
+        var extractor = new DbExtractor<ContractRecord>
+        (
+            conn,
+            "SELECT Name, Value FROM ContractItems ORDER BY Value",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                SkipItemCount = 2
+            },
+            logger: logger
+        );
+
+        await extractor.ExtractAsync().ToListAsync();
+
+        Assert.DoesNotContain(logger.Entries, e => e.Level == LogLevel.Warning);
+    }
+
+
+
+    [Fact]
     public async Task ExtractAsync_when_MaximumItemCount_reached_logs_Debug()
     {
         var logger = new SpyLogger<DbExtractor<ContractRecord>>();
