@@ -24,6 +24,7 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 /// Stryker's string, conditional and statement mutations on these lines survived. Each test
 /// here pins the exact observable result.
 /// </remarks>
+[Collection(StrictColumnMappingCollection.Name)]
 public class SqlBuilderAndGuardContractTests
 {
     [ExcludeFromCodeCoverage]
