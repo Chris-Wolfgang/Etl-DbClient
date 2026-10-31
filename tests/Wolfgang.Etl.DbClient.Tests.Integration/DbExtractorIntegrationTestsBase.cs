@@ -150,34 +150,132 @@ public abstract class DbExtractorIntegrationTestsBase
         await Fixture.ResetSchemaAsync(conn);
         await Fixture.SeedAsync(conn, rowCount: 7);
 
-        // 7 rows in pages of 3 deliberately leaves a partial final page.
-        const int pageSize = 3;
-        var seen = new List<int>();
-
-        var offset = 0;
-        while (true)
-        {
-            var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
+        // One extractor walks every page: 7 rows in pages of 3 deliberately leaves a
+        // partial final page, which is what ends the walk.
+        var extractor = new DbExtractor<ContractItem>
+        (
+            conn,
+            OrderedSelect,
+            new DbExtractorOptions
             {
                 PagingClauseTemplate = Fixture.PagingClauseTemplate,
-                ServerOffset = offset,
-                ServerLimit = pageSize
-            };
-
-            var page = await extractor.ExtractAsync().ToListAsync();
-
-            if (page.Count == 0)
-            {
-                break;
+                PageSize = 3
             }
+        );
 
-            Assert.True(page.Count <= pageSize, $"page at offset {offset} returned {page.Count} rows");
-            seen.AddRange(page.Select(item => item.Value));
-            offset += pageSize;
-        }
+        var seen = await extractor
+            .ExtractAsync()
+            .Select(item => item.Value)
+            .ToListAsync();
 
         // No gaps, no duplicates, and in order — the three ways paging goes wrong.
         Assert.Equal(Enumerable.Range(1, 7).Select(i => i * 10), seen);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_PageSize_is_set_counts_SkipItemCount_and_MaximumItemCount_across_pages()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 7);
+
+        // Skip 1 and take 5 in pages of 2: the window spans three pages, and the last
+        // page is clamped to the one row still needed.
+        var extractor = new DbExtractor<ContractItem>
+        (
+            conn,
+            OrderedSelect,
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = Fixture.PagingClauseTemplate,
+                PageSize = 2,
+                SkipItemCount = 1,
+                MaximumItemCount = 5
+            }
+        );
+
+        var seen = await extractor
+            .ExtractAsync()
+            .Select(item => item.Value)
+            .ToListAsync();
+
+        Assert.Equal
+        (
+            new[] { 20, 30, 40, 50, 60 },
+            seen
+        );
+        Assert.Equal(1, extractor.CurrentSkippedItemCount);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_template_is_set_without_PageSize_skips_on_the_server()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
+
+        // Template set, no PageSize: one query with the skip pushed into the offset.
+        // The skipped rows are never fetched but still count as skipped.
+        var extractor = new DbExtractor<ContractItem>
+        (
+            conn,
+            OrderedSelect,
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = Fixture.PagingClauseTemplate,
+                SkipItemCount = 2
+            }
+        );
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal
+        (
+            new[] { "Item3", "Item4", "Item5" },
+            results.Select(item => item.Name)
+        );
+        Assert.Equal(2, extractor.CurrentSkippedItemCount);
+    }
+
+
+
+    [SkippableFact]
+    public async Task ExtractAsync_when_template_is_set_without_PageSize_pushes_skip_and_max_into_one_query()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        await Fixture.SeedAsync(conn, rowCount: 5);
+
+        var extractor = new DbExtractor<ContractItem>
+        (
+            conn,
+            OrderedSelect,
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = Fixture.PagingClauseTemplate,
+                SkipItemCount = 1,
+                MaximumItemCount = 2
+            }
+        );
+
+        var results = await extractor.ExtractAsync().ToListAsync();
+
+        Assert.Equal
+        (
+            new[] { "Item2", "Item3" },
+            results.Select(item => item.Name)
+        );
+        Assert.Equal(1, extractor.CurrentSkippedItemCount);
     }
 
 
@@ -241,7 +339,8 @@ public abstract class DbExtractorIntegrationTestsBase
 
         // Reversed deliberately. This previously asserted that a limit with no offset was a
         // silent no-op returning all 5 rows — the caller asking for 2 and getting everything.
-        // ServerLimit now switches paging on and an unset offset means 0.
+        // ServerLimit is an alias of MaximumItemCount, the template switches paging on,
+        // and an unset offset means 0.
         var extractor = new DbExtractor<ContractItem>(conn, OrderedSelect)
         {
             PagingClauseTemplate = Fixture.PagingClauseTemplate,
