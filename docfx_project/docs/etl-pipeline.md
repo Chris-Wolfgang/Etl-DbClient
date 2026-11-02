@@ -119,6 +119,8 @@ await EtlPipeline
 ## Server-side paging
 
 ```csharp
+using Dapper;   // DynamicParameters
+
 await EtlPipeline
     .Create()
     .DbExtractor<Invoice>(conn, "SELECT * FROM Invoices WHERE Status = @Status")
