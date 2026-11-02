@@ -28,17 +28,19 @@ on:
 permissions: read-all
 
 jobs:
+  # The scorecard.dev webapp verifies the job that runs scorecard-action before it accepts
+  # published results: every step must be a `uses:` of an allow-listed action. A `run:` step in
+  # that job makes it reject the publish with a 400 ("scorecard job must only have steps with
+  # `uses`"); the action only logs a warning, so the run stays green while the public score never
+  # updates (#525). The SARIF filter therefore runs in the separate `upload` job below.
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
     permissions:
-      # Required to upload SARIF results to the code-scanning API.
-      security-events: write
       # Required for OIDC-based publishing to the OpenSSF dashboard.
       id-token: write
       # Required to read repository content and settings for scoring.
       contents: read
-      actions: read
 
     steps:
       - name: Checkout
@@ -54,6 +56,36 @@ jobs:
           # Publishes results to the OpenSSF public dashboard so the badge
           # in README.md resolves. Requires the repo to be public (this repo is).
           publish_results: true
+
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 5
+
+  upload:
+    name: Filter and upload SARIF
+    needs: analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to the code-scanning API.
+      security-events: write
+      contents: read
+
+    steps:
+      # Checked out (before the download, which it would otherwise wipe) so upload-sarif can
+      # compute the same source fingerprints it did when this ran in the analysis job; without
+      # the files, alert fingerprints drift and existing alerts reappear under new IDs.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download SARIF artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: scorecard-sarif
 
       # Drop Scorecard findings that are known won't-fix for this repository
       # BEFORE the SARIF reaches Code Scanning. Filtering here (rather than
