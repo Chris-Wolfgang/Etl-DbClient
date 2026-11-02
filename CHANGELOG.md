@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-
 ## [0.12.0] - 2026-09-22
 
 ### Added
@@ -33,11 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Internal
 
 - Built against Wolfgang.Etl.Abstractions / ErrorPolicies / TestKit / TestKit.Xunit 0.26.0 (trim- and native-AOT-compatible on net8.0+; no API change from 0.25.0), so the package now requires Abstractions 0.26.0 or later. (#453)
-- The options constructor assigns the stage's backing fields directly instead of going through the deprecated setters, so the `CS0618` suppressions that covered those writes are gone. The six validating setters' guards (`DbExtractorOptions.CommandTimeout`; `DbLoaderOptions.CommandTimeout` / `InsertBatchSize` / `MaxErrorCount` / `BatchCommitSize` / `BatchSize`) now also run on the records' init accessors, with tests; the extractor's `Parameters` backing field is named `_parameterOverride` because `_parameters` already holds the constructor dictionary. (#441) (#441)
+- The options constructor assigns the stage's backing fields directly instead of going through the deprecated setters, so the `CS0618` suppressions that covered those writes are gone. The six validating setters' guards (`DbExtractorOptions.CommandTimeout`; `DbLoaderOptions.CommandTimeout` / `InsertBatchSize` / `MaxErrorCount` / `BatchCommitSize` / `BatchSize`) now also run on the records' init accessors, with tests; the extractor's `Parameters` backing field is named `_parameterOverride` because `_parameters` already holds the constructor dictionary. (#441)
 - Review polish: member spacing normalised in the extractor, loader and schema validator; the source generator's Roslyn pin is documented; the open InspectCode findings are resolved (LINQ `Any` parameter-name scans, a redundant Dapper interface entry, a redundant null-forgiving operator, and test-code tidy-ups); no behaviour change.
 
-
-## [0.11.0] - 2026-09-16
+## [0.11.0] - 2026-09-17
 
 ### Added
 
@@ -65,8 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([GHSA-23fw-v26w-5fgq](https://github.com/advisories/GHSA-23fw-v26w-5fgq)). Build-time only; the shipped package does not depend on
   it. The PR benchmark workflow no longer audits the merge-base restore, so a base carrying an advisory cannot block the PR that fixes it.
 
-
-## [0.10.0] - 2026-09-04
+## [0.10.0] - 2026-09-05
 
 > **The server-side paging API is provisional in this release.** It arrived across #385, #391
 > and #393 and is still settling: in particular the two guard clauses — activating paging
@@ -371,7 +368,7 @@ surface over `DbExtractor` / `DbLoader`.
 
 - Bumped `Wolfgang.Etl.Abstractions` to `0.16.0`.
 
-## [0.6.0] - 2026-07-06
+## [0.6.0] - 2026-07-12
 
 Feature-rich release: dry-run mode, source-generator scaffolding, batching + paging + connection lifecycle knobs, plus a broad InspectCode fix pass.
 
@@ -398,7 +395,9 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 - Real-bug findings from the InspectCode audit (#202 follow-up).
 - Remaining InspectCode findings via actual source changes rather than suppressions (#202 follow-up).
 - Replaced file-scope ReSharper disables with documented JetBrains annotations (#202 follow-up).
-## [0.5.0] — robustness + extractor ergonomics + source generator
+## [0.5.0] - 2026-06-30
+
+_Robustness + extractor ergonomics + source generator._
 
 ### Added — DbLoader robustness
 - `IsDryRun` ([#21](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/21)) — when `true`, the loader runs the full pipeline (enumerate, evaluate skip/max, increment counters, fire progress) but skips both `ExecuteAsync` call sites (per-row + batched). The DB is not modified. Implements `ISupportDryRun` from Abstractions 0.15.0.
@@ -433,7 +432,9 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 ### Breaking
 - **Removed**: `DbReport.TotalItemCount` (locally declared) — the property is now inherited from `Report` (Abstractions 0.14+ moved it to the base). Callers reading `report.TotalItemCount` continue to work via inheritance lookup; recompilation against Abstractions 0.15+ may be needed for tightly-coupled consumers.
 
-## [0.4.0] — production-readiness knobs
+## [0.4.0] - 2026-06-22
+
+_Production-readiness knobs._
 
 ### Added
 - `DbExtractor<TRecord>.CommandTimeout` / `DbLoader<TRecord>.CommandTimeout` (`TimeSpan?`) — controls how long each underlying command can run before timing out. `null` (the default) falls back to the ADO.NET provider default (~30 s). Negative values throw `ArgumentOutOfRangeException`. Wired through every Dapper call site (extractor's main query + default count query; loader's per-record and batched `ExecuteAsync`).
@@ -441,13 +442,9 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 - `DbExtractor<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload. The extractor creates the connection via the supplied `DbProviderFactory`, opens it lazily before the first command, and disposes it when extraction completes (or throws). Saves callers the `using var conn = …; await conn.OpenAsync();` boilerplate for one-off scenarios.
 - `DbLoader<TRecord>(DbProviderFactory, string connectionString, string commandText, ILogger?)` — owned-connection ctor overload with the same semantics (open lazily, dispose at end). Defaults to auto-managed transaction.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.11.0...HEAD
-[0.11.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.10.0...v0.11.0
-[0.6.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.5.0
-[0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.4.0
+## [0.3.0] - 2026-06-22
 
-## [0.3.0] — code-review pass + integration-test surface
+_Code-review pass + integration-test surface._
 
 ### Added
 - `DbClientOptions.StrictColumnMapping` (default `false`) — opt-in flag that converts unmapped result-set columns from Dapper's silent-drop default into a descriptive `InvalidOperationException` naming the column and target type. Preserves out-of-the-box Dapper behavior by default. Useful for catching `[Column]` typos during development.
@@ -470,4 +467,16 @@ Feature-rich release: dry-run mode, source-generator scaffolding, batching + pag
 
 See git history.
 
-[0.3.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/releases/tag/v0.3.0
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.9.1...v0.10.0
+[0.9.1]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.7.1...v0.8.0
+[0.7.1]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.2.0...v0.3.0
