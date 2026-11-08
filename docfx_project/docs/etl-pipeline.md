@@ -8,7 +8,7 @@ read from a database, thread rows through operators from
 — another database, JSON, CSV, `Console`, an arbitrary `LoaderBase<T, TProgress>`,
 or an `IAsyncEnumerable<T>` escape hatch.
 
-Added in **v0.7.0**. Requires `Wolfgang.Etl.Abstractions` ≥ 0.16.0.
+Added in **v0.7.0**. Requires `Wolfgang.Etl.Abstractions` ≥ 0.26.0.
 
 ## The pattern
 
@@ -159,7 +159,12 @@ imports where a per-row PK conflict or check-constraint violation shouldn't
 tear down the whole run:
 
 ```csharp
-var loader = new DbLoader<Widget>(destConn, insertSql) { InsertBatchSize = 1 };
+var loader = new DbLoader<Widget>
+(
+    destConn,
+    insertSql,
+    new DbLoaderOptions { InsertBatchSize = 1, BatchSize = 1 }  // both 1 (the defaults) keeps Skip available
+);
 
 await EtlPipeline
     .Create()
