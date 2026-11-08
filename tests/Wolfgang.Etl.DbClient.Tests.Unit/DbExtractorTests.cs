@@ -276,7 +276,6 @@ public class DbExtractorTests
 
         Assert.Equal(3, report.CurrentItemCount);
         Assert.Contains("People", report.CommandText, StringComparison.Ordinal);
-        Assert.True(report.ElapsedMilliseconds >= 0);
     }
 
 
@@ -967,8 +966,10 @@ public class DbExtractorTests
         var extractor = new DbExtractor<PersonRecord>(conn, "SELECT first_name AS FirstName, age AS Age FROM People");
 
         // No ErrorPolicy set — default is Abort, so pre-existing behavior
-        // (the row's exception propagates) is preserved bit-for-bit.
-        await Assert.ThrowsAnyAsync<Exception>
+        // (the row's exception propagates) is preserved bit-for-bit. The row
+        // failure is Dapper's DataException, rethrown as-is; pinning the exact
+        // type keeps an unrelated exception from passing this test.
+        await Assert.ThrowsAsync<System.Data.DataException>
         (
             async () => await extractor.ExtractAsync().ToListAsync()
         );

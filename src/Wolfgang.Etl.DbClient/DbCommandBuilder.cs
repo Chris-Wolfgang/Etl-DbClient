@@ -32,8 +32,9 @@ internal static class DbCommandBuilder
 
 
     /// <summary>
-    /// Generates an INSERT statement for all mapped non-key columns.
-    /// If no <see cref="KeyAttribute"/> columns exist, all columns are included.
+    /// Generates an INSERT statement for every mapped column except store-generated keys
+    /// (<see cref="KeyAttribute"/> combined with <c>[DatabaseGenerated(Identity)]</c>).
+    /// Non-identity keys are included, since they are user-assigned values.
     /// Requires <see cref="TableAttribute"/> on the type.
     /// </summary>
     /// <exception cref="InvalidOperationException">
