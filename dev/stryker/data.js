@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792305344344,
+  "lastUpdate": 1794143360803,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "Mutation score": [
@@ -107,6 +107,33 @@ window.BENCHMARK_DATA = {
           {
             "name": "Mutation score",
             "value": 71.11,
+            "unit": "%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang",
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "84187eaee4ec9108edc32f3b6018bb8e3545fadf",
+          "message": "test(unit): pin generated SQL, builder messages and guard names to kill mutation survivors (#474, batch 2) (#570)\n\n* test(unit): pin generated SQL, builder messages and guard names to kill mutation survivors (#474)\n\nSecond batch for #474, covering DbCommandBuilder, ColumnAttributeTypeMapper,\nEtlParameter and EtlPipelineDbClientExtensions. Stryker (net10.0, -m on the\nfour files): 76.11 % -> 92.92 %, survived/no-coverage 27 -> 8.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* test(unit): serialize the StrictColumnMapping tests so they cannot race\n\nThis PR added a second test class that flips the process-wide\nDbClientOptions.StrictColumnMapping static. xunit runs classes in\nparallel, so ColumnAttributeTypeMapperTests could reset the flag to false\nwhile SqlBuilderAndGuardContractTests relied on it being true; the strict\ntest then saw no exception. Observed once locally on net471 while running\nscripts/build-pr.ps1 on the batch-4 branch stacked above this one.\n\nBoth classes now join a collection with DisableParallelization = true.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-08T03:31:07Z",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/84187eaee4ec9108edc32f3b6018bb8e3545fadf"
+        },
+        "date": 1794143354771,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Mutation score",
+            "value": 77.92,
             "unit": "%"
           }
         ]
