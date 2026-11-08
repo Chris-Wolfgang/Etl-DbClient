@@ -884,13 +884,19 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         // Materialize up to BatchCommitSize items at a time, then run each
         // chunk through the single-transaction path. A failure rolls back
         // ONLY the current chunk; previously-committed chunks survive.
+        //
+        // Stop pulling from the source once MaximumItemCount is reached (#536):
+        // the inner per-row path stops writing at the cap, but nothing told this
+        // loop, so it used to keep reading the source to exhaustion and commit an
+        // empty transaction per chunk.
         var enumerator = items.GetAsyncEnumerator(token);
         try
         {
-            while (true)
+            while (CurrentItemCount < MaximumItemCount)
             {
-                var chunk = new List<TRecord>(_batchCommitSize);
-                while (chunk.Count < _batchCommitSize && await enumerator.MoveNextAsync().ConfigureAwait(false))
+                var chunkLimit = ChunkFillLimit();
+                var chunk = new List<TRecord>(chunkLimit);
+                while (chunk.Count < chunkLimit && await enumerator.MoveNextAsync().ConfigureAwait(false))
                 {
                     chunk.Add(enumerator.Current);
                 }
@@ -907,6 +913,23 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         {
             await enumerator.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+
+
+    /// <summary>
+    /// How many source items the next chunk may hold without reading past what
+    /// the load can still use: the items still to be skipped plus the items still
+    /// allowed under <c>MaximumItemCount</c>, capped at <c>BatchCommitSize</c>.
+    /// Computed in <see cref="long"/> because <c>MaximumItemCount</c> defaults to
+    /// <see cref="int.MaxValue"/>.
+    /// </summary>
+    private int ChunkFillLimit()
+    {
+        var stillToSkip = Math.Max(0L, (long)SkipItemCount - CurrentSkippedItemCount);
+        var stillAllowed = (long)MaximumItemCount - CurrentItemCount;
+
+        return (int)Math.Min(_batchCommitSize, stillToSkip + stillAllowed);
     }
 
 
