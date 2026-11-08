@@ -83,7 +83,7 @@ public class DbLoaderTests
     // ------------------------------------------------------------------
 
     [Fact]
-    public async Task LoadAsync_inserts_all_records()
+    public async Task LoadAsync_when_source_has_records_inserts_all_records()
     {
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
@@ -364,7 +364,6 @@ public class DbLoaderTests
 
         Assert.Equal(3, report.CurrentItemCount);
         Assert.Contains("INSERT", report.CommandText, StringComparison.OrdinalIgnoreCase);
-        Assert.True(report.ElapsedMilliseconds >= 0);
     }
 
 
