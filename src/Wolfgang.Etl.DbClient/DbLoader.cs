@@ -56,6 +56,10 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     // Fields
     // ------------------------------------------------------------------
 
+    // Compiled property getters for the multi-row INSERT binder, shared by every loader of this
+    // TRecord. Keyed by PropertyInfo, so a getter is compiled once per property per process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Reflection.PropertyInfo, Func<TRecord, object?>> PropertyGetterCache = new();
+
     // _ownsConnection tracks whether LoadWorkerAsync is responsible for the
     // connection's OpenAsync + Dispose. True for the DbProviderFactory ctor
     // overloads; false when the caller passes a pre-opened DbConnection.
@@ -997,7 +1001,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         var templateParams = ExtractTemplateParamNames(template);
         var paramNames = templateParams.Names;
         var paramSpans = templateParams.Spans;
-        var properties = GetMappedProperties(paramNames);
+        var getters = GetPropertyGetters(GetMappedProperties(paramNames));
+        var parameterKeys = BuildRowParameterKeys(paramNames, _insertBatchSize);
 
         var buffer = new List<TRecord>(_insertBatchSize);
         await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
@@ -1021,14 +1026,14 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
 
             if (buffer.Count >= _insertBatchSize)
             {
-                await FlushMultiRowInsertAsync(prefix, template, paramNames, paramSpans, properties, buffer, transaction, token).ConfigureAwait(false);
+                await FlushMultiRowInsertAsync(prefix, template, parameterKeys, paramSpans, getters, buffer, transaction, token).ConfigureAwait(false);
                 buffer.Clear();
             }
         }
 
         if (buffer.Count > 0)
         {
-            await FlushMultiRowInsertAsync(prefix, template, paramNames, paramSpans, properties, buffer, transaction, token).ConfigureAwait(false);
+            await FlushMultiRowInsertAsync(prefix, template, parameterKeys, paramSpans, getters, buffer, transaction, token).ConfigureAwait(false);
         }
     }
 
@@ -1038,9 +1043,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     (
         string prefix,
         string template,
-        IReadOnlyList<string> paramNames,
+        string[] parameterKeys,
         IReadOnlyList<ParamSpan> paramSpans,
-        IReadOnlyList<System.Reflection.PropertyInfo> properties,
+        Func<TRecord, object?>[] getters,
         List<TRecord> batch,
         DbTransaction? transaction,
         CancellationToken token
@@ -1060,6 +1065,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         sb.Append(prefix);
 
         var dp = new DynamicParameters();
+        var spanCount = paramSpans.Count;
         for (var i = 0; i < batch.Count; i++)
         {
             if (i > 0)
@@ -1078,9 +1084,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
                 var span = paramSpans[p];
                 sb.Append(template, cursor, span.Start - cursor);
 
-                var paramKey = "@" + paramNames[p] + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var paramKey = parameterKeys[(i * spanCount) + p];
                 sb.Append(paramKey);
-                dp.Add(paramKey, properties[p].GetValue(batch[i]));
+                dp.Add(paramKey, getters[p](batch[i]));
 
                 cursor = span.Start + span.Length;
             }
@@ -1232,6 +1238,61 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
             i = end;
         }
         return new TemplateParams(names, spanList);
+    }
+
+
+
+    /// <summary>
+    /// The row-numbered parameter names for one multi-row INSERT chunk, computed once per load
+    /// instead of once per cell per flush: entry <c>(row * names.Count) + column</c> is
+    /// <c>@name_row</c>.
+    /// </summary>
+    private static string[] BuildRowParameterKeys(IReadOnlyList<string> paramNames, int rowCount)
+    {
+        var keys = new string[rowCount * paramNames.Count];
+        for (var row = 0; row < rowCount; row++)
+        {
+            var suffix = "_" + row.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            for (var p = 0; p < paramNames.Count; p++)
+            {
+                keys[(row * paramNames.Count) + p] = "@" + paramNames[p] + suffix;
+            }
+        }
+
+        return keys;
+    }
+
+
+
+    /// <summary>
+    /// Compiled, cached getters for <paramref name="properties"/>, so the multi-row INSERT binder
+    /// does not go through <see cref="System.Reflection.PropertyInfo.GetValue(object)"/> for
+    /// every cell.
+    /// </summary>
+    private static Func<TRecord, object?>[] GetPropertyGetters(IReadOnlyList<System.Reflection.PropertyInfo> properties)
+    {
+        var getters = new Func<TRecord, object?>[properties.Count];
+        for (var i = 0; i < properties.Count; i++)
+        {
+            getters[i] = PropertyGetterCache.GetOrAdd(properties[i], CreatePropertyGetter);
+        }
+
+        return getters;
+    }
+
+
+
+    private static Func<TRecord, object?> CreatePropertyGetter(System.Reflection.PropertyInfo property)
+    {
+        var record = System.Linq.Expressions.Expression.Parameter(typeof(TRecord), "record");
+        var body = System.Linq.Expressions.Expression.Convert
+        (
+            System.Linq.Expressions.Expression.Property(record, property),
+            typeof(object)
+        );
+        return System.Linq.Expressions.Expression
+            .Lambda<Func<TRecord, object?>>(body, record)
+            .Compile();
     }
 
 
