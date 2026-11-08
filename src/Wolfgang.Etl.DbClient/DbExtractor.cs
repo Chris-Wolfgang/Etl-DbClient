@@ -53,9 +53,6 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     // Fields
     // ------------------------------------------------------------------
 
-    // The parameter names server-side paging adds; the collision guard checks them.
-    private static readonly string[] GeneratedPagingParameterNames = { "@PageOffset", "@PageLimit" };
-
     // _connection is not `readonly` because the DbProviderFactory ctor overload
     // creates the connection itself; the caller-supplied-DbConnection ctors set
     // it once and never re-assign. _ownsConnection tracks whether ExtractWorkerAsync
@@ -1024,7 +1021,7 @@ public class DbExtractor<TRecord> : ExtractorBase<TRecord, DbReport>
     /// </exception>
     private void EnsurePagingParametersNotAlreadySupplied()
     {
-        foreach (var generated in GeneratedPagingParameterNames)
+        foreach (var generated in PagingClauseTemplates.GeneratedParameterNames)
         {
             // ContainsKey resolves against _parameters' own comparer, which is deliberately
             // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
