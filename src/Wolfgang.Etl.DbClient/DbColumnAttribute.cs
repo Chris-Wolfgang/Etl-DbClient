@@ -31,8 +31,9 @@ public sealed class DbColumnAttribute : Attribute
     public string Name { get; }
 
     /// <summary>
-    /// When <see langword="true"/>, the property is excluded from the
-    /// generated <c>Insert</c> SQL and parameter binder. Useful for computed
+    /// When <see langword="true"/>, the property is excluded from every
+    /// generated SQL constant (<c>Insert</c>, <c>Select</c>, <c>Update</c>,
+    /// <c>Delete</c>) and from the parameter binder. Useful for computed
     /// columns or columns the application doesn't write.
     /// </summary>
     public bool Skip { get; set; }

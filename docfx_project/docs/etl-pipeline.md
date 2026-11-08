@@ -36,7 +36,8 @@ pipeline interfaces.
 
 ## Extractor knobs
 
-Every configurable property on `DbExtractor<T>` has a matching builder setter:
+Most configurable properties on `DbExtractor<T>` have a matching builder setter
+(`CommandTimeout` and `ValidateSchemaOnStart` do not; set those on the extractor):
 
 | Setter | Underlying property | Purpose |
 |---|---|---|
@@ -153,7 +154,7 @@ await EtlPipeline
 ## Error handling
 
 `RowErrorHandling.Skip` on the loader silently drops the failing row and
-continues (per-record path only, requires `InsertBatchSize = 1`). Useful for
+continues (per-record path only, requires both `BatchSize = 1` and `InsertBatchSize = 1`). Useful for
 imports where a per-row PK conflict or check-constraint violation shouldn't
 tear down the whole run:
 

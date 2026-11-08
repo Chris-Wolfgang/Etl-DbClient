@@ -33,9 +33,11 @@ namespace Wolfgang.Etl.DbClient;
 ///   exception.</item>
 /// </list>
 /// <para>
-/// The caller owns the <see cref="DbConnection"/> lifetime — the loader does not
-/// open, close, or dispose it. The connection must be open before calling
-/// <c>LoadAsync</c>.
+/// By default the caller owns the <see cref="DbConnection"/> lifetime — the loader does not
+/// open, close, or dispose it, and the connection must be open before calling
+/// <c>LoadAsync</c>. Set <c>ManageConnection</c> to have the loader open and close a
+/// caller-supplied connection, or use the <see cref="DbProviderFactory"/> constructor to have
+/// it create, open and dispose its own.
 /// </para>
 /// <para>
 /// <b>Thread safety.</b> A <see cref="DbLoader{TRecord}"/> instance is not safe for
@@ -43,8 +45,8 @@ namespace Wolfgang.Etl.DbClient;
 /// assumes a single load in flight. Build a separate instance per concurrent load.
 /// </para>
 /// <para>
-/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
-/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
+/// Command timeout defaults to the ADO.NET provider's default (typically 30 seconds);
+/// set <see cref="DbLoaderOptions.CommandTimeout"/> to change it.
 /// </para>
 /// </remarks>
 public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
@@ -498,9 +500,9 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// Mutually exclusive with <see cref="BatchSize"/> &gt; <c>1</c> — when
     /// both are set, <c>InsertBatchSize</c> wins because it generates a
     /// single statement per chunk instead of N. Mutually exclusive with
-    /// <c>IsDryRun</c> = <see langword="true"/> (IsDryRun short-circuits
-    /// before SQL generation) and with stored-procedure
-    /// <see cref="CommandType"/>.
+    /// stored-procedure <see cref="CommandType"/>. With <c>IsDryRun</c> =
+    /// <see langword="true"/> the <c>VALUES</c> template is still parsed (and a
+    /// command text without one still throws); only the execute is skipped.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -573,10 +575,11 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// </summary>
     /// <remarks>
     /// <see cref="RowErrorHandling.Skip"/> only takes effect on the
-    /// per-record path (<see cref="BatchSize"/> == 1, the default). A failed
+    /// per-record path — <see cref="BatchSize"/> == 1 <b>and</b>
+    /// <see cref="InsertBatchSize"/> == 1, both the default. A failed
     /// batch cannot be safely attributed to a single row without per-item
-    /// retry, so the load still aborts even in Skip mode when
-    /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
+    /// retry, so the load still aborts even in Skip mode when either is
+    /// greater than <c>1</c>. See <see cref="RowErrorHandling.Skip"/>.
     /// </remarks>
     public RowErrorHandling ErrorHandling { get => _errorHandling; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _errorHandling = value; }
 

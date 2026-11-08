@@ -15,8 +15,10 @@ namespace Wolfgang.Etl.DbClient;
 /// </summary>
 /// <typeparam name="T">The record type produced by the extractor.</typeparam>
 /// <remarks>
-/// Each setter maps 1:1 to a public property on <see cref="DbExtractor{TRecord}"/>;
-/// no new configuration surface is introduced. Setters return the builder for
+/// Each setter maps to a public property on <see cref="DbExtractor{TRecord}"/>;
+/// no new configuration surface is introduced. Not every extractor property has a
+/// setter (for example <c>CommandTimeout</c> and <c>ValidateSchemaOnStart</c> do not).
+/// Setters return the builder for
 /// chaining and take effect on the next enumeration of the pipeline.
 /// </remarks>
 public interface IDbExtractorBuilder<T> : IEtlPipeline<T>
