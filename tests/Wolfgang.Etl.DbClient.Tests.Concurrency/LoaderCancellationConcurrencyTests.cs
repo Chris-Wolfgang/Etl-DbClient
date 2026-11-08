@@ -93,7 +93,7 @@ public class LoaderCancellationConcurrencyTests
                 cts.Cancel();
             });
 
-            var loadTask = Task.Run(() => Outcome.FaultOfAsync(loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token)));
+            var loadTask = Task.Run(() => Outcome.FaultOfAsync(() => loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token)));
 
             Task.WaitAll(cancelTask, loadTask);
 
@@ -134,7 +134,7 @@ public class LoaderCancellationConcurrencyTests
             conn,
             "INSERT INTO load_probe (value) VALUES (@Value)");
 
-        var fault = await Outcome.FaultOfAsync(loader.LoadAsync(GenerateAsync(5, CancellationToken.None), CancellationToken.None));
+        var fault = await Outcome.FaultOfAsync(() => loader.LoadAsync(GenerateAsync(5, CancellationToken.None), CancellationToken.None));
 
         Assert.Null(fault);
         Assert.Equal(5, loader.CurrentItemCount);
@@ -162,7 +162,7 @@ public class LoaderCancellationConcurrencyTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        var fault = await Outcome.FaultOfAsync(loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token));
+        var fault = await Outcome.FaultOfAsync(() => loader.LoadAsync(GenerateAsync(5, cts.Token), cts.Token));
 
         Assert.IsAssignableFrom<OperationCanceledException>(fault);
         Assert.Equal(0, loader.CurrentItemCount);
