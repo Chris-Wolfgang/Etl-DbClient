@@ -56,34 +56,43 @@ await SeedAsync(conn, rowCount: 100_000);
 var stopwatch = Stopwatch.StartNew();
 long cycles = 0, extracted = 0, loaded = 0;
 
-// SIGTERM handler so a workflow's timeout kills the process cleanly
-// and we still print the summary.
+// The token fires after the requested duration. The loop checks it between cycles, and the
+// extract / load calls observe it too, so a cycle cut short by the timer throws
+// OperationCanceledException; that is the normal end of the run, so it is caught here and the
+// summary below still prints.
 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(durationSeconds));
 
-while (!cts.IsCancellationRequested)
+try
 {
-    var extractor = new DbExtractor<Widget>(conn,
-        "SELECT id AS Id, name AS Name, price AS Price FROM widget");
-    await foreach (var _ in extractor.ExtractAsync(cts.Token).ConfigureAwait(false))
+    while (!cts.IsCancellationRequested)
     {
-        extracted++;
-    }
+        var extractor = new DbExtractor<Widget>(conn,
+            "SELECT id AS Id, name AS Name, price AS Price FROM widget");
+        await foreach (var _ in extractor.ExtractAsync(cts.Token).ConfigureAwait(false))
+        {
+            extracted++;
+        }
 
-    var loader = new DbLoader<Widget>(conn,
-        "INSERT INTO widget (name, price) VALUES (@Name, @Price)");
-    await loader.LoadAsync(GenerateBatch(rowsPerBatch), cts.Token).ConfigureAwait(false);
-    loaded += rowsPerBatch;
+        var loader = new DbLoader<Widget>(conn,
+            "INSERT INTO widget (name, price) VALUES (@Name, @Price)");
+        await loader.LoadAsync(GenerateBatch(rowsPerBatch), cts.Token).ConfigureAwait(false);
+        loaded += rowsPerBatch;
 
-    cycles++;
-    if (cycles % 10 == 0)
-    {
-        var alloc = GC.GetTotalAllocatedBytes(precise: true);
-        Console.WriteLine(
-            $"[gc-workload] t={stopwatch.Elapsed.TotalSeconds,7:F1}s  " +
-            $"cycles={cycles,5}  extracted={extracted,10}  loaded={loaded,10}  " +
-            $"gen0={GC.CollectionCount(0),4}  gen1={GC.CollectionCount(1),3}  gen2={GC.CollectionCount(2),3}  " +
-            $"total-alloc={alloc / 1024 / 1024,7} MB");
+        cycles++;
+        if (cycles % 10 == 0)
+        {
+            var alloc = GC.GetTotalAllocatedBytes(precise: true);
+            Console.WriteLine(
+                $"[gc-workload] t={stopwatch.Elapsed.TotalSeconds,7:F1}s  " +
+                $"cycles={cycles,5}  extracted={extracted,10}  loaded={loaded,10}  " +
+                $"gen0={GC.CollectionCount(0),4}  gen1={GC.CollectionCount(1),3}  gen2={GC.CollectionCount(2),3}  " +
+                $"total-alloc={alloc / 1024 / 1024,7} MB");
+        }
     }
+}
+catch (OperationCanceledException) when (cts.IsCancellationRequested)
+{
+    // Duration elapsed mid-cycle; fall through to the summary.
 }
 
 Console.WriteLine();
@@ -129,12 +138,6 @@ static async IAsyncEnumerable<Widget> GenerateBatch(int count)
         }
     }
 }
-
-// This file still configures through the deprecated property setters. Migrating it to the
-// options constructors is follow-up work, tracked separately - the deprecation's purpose is
-// to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
-// Several sites here assign after construction, so they cannot move to a constructor without
-// restructuring the test.
 
 namespace Wolfgang.Etl.DbClient.Tools.GcProfileWorkload
 {

@@ -12,8 +12,8 @@ using Microsoft.Data.Sqlite;
 // This file still configures through the deprecated property setters. Migrating it to the
 // options constructors is follow-up work, tracked separately - the deprecation's purpose is
 // to warn consumers, and the options constructors are covered by DbOptionsDefaultsTests.
-// Several sites here assign after construction, so they cannot move to a constructor without
-// restructuring the test.
+// The loader is reconfigured per benchmark parameter after construction, so it cannot move
+// to a constructor without restructuring the benchmark.
 #pragma warning disable CS0618
 
 namespace Wolfgang.Etl.DbClient.Benchmarks;
