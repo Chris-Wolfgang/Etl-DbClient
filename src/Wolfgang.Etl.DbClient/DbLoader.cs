@@ -274,6 +274,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
         ApplyOptions(options);
     }
 
+
+
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this loader owns.
     /// </summary>
@@ -414,7 +416,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// procedure by name per record (or per batch when <see cref="BatchSize"/>
     /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
     /// </summary>
-    public CommandType CommandType { get => _commandType; [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _commandType = value; }
+    public CommandType CommandType
+    {
+        get => _commandType;
+        [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _commandType = value;
+    }
 
 
 
@@ -442,7 +449,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// left open — the loader only closes connections it itself opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get => _manageConnection; [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _manageConnection = value; }
+    public bool ManageConnection
+    {
+        get => _manageConnection;
+        [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _manageConnection = value;
+    }
 
 
 
@@ -467,7 +479,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get => _validateSchemaOnStart; [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _validateSchemaOnStart = value; }
+    public bool ValidateSchemaOnStart
+    {
+        get => _validateSchemaOnStart;
+        [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _validateSchemaOnStart = value;
+    }
 
 
 
@@ -561,7 +578,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// deprecated and will be removed in a later release.
     /// </para>
     /// </remarks>
-    public bool IsDryRun { get => _isDryRun; [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")] set => _isDryRun = value; }
+    public bool IsDryRun
+    {
+        get => _isDryRun;
+        [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")]
+        set => _isDryRun = value;
+    }
 
 
 
@@ -581,7 +603,12 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     /// retry, so the load still aborts even in Skip mode when either is
     /// greater than <c>1</c>. See <see cref="RowErrorHandling.Skip"/>.
     /// </remarks>
-    public RowErrorHandling ErrorHandling { get => _errorHandling; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _errorHandling = value; }
+    public RowErrorHandling ErrorHandling
+    {
+        get => _errorHandling;
+        [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _errorHandling = value;
+    }
 
 
 
@@ -1021,7 +1048,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
     {
         if (IsDryRun)
         {
-            foreach (var _ in batch)
+            for (var i = 0; i < batch.Count; i++)
             {
                 IncrementCurrentItemCount();
                 LogDebugRecordLoaded();
@@ -1065,7 +1092,7 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
             new CommandDefinition(sb.ToString(), dp, transaction, CommandTimeoutSeconds, CommandType.Text, cancellationToken: token)
         ).ConfigureAwait(false);
 
-        foreach (var _ in batch)
+        for (var i = 0; i < batch.Count; i++)
         {
             IncrementCurrentItemCount();
             LogDebugRecordLoaded();
@@ -1651,6 +1678,8 @@ public class DbLoader<TRecord> : LoaderBase<TRecord, DbReport>
             );
         }
     }
+
+
 
     /// <summary>
     /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves
