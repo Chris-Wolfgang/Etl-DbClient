@@ -35,6 +35,11 @@ public static class PagingClauseTemplates
 
     private const string OffsetFetch = "OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY";
 
+    // The parameter names server-side paging adds; DbExtractor's collision guard checks them.
+    // Lives here, not in the generic DbExtractor<TRecord>, so there is one array rather than
+    // one per closed TRecord (InspectCode StaticMemberInGenericType).
+    internal static readonly string[] GeneratedParameterNames = { "@PageOffset", "@PageLimit" };
+
 
 
     /// <summary>
