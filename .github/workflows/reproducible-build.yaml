@@ -3,12 +3,16 @@
 # `Directory.Build.props` sets <Deterministic>true</Deterministic> and
 # <ContinuousIntegrationBuild> — both INPUTS to a reproducible build.
 # This workflow verifies the OUTPUT: building the same commit on two
-# different runner OSes must produce byte-identical `.dll` / `.pdb` /
-# `.nupkg` artifacts. Any divergence means the deterministic guarantee
-# is broken and downstream consumers (SBOM validators, supply-chain
-# attestation, third-party reproducers) can't trust our binaries.
+# different runner OSes must produce byte-identical `.dll` / `.pdb`
+# artifacts. Any divergence means the deterministic guarantee is broken
+# and downstream consumers (SBOM validators, supply-chain attestation,
+# third-party reproducers) can't trust our binaries.
 #
-# Refs #146.
+# `.nupkg` / `.snupkg` digests are recorded for reference but are NOT
+# compared: NuGet stamps the pack time into every zip entry, so two packs
+# of the same commit on the same machine already differ.
+#
+# Refs #146, #255.
 
 name: Reproducible build verify
 
@@ -127,16 +131,12 @@ jobs:
           path: reports
 
       - name: Compare
-        # GATE MODE: informational / non-blocking.
-        #
-        # Cross-OS byte-identity is the ASPIRATION; the current tree is not
-        # yet reproducible. Failing PRs on that would block every merge on
-        # a problem no PR author can fix in isolation. This step surfaces
-        # divergence in the Step Summary + as a workflow warning, but
-        # exits 0 so it doesn't gate merge.
-        #
-        # Flip to `exit 1` once the reproducibility gap tracked in the
-        # follow-up issue actually closes.
+        # GATE MODE: blocking (#255). Any difference in the library's .dll / .pdb between
+        # the Linux and Windows builds fails the job. If it does, diff the per-TFM .pdb
+        # documents and referenced-assembly records first: a generated source written with a
+        # different newline, or a different reference assembly, were the two causes that
+        # Directory.Build.targets and Directory.Build.props remove.
+        # Package files are excluded from the comparison (see the header).
         shell: bash
         run: |
           set -uo pipefail
@@ -161,20 +161,25 @@ jobs:
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if diff -u "$linux" "$win" > /tmp/repro.diff; then
-            echo "✅ Reproducible: Linux and Windows produced byte-identical artifacts."
+          grep -vE '\.s?nupkg$' "$linux" > /tmp/linux-assemblies.txt || true
+          grep -vE '\.s?nupkg$' "$win" > /tmp/windows-assemblies.txt || true
+          if [ ! -s /tmp/linux-assemblies.txt ] || [ ! -s /tmp/windows-assemblies.txt ]; then
+            echo "::error::No .dll / .pdb digests in at least one manifest - nothing to compare, so the gate cannot pass."
+            exit 1
+          fi
+
+          if diff -u /tmp/linux-assemblies.txt /tmp/windows-assemblies.txt > /tmp/repro.diff; then
+            echo "✅ Reproducible: Linux and Windows produced byte-identical assemblies and symbols."
             {
-              echo "✅ **Reproducible**: Linux and Windows produced byte-identical artifacts."
+              echo "✅ **Reproducible**: Linux and Windows produced byte-identical assemblies and symbols (package files are not compared)."
             } >> "$GITHUB_STEP_SUMMARY"
           else
             echo ""
-            echo "::warning::Non-reproducible build — Linux and Windows produced DIFFERENT artifacts. Informational only for now (see workflow header)."
+            echo "::error::Non-reproducible build — Linux and Windows produced DIFFERENT assemblies or symbols."
             echo ""
             cat /tmp/repro.diff
             {
-              echo "⚠️ **Non-reproducible** — Linux and Windows produced DIFFERENT artifacts."
-              echo ""
-              echo "Gate is currently non-blocking (informational). Flipping to blocking is tracked as follow-up work."
+              echo "❌ **Non-reproducible** — Linux and Windows produced DIFFERENT assemblies or symbols."
               echo ""
               echo "<details><summary>Diff</summary>"
               echo ""
@@ -184,4 +189,5 @@ jobs:
               echo ""
               echo "</details>"
             } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
