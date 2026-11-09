@@ -13,6 +13,7 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 /// Tests covering the public-surface behaviour of <c>ColumnAttributeTypeMapper</c>
 /// — exercised indirectly via <see cref="DbExtractor{T}"/>.
 /// </summary>
+[Collection(StrictColumnMappingCollection.Name)]
 public class ColumnAttributeTypeMapperTests
 {
     [ExcludeFromCodeCoverage]
