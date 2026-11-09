@@ -18,7 +18,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
     <!-- GHSA-2m69-gcr7-jv3q: Microsoft.Data.Sqlite pins a vulnerable
          SQLitePCLRaw.lib.e_sqlite3 2.1.11 transitively. The 3.x
          bundle_e_sqlite3/core line pulls patched native lib.e_sqlite3

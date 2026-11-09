@@ -89,6 +89,8 @@ public static class DbSchemaValidator
         }
     }
 
+
+
     /// <summary>
     /// Async companion to <see cref="Validate{TRecord}"/>. Recommended for
     /// server contexts where blocking the calling thread on the round-trip
@@ -100,12 +102,23 @@ public static class DbSchemaValidator
     /// validator if closed; state is restored on return.
     /// </param>
     /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <exception cref="ArgumentNullException"/>
-    /// <exception cref="InvalidOperationException"/>
-    /// <exception cref="OperationCanceledException"/>
-    public static async Task ValidateAsync<TRecord>(
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="connection"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// <typeparamref name="TRecord"/> has no <c>[Table]</c> attribute, the
+    /// table does not exist on the database, or one or more mapped column
+    /// names are not present on the table. The exception message names
+    /// the specific offender.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// <paramref name="cancellationToken"/> was canceled.
+    /// </exception>
+    public static async Task ValidateAsync<TRecord>
+    (
         DbConnection connection,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
         where TRecord : notnull
     {
         if (connection is null)
@@ -127,10 +140,12 @@ public static class DbSchemaValidator
             }
             catch (DbException ex)
             {
-                throw new InvalidOperationException(
+                throw new InvalidOperationException
+                (
                     $"Schema validation failed for table '{table}': the table does not exist or cannot be queried. " +
                     $"Underlying provider error: {ex.Message}",
-                    ex);
+                    ex
+                );
             }
             using (reader)
             {
@@ -157,9 +172,11 @@ public static class DbSchemaValidator
         var tableAttr = type.GetCustomAttribute<TableAttribute>();
         if (tableAttr is null || string.IsNullOrWhiteSpace(tableAttr.Name))
         {
-            throw new InvalidOperationException(
+            throw new InvalidOperationException
+            (
                 $"Type '{type.FullName}' does not have a [Table] attribute. " +
-                "Schema validation requires an explicit table mapping.");
+                "Schema validation requires an explicit table mapping."
+            );
         }
 
         var mapped = new List<string>();
@@ -175,9 +192,11 @@ public static class DbSchemaValidator
 
         if (mapped.Count == 0)
         {
-            throw new InvalidOperationException(
+            throw new InvalidOperationException
+            (
                 $"Type '{type.FullName}' declares no mapped columns. " +
-                "Every property is [NotMapped]; nothing to validate.");
+                "Every property is [NotMapped]; nothing to validate."
+            );
         }
 
         table = tableAttr.Name;
@@ -218,19 +237,23 @@ public static class DbSchemaValidator
         }
         catch (DbException ex)
         {
-            throw new InvalidOperationException(
+            throw new InvalidOperationException
+            (
                 $"Schema validation failed for table '{table}': the table does not exist or cannot be queried. " +
                 $"Underlying provider error: {ex.Message}",
-                ex);
+                ex
+            );
         }
     }
 
 
 
-    private static void AssertColumnsPresent(
+    private static void AssertColumnsPresent
+    (
         DbDataReader reader,
         IReadOnlyList<string> mappedColumns,
-        string table)
+        string table
+    )
     {
         var actual = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var i = 0; i < reader.FieldCount; i++)
@@ -241,11 +264,13 @@ public static class DbSchemaValidator
         var missing = mappedColumns.Where(c => !actual.Contains(c)).ToList();
         if (missing.Count > 0)
         {
-            throw new InvalidOperationException(
+            throw new InvalidOperationException
+            (
                 $"Schema validation failed for table '{table}': " +
                 $"the following mapped column(s) are missing from the database: " +
                 string.Join(", ", missing.Select(m => $"'{m}'")) + ". " +
-                $"Table has: {string.Join(", ", actual.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))}.");
+                $"Table has: {string.Join(", ", actual.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))}."
+            );
         }
     }
 }
