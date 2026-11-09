@@ -20,7 +20,6 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
@@ -36,18 +35,19 @@ using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Concurrency;
 
-[ExcludeFromCodeCoverage]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
+// Abstract: DbCommandBuilder reads the shape through the type alone and never
+// creates an instance, so there are no accessor bodies to leave unexecuted.
 [Table("concurrent_probe")]
-internal sealed class ConcurrentProbe
+internal abstract class ConcurrentProbe
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
-    public int Id { get; set; }
+    public abstract int Id { get; set; }
 
     [Column("value")]
-    public string Value { get; set; } = "";
+    public abstract string Value { get; set; }
 }
 
 public class DbCommandBuilderCacheConcurrencyTests

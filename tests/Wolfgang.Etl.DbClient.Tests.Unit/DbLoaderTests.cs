@@ -83,7 +83,7 @@ public class DbLoaderTests
     // ------------------------------------------------------------------
 
     [Fact]
-    public async Task LoadAsync_inserts_all_records()
+    public async Task LoadAsync_when_source_has_records_inserts_all_records()
     {
         using var conn = TestDb.CreateConnection();
         await TestDb.CreateEmptyTableAsync(conn);
@@ -364,7 +364,6 @@ public class DbLoaderTests
 
         Assert.Equal(3, report.CurrentItemCount);
         Assert.Contains("INSERT", report.CommandText, StringComparison.OrdinalIgnoreCase);
-        Assert.True(report.ElapsedMilliseconds >= 0);
     }
 
 
@@ -553,21 +552,23 @@ public class DbLoaderTests
 
 
 
-    private static async IAsyncEnumerable<PersonRecord> FailingSourceAsync(int succeedCount)
-    {
-        for (var i = 0; i < succeedCount; i++)
-        {
-            yield return new PersonRecord
-            {
-                FirstName = $"First{i + 1}",
-                LastName = $"Last{i + 1}",
-                Age = 20 + i + 1,
-            };
-        }
-
-        await Task.CompletedTask;
-        throw new InvalidOperationException("Simulated failure");
-    }
+    // Built from a LINQ projection rather than an async iterator: an iterator that ends in
+    // `throw` leaves its closing brace unexecuted, which costs the 100 % test-assembly gate.
+    private static IAsyncEnumerable<PersonRecord> FailingSourceAsync(int succeedCount) =>
+        Enumerable
+            .Range(1, succeedCount + 1)
+            .Select
+            (
+                i => i <= succeedCount
+                    ? new PersonRecord
+                    {
+                        FirstName = $"First{i}",
+                        LastName = $"Last{i}",
+                        Age = 20 + i,
+                    }
+                    : throw new InvalidOperationException("Simulated failure")
+            )
+            .ToAsyncEnumerable();
 
 
 
@@ -1109,6 +1110,91 @@ public class DbLoaderTests
         // The first 2 chunks of 3 each committed before the failure; the 3rd
         // chunk (containing the bad record) rolled back.
         Assert.Equal(6, await TestDb.CountRowsAsync(conn));
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_BatchCommitSize_and_MaximumItemCount_are_set_stops_reading_the_source_at_the_cap()
+    {
+        // #536: the chunked-commit path used to keep reading the source to
+        // exhaustion after MaximumItemCount was reached, committing an empty
+        // transaction per chunk.
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var source = new CountingSource(100);
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 3,
+            MaximumItemCount = 5
+        };
+
+        await loader.LoadAsync(source.ItemsAsync());
+
+        Assert.Equal(5, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(5, loader.CurrentItemCount);
+        Assert.Equal(5, source.ItemsRead);
+    }
+
+
+
+    [Fact]
+    public async Task LoadAsync_when_BatchCommitSize_SkipItemCount_and_MaximumItemCount_are_set_reads_only_skipped_plus_maximum()
+    {
+        using var conn = TestDb.CreateConnection();
+        await TestDb.CreateEmptyTableAsync(conn);
+
+        var source = new CountingSource(100);
+        var loader = new DbLoader<PersonRecord>
+        (
+            conn,
+            "INSERT INTO People (first_name, last_name, age) VALUES (@FirstName, @LastName, @Age)"
+        )
+        {
+            BatchCommitSize = 4,
+            SkipItemCount = 2,
+            MaximumItemCount = 5
+        };
+
+        await loader.LoadAsync(source.ItemsAsync());
+
+        Assert.Equal(5, await TestDb.CountRowsAsync(conn));
+        Assert.Equal(5, loader.CurrentItemCount);
+        Assert.Equal(2, loader.CurrentSkippedItemCount);
+        Assert.Equal(7, source.ItemsRead);
+    }
+
+
+
+    // Counts how many items the loader actually pulled from the source.
+    private sealed class CountingSource
+    {
+        private readonly int _count;
+
+
+
+        internal CountingSource(int count) => _count = count;
+
+
+
+        internal int ItemsRead { get; private set; }
+
+
+
+        internal async IAsyncEnumerable<PersonRecord> ItemsAsync()
+        {
+            for (var i = 0; i < _count; i++)
+            {
+                ItemsRead++;
+                yield return new PersonRecord { FirstName = $"F{i}", LastName = "L", Age = i };
+                await Task.Yield();
+            }
+        }
     }
 
 

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
@@ -21,7 +22,7 @@ namespace Wolfgang.Etl.DbClient;
 /// pipeline operator has consumed the builder — the extractor instance is the
 /// single source of truth throughout.
 /// </remarks>
-internal sealed class DbExtractorBuilder<T> : IDbExtractorBuilder<T>
+internal sealed class DbExtractorBuilder<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T> : IDbExtractorBuilder<T>
     where T : notnull
 {
     private readonly EtlPipeline _pipeline;
