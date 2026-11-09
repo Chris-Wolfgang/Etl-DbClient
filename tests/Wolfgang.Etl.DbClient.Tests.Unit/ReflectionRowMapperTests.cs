@@ -2,12 +2,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.ErrorPolicies;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;
+
+// ReSharper disable NotAccessedPositionalProperty.Global -- the mapper writes the test records' positional
+// properties from the reader and the tests read them back through record equality, which ReSharper does not count.
 
 /// <summary>
 /// The Native AOT row-mapping path (<see cref="ReflectionRowMapper{TRecord}"/>). The
@@ -61,6 +65,7 @@ public class ReflectionRowMapperTests
 
 
     [ExcludeFromCodeCoverage]
+    [StructLayout(LayoutKind.Auto)]
     public record struct PointRecord
     {
         public int X { get; set; }

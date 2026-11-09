@@ -8,6 +8,10 @@
 // System.Diagnostics.CodeAnalysis, regardless of the folder layout under the project root.
 namespace System.Diagnostics.CodeAnalysis
 {
+    // S4070 / MA0062 see a non-flags enum because PublicConstructors is 0x0002 | PublicParameterlessConstructor
+    // with no named 0x0002 member. That is exactly how the BCL declares it, and the values must mirror the
+    // BCL so the annotation means the same thing on every TFM.
+#pragma warning disable S4070, MA0062
     [Flags]
     internal enum DynamicallyAccessedMemberTypes
     {
@@ -16,5 +20,6 @@ namespace System.Diagnostics.CodeAnalysis
         PublicConstructors = 0x0002 | PublicParameterlessConstructor,
         PublicProperties = 0x0200,
     }
+#pragma warning restore S4070, MA0062
 }
 #endif
