@@ -27,17 +27,15 @@ permissions:
 
 env:
   # Minimum line coverage for PRODUCTION assemblies (anything under src/).
-  CODECOV_MINIMUM: 90
+  # Fleet policy (#477): production code at 95 % or more.
+  CODECOV_MINIMUM: 95
   # Minimum line coverage for TEST assemblies (anything under tests/).
   # Test code that never executes has no purpose — an uncovered helper, fake, or
   # branch in a test project is dead code and should be exercised or deleted.
   # This is LINE coverage; branch coverage legitimately can't reach 100%
   # (compiler-generated async state machines), and the gate reads only the
   # line-coverage column that ReportGenerator puts at end-of-row.
-  # Gated at the level the unit-test assembly measures today (99 %, template default 100):
-  # the pull_request adoption must not fail on pre-existing test lines. Raise to 100 once
-  # the uncovered test code is exercised or deleted (#458).
-  CODECOV_TEST_MINIMUM: 99
+  CODECOV_TEST_MINIMUM: 100
   
 on:
   pull_request:
@@ -264,7 +262,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68  # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6.1.0
         with:
           # Install every SDK the test stages install. Solutions that
           # multi-target out-of-support TFMs (netcoreapp3.1 / net5.0 /
@@ -442,7 +440,7 @@ jobs:
 
       - name: Upload SARIF to Code Scanning
         if: steps.sarif.outcome == 'success' && hashFiles('inspect.sarif') != ''
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370  # v4.39.1
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066  # v4.39.3
         with:
           sarif_file: inspect.sarif
 
@@ -634,7 +632,7 @@ jobs:
           sudo rm /etc/apt/sources.list.d/focal-security.list
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68  # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6.1.0
         with:
           dotnet-version: |
             3.1.x
@@ -936,7 +934,7 @@ jobs:
             -targetdir:"CoverageReport" \
             -reporttypes:"Html;TextSummary;MarkdownSummaryGithub;CsvSummary"
 
-      - name: Enforce 90% coverage threshold
+      - name: Enforce coverage thresholds
         if: steps.check-coverage.outputs.has-coverage == 'true'
         run: |
           if [ ! -f CoverageReport/Summary.txt ]; then
@@ -1116,7 +1114,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rdbms: [sqlserver, postgres, mysql, mariadb, sqlite]
+        rdbms: [sqlserver, postgres, mysql, mariadb, cockroachdb, sqlite]
         tfm: [net8.0, net10.0]
 
     steps:
@@ -1130,7 +1128,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: |
             8.0.x
@@ -1298,7 +1296,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68  # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6.1.0
         with:
           dotnet-version: |
             3.1.x
@@ -1608,7 +1606,7 @@ jobs:
           }
           Write-Host "Every test assembly that collected coverage is present in the report."
 
-      - name: Enforce 90% coverage threshold
+      - name: Enforce coverage thresholds
         if: steps.check-coverage.outputs.has-coverage == 'true'
         shell: pwsh
         run: |
@@ -1747,7 +1745,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68  # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73  # v6.1.0
         with:
           dotnet-version: |
             6.0.x
@@ -2021,7 +2019,7 @@ jobs:
             echo "ℹ️  No coverage files found - skipping report generation"
           fi
 
-      - name: Enforce 90% coverage threshold
+      - name: Enforce coverage thresholds
         run: |
           # If no cobertura files were produced (no tests, all test projects
           # skipped, etc.), the preceding step explicitly skipped report
@@ -2143,7 +2141,7 @@ jobs:
           echo "=========================================="
           echo "✅ ALL STAGES PASSED"
           echo "=========================================="
-          echo "Stage 1: Linux tests + 90% coverage ✅"
+          echo "Stage 1: Linux tests + coverage gate (${CODECOV_MINIMUM}% production, ${CODECOV_TEST_MINIMUM}% tests) ✅"
           echo "Stage 2: Windows .NET Core & .NET Framework tests ✅"
           echo "Stage 3: macOS tests ✅"
           echo ""
