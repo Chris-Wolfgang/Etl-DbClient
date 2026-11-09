@@ -22,11 +22,12 @@ public enum RowErrorHandling
     /// as the inner exception.
     /// </summary>
     /// <remarks>
-    /// Skip mode only applies on the per-record path (<c>BatchSize == 1</c>,
-    /// the default). When <c>BatchSize &gt; 1</c>, a failed batch can't be
-    /// reliably attributed to a single row without per-item retry, so the
-    /// load aborts even in <see cref="Skip"/> mode. Set <c>BatchSize = 1</c>
-    /// if row-level error handling is required.
+    /// Skip mode only applies on the per-record path (<c>BatchSize == 1</c>
+    /// and <c>InsertBatchSize == 1</c>, both the default). When either is
+    /// greater than <c>1</c>, a failed batch can't be reliably attributed to a
+    /// single row without per-item retry, so the load aborts even in
+    /// <see cref="Skip"/> mode. Leave both at <c>1</c> if row-level error
+    /// handling is required.
     /// </remarks>
     Skip,
 }

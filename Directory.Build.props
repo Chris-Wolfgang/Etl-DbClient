@@ -88,6 +88,14 @@
 
 
   <PropertyGroup>
+    <!-- Project directory relative to the repository root, '/'-separated with a trailing slash
+         (e.g. 'src/Wolfgang.Etl.DbClient/'). Conditions below test it with StartsWith('src/');
+         it was used without being defined, so those conditions were always false (#562). -->
+    <_RelativeProjectDir>$([MSBuild]::EnsureTrailingSlash($([MSBuild]::MakeRelative($(MSBuildThisFileDirectory), $(MSBuildProjectDirectory)))).Replace('\', '/'))</_RelativeProjectDir>
+  </PropertyGroup>
+
+
+  <PropertyGroup>
     <!-- CI3: NuGet package metadata canonical defaults. Per-repo fields
          (Description, PackageTags, PackageProjectUrl, RepositoryUrl,
          PackageLicenseExpression, PackageReadmeFile) stay in each src
