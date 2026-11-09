@@ -34,9 +34,11 @@ namespace Wolfgang.Etl.DbClient;
 ///   exception.</item>
 /// </list>
 /// <para>
-/// The caller owns the <see cref="DbConnection"/> lifetime — the loader does not
-/// open, close, or dispose it. The connection must be open before calling
-/// <c>LoadAsync</c>.
+/// By default the caller owns the <see cref="DbConnection"/> lifetime — the loader does not
+/// open, close, or dispose it, and the connection must be open before calling
+/// <c>LoadAsync</c>. Set <c>ManageConnection</c> to have the loader open and close a
+/// caller-supplied connection, or use the <see cref="DbProviderFactory"/> constructor to have
+/// it create, open and dispose its own.
 /// </para>
 /// <para>
 /// <b>Thread safety.</b> A <see cref="DbLoader{TRecord}"/> instance is not safe for
@@ -44,8 +46,8 @@ namespace Wolfgang.Etl.DbClient;
 /// assumes a single load in flight. Build a separate instance per concurrent load.
 /// </para>
 /// <para>
-/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
-/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
+/// Command timeout defaults to the ADO.NET provider's default (typically 30 seconds);
+/// set <see cref="DbLoaderOptions.CommandTimeout"/> to change it.
 /// </para>
 /// </remarks>
 public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord> : LoaderBase<TRecord, DbReport>
@@ -54,6 +56,10 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     // ------------------------------------------------------------------
     // Fields
     // ------------------------------------------------------------------
+
+    // Compiled property getters for the multi-row INSERT binder, shared by every loader of this
+    // TRecord. Keyed by PropertyInfo, so a getter is compiled once per property per process.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Reflection.PropertyInfo, Func<TRecord, object?>> PropertyGetterCache = new();
 
     // _ownsConnection tracks whether LoadWorkerAsync is responsible for the
     // connection's OpenAsync + Dispose. True for the DbProviderFactory ctor
@@ -273,6 +279,8 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         ApplyOptions(options);
     }
 
+
+
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this loader owns.
     /// </summary>
@@ -413,7 +421,12 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// procedure by name per record (or per batch when <see cref="BatchSize"/>
     /// is &gt; 1); <see cref="CommandText"/> then holds the procedure name.
     /// </summary>
-    public CommandType CommandType { get => _commandType; [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _commandType = value; }
+    public CommandType CommandType
+    {
+        get => _commandType;
+        [Obsolete("Configure CommandType through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _commandType = value;
+    }
 
 
 
@@ -441,7 +454,12 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// left open — the loader only closes connections it itself opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get => _manageConnection; [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _manageConnection = value; }
+    public bool ManageConnection
+    {
+        get => _manageConnection;
+        [Obsolete("Configure ManageConnection through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _manageConnection = value;
+    }
 
 
 
@@ -466,7 +484,12 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get => _validateSchemaOnStart; [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _validateSchemaOnStart = value; }
+    public bool ValidateSchemaOnStart
+    {
+        get => _validateSchemaOnStart;
+        [Obsolete("Configure ValidateSchemaOnStart through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _validateSchemaOnStart = value;
+    }
 
 
 
@@ -499,9 +522,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// Mutually exclusive with <see cref="BatchSize"/> &gt; <c>1</c> — when
     /// both are set, <c>InsertBatchSize</c> wins because it generates a
     /// single statement per chunk instead of N. Mutually exclusive with
-    /// <c>IsDryRun</c> = <see langword="true"/> (IsDryRun short-circuits
-    /// before SQL generation) and with stored-procedure
-    /// <see cref="CommandType"/>.
+    /// stored-procedure <see cref="CommandType"/>. With <c>IsDryRun</c> =
+    /// <see langword="true"/> the <c>VALUES</c> template is still parsed (and a
+    /// command text without one still throws); only the execute is skipped.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -560,7 +583,12 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// deprecated and will be removed in a later release.
     /// </para>
     /// </remarks>
-    public bool IsDryRun { get => _isDryRun; [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")] set => _isDryRun = value; }
+    public bool IsDryRun
+    {
+        get => _isDryRun;
+        [Obsolete("Configure IsDryRun through DbLoaderOptions passed to the constructor instead. The setter will be removed in a later release.")]
+        set => _isDryRun = value;
+    }
 
 
 
@@ -574,12 +602,18 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// </summary>
     /// <remarks>
     /// <see cref="RowErrorHandling.Skip"/> only takes effect on the
-    /// per-record path (<see cref="BatchSize"/> == 1, the default). A failed
+    /// per-record path — <see cref="BatchSize"/> == 1 <b>and</b>
+    /// <see cref="InsertBatchSize"/> == 1, both the default. A failed
     /// batch cannot be safely attributed to a single row without per-item
-    /// retry, so the load still aborts even in Skip mode when
-    /// <c>BatchSize &gt; 1</c>. See <see cref="RowErrorHandling.Skip"/>.
+    /// retry, so the load still aborts even in Skip mode when either is
+    /// greater than <c>1</c>. See <see cref="RowErrorHandling.Skip"/>.
     /// </remarks>
-    public RowErrorHandling ErrorHandling { get => _errorHandling; [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _errorHandling = value; }
+    public RowErrorHandling ErrorHandling
+    {
+        get => _errorHandling;
+        [Obsolete("Configure ErrorHandling through DbLoaderOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _errorHandling = value;
+    }
 
 
 
@@ -885,13 +919,19 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         // Materialize up to BatchCommitSize items at a time, then run each
         // chunk through the single-transaction path. A failure rolls back
         // ONLY the current chunk; previously-committed chunks survive.
+        //
+        // Stop pulling from the source once MaximumItemCount is reached (#536):
+        // the inner per-row path stops writing at the cap, but nothing told this
+        // loop, so it used to keep reading the source to exhaustion and commit an
+        // empty transaction per chunk.
         var enumerator = items.GetAsyncEnumerator(token);
         try
         {
-            while (true)
+            while (CurrentItemCount < MaximumItemCount)
             {
-                var chunk = new List<TRecord>(_batchCommitSize);
-                while (chunk.Count < _batchCommitSize && await enumerator.MoveNextAsync().ConfigureAwait(false))
+                var chunkLimit = ChunkFillLimit();
+                var chunk = new List<TRecord>(chunkLimit);
+                while (chunk.Count < chunkLimit && await enumerator.MoveNextAsync().ConfigureAwait(false))
                 {
                     chunk.Add(enumerator.Current);
                 }
@@ -908,6 +948,23 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         {
             await enumerator.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+
+
+    /// <summary>
+    /// How many source items the next chunk may hold without reading past what
+    /// the load can still use: the items still to be skipped plus the items still
+    /// allowed under <c>MaximumItemCount</c>, capped at <c>BatchCommitSize</c>.
+    /// Computed in <see cref="long"/> because <c>MaximumItemCount</c> defaults to
+    /// <see cref="int.MaxValue"/>.
+    /// </summary>
+    private int ChunkFillLimit()
+    {
+        var stillToSkip = Math.Max(0L, (long)SkipItemCount - CurrentSkippedItemCount);
+        var stillAllowed = (long)MaximumItemCount - CurrentItemCount;
+
+        return (int)Math.Min(_batchCommitSize, stillToSkip + stillAllowed);
     }
 
 
@@ -945,7 +1002,8 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         var templateParams = ExtractTemplateParamNames(template);
         var paramNames = templateParams.Names;
         var paramSpans = templateParams.Spans;
-        var properties = GetMappedProperties(paramNames);
+        var getters = GetPropertyGetters(GetMappedProperties(paramNames));
+        var parameterKeys = BuildRowParameterKeys(paramNames, _insertBatchSize);
 
         var buffer = new List<TRecord>(_insertBatchSize);
         await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
@@ -969,14 +1027,14 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
             if (buffer.Count >= _insertBatchSize)
             {
-                await FlushMultiRowInsertAsync(prefix, template, paramNames, paramSpans, properties, buffer, transaction, token).ConfigureAwait(false);
+                await FlushMultiRowInsertAsync(prefix, template, parameterKeys, paramSpans, getters, buffer, transaction, token).ConfigureAwait(false);
                 buffer.Clear();
             }
         }
 
         if (buffer.Count > 0)
         {
-            await FlushMultiRowInsertAsync(prefix, template, paramNames, paramSpans, properties, buffer, transaction, token).ConfigureAwait(false);
+            await FlushMultiRowInsertAsync(prefix, template, parameterKeys, paramSpans, getters, buffer, transaction, token).ConfigureAwait(false);
         }
     }
 
@@ -986,9 +1044,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     (
         string prefix,
         string template,
-        IReadOnlyList<string> paramNames,
+        string[] parameterKeys,
         IReadOnlyList<ParamSpan> paramSpans,
-        IReadOnlyList<System.Reflection.PropertyInfo> properties,
+        Func<TRecord, object?>[] getters,
         List<TRecord> batch,
         DbTransaction? transaction,
         CancellationToken token
@@ -996,7 +1054,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     {
         if (IsDryRun)
         {
-            foreach (var _ in batch)
+            for (var i = 0; i < batch.Count; i++)
             {
                 IncrementCurrentItemCount();
                 LogDebugRecordLoaded();
@@ -1008,6 +1066,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         sb.Append(prefix);
 
         var dp = new DynamicParameters();
+        var spanCount = paramSpans.Count;
         for (var i = 0; i < batch.Count; i++)
         {
             if (i > 0)
@@ -1026,9 +1085,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
                 var span = paramSpans[p];
                 sb.Append(template, cursor, span.Start - cursor);
 
-                var paramKey = "@" + paramNames[p] + "_" + i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var paramKey = parameterKeys[(i * spanCount) + p];
                 sb.Append(paramKey);
-                dp.Add(paramKey, properties[p].GetValue(batch[i]));
+                dp.Add(paramKey, getters[p](batch[i]));
 
                 cursor = span.Start + span.Length;
             }
@@ -1040,7 +1099,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             new CommandDefinition(sb.ToString(), dp, transaction, CommandTimeoutSeconds, CommandType.Text, cancellationToken: token)
         ).ConfigureAwait(false);
 
-        foreach (var _ in batch)
+        for (var i = 0; i < batch.Count; i++)
         {
             IncrementCurrentItemCount();
             LogDebugRecordLoaded();
@@ -1180,6 +1239,61 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             i = end;
         }
         return new TemplateParams(names, spanList);
+    }
+
+
+
+    /// <summary>
+    /// The row-numbered parameter names for one multi-row INSERT chunk, computed once per load
+    /// instead of once per cell per flush: entry <c>(row * names.Count) + column</c> is
+    /// <c>@name_row</c>.
+    /// </summary>
+    private static string[] BuildRowParameterKeys(IReadOnlyList<string> paramNames, int rowCount)
+    {
+        var keys = new string[rowCount * paramNames.Count];
+        for (var row = 0; row < rowCount; row++)
+        {
+            var suffix = "_" + row.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            for (var p = 0; p < paramNames.Count; p++)
+            {
+                keys[(row * paramNames.Count) + p] = "@" + paramNames[p] + suffix;
+            }
+        }
+
+        return keys;
+    }
+
+
+
+    /// <summary>
+    /// Compiled, cached getters for <paramref name="properties"/>, so the multi-row INSERT binder
+    /// does not go through <see cref="System.Reflection.PropertyInfo.GetValue(object)"/> for
+    /// every cell.
+    /// </summary>
+    private static Func<TRecord, object?>[] GetPropertyGetters(IReadOnlyList<System.Reflection.PropertyInfo> properties)
+    {
+        var getters = new Func<TRecord, object?>[properties.Count];
+        for (var i = 0; i < properties.Count; i++)
+        {
+            getters[i] = PropertyGetterCache.GetOrAdd(properties[i], CreatePropertyGetter);
+        }
+
+        return getters;
+    }
+
+
+
+    private static Func<TRecord, object?> CreatePropertyGetter(System.Reflection.PropertyInfo property)
+    {
+        var record = System.Linq.Expressions.Expression.Parameter(typeof(TRecord), "record");
+        var body = System.Linq.Expressions.Expression.Convert
+        (
+            System.Linq.Expressions.Expression.Property(record, property),
+            typeof(object)
+        );
+        return System.Linq.Expressions.Expression
+            .Lambda<Func<TRecord, object?>>(body, record)
+            .Compile();
     }
 
 
@@ -1626,6 +1740,8 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             );
         }
     }
+
+
 
     /// <summary>
     /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves

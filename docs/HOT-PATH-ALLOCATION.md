@@ -15,7 +15,8 @@ Every non-trivial code path in `Wolfgang.Etl.DbClient` goes through
 one of the following, each of which allocates by design:
 
 - **Dapper materialization.** `DbExtractor<TRecord>.ExtractAsync`
-  reads rows via `conn.QueryUnbufferedAsync<TRecord>`. Every row
+  drives its own `ExecuteReaderAsync` loop and materializes each row
+  with Dapper's `GetRowParser<TRecord>`. Every row
   materializes a new `TRecord` instance (unavoidable — the caller
   needs one to consume) plus Dapper's per-row plumbing
   (`DataReader.GetValue` boxes value types, `IDataRecord` field
@@ -47,20 +48,23 @@ one of the following, each of which allocates by design:
 DbClient's performance story is about *throughput* per round-trip,
 not per-call allocation:
 
-- **Batching.** `DbLoader<TRecord>.BatchSize` collapses N per-row
+- **Batching.** `DbLoader<TRecord>.InsertBatchSize` collapses N per-row
   `INSERT`s into a single multi-row `INSERT … VALUES (…), (…), …`
   statement. The single biggest single-line win available without
-  provider-specific bulk APIs.
-- **Server-side paging.** `DbExtractor<TRecord>` streams via
-  `QueryUnbufferedAsync` instead of `Query`, so a 10M-row result
-  does not first materialize as a `List<T>` in memory.
+  provider-specific bulk APIs. (`BatchSize` is the other knob: it sends
+  N single-row executes per round trip.)
+- **Streaming and server-side paging.** `DbExtractor<TRecord>` reads
+  rows one at a time from a `DbDataReader` instead of buffering with
+  `Query`, so a 10M-row result does not first materialize as a
+  `List<T>` in memory; `ServerLimit` / `ServerOffset` push paging to
+  the database.
 - **Connection ownership modes.** `ManageConnection` and the
   factory ctor path let the caller choose between "hold the
   connection open for the whole extract/load" and "open/close
   around each call" without dictating a lifetime.
 
 The [BenchmarkDotNet suite][bdn] measures these — insert throughput
-under batch sizes 1/10/100/1000, extract throughput under different
+under batch sizes 1/50/500, extract throughput under different
 row counts, etc. Regressions there DO block a release. That is the
 right shape of enforcement for this library.
 

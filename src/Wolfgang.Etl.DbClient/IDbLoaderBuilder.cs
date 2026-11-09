@@ -13,8 +13,9 @@ namespace Wolfgang.Etl.DbClient;
 /// </summary>
 /// <typeparam name="T">The record type consumed by the loader.</typeparam>
 /// <remarks>
-/// Each setter maps 1:1 to a public property on <see cref="DbLoader{TRecord}"/>;
-/// no new configuration surface is introduced. Setters return the builder for
+/// Each setter maps to a public property on <see cref="DbLoader{TRecord}"/>;
+/// no new configuration surface is introduced. Only a subset of the loader's
+/// properties has a setter; configure the rest on the loader itself. Setters return the builder for
 /// chaining and take effect on <see cref="IEtlPipelineSink.RunAsync"/>.
 /// </remarks>
 public interface IDbLoaderBuilder<T> : IEtlPipelineSink

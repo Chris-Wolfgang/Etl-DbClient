@@ -26,9 +26,11 @@ namespace Wolfgang.Etl.DbClient;
 /// </typeparam>
 /// <remarks>
 /// <para>
-/// The caller owns the <see cref="DbConnection"/> lifetime — the extractor does not
-/// open, close, or dispose it. The connection must be open before calling
-/// <c>ExtractAsync</c>.
+/// By default the caller owns the <see cref="DbConnection"/> lifetime — the extractor does
+/// not open, close, or dispose it, and the connection must be open before calling
+/// <c>ExtractAsync</c>. Set <c>ManageConnection</c> to have the extractor open and close a
+/// caller-supplied connection, or use the <see cref="DbProviderFactory"/> constructor to have
+/// it create, open and dispose its own.
 /// </para>
 /// <para>
 /// An optional <see cref="DbTransaction"/> can be provided for isolation level control.
@@ -41,8 +43,8 @@ namespace Wolfgang.Etl.DbClient;
 /// instance per concurrent extraction.
 /// </para>
 /// <para>
-/// Command timeout uses the Dapper/ADO.NET default (typically 30 seconds).
-/// A dedicated <c>CommandTimeout</c> property is planned (see GitHub issue #25).
+/// Command timeout defaults to the ADO.NET provider's default (typically 30 seconds);
+/// set <see cref="DbExtractorOptions.CommandTimeout"/> to change it.
 /// </para>
 /// </remarks>
 public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord> : ExtractorBase<TRecord, DbReport>
@@ -362,6 +364,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         ApplyOptions(options);
     }
 
+
+
     /// <summary>
     /// Validates the provider-factory arguments and produces the connection this extractor owns.
     /// </summary>
@@ -503,7 +507,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// through — but most consumers should stick to <c>Text</c> or
     /// <c>StoredProcedure</c>.
     /// </remarks>
-    public CommandType CommandType { get => _commandType; [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _commandType = value; }
+    public CommandType CommandType
+    {
+        get => _commandType;
+        [Obsolete("Configure CommandType through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _commandType = value;
+    }
 
 
 
@@ -533,7 +542,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// opened.
     /// </para>
     /// </remarks>
-    public bool ManageConnection { get => _manageConnection; [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _manageConnection = value; }
+    public bool ManageConnection
+    {
+        get => _manageConnection;
+        [Obsolete("Configure ManageConnection through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _manageConnection = value;
+    }
 
 
 
@@ -559,7 +573,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// Refs <see href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</see>.
     /// </para>
     /// </remarks>
-    public bool ValidateSchemaOnStart { get => _validateSchemaOnStart; [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _validateSchemaOnStart = value; }
+    public bool ValidateSchemaOnStart
+    {
+        get => _validateSchemaOnStart;
+        [Obsolete("Configure ValidateSchemaOnStart through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _validateSchemaOnStart = value;
+    }
 
 
 
@@ -580,34 +599,44 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// <c>Parameters.Get&lt;T&gt;("@name")</c>.
     /// </para>
     /// <para>
-    /// Example:
+    /// This setter is obsolete. Supply parameters through the constructor overload that takes
+    /// an <c>IDictionary&lt;string, object&gt;</c> instead, using <see cref="EtlParameter{T}"/>
+    /// for output parameters:
     /// <code>
-    /// var p = new DynamicParameters();
-    /// p.Add("@CustomerId", 42);
-    /// p.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
-    /// var extractor = new DbExtractor&lt;Order&gt;(conn, "usp_GetOrdersForCustomer")
+    /// var total = new EtlParameter&lt;int&gt;
     /// {
-    ///     CommandType = CommandType.StoredProcedure,
-    ///     Parameters = p
+    ///     DbType = DbType.Int32,
+    ///     Direction = ParameterDirection.Output
     /// };
+    /// var extractor = new DbExtractor&lt;Order&gt;
+    /// (
+    ///     conn,
+    ///     "usp_GetOrdersForCustomer",
+    ///     new Dictionary&lt;string, object&gt; { ["@CustomerId"] = 42, ["@TotalCount"] = total },
+    ///     new DbExtractorOptions { CommandType = CommandType.StoredProcedure }
+    /// );
     /// var orders = await extractor.ExtractAsync().ToListAsync();
-    /// var total = p.Get&lt;int&gt;("@TotalCount");
+    /// var count = total.Value;
     /// </code>
     /// </para>
     /// </remarks>
-    public DynamicParameters? Parameters { get => _parameterOverride; [Obsolete("Configure Parameters through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _parameterOverride = value; }
+    public DynamicParameters? Parameters
+    {
+        get => _parameterOverride;
+        [Obsolete("Supply parameters through the constructor overload that takes an IDictionary<string, object> instead (use EtlParameter<T> for output parameters). This setter will be removed in a future release.")]
+        set => _parameterOverride = value;
+    }
 
 
 
     private long? _serverOffset;
 
     /// <summary>
-    /// When <see cref="ServerLimit"/> is set, the extractor appends
-    /// <see cref="PagingClauseTemplate"/> to the command text before sending it, using this
-    /// offset — or <c>0</c> when this is unset. Default <see langword="null"/> disables
-    /// server-side paging (the v0.4.0 behavior — the full result set comes
-    /// back and <c>SkipItemCount</c>/<c>MaximumItemCount</c> filter
-    /// client-side).
+    /// The row offset used when server-side paging is active. Paging is switched on by
+    /// <see cref="ServerLimit"/>: when it is set, the extractor appends
+    /// <see cref="PagingClauseTemplate"/> to the command text, using this offset — or <c>0</c>
+    /// when this is unset. With <see cref="ServerLimit"/> unset, the full result set comes back
+    /// and <c>SkipItemCount</c>/<c>MaximumItemCount</c> filter client-side.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -618,10 +647,16 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// include one — without a stable order, page contents drift.
     /// </para>
     /// <para>
-    /// Defaults to <c>0</c>. Paging is switched on by <see cref="ServerLimit"/>; an offset with no limit throws, since no page size can be inferred.
+    /// The property defaults to <see langword="null"/>, which paging treats as <c>0</c>. An
+    /// offset with no <see cref="ServerLimit"/> throws, since no page size can be inferred.
     /// </para>
     /// </remarks>
-    public long? ServerOffset { get => _serverOffset; [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _serverOffset = value; }
+    public long? ServerOffset
+    {
+        get => _serverOffset;
+        [Obsolete("Configure ServerOffset through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _serverOffset = value;
+    }
 
 
 
@@ -629,15 +664,20 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
 
     /// <summary>Page size in rows. See <see cref="ServerOffset"/>.</summary>
     /// <remarks>Setting this switches server-side paging on. <see cref="ServerOffset"/> defaults to <c>0</c> when not set.</remarks>
-    public long? ServerLimit { get => _serverLimit; [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _serverLimit = value; }
+    public long? ServerLimit
+    {
+        get => _serverLimit;
+        [Obsolete("Configure ServerLimit through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _serverLimit = value;
+    }
 
 
 
     private string? _pagingClauseTemplate = PagingClauseTemplates.None;
 
     /// <summary>
-    /// SQL fragment appended to the command text when both
-    /// <see cref="ServerOffset"/> and <see cref="ServerLimit"/> are set.
+    /// SQL fragment appended to the command text when server-side paging is active, that is
+    /// when <see cref="ServerLimit"/> is set (<see cref="ServerOffset"/> defaults to <c>0</c>).
     /// Bound as Dapper parameters <c>@PageOffset</c> and <c>@PageLimit</c>.
     /// </summary>
     /// <remarks>
@@ -653,7 +693,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// Prefer the presets on <see cref="PagingClauseTemplates"/> over writing the clause by hand.
     /// </para>
     /// </remarks>
-    public string? PagingClauseTemplate { get => _pagingClauseTemplate; [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _pagingClauseTemplate = value; }
+    public string? PagingClauseTemplate
+    {
+        get => _pagingClauseTemplate;
+        [Obsolete("Configure PagingClauseTemplate through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _pagingClauseTemplate = value;
+    }
 
 
 
@@ -666,7 +711,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// <c>SELECT COUNT(*)</c> subquery, or supply a custom function for a more efficient
     /// query. Defaults to <c>null</c> (total count is not fetched).
     /// </summary>
-    public Func<CancellationToken, Task<int>>? TotalCountQuery { get => _totalCountQuery; [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")] set => _totalCountQuery = value; }
+    public Func<CancellationToken, Task<int>>? TotalCountQuery
+    {
+        get => _totalCountQuery;
+        [Obsolete("Configure TotalCountQuery through DbExtractorOptions passed to the constructor instead. This setter will be removed in a future release.")]
+        set => _totalCountQuery = value;
+    }
 
 
 
@@ -954,9 +1004,13 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         var sanitized = SanitizeCommandTextForCount(_commandText);
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
         var param = Parameters ?? _dynamicParameters;
-        return _connection.ExecuteScalarAsync<int>(
-            new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token));
+        return _connection.ExecuteScalarAsync<int>
+        (
+            new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token)
+        );
     }
+
+
 
     /// <summary>
     /// Verifies a paging dialect was chosen before server-side paging is applied.
@@ -1006,7 +1060,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// </exception>
     private void EnsurePagingParametersNotAlreadySupplied()
     {
-        foreach (var generated in new[] { "@PageOffset", "@PageLimit" })
+        foreach (var generated in PagingClauseTemplates.GeneratedParameterNames)
         {
             // ContainsKey resolves against _parameters' own comparer, which is deliberately
             // StringComparer.Ordinal, so it would miss "@pagelimit" and the leading-@ variants.
@@ -1027,6 +1081,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             }
         }
     }
+
 
 
     /// <summary>
@@ -1050,7 +1105,13 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// which server-side paging also generates. Emitting both would duplicate the name, and
     /// silently preferring one would discard either the caller's value or the paging.
     /// </exception>
-    private void ApplyServerPaging(string commandText, SqlMapper.IDynamicParameters? param, out string pagedCommandText, out SqlMapper.IDynamicParameters? pagedParam)
+    private void ApplyServerPaging
+    (
+        string commandText,
+        SqlMapper.IDynamicParameters? param,
+        out string pagedCommandText,
+        out SqlMapper.IDynamicParameters? pagedParam
+    )
     {
         if (!ServerLimit.HasValue)
         {
@@ -1250,6 +1311,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             );
         }
     }
+
+
 
     /// <summary>
     /// Copies <paramref name="options"/> onto this instance. A <c>null</c> options object leaves
