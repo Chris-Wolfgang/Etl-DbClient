@@ -195,7 +195,7 @@ internal static class ReflectionRowMapper<[DynamicallyAccessedMembers(RecordMemb
 
 
 
-    private static object? ConvertColumn(DbDataReader reader, int ordinal, object value, Type targetType)
+    private static object ConvertColumn(DbDataReader reader, int ordinal, object value, Type targetType)
     {
         try
         {
