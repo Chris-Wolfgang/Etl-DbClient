@@ -33,6 +33,12 @@ public static class PagingClauseTemplates
 
     private const string OffsetFetch = "OFFSET @PageOffset ROWS FETCH NEXT @PageLimit ROWS ONLY";
 
+    // The parameter names server-side paging adds; DbExtractor's collision guard checks them.
+    // Lives here, not in the generic DbExtractor<TRecord>, so there is one array rather than
+    // one per closed TRecord (InspectCode StaticMemberInGenericType).
+    internal static readonly string[] GeneratedParameterNames = { "@PageOffset", "@PageLimit" };
+
+
 
     /// <summary>
     /// No dialect chosen. This is the default, and it is <see langword="null"/>.
@@ -52,20 +58,25 @@ public static class PagingClauseTemplates
     public static string MySql { get; } = LimitOffset;
 
 
+
     /// <summary>PostgreSQL — <c>LIMIT … OFFSET …</c>.</summary>
     public static string PostgreSql { get; } = LimitOffset;
 
 
-    /// <summary>SQLite — <c>LIMIT … OFFSET …</c>. This is also the library default.</summary>
+
+    /// <summary>SQLite — <c>LIMIT … OFFSET …</c>.</summary>
     public static string Sqlite { get; } = LimitOffset;
+
 
 
     /// <summary>SQL Server 2012 and later — SQL:2008 <c>OFFSET … FETCH NEXT …</c>.</summary>
     public static string SqlServer { get; } = OffsetFetch;
 
 
+
     /// <summary>Oracle 12c and later — SQL:2008 <c>OFFSET … FETCH NEXT …</c>.</summary>
     public static string Oracle { get; } = OffsetFetch;
+
 
 
     /// <summary>Db2 — SQL:2008 <c>OFFSET … FETCH NEXT …</c>.</summary>

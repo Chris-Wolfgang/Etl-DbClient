@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -11,7 +10,6 @@ public class CockroachDbCollection : ICollectionFixture<CockroachDbFixture> { }
 
 [Collection("CockroachDb")]
 [Trait("Category", "cockroachdb")]
-[ExcludeFromCodeCoverage]
 public sealed class CockroachDbExtractorTests : DbExtractorIntegrationTestsBase
 {
     private readonly CockroachDbFixture _fixture;
@@ -23,7 +21,6 @@ public sealed class CockroachDbExtractorTests : DbExtractorIntegrationTestsBase
 
 [Collection("CockroachDb")]
 [Trait("Category", "cockroachdb")]
-[ExcludeFromCodeCoverage]
 public sealed class CockroachDbLoaderTests : DbLoaderIntegrationTestsBase
 {
     private readonly CockroachDbFixture _fixture;

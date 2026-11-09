@@ -142,10 +142,11 @@ public sealed record DbExtractorOptions : ExtractorOptions
     /// Defaults to <see cref="PagingClauseTemplates.None"/> — no dialect chosen.
     /// </summary>
     /// <remarks>
-    /// <b>This is dialect-specific, not standard SQL.</b> The default is the PostgreSQL / MySQL /
-    /// SQLite form; <b>SQL Server rejects <c>LIMIT</c></b> and needs the SQL:2008
-    /// <c>OFFSET … ROWS FETCH NEXT … ROWS ONLY</c> form, as do Oracle 12c+ and Db2. Leaving the
-    /// default in place against those engines produces a runtime syntax error.
+    /// <b>This is dialect-specific, not standard SQL.</b> PostgreSQL, MySQL and
+    /// SQLite use the <c>LIMIT … OFFSET …</c> form; <b>SQL Server rejects <c>LIMIT</c></b> and needs
+    /// the SQL:2008 <c>OFFSET … ROWS FETCH NEXT … ROWS ONLY</c> form, as do Oracle 12c+ and Db2.
+    /// The default (<see cref="PagingClauseTemplates.None"/>) names no dialect, so activating
+    /// server paging without choosing a template throws rather than guessing.
     /// <para>
     /// Use <see cref="PagingClauseTemplates"/> rather than writing the clause by hand:
     /// <c>PagingClauseTemplate = PagingClauseTemplates.SqlServer</c>. Any string is accepted, so a

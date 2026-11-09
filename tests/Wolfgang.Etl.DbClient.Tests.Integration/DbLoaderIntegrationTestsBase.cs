@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -14,7 +13,6 @@ namespace Wolfgang.Etl.DbClient.Tests.Integration;
 /// and supplies its own <see cref="IDbProviderFixture"/>. Tests are skipped (not
 /// failed) when the fixture's container could not start.
 /// </summary>
-[ExcludeFromCodeCoverage]
 public abstract class DbLoaderIntegrationTestsBase
 {
     protected abstract IDbProviderFixture Fixture { get; }
