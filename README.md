@@ -19,7 +19,7 @@ Extractors and Loaders for working with SQL databases using ADO.NET
 dotnet add package Wolfgang.Etl.DbClient
 ```
 
-**NuGet Package:** Coming soon to NuGet.org
+**NuGet Package:** [Wolfgang.Etl.DbClient on nuget.org](https://www.nuget.org/packages/Wolfgang.Etl.DbClient/)
 
 ---
 
@@ -33,7 +33,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 - **GitHub Repository:** [https://github.com/Chris-Wolfgang/Etl-DbClient](https://github.com/Chris-Wolfgang/Etl-DbClient)
 - **API Documentation:** https://Chris-Wolfgang.github.io/Etl-DbClient/
-- **Formatting Guide:** [README-FORMATTING.md](README-FORMATTING.md)
+- **Formatting Guide:** [README-FORMATTING.md](docs/README-FORMATTING.md)
 - **Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
@@ -123,6 +123,10 @@ DB, a JSON file, a CSV, etc.), the class-named factories over
 compose cleanly with the sibling packages in the ETL family:
 
 ```csharp
+using Dapper;                       // DynamicParameters
+using Wolfgang.Etl.Abstractions;
+using Wolfgang.Etl.DbClient;
+
 // Same-database ETL: filter with server-side paging, then reload
 await EtlPipeline
     .Create()
@@ -143,9 +147,11 @@ await EtlPipeline
 ```
 
 The `DbExtractor<T>` / `DbLoader<T>` factories return builder types with fluent
-setters for every knob on the underlying extractor and loader (paging,
-`CommandType`, `ManageConnection`, `Parameters`, `TotalCountQuery`,
-`ErrorHandling`); the chain transitions into the plain `IEtlPipeline<T>` on the
+setters for the common knobs: on the extractor, paging, `CommandType`,
+`ManageConnection`, `Parameters` and `TotalCountQuery` (not `CommandTimeout` or
+`ValidateSchemaOnStart`); on the loader, `CommandType`, `ManageConnection` and
+`ErrorHandling`. Configure anything else on the extractor or loader itself and pass
+the instance in. The chain transitions into the plain `IEtlPipeline<T>` on the
 first operator or terminator call. See
 [docs/etl-pipeline.md](docfx_project/docs/etl-pipeline.md) for the full surface
 and the [Example.EtlPipeline](examples/Wolfgang.Etl.DbClient.Example.EtlPipeline/)
@@ -157,13 +163,22 @@ runnable project.
 
 | Feature | Description |
 |---------|-------------|
-| Async Streaming | Built on `IAsyncEnumerable<T>` via Dapper's unbuffered reader for constant memory usage |
+| Async Streaming | `IAsyncEnumerable<T>` over a `DbDataReader` loop with Dapper's row parser, one row in memory at a time |
 | Auto-generated SQL | Builds SELECT, INSERT, and UPDATE from `[Table]`, `[Column]`, and `[Key]` attributes |
 | Parameterized Queries | Pass named parameters via `Dictionary<string, object>` |
+| Output Parameters | `EtlParameter<T>` with `Direction = Output` / `InputOutput`; read `.Value` after the extract |
+| Server-side Paging | `ServerLimit` / `ServerOffset` with dialect presets in `PagingClauseTemplates` |
+| Total Count | `CountAsync` and `TotalCountQuery` populate `DbReport.TotalItemCount` |
 | Column Mapping | Dapper integration with `[Column]` attribute support via `ColumnAttributeTypeMapper` |
 | Transaction Support | Caller-managed or auto-managed (commit on success, rollback on failure) |
 | Progress Reporting | `DbReport` includes item count, skipped count, command text, and elapsed time |
 | Skip & Limit | `SkipItemCount` and `MaximumItemCount` for pagination |
+| Batched Loading | `BatchSize` (N executes per round trip), `InsertBatchSize` (one multi-row `INSERT … VALUES`), `BatchCommitSize` (commit every N rows) |
+| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default) |
+| Dry Run | `IsDryRun` runs the pipeline without executing writes |
+| Schema Validation | `DbSchemaValidator` and `ValidateSchemaOnStart` check the mapped table and columns up front |
+| Source Generator | `[DbTable]` / `[DbColumn]` / `[DbKey]` emit `Insert`, `Select`, `Update`, `Delete` SQL and a reflection-free binder at compile time |
+| Options Records | `DbExtractorOptions` / `DbLoaderOptions` passed to the constructor (the property setters are obsolete) |
 | Structured Logging | Optional `ILogger` integration |
 | Multi-TFM | Targets .NET Framework 4.6.2+, .NET Standard 2.0, and .NET 5.0–10.0 |
 
@@ -305,7 +320,7 @@ cd docfx_project
 docfx metadata  # Extract API metadata from source code
 docfx build     # Build HTML documentation
 
-# Documentation is generated in the docs/ folder at the repository root
+# Documentation is generated in docfx_project/_site
 ```
 
 The documentation is automatically built and deployed to GitHub Pages when changes are pushed to the `main` branch.
@@ -321,7 +336,8 @@ docfx build --serve
 
 **Documentation Structure:**
 - `docfx_project/` - DocFX configuration and source files
-- `docs/` - Generated HTML documentation (published to GitHub Pages)
+- `docfx_project/_site/` - Generated HTML documentation (published to GitHub Pages; not committed)
+- `docs/` - Hand-written policy and design docs (ADRs, workflow security, release setup)
 - `docfx_project/index.md` - Main landing page content
 - `docfx_project/docs/` - Additional documentation articles
 - `docfx_project/api/` - Auto-generated API reference YAML files
