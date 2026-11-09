@@ -44,8 +44,9 @@ Every release of `Wolfgang.Etl.DbClient` ships a signed [SLSA build-provenance a
 plus a `reproducible-build-manifest.json` recording the sha256 of every
 `.nupkg` / `.snupkg` in that release, so you can confirm a published
 package actually came from this repo's release pipeline at the tagged
-commit. Same-OS builds reproduce byte-for-byte from source; cross-OS
-byte-identity is tracked as in-progress ([#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
+commit. The library's `.dll` / `.pdb` reproduce byte-for-byte from source
+on Linux and Windows, and CI fails if they stop doing so
+([#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
 
 Third-party consumers can independently verify a published package —
 full recipe (rebuild from source, cross-check manifest, publish an
