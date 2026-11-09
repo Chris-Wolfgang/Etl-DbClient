@@ -243,10 +243,16 @@ public class DbLoaderLoggingTests
 
 
 
-    private static async IAsyncEnumerable<ContractRecord> FailingSourceAsync()
-    {
-        yield return new ContractRecord { Name = "Item1", Value = 10 };
-        await Task.CompletedTask;
-        throw new InvalidOperationException("Simulated failure");
-    }
+    // Built from a LINQ projection rather than an async iterator: an iterator that ends in
+    // `throw` leaves its closing brace unexecuted, which costs the 100 % test-assembly gate.
+    private static IAsyncEnumerable<ContractRecord> FailingSourceAsync() =>
+        Enumerable
+            .Range(1, 2)
+            .Select
+            (
+                i => i == 1
+                    ? new ContractRecord { Name = "Item1", Value = 10 }
+                    : throw new InvalidOperationException("Simulated failure")
+            )
+            .ToAsyncEnumerable();
 }
