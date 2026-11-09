@@ -31,11 +31,17 @@ public sealed class RowFailedEventArgs<TRecord> : EventArgs
         ItemIndex = itemIndex;
     }
 
+
+
     /// <summary>The record whose insert/update threw.</summary>
     public TRecord Record { get; }
 
+
+
     /// <summary>The exception thrown by the underlying provider.</summary>
     public Exception Exception { get; }
+
+
 
     /// <summary>
     /// 1-based index of the row in the source enumerable (after
