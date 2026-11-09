@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -11,7 +10,6 @@ public class PostgresCollection : ICollectionFixture<PostgresFixture> { }
 
 [Collection("Postgres")]
 [Trait("Category", "postgres")]
-[ExcludeFromCodeCoverage]
 public sealed class PostgresExtractorTests : DbExtractorIntegrationTestsBase
 {
     private readonly PostgresFixture _fixture;
@@ -23,7 +21,6 @@ public sealed class PostgresExtractorTests : DbExtractorIntegrationTestsBase
 
 [Collection("Postgres")]
 [Trait("Category", "postgres")]
-[ExcludeFromCodeCoverage]
 public sealed class PostgresLoaderTests : DbLoaderIntegrationTestsBase
 {
     private readonly PostgresFixture _fixture;

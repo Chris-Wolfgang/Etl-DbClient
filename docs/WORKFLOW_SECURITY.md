@@ -181,7 +181,7 @@ When adding new configuration files that control code quality or security:
 `.github/workflows/scorecard.yaml` runs the OpenSSF Scorecard on a weekly schedule + on push to `main`. It scores repository *configuration* (branch protection, pinned dependencies, dangerous-workflow patterns, permission scoping, ...) against ~20 best practices and publishes SARIF to the Security tab.
 
 - **Public dashboard**: https://scorecard.dev/viewer/?uri=github.com/Chris-Wolfgang/Etl-DbClient (badge in README.md).
-- **Baseline**: to be captured once the first run publishes (this PR's first `push:main` after merge). Update this section with the initial score + a list of intentionally accepted findings.
+- **Baseline**: not yet recorded. Results have not been reaching scorecard.dev (see [#525](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/525)); record the first published score and any intentionally accepted findings here once they do.
 - **Score floor**: **7.5**. If a scheduled or push run drops the score below 7.5:
   1. The maintainer investigates the specific check(s) that regressed.
   2. If the regression is intentional (e.g. a new third-party action we accept without SHA-pin), add it to the accepted-findings list here with a one-line rationale, and note the score-floor drop in the next CHANGELOG entry.
@@ -190,13 +190,13 @@ When adding new configuration files that control code quality or security:
 
 ## Workflow YAML audit — zizmor + actionlint
 
-`.github/workflows/workflow-security.yaml` runs on every PR that touches workflow YAML (`.github/workflows/**`, `.github/actions/**`) or the tool config files (`.zizmor.yml`, `.github/actionlint.yaml`), and on every push to `main` / `vNext` that touches the same paths. Two tools, complementary rule sets:
+`.github/workflows/actions-audit.yaml` runs on every PR (not path-filtered, so its jobs can be required checks), on every push to `main`, and on manual dispatch. Two tools, complementary rule sets:
 
-- **[zizmor](https://github.com/zizmorcore/zizmor)** — security-focused static analysis. Catches untrusted-input injection into `run:` blocks, missing / overly-permissive `permissions:` blocks, secret leaks via expression-context expansion, third-party actions unpinned by SHA. Publishes SARIF to Code Scanning (category: `zizmor`). Gate: `min-severity: high` — highs fail the PR, medium/low surface in Code Scanning without blocking.
-- **[actionlint](https://github.com/rhysd/actionlint)** — syntax + typing + common-mistake linting. Broader coverage; catches issues zizmor doesn't model (shell-checker integration, matrix-expression typos, deprecated Actions syntax). Runs with `fail-on-error: true`.
+- **[zizmor](https://github.com/zizmorcore/zizmor)** — security-focused static analysis. Catches untrusted-input injection into `run:` blocks, missing / overly-permissive `permissions:` blocks, secret leaks via expression-context expansion, third-party actions unpinned by SHA. Publishes SARIF to Code Scanning (category: `zizmor`). Gate: high-severity findings (SARIF level `error`) fail the job; medium/low surface in Code Scanning without blocking.
+- **[actionlint](https://github.com/rhysd/actionlint)** — syntax + typing + common-mistake linting. Broader coverage; catches issues zizmor doesn't model (shell-checker integration, matrix-expression typos, deprecated Actions syntax). Any finding fails the job (`actionlint` exits non-zero).
 
 **Configuration**:
-- `.zizmor.yml` at the repo root — suppression list. Currently empty (no accepted findings).
+- Accepted zizmor findings use an inline `# zizmor: ignore[<rule>]` comment next to the flagged key. zizmor reads only `.github/zizmor.yml`, so the root `.zizmor.yml` is not applied.
 - `.github/actionlint.yaml` — self-hosted-runner labels + rule config. Currently empty.
 
 **Adding a suppression** (either tool): document *why* the finding is intentional in the config file. Prefer fixing the finding over suppressing it. Refs [#153](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/153).

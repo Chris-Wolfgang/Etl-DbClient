@@ -1,12 +1,10 @@
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.Data.SqlClient;
 using Testcontainers.MsSql;
 
 namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 
-[ExcludeFromCodeCoverage]
 public sealed class SqlServerFixture : DbProviderFixtureBase
 {
     private MsSqlContainer? _container;

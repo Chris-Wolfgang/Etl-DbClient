@@ -16,7 +16,6 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using VerifyTests;
@@ -26,51 +25,53 @@ using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Snapshots;
 
-[ExcludeFromCodeCoverage]
+// The record shapes below are abstract: DbCommandBuilder reads their metadata
+// through the type alone and never creates an instance, so abstract properties
+// leave no accessor bodies sitting unexecuted.
+
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 [Table("orders")]
-internal sealed class OrderRecord
+internal abstract class OrderRecord
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
-    public int Id { get; set; }
+    public abstract int Id { get; set; }
 
     [Column("customer_id")]
-    public int CustomerId { get; set; }
+    public abstract int CustomerId { get; set; }
 
     [Column("total")]
-    public decimal Total { get; set; }
+    public abstract decimal Total { get; set; }
 
     [Column("placed_utc")]
-    public DateTime PlacedUtc { get; set; }
+    public abstract DateTime PlacedUtc { get; set; }
 
     // NotMapped: verifies the builder skips this column in SELECT / INSERT
     // / UPDATE without leaving artefacts in the generated SQL.
     [NotMapped]
-    public string DisplayName { get; set; } = "";
+    public abstract string DisplayName { get; set; }
 }
 
-[ExcludeFromCodeCoverage]
 [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
 [Table("order_lines")]
-internal sealed class OrderLineRecord
+internal abstract class OrderLineRecord
 {
     // Composite key: verifies the builder handles multi-column WHERE
     // clauses on UPDATE without regressing to single-key SQL.
     [Key]
     [Column("order_id")]
-    public int OrderId { get; set; }
+    public abstract int OrderId { get; set; }
 
     [Key]
     [Column("line_no")]
-    public int LineNo { get; set; }
+    public abstract int LineNo { get; set; }
 
     [Column("sku")]
-    public string Sku { get; set; } = "";
+    public abstract string Sku { get; set; }
 
     [Column("qty")]
-    public int Qty { get; set; }
+    public abstract int Qty { get; set; }
 }
 
 public class SqlSnapshotTests
@@ -96,15 +97,15 @@ public class SqlSnapshotTests
     internal static void Init() => Verifier.DerivePathInfo(
         (_, _, type, method) =>
             new PathInfo(
-                directory: Path.Combine(ResolveProjectDirectory(), "Snapshots"),
+                directory: Path.Combine(ResolveProjectDirectory(AppContext.BaseDirectory), "Snapshots"),
                 typeName: type.Name,
                 methodName: method.Name));
 
 
 
-    private static string ResolveProjectDirectory()
+    internal static string ResolveProjectDirectory(string startDirectory)
     {
-        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+        for (var dir = new DirectoryInfo(startDirectory); dir != null; dir = dir.Parent)
         {
             if (dir.GetFiles("*.csproj").Length > 0)
             {
@@ -114,9 +115,31 @@ public class SqlSnapshotTests
 
         throw new InvalidOperationException
         (
-            $"Could not locate the Tests.Snapshots project directory by walking up from '{AppContext.BaseDirectory}'."
+            $"Could not locate the Tests.Snapshots project directory by walking up from '{startDirectory}'."
         );
     }
+
+
+
+    [Fact]
+    public void ResolveProjectDirectory_when_no_ancestor_has_a_csproj_throws_InvalidOperationException()
+    {
+        var start = Path.Combine(Path.GetTempPath(), "dbclient-snapshots-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(start);
+
+        try
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() => ResolveProjectDirectory(start));
+
+            Assert.Contains(start, ex.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(start);
+        }
+    }
+
+
 
     [Fact]
     public Task Select_orders() => Verifier.Verify(DbCommandBuilder.BuildSelect<OrderRecord>());

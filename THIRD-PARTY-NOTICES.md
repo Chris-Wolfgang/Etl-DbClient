@@ -19,6 +19,10 @@ declares a licence outside `.github/license/allowed-licenses.json`.
 | [Microsoft.Extensions.Logging.Abstractions](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Abstractions) | 10.0.11 | MIT |
 | [System.Memory](https://www.nuget.org/packages/System.Memory) | 4.6.3 | MIT |
 
+System.Memory is not referenced directly: it reaches the .NET Framework and
+.NET Standard 2.0 builds transitively through Microsoft.Extensions.Logging.Abstractions
+(and is part of the runtime on .NET 5+).
+
 `Wolfgang.Etl.Abstractions` is also a runtime dependency. It is first-party — part of
 this same project family, MIT licensed — so it is listed separately rather than as a
 third-party notice.

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Data.Common;
 using Wolfgang.Etl.Abstractions;
 
@@ -54,7 +55,7 @@ public static class EtlPipelineDbClientExtensions
     /// <paramref name="pipeline"/>, <paramref name="connection"/>, or
     /// <paramref name="commandText"/> is <see langword="null"/>.
     /// </exception>
-    public static IDbExtractorBuilder<T> DbExtractor<T>
+    public static IDbExtractorBuilder<T> DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>
     (
         this EtlPipeline pipeline,
         DbConnection connection,
@@ -97,7 +98,7 @@ public static class EtlPipelineDbClientExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="pipeline"/> or <paramref name="extractor"/> is <see langword="null"/>.
     /// </exception>
-    public static IDbExtractorBuilder<T> DbExtractor<T>
+    public static IDbExtractorBuilder<T> DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>
     (
         this EtlPipeline pipeline,
         DbExtractor<T> extractor
@@ -145,7 +146,7 @@ public static class EtlPipelineDbClientExtensions
     /// <paramref name="pipeline"/>, <paramref name="connection"/>, or
     /// <paramref name="commandText"/> is <see langword="null"/>.
     /// </exception>
-    public static IDbLoaderBuilder<T> DbLoader<T>
+    public static IDbLoaderBuilder<T> DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>
     (
         this IEtlPipeline<T> pipeline,
         DbConnection connection,
@@ -190,7 +191,7 @@ public static class EtlPipelineDbClientExtensions
     /// <exception cref="ArgumentNullException">
     /// <paramref name="pipeline"/> or <paramref name="loader"/> is <see langword="null"/>.
     /// </exception>
-    public static IDbLoaderBuilder<T> DbLoader<T>
+    public static IDbLoaderBuilder<T> DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>
     (
         this IEtlPipeline<T> pipeline,
         DbLoader<T> loader
