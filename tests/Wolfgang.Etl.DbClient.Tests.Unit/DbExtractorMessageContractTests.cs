@@ -243,6 +243,7 @@ public class DbExtractorMessageContractTests
                 new DbExtractorOptions
                 {
                     ManageConnection = true,
+                    // ReSharper disable once AccessToDisposedClosure -- CountAsync awaits this delegate before it returns, inside the using scope that owns conn.
                     TotalCountQuery = _ => Task.FromResult((int)conn.State),
                 }
             );
