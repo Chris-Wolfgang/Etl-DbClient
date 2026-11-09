@@ -42,10 +42,8 @@ on:
   # this check by name before merge, so a PR can't silently drop it.
   # pull_request is the correct trigger here.
   pull_request:
-    paths:
-      - "src/**"
-      - "examples/Wolfgang.Etl.DbClient.Example.AotSmoke/**"
-      - ".github/workflows/aot-smoke.yaml"
+    # No paths filter: the check reports on every PR, so it can later become a required
+    # status check (a path-skipped workflow never reports and would block the merge).
   push:
     branches: [main, vNext]
     paths:
@@ -90,6 +88,10 @@ jobs:
 
       # Non-blocking (see file header). Captures full trim/AOT
       # warning output so we can trend and eventually gate.
+      # PublishAot / PublishTrimmed / TrimmerSingleWarn live in the AotSmoke csproj, not on this
+      # command line: a -p: property on the command line is global and flows into every
+      # referenced project, including the library's net462 target, where AOT is unsupported
+      # (NETSDK1207). That made this step fail every time, so the binary was never built or run.
       - name: Publish (PublishAot + PublishTrimmed)
         id: publish
         continue-on-error: true
@@ -102,9 +104,6 @@ jobs:
             --runtime linux-x64 \
             --self-contained true \
             --output publish \
-            -p:PublishAot=true \
-            -p:PublishTrimmed=true \
-            -p:TrimmerSingleWarn=false \
             2>&1 | tee publish.log
 
       - name: Summarize trim / AOT warnings
@@ -118,9 +117,9 @@ jobs:
             echo "publish step produced no log — likely errored before running dotnet." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          il2_count=$(grep -c "warning IL2" publish.log || true)
-          il3_count=$(grep -c "warning IL3" publish.log || true)
-          aot_count=$(grep -c "warning AOT" publish.log || true)
+          il2_count=$(grep -c -E "(warning|error) IL2" publish.log || true)
+          il3_count=$(grep -c -E "(warning|error) IL3" publish.log || true)
+          aot_count=$(grep -c -E "(warning|error) AOT" publish.log || true)
           {
             echo "| Category | Count |"
             echo "|---|---|"
@@ -134,7 +133,7 @@ jobs:
               echo "<details><summary>First 20 warnings</summary>"
               echo ""
               echo '```'
-              grep -E "warning (IL[23]|AOT)" publish.log | head -20
+              grep -E "(warning|error) (IL[23]|AOT)" publish.log | head -20
               echo '```'
               echo ""
               echo "</details>"
@@ -149,6 +148,8 @@ jobs:
       # skip cleanly instead of failing.
       - name: Run the AOT-published binary
         if: steps.publish.outcome == 'success'
+        # Informational, like the publish step: report a crash without failing the job.
+        continue-on-error: true
         run: |
           bin=publish/Wolfgang.Etl.DbClient.Example.AotSmoke
           if [ ! -x "$bin" ]; then
