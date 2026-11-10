@@ -11,6 +11,31 @@ updates:
       dotnet-dependencies:
         patterns:
           - "*"
+    ignore:
+      # Deliberate pins. Dependabot spends minutes of per-dependency evaluation on each of
+      # these every run (17 projects x 40 TFM slots, see #614) and could never open a
+      # mergeable PR for them; the pin reasons live next to the PackageReference.
+      #   xunit.runner.visualstudio: per-TFM-slot policy - 2.4.5 / 2.8.2 capped on
+      #   net462-net7 (runner 3.x drops those TFMs), 3.x on net8+; 4.x not yet verified
+      #   against xunit v2. Patch updates only.
+      - dependency-name: "xunit.runner.visualstudio"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      #   The source generator pins the lowest Roslyn it supports so it loads on older SDKs.
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp"
+      - dependency-name: "Microsoft.CodeAnalysis.Analyzers"
+      #   The library's dependency floor stays on the 10.x line until the fleet adopts net11;
+      #   a major here forces every consumer up with it.
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Bcl.*"
+        update-types: ["version-update:semver-major"]
+      #   Microsoft.Data.Sqlite 11.x is net10.0-only; the Unit tests run it on net462..net10.
+      - dependency-name: "Microsoft.Data.Sqlite"
+        update-types: ["version-update:semver-major"]
+      #   Microsoft.NET.Test.Sdk 18.x has no group below net8.0; the Unit project's
+      #   netcoreapp3.1 / net5 / net6 / net7 / net4x slots stay on 17.13.0.
+      - dependency-name: "Microsoft.NET.Test.Sdk"
+        update-types: ["version-update:semver-major"]
 
   # Keep third-party GitHub Actions pinned in workflows up to date.
   - package-ecosystem: "github-actions"
