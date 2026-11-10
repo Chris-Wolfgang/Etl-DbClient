@@ -1,10 +1,13 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Dapper;
-using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.ErrorPolicies;
 using Xunit;
 

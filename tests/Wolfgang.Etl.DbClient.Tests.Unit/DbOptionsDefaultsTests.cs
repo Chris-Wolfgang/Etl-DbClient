@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.DbClient;
 using Xunit;
 
 // Constructs via the deprecated constructors. Migrating to the options overloads is

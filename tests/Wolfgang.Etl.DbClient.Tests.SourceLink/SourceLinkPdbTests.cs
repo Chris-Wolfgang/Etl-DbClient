@@ -8,8 +8,10 @@
 // works by construction. If any breaks, the consumer's debugger silently
 // falls back to decompiled placeholders. Refs #144.
 
+using System;
+using System.IO;
+using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
 using System.Text.Json;
 using Xunit;
 

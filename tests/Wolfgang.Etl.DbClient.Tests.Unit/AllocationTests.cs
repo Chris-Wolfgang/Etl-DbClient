@@ -19,13 +19,13 @@
 // If you add a new no-alloc-by-contract method, add a `[Fact]` here and
 // a bullet to the list above. Refs #147.
 
+
 #if NET5_0_OR_GREATER || NETCOREAPP3_1
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
-using Wolfgang.Etl.DbClient;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;

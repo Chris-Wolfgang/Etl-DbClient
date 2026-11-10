@@ -4,6 +4,10 @@
 // The comments are legitimate prose — silencing the rule for this file at
 // the top rather than mangling the header to satisfy the heuristic. The
 // pragma MUST precede the flagged comment lines to take effect.
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
 #pragma warning disable S125
 
 // Culture-invariance gate — exercises the extractor + loader end-to-end
@@ -31,12 +35,10 @@
 // serialisation invariantly. If that ever changes, document the new
 // culture-sensitive API here + note the accepted risk.
 
-using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using JetBrains.Annotations;
-using Microsoft.Data.Sqlite;
 using Xunit;
 
 
