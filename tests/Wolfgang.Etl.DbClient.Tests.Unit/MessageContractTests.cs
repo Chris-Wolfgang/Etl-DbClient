@@ -193,9 +193,9 @@ public class MessageContractTests
         (
             "Parameter '@PageLimit' was supplied in the parameters dictionary and is also " +
             "generated automatically, so it cannot be applied twice. Server-side paging " +
-            "generates '@PageLimit' when ServerLimit is set. Either remove " +
-            "'@PageLimit' from the dictionary and let paging supply it, or clear ServerLimit " +
-            "and page through the command text yourself.",
+            "generates '@PageLimit' when PagingClauseTemplate is set. Either remove " +
+            "'@PageLimit' from the dictionary and let paging supply it, or clear " +
+            "PagingClauseTemplate and page through the command text yourself.",
             ex.Message
         );
     }

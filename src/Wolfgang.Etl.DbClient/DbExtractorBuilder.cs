@@ -76,6 +76,8 @@ internal sealed class DbExtractorBuilder<[DynamicallyAccessedMembers(RecordMembe
 
 
 
+    /// <inheritdoc/>
+    [Obsolete("Use SkipItemCount instead. ServerOffset is an alias of SkipItemCount and will be removed in a future release.")]
     public IDbExtractorBuilder<T> ServerOffset(long? offset)
     {
         _extractor.ServerOffset = offset;
@@ -84,6 +86,34 @@ internal sealed class DbExtractorBuilder<[DynamicallyAccessedMembers(RecordMembe
 
 
 
+    public IDbExtractorBuilder<T> PageSize(int? pageSize)
+    {
+        _extractor.PageSize = pageSize;
+        return this;
+    }
+
+
+
+    /// <inheritdoc/>
+    public IDbExtractorBuilder<T> SkipItemCount(int skip)
+    {
+        _extractor.SkipItemCount = skip;
+        return this;
+    }
+
+
+
+    /// <inheritdoc/>
+    public IDbExtractorBuilder<T> MaximumItemCount(int maximum)
+    {
+        _extractor.MaximumItemCount = maximum;
+        return this;
+    }
+
+
+
+    /// <inheritdoc/>
+    [Obsolete("Use MaximumItemCount (total rows) instead. For rows per round-trip use PageSize. ServerLimit is an alias of MaximumItemCount and will be removed in a future release.")]
     public IDbExtractorBuilder<T> ServerLimit(long? limit)
     {
         _extractor.ServerLimit = limit;

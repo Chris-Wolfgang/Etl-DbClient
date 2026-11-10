@@ -14,17 +14,15 @@ namespace Wolfgang.Etl.DbClient;
 /// </para>
 /// <para>
 /// Every template must reference both <c>@PageOffset</c> and <c>@PageLimit</c>: those are the
-/// parameter names the extractor supplies when server paging is active, that is when
-/// <see cref="DbExtractorOptions.ServerLimit"/> is set (an unset
-/// <see cref="DbExtractorOptions.ServerOffset"/> binds as <c>0</c>).
+/// parameter names the extractor supplies whenever paging is active.
 /// </para>
 /// </remarks>
 /// <example>
 /// <code>
 /// var options = new DbExtractorOptions
 /// {
-///     ServerOffset = 100,
-///     ServerLimit = 50,
+///     SkipItemCount = 100,
+///     MaximumItemCount = 50,
 ///     PagingClauseTemplate = PagingClauseTemplates.SqlServer
 /// };
 /// </code>
@@ -46,11 +44,11 @@ public static class PagingClauseTemplates
     /// No dialect chosen. This is the default, and it is <see langword="null"/>.
     /// </summary>
     /// <remarks>
-    /// This does NOT disable paging — paging is switched on by <c>ServerLimit</c>, with
-    /// <c>ServerOffset</c> defaulting to <c>0</c>. <see cref="None"/> means the
-    /// dialect has not been named yet, so activating paging while it is in effect is an error
-    /// rather than a silent guess: there is no portable paging syntax, and any default this
-    /// library picked would be wrong on half the engines it supports.
+    /// The template is the switch for server-side paging. With <see cref="None"/> in effect the
+    /// command runs as written and <c>SkipItemCount</c> / <c>MaximumItemCount</c> are applied
+    /// client-side; setting <c>PageSize</c> is an error rather than a silent guess, because there
+    /// is no portable paging syntax and any default this library picked would be wrong on half the
+    /// engines it supports.
     /// </remarks>
     public static string? None => null;
 
