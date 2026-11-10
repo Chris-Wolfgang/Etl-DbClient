@@ -34,7 +34,6 @@ on:
 
 permissions:
   contents: read
-  issues: write   # for the auto-issue step on workflow_dispatch failures
 
 concurrency:
   group: shadow-regression-${{ github.event.pull_request.number || github.ref }}
@@ -45,6 +44,11 @@ jobs:
     name: "Regression gate (${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    # Job-level, not workflow-level: this job's auto-issue step opens or
+    # comments on a regression issue when a workflow_dispatch run fails.
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
