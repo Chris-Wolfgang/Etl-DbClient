@@ -1,5 +1,7 @@
 using System.Data.Common;
 using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 using Npgsql;
 using Testcontainers.PostgreSql;
 

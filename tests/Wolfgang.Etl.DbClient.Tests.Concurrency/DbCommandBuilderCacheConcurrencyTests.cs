@@ -18,12 +18,14 @@
 //
 // Refs #137.
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
-using Wolfgang.Etl.DbClient;
 using Xunit;
 
 // VSTHRD002: `Task.WaitAll` inside a `RunUnderCoyote(Action)` body is

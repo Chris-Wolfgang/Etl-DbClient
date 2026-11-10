@@ -18,13 +18,15 @@
 //
 // Refs #137 (Coyote follow-up scope on #265 / #268).
 
-using System.Data;
-using System.Data.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.DbClient;
 using Xunit;
 
 // Constructs via the deprecated constructors. Migrating to the options overloads is

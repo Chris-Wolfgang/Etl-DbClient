@@ -23,13 +23,16 @@
 //
 // Refs #137 follow-up.
 
-using System.ComponentModel.DataAnnotations;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
 using Microsoft.Data.Sqlite;
-using Wolfgang.Etl.DbClient;
 using Xunit;
 
 // Constructs via the deprecated constructors. Migrating to the options overloads is
