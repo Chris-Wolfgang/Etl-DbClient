@@ -128,9 +128,10 @@ jobs:
           STRICT: ${{ inputs.strict || 'false' }}
         run: |
           set -euo pipefail
-          # Thresholds: allocation-family only (50% alloc, 50% gen0, 200%+abs
-          # floor for gen1/gen2). Cross-time latency (`elapsedMs` /
-          # `rowsPerSecond`) is REPORTED but NOT GATED — see #332.
+          # Thresholds: 50% allocatedBytes / bytesPerRow, 50% gen0. Cross-time
+          # latency (`elapsedMs` / `rowsPerSecond`) and the gen1 / gen2
+          # collection counts are REPORTED but NOT GATED — see #332 and the
+          # gen1/gen2 paragraph below.
           #
           # Why: the baseline is fetched from gh-pages, recorded by
           # shadow-baseline.yaml on some prior push to main. Because the
@@ -143,9 +144,9 @@ jobs:
           # +50% "regression" — the 50% is runner drift, not code. Same
           # commit repeatedly produces +33% / +51% / -8% over reruns.
           #
-          # Allocation metrics (allocatedBytes / bytesPerRow / genN) are
+          # Allocation metrics (allocatedBytes / bytesPerRow / gen0) are
           # deterministic and machine-independent — same code path allocates
-          # the same bytes and triggers the same GC frequency regardless of
+          # the same bytes and triggers the same gen0 frequency regardless of
           # runner wall-clock. Those stay in the gate.
           #
           # Pure-latency regressions (code got slower without changing
@@ -156,14 +157,19 @@ jobs:
           # baseline in the same job by running the sample once on the PR's
           # merge-base and once on the head. Bigger change; deferred.
           #
-          # gen1/gen2 collections are noisy on small per-run sample counts
-          # (observed 2, 5, 8 collections across otherwise-identical runs
-          # of PR #326/#327 with unchanged allocatedBytes/bytesPerRow) --
-          # percentage alone can't gate a metric that swings this much on
-          # tiny integers, so gen1/gen2 also require an absolute floor
-          # (see ABS_FLOOR below) on top of the percentage threshold.
-          # Added 2026-08-11 after the plain-percentage widening (100%,
-          # then 200%) both still false-triggered on PR #326.
+          # gen1/gen2 collections are NOT deterministic: whether a gen0
+          # survivor is promoted depends on the GC's timing on that runner
+          # (Server GC, heap count = core count), not on the code. Observed
+          # 2, 5, 8 collections across otherwise-identical runs of PR
+          # #326/#327; a 100% then 200% percentage threshold (2026-08-11)
+          # and then a +15 absolute floor each still false-failed, the last
+          # time on the v0.13.0 release PR (#612): gen1 7 -> 27 on a binary
+          # whose only change from the baseline commit was the version
+          # number, with allocatedBytes / bytesPerRow / gen0 identical; the
+          # re-run of the same job gave 9. So gen1/gen2 are reported in the
+          # table (the abs floor is kept for the status text) but no longer
+          # gate. A real promotion-rate change still shows up as an
+          # allocatedBytes / bytesPerRow / gen0 move, which do gate.
           # windows-latest's pre-installed Python is only on PATH as
           # `python`, not `python3` — pick whichever exists.
           PYTHON_BIN=python3
@@ -195,8 +201,9 @@ jobs:
               "allocatedBytes":    ("up",   0.50, None, True),
               "bytesPerRow":       ("up",   0.50, None, True),
               "gen0Collections":   ("up",   0.50, None, True),
-              "gen1Collections":   ("up",   2.00, 15,   True),
-              "gen2Collections":   ("up",   2.00, 15,   True),
+              # gen1/gen2 — GC promotion timing, reported only. See header comment.
+              "gen1Collections":   ("up",   2.00, 15,   False),
+              "gen2Collections":   ("up",   2.00, 15,   False),
           }
 
           rows = []
