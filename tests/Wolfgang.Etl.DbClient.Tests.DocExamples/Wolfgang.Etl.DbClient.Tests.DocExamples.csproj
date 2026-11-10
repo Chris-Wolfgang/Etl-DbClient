@@ -40,7 +40,7 @@
          DynamicParameters. System.Linq.AsyncEnumerable is in the net10 BCL
          so we don't add System.Linq.Async — mixing them causes duplicate-
          extension-method ambiguity on ToListAsync. -->
-    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Dapper" Version="2.1.89" />
   </ItemGroup>
 
 </Project>
