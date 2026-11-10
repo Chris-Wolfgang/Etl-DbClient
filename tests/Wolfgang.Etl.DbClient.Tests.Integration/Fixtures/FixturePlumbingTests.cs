@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;

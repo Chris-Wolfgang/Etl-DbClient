@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Wolfgang.Etl.DbClient.Tests.Unit;

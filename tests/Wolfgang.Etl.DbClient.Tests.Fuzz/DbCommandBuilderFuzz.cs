@@ -17,9 +17,9 @@
 //
 // Refs #129.
 
+using System;
+using System.Linq;
 using CsCheck;
-using JetBrains.Annotations;
-using Wolfgang.Etl.DbClient;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Fuzz;
