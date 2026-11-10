@@ -14,6 +14,7 @@
 // ever reads their metadata through typeof(...), so no instance is created
 // and there are no accessor bodies that would sit unexecuted.
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using JetBrains.Annotations;

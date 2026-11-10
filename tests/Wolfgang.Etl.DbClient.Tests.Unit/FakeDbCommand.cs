@@ -2,6 +2,7 @@
 // [AllowNull], which an implementation here cannot mirror because that attribute is shadowed by an
 // internal polyfill in this project. CS8767/CS8769 are the resulting annotation-mismatch warnings
 // and are suppressed for this file only — the members accept null exactly as the interfaces intend.
+
 #pragma warning disable CS8767, CS8769
 
 using System;
