@@ -31,8 +31,7 @@ public sealed class CockroachDbFixture : DbProviderFixtureBase
     {
         // Pinned patch tag for reproducible CI. Bump deliberately when
         // moving to a new minor.
-        _container = new ContainerBuilder()
-            .WithImage("cockroachdb/cockroach:v24.3.5")
+        _container = new ContainerBuilder("cockroachdb/cockroach:v24.3.5")
             .WithCommand("start-single-node", "--insecure")
             .WithPortBinding(CockroachSqlPort, true)
             // Wait by actually executing a SQL probe inside the container —
