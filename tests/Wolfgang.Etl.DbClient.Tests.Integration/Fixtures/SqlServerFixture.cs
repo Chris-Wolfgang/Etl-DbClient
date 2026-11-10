@@ -21,8 +21,7 @@ public sealed class SqlServerFixture : DbProviderFixtureBase
     {
         // Pinned tag for reproducible CI. Bump deliberately when you want
         // to validate against a new CU.
-        _container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-CU20-ubuntu-22.04")
+        _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-CU20-ubuntu-22.04")
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);

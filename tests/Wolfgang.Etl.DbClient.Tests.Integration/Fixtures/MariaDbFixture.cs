@@ -27,8 +27,7 @@ public sealed class MariaDbFixture : DbProviderFixtureBase
     {
         // Pinned patch tag for reproducible CI. Bump deliberately when
         // moving to a new minor.
-        _container = new MariaDbBuilder()
-            .WithImage("mariadb:11.4.4")
+        _container = new MariaDbBuilder("mariadb:11.4.4")
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);

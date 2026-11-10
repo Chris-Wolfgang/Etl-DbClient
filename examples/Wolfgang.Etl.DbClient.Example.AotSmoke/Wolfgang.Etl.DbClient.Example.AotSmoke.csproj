@@ -52,9 +52,9 @@
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
     <!-- Microsoft.Data.Sqlite for a real DbConnection to hand to the
          extractor / loader — no external service needed. -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.15" />
     <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql. -->
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
   </ItemGroup>
 
 </Project>

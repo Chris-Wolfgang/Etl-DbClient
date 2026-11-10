@@ -21,8 +21,7 @@ public sealed class MySqlFixture : DbProviderFixtureBase
     {
         // Pinned patch tag for reproducible CI. Bump deliberately when
         // moving to a new minor.
-        _container = new MySqlBuilder()
-            .WithImage("mysql:8.0.39")
+        _container = new MySqlBuilder("mysql:8.0.39")
             .Build();
 
         await _container.StartAsync().ConfigureAwait(false);
