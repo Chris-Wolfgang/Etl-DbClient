@@ -36,6 +36,11 @@ updates:
       #   netcoreapp3.1 / net5 / net6 / net7 / net4x slots stay on 17.13.0.
       - dependency-name: "Microsoft.NET.Test.Sdk"
         update-types: ["version-update:semver-major"]
+      #   Npgsql 10.x's connection bootstrap is cut off by the pinned CockroachDB v24.3.5 image
+      #   (every CockroachDb integration test fails with EndOfStreamException); PostgreSQL itself
+      #   is fine. Moves together with the image pin in CockroachDbFixture.
+      - dependency-name: "Npgsql"
+        update-types: ["version-update:semver-major"]
 
   # Keep third-party GitHub Actions pinned in workflows up to date.
   - package-ecosystem: "github-actions"
