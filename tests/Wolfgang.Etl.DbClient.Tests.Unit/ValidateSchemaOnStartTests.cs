@@ -10,9 +10,12 @@
 //     "no such column" surfaced deep inside the read loop.
 //   * When true and mapping is correct: extract/load succeed normally.
 
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Xunit;

@@ -14,8 +14,11 @@
 //
 // Refs #142.
 
-using System.Data.Common;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
