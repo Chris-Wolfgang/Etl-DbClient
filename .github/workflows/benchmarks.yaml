@@ -85,7 +85,9 @@ jobs:
       deployments: write  # benchmark-action records a deployment
     services:
       mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+        # Pinned to the digest the tag resolved to on 2026-11-10. MCR publishes
+        # this tag as a single linux/amd64 image manifest; there is no index.
+        image: mcr.microsoft.com/mssql/server:2022-latest@sha256:11927f5edc5122658e90b3a80ee36e8aef779310bf771415c1d89271859c73fd
         env:
           ACCEPT_EULA: "Y"
           MSSQL_SA_PASSWORD: "Bench-SA-Pass-1!"
@@ -139,7 +141,8 @@ jobs:
       deployments: write  # benchmark-action records a deployment
     services:
       postgres:
-        image: postgres:16-alpine
+        # Pinned to the multi-arch index digest the tag resolved to on 2026-11-10.
+        image: postgres:16-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: bench
@@ -193,7 +196,8 @@ jobs:
       deployments: write  # benchmark-action records a deployment
     services:
       mysql:
-        image: mysql:8.0
+        # Pinned to the multi-arch index digest the tag resolved to on 2026-11-10.
+        image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
         env:
           MYSQL_ROOT_PASSWORD: mysql
           MYSQL_DATABASE: bench
@@ -249,7 +253,8 @@ jobs:
       deployments: write  # benchmark-action records a deployment
     services:
       mariadb:
-        image: mariadb:11.4.4
+        # Pinned to the multi-arch index digest the tag resolved to on 2026-11-10.
+        image: mariadb:11.4.4@sha256:d21c7a73ce3b907ce41f9aefc4f6689de36ac477d3ed12b9c552ef39f8caeac0
         env:
           MARIADB_ROOT_PASSWORD: mariadb
           MARIADB_DATABASE: bench
