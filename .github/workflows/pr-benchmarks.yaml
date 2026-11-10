@@ -31,7 +31,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write   # required to post / edit the PR comment
 
 concurrency:
   # A push to the PR should replace an in-flight benchmark run —
@@ -44,6 +43,11 @@ jobs:
     name: Benchmark PR HEAD vs base
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Job-level, not workflow-level: this is the job that upserts the
+    # benchmark delta comment on the PR.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout PR HEAD (with base branch)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
