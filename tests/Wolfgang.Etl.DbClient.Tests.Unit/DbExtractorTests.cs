@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Data.Sqlite;
@@ -718,6 +719,50 @@ public class DbExtractorTests
 
         // Every row exactly once — a mis-advanced offset would repeat or drop some.
         Assert.Equal(20, records.Select(r => r.FirstName).Distinct(StringComparer.Ordinal).Count());
+    }
+
+
+
+    [Fact]
+    public async Task ExtractAsync_with_PageSize_when_cancelled_mid_walk_stops_requesting_pages()
+    {
+        // Cancelling partway through the second page must end the walk rather than let the
+        // extractor keep issuing page queries to the end of the table.
+        using var conn = await TestDb.CreateConnectionWithDataAsync(rowCount: 20);
+        using var cts = new CancellationTokenSource();
+
+        var extractor = new DbExtractor<PersonRecord>
+        (
+            conn,
+            "SELECT first_name AS FirstName, last_name AS LastName, age AS Age FROM People ORDER BY id",
+            new DbExtractorOptions
+            {
+                PagingClauseTemplate = PagingClauseTemplates.Sqlite,
+                PageSize = 3
+            }
+        );
+
+        var received = new List<PersonRecord>();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>
+        (
+            async () =>
+            {
+                await foreach (var record in extractor.ExtractAsync(cts.Token))
+                {
+                    received.Add(record);
+                    if (received.Count == 4)
+                    {
+                        // CancelAsync is .NET 8+; Cancel only flips the token state.
+#pragma warning disable VSTHRD103
+                        cts.Cancel();
+#pragma warning restore VSTHRD103
+                    }
+                }
+            }
+        );
+
+        Assert.Equal(4, received.Count);
     }
 
 
