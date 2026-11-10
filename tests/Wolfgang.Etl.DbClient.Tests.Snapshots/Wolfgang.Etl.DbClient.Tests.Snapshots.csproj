@@ -30,7 +30,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Verify.Xunit" Version="31.12.5" />
-    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
+    <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
