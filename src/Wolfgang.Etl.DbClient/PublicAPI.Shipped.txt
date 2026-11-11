@@ -40,6 +40,8 @@ Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout.get -> System.TimeSpan?
 Wolfgang.Etl.DbClient.DbExtractorOptions.CommandTimeout.init -> void
 Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType.get -> System.Data.CommandType
 Wolfgang.Etl.DbClient.DbExtractorOptions.CommandType.init -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.DbExtractorOptions() -> void
+Wolfgang.Etl.DbClient.DbExtractorOptions.Equals(Wolfgang.Etl.DbClient.DbExtractorOptions? other) -> bool
 Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection.get -> bool
 Wolfgang.Etl.DbClient.DbExtractorOptions.ManageConnection.init -> void
 Wolfgang.Etl.DbClient.DbExtractorOptions.PagingClauseTemplate.get -> string?
@@ -93,6 +95,8 @@ Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout.get -> System.TimeSpan?
 Wolfgang.Etl.DbClient.DbLoaderOptions.CommandTimeout.init -> void
 Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType.get -> System.Data.CommandType
 Wolfgang.Etl.DbClient.DbLoaderOptions.CommandType.init -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.DbLoaderOptions() -> void
+Wolfgang.Etl.DbClient.DbLoaderOptions.Equals(Wolfgang.Etl.DbClient.DbLoaderOptions? other) -> bool
 Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling.get -> Wolfgang.Etl.DbClient.RowErrorHandling
 Wolfgang.Etl.DbClient.DbLoaderOptions.ErrorHandling.init -> void
 Wolfgang.Etl.DbClient.DbLoaderOptions.InsertBatchSize.get -> int
@@ -108,6 +112,7 @@ Wolfgang.Etl.DbClient.DbLoaderOptions.ValidateSchemaOnStart.init -> void
 Wolfgang.Etl.DbClient.DbReport
 Wolfgang.Etl.DbClient.DbReport.CommandText.get -> string!
 Wolfgang.Etl.DbClient.DbReport.CurrentSkippedItemCount.get -> int
+Wolfgang.Etl.DbClient.DbReport.DbReport(Wolfgang.Etl.DbClient.DbReport! original) -> void
 Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds) -> void
 Wolfgang.Etl.DbClient.DbReport.DbReport(int currentItemCount, int currentSkippedItemCount, string! commandText, long elapsedMilliseconds, int? totalItemCount) -> void
 Wolfgang.Etl.DbClient.DbReport.ElapsedMilliseconds.get -> long
@@ -154,10 +159,30 @@ Wolfgang.Etl.DbClient.WriteMode.Insert = 0 -> Wolfgang.Etl.DbClient.WriteMode
 Wolfgang.Etl.DbClient.WriteMode.Update = 1 -> Wolfgang.Etl.DbClient.WriteMode
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
 override Wolfgang.Etl.DbClient.DbExtractor<TRecord>.ExtractWorkerAsync(System.Threading.CancellationToken token) -> System.Collections.Generic.IAsyncEnumerable<TRecord>!
+override Wolfgang.Etl.DbClient.DbExtractorOptions.Equals(object? obj) -> bool
+override Wolfgang.Etl.DbClient.DbExtractorOptions.GetHashCode() -> int
+override Wolfgang.Etl.DbClient.DbExtractorOptions.ToString() -> string!
 override Wolfgang.Etl.DbClient.DbLoader<TRecord>.CreateProgressReport() -> Wolfgang.Etl.DbClient.DbReport!
 override Wolfgang.Etl.DbClient.DbLoader<TRecord>.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable<TRecord>! items, System.Threading.CancellationToken token) -> System.Threading.Tasks.Task!
+override Wolfgang.Etl.DbClient.DbLoaderOptions.Equals(object? obj) -> bool
+override Wolfgang.Etl.DbClient.DbLoaderOptions.GetHashCode() -> int
+override Wolfgang.Etl.DbClient.DbLoaderOptions.ToString() -> string!
+override Wolfgang.Etl.DbClient.DbReport.EqualityContract.get -> System.Type!
+override Wolfgang.Etl.DbClient.DbReport.Equals(object? obj) -> bool
+override Wolfgang.Etl.DbClient.DbReport.GetHashCode() -> int
+override Wolfgang.Etl.DbClient.DbReport.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override Wolfgang.Etl.DbClient.DbReport.ToString() -> string!
+override sealed Wolfgang.Etl.DbClient.DbExtractorOptions.Equals(Wolfgang.Etl.Abstractions.ExtractorOptions? other) -> bool
+override sealed Wolfgang.Etl.DbClient.DbLoaderOptions.Equals(Wolfgang.Etl.Abstractions.LoaderOptions? other) -> bool
+override sealed Wolfgang.Etl.DbClient.DbReport.Equals(Wolfgang.Etl.Abstractions.Report? other) -> bool
 static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.get -> bool
 static Wolfgang.Etl.DbClient.DbClientOptions.StrictColumnMapping.set -> void
+static Wolfgang.Etl.DbClient.DbExtractorOptions.operator !=(Wolfgang.Etl.DbClient.DbExtractorOptions? left, Wolfgang.Etl.DbClient.DbExtractorOptions? right) -> bool
+static Wolfgang.Etl.DbClient.DbExtractorOptions.operator ==(Wolfgang.Etl.DbClient.DbExtractorOptions? left, Wolfgang.Etl.DbClient.DbExtractorOptions? right) -> bool
+static Wolfgang.Etl.DbClient.DbLoaderOptions.operator !=(Wolfgang.Etl.DbClient.DbLoaderOptions? left, Wolfgang.Etl.DbClient.DbLoaderOptions? right) -> bool
+static Wolfgang.Etl.DbClient.DbLoaderOptions.operator ==(Wolfgang.Etl.DbClient.DbLoaderOptions? left, Wolfgang.Etl.DbClient.DbLoaderOptions? right) -> bool
+static Wolfgang.Etl.DbClient.DbReport.operator !=(Wolfgang.Etl.DbClient.DbReport? left, Wolfgang.Etl.DbClient.DbReport? right) -> bool
+static Wolfgang.Etl.DbClient.DbReport.operator ==(Wolfgang.Etl.DbClient.DbReport? left, Wolfgang.Etl.DbClient.DbReport? right) -> bool
 static Wolfgang.Etl.DbClient.DbSchemaValidator.Validate<TRecord>(System.Data.Common.DbConnection! connection) -> void
 static Wolfgang.Etl.DbClient.DbSchemaValidator.ValidateAsync<TRecord>(System.Data.Common.DbConnection! connection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 static Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions.DbExtractor<T>(this Wolfgang.Etl.Abstractions.EtlPipeline! pipeline, System.Data.Common.DbConnection! connection, string! commandText, System.Data.Common.DbTransaction? transaction = null) -> Wolfgang.Etl.DbClient.IDbExtractorBuilder<T>!
@@ -171,3 +196,4 @@ static Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle.get -> string!
 static Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql.get -> string!
 static Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer.get -> string!
 static Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite.get -> string!
+virtual Wolfgang.Etl.DbClient.DbReport.Equals(Wolfgang.Etl.DbClient.DbReport? other) -> bool

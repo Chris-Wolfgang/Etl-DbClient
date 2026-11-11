@@ -114,5 +114,27 @@
 
   <!-- Analyzer PackageReferences are centralized in Directory.Build.props -->
 
+  <!-- PublicApiAnalyzers: the public surface diverges by TFM. DbExtractorOptions / DbLoaderOptions derive from
+       Abstractions records, and their compiler-synthesized <Clone>$ has a covariant return (the derived type) on
+       net5.0+ but returns the base type on net462 / netstandard2.0. The shared PublicAPI.Shipped.txt (wired in
+       Directory.Build.props) holds the TFM-invariant surface; these per-TFM files carry the divergent entries.
+       Same layout as ETL-SqlBulkCopy and ETL-FixedWidth. -->
+  <ItemGroup>
+    <AdditionalFiles Include="PublicApi\modern\PublicAPI.Shipped.txt"
+                     Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+    <AdditionalFiles Include="PublicApi\modern\PublicAPI.Unshipped.txt"
+                     Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+    <AdditionalFiles Include="PublicApi\legacy\PublicAPI.Shipped.txt"
+                     Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+    <AdditionalFiles Include="PublicApi\legacy\PublicAPI.Unshipped.txt"
+                     Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+  </ItemGroup>
+
+  <!-- Bridge for the PublicApiAnalyzers 3.3.4 -> 5.6.0 upgrade: 5.6.0 tracks the compiler-synthesized
+       record members recorded in the PublicAPI files, 3.3.4 does not and reports them as RS0017
+       (declared but missing). Removed in the follow-up once Directory.Build.props carries 5.6.0. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);RS0017</NoWarn>
+  </PropertyGroup>
 
 </Project>
