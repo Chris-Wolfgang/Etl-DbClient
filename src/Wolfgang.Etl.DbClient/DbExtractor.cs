@@ -1002,7 +1002,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
     {
         var sanitized = SanitizeCommandTextForCount(_commandText);
+        // S2077: the formatted part is the caller's own extractor command text, wrapped as a
+        // subquery; the wrapper adds no value interpolation and the caller's parameters are
+        // passed through to the command below unchanged.
+#pragma warning disable S2077
         var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
+#pragma warning restore S2077
         var param = Parameters ?? _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>
         (

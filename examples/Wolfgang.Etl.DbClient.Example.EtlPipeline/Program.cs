@@ -43,8 +43,11 @@ using (var cmd = src.CreateCommand())
 for (var i = 1; i <= 20; i++)
 {
     using var ins = src.CreateCommand();
-    ins.CommandText =
-        $"INSERT INTO Orders (Id, Customer, Total, Status) VALUES ({i}, 'c{i}', {i * 10.5}, '{(i % 3 == 0 ? "pending" : "paid")}');";
+    ins.CommandText = "INSERT INTO Orders (Id, Customer, Total, Status) VALUES ($id, $customer, $total, $status);";
+    ins.Parameters.AddWithValue("$id", i);
+    ins.Parameters.AddWithValue("$customer", $"c{i}");
+    ins.Parameters.AddWithValue("$total", i * 10.5);
+    ins.Parameters.AddWithValue("$status", i % 3 == 0 ? "pending" : "paid");
     await ins.ExecuteNonQueryAsync().ConfigureAwait(false);
 }
 

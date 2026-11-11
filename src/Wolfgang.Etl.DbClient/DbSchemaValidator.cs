@@ -76,7 +76,12 @@ public static class DbSchemaValidator
         try
         {
             using var cmd = connection.CreateCommand();
+            // S2077: the only formatted part is the table name, an identifier read from the record
+            // type's [Table] attribute (compile-time constant, never request data); identifiers cannot
+            // be bound as parameters. The query returns no rows, it only exposes the result schema.
+#pragma warning disable S2077
             cmd.CommandText = $"SELECT * FROM {table} WHERE 1 = 0";
+#pragma warning restore S2077
             cmd.CommandType = CommandType.Text;
             using var reader = TryExecuteReader(cmd, table);
             AssertColumnsPresent(reader, mappedColumns, table);
@@ -132,7 +137,12 @@ public static class DbSchemaValidator
         try
         {
             using var cmd = connection.CreateCommand();
+            // S2077: the only formatted part is the table name, an identifier read from the record
+            // type's [Table] attribute (compile-time constant, never request data); identifiers cannot
+            // be bound as parameters. The query returns no rows, it only exposes the result schema.
+#pragma warning disable S2077
             cmd.CommandText = $"SELECT * FROM {table} WHERE 1 = 0";
+#pragma warning restore S2077
             cmd.CommandType = CommandType.Text;
             DbDataReader reader;
             try
