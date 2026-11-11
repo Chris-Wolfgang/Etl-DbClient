@@ -28,32 +28,46 @@ namespace Wolfgang.Etl.DbClient;
 internal static class ColumnAttributeTypeMapper
 {
     private static readonly ConcurrentDictionary<Type, byte> RegisteredTypes = new();
+    private static readonly object RegistrationGate = new();
 
 
 
     /// <summary>
     /// Registers a custom type map for <typeparamref name="T"/> that checks
     /// <see cref="ColumnAttribute"/> first, then falls back to Dapper's default
-    /// name-based matching. Thread-safe — each type is registered at most once.
+    /// name-based matching. Thread-safe — each type is registered at most once, and
+    /// every caller, including one that arrives while another is registering the same
+    /// type, returns only after the type map is in place.
     /// </summary>
     internal static void Register<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>()
     {
         var type = typeof(T);
 
-        if (!RegisteredTypes.TryAdd(type, 0))
+        if (RegisteredTypes.ContainsKey(type))
         {
             return;
         }
 
-        var lookup = BuildLookup(type);
-        if (lookup == null)
+        // The type is published to RegisteredTypes only after SqlMapper.SetTypeMap has run.
+        // Claiming it first and registering afterwards let a concurrent caller return early and
+        // hand Dapper a row parser built on the default type map, which ignores [Column].
+        lock (RegistrationGate)
         {
-            // No [Column] attributes anywhere → let Dapper's built-in name matcher handle it.
-            return;
-        }
+            if (RegisteredTypes.ContainsKey(type))
+            {
+                return;
+            }
 
-        var columnMap = new CustomPropertyTypeMap(type, (t, columnName) => ResolveColumn(t, columnName, lookup)!);
-        SqlMapper.SetTypeMap(type, columnMap);
+            var lookup = BuildLookup(type);
+            if (lookup != null)
+            {
+                // With no [Column] attributes anywhere, Dapper's built-in name matcher handles the type.
+                var columnMap = new CustomPropertyTypeMap(type, (t, columnName) => ResolveColumn(t, columnName, lookup)!);
+                SqlMapper.SetTypeMap(type, columnMap);
+            }
+
+            RegisteredTypes[type] = 0;
+        }
     }
 
 
