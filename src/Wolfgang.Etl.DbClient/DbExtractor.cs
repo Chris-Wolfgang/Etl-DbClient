@@ -1002,17 +1002,17 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
     {
         var sanitized = SanitizeCommandTextForCount(_commandText);
+        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
+        var param = Parameters ?? _dynamicParameters;
         // S2077: the formatted part is the caller's own extractor command text, wrapped as a
         // subquery; the wrapper adds no value interpolation and the caller's parameters are
-        // passed through to the command below unchanged.
+        // passed through to the command unchanged. Sonar reports the command, not the string.
 #pragma warning disable S2077
-        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
-#pragma warning restore S2077
-        var param = Parameters ?? _dynamicParameters;
         return _connection.ExecuteScalarAsync<int>
         (
             new CommandDefinition(countSql, param, _transaction, CommandTimeoutSeconds, cancellationToken: token)
         );
+#pragma warning restore S2077
     }
 
 
