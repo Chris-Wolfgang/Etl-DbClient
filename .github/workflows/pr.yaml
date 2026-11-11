@@ -630,8 +630,20 @@ jobs:
           # Earlier iteration used [trusted=yes] (skipping verification) as a quick
           # unblock; this restores end-to-end signature verification.
           echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu focal-security main" | sudo tee /etc/apt/sources.list.d/focal-security.list
-          sudo apt-get update -q
-          sudo apt-get install --yes libssl1.1
+          # The runner's apt mirrors fail DNS resolution now and then, which leaves libssl1.1
+          # with "no installation candidate" and fails the whole stage on a network blip.
+          # Retry the update + install pair with a pause before giving up.
+          for attempt in 1 2 3 4 5; do
+            if sudo apt-get update -q && sudo apt-get install --yes libssl1.1; then
+              break
+            fi
+            if [ "$attempt" = "5" ]; then
+              echo "::error::apt could not install libssl1.1 after $attempt attempts"
+              exit 1
+            fi
+            echo "apt attempt $attempt failed; retrying in 30 s"
+            sleep 30
+          done
           sudo rm /etc/apt/sources.list.d/focal-security.list
 
       - name: Setup .NET
