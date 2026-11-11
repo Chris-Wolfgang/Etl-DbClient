@@ -130,4 +130,11 @@
                      Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
   </ItemGroup>
 
+  <!-- Bridge for the PublicApiAnalyzers 3.3.4 -> 5.6.0 upgrade: 5.6.0 tracks the compiler-synthesized
+       record members recorded in the PublicAPI files, 3.3.4 does not and reports them as RS0017
+       (declared but missing). Removed in the follow-up once Directory.Build.props carries 5.6.0. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);RS0017</NoWarn>
+  </PropertyGroup>
+
 </Project>
