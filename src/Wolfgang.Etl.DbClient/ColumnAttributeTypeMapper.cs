@@ -27,8 +27,12 @@ namespace Wolfgang.Etl.DbClient;
 /// </remarks>
 internal static class ColumnAttributeTypeMapper
 {
-    private static readonly ConcurrentDictionary<Type, byte> RegisteredTypes = new();
-    private static readonly object RegistrationGate = new();
+    // One registration per type. Lazy<T> (ExecutionAndPublication) runs the factory once and makes
+    // every caller — including one that arrives while another thread is still registering the same
+    // type — wait on Value until SqlMapper.SetTypeMap has run. GetOrAdd may construct a Lazy that is
+    // never stored; that one is never started. Publishing the type before the map was in place let a
+    // concurrent caller build a Dapper row parser on the default type map, which ignores [Column].
+    private static readonly ConcurrentDictionary<Type, Lazy<bool>> Registrations = new();
 
 
 
@@ -41,42 +45,30 @@ internal static class ColumnAttributeTypeMapper
     /// </summary>
     internal static void Register<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>()
     {
-        var type = typeof(T);
-
-        if (RegisteredTypes.ContainsKey(type))
-        {
-            return;
-        }
-
-        // The type is published to RegisteredTypes only after SqlMapper.SetTypeMap has run.
-        // Claiming it first and registering afterwards let a concurrent caller return early and
-        // hand Dapper a row parser built on the default type map, which ignores [Column].
-        lock (RegistrationGate)
-        {
-            if (RegisteredTypes.ContainsKey(type))
-            {
-                return;
-            }
-
-            var lookup = BuildLookup(type);
-            if (lookup != null)
-            {
-                // With no [Column] attributes anywhere, Dapper's built-in name matcher handles the type.
-                var columnMap = new CustomPropertyTypeMap(type, (t, columnName) => ResolveColumn(t, columnName, lookup)!);
-                SqlMapper.SetTypeMap(type, columnMap);
-            }
-
-            RegisteredTypes[type] = 0;
-        }
+        _ = Registrations
+            .GetOrAdd(typeof(T), _ => new Lazy<bool>(RegisterCore<T>))
+            .Value;
     }
 
 
 
-    /// <summary>
-    /// Builds the case-insensitive column-to-property lookup for <paramref name="type"/>.
-    /// Returns <see langword="null"/> if the type has no <see cref="ColumnAttribute"/>
-    /// decorations, signalling that Dapper's default mapping should be used.
-    /// </summary>
+    private static bool RegisterCore<[DynamicallyAccessedMembers(RecordMembers.Mapped)] T>()
+    {
+        var type = typeof(T);
+        var lookup = BuildLookup(type);
+        if (lookup == null)
+        {
+            // No [Column] attributes anywhere → let Dapper's built-in name matcher handle it.
+            return true;
+        }
+
+        var columnMap = new CustomPropertyTypeMap(type, (t, columnName) => ResolveColumn(t, columnName, lookup)!);
+        SqlMapper.SetTypeMap(type, columnMap);
+        return true;
+    }
+
+
+
     private static Dictionary<string, PropertyInfo>? BuildLookup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
     {
         var lookup = BuildColumnLookup(type, out var hasColumnAttributes);
