@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using JetBrains.Annotations;
@@ -94,6 +95,15 @@ public class SqlBuilderAndGuardContractTests
     public sealed class RegisterOnce
     {
         [Column("register_once_id")] public int Id { get; set; }
+    }
+
+
+
+    [ExcludeFromCodeCoverage]
+    [UsedImplicitly(ImplicitUseKindFlags.Default, ImplicitUseTargetFlags.WithMembers)]
+    public sealed class RegisterConcurrently
+    {
+        [Column("register_concurrently_id")] public int Id { get; set; }
     }
 
 
@@ -247,6 +257,38 @@ public class SqlBuilderAndGuardContractTests
         ColumnAttributeTypeMapper.Register<RegisterOnce>();
 
         Assert.Same(first, SqlMapper.GetTypeMap(typeof(RegisterOnce)));
+    }
+
+
+
+    [Fact]
+    public async Task Register_when_called_concurrently_every_caller_returns_with_the_type_map_in_place()
+    {
+        // Register claims the type before it builds the map. A caller that returns on the claim
+        // alone can hand Dapper a parser built on the default type map, which ignores [Column]
+        // (seen once in CI: the Dapper side of a conformance test read first_name and last_name
+        // as empty strings while the reflection mapper read them correctly).
+        const int callers = 16;
+        using var start = new ManualResetEventSlim(false);
+
+        var callersReady = Enumerable
+            .Range(0, callers)
+            .Select(_ => Task.Run(() =>
+            {
+                start.Wait();
+                ColumnAttributeTypeMapper.Register<RegisterConcurrently>();
+                return SqlMapper.GetTypeMap(typeof(RegisterConcurrently));
+            }))
+            .ToArray();
+
+        start.Set();
+        var mapsSeenOnReturn = await Task.WhenAll(callersReady);
+
+        Assert.All
+        (
+            mapsSeenOnReturn,
+            map => Assert.IsType<CustomPropertyTypeMap>(map)
+        );
     }
 
 
