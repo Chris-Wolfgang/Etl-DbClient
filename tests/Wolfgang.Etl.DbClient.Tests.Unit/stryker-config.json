@@ -1,11 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-net/master/src/Stryker.Core/Stryker.Core/stryker-schema.json",
   "stryker-config": {
-    "project": "src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj",
+    "project": "Wolfgang.Etl.DbClient.csproj",
     "target-framework": "net10.0",
-    "test-projects": [
-      "tests/Wolfgang.Etl.DbClient.Tests.Unit/Wolfgang.Etl.DbClient.Tests.Unit.csproj"
-    ],
     "reporters": [
       "progress",
       "html",
