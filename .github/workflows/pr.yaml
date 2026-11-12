@@ -633,8 +633,14 @@ jobs:
         run: |
           deb="${RUNNER_TEMP:?}/${LIBSSL_DEB:?}"
           # Mirrors in different DNS zones, so one unreachable host or zone does not fail the stage.
-          for base in             https://security.ubuntu.com/ubuntu             https://archive.ubuntu.com/ubuntu             https://mirrors.edge.kernel.org/ubuntu             https://mirror.math.princeton.edu/pub/ubuntu; do
-            if curl -fsSL --retry 3 --retry-all-errors --retry-delay 5 --max-time 120                  -o "$deb" "$base/pool/main/o/openssl/$LIBSSL_DEB"                && echo "$LIBSSL_SHA256  $deb" | sha256sum -c --status -; then
+          for base in \
+            https://security.ubuntu.com/ubuntu \
+            https://archive.ubuntu.com/ubuntu \
+            https://mirrors.edge.kernel.org/ubuntu \
+            https://mirror.math.princeton.edu/pub/ubuntu; do
+            if curl -fsSL --retry 3 --retry-all-errors --retry-delay 5 --max-time 120 \
+                 -o "$deb" "$base/pool/main/o/openssl/$LIBSSL_DEB" \
+               && echo "$LIBSSL_SHA256  $deb" | sha256sum -c --status -; then
               echo "libssl1.1 fetched from $base"
               break
             fi
