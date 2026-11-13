@@ -39,12 +39,12 @@
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.15" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
     <PackageReference Include="System.Linq.Async" Version="7.0.1" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.2" />
     <!-- Npgsql stays on the 9.x line: 10.x's connection bootstrap (LoadBackendTypes) is cut off by
          CockroachDB v24.3.5 with EndOfStreamException on every CockroachDb test, while PostgreSQL
          itself is fine on 10.x. Move together with the CockroachDB image pin in CockroachDbFixture. -->
     <PackageReference Include="Npgsql" Version="9.0.5" />
-    <PackageReference Include="MySqlConnector" Version="2.6.2" />
+    <PackageReference Include="MySqlConnector" Version="3.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.15" />
     <!-- GHSA-2m69-gcr7-jv3q: see sister-csproj note in Example.AutoSql. -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
