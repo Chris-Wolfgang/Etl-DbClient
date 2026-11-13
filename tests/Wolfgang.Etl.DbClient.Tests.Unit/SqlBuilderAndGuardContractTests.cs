@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -269,19 +270,21 @@ public class SqlBuilderAndGuardContractTests
         // (seen once in CI: the Dapper side of a conformance test read first_name and last_name
         // as empty strings while the reflection mapper read them correctly).
         const int callers = 16;
-        using var start = new ManualResetEventSlim(false);
+        // A plain flag rather than a disposable event: nothing to dispose while the closures may
+        // still run, and nothing a closure could observe after disposal.
+        var released = new StrongBox<bool>(false);
 
         var callersReady = Enumerable
             .Range(0, callers)
             .Select(_ => Task.Run(() =>
             {
-                start.Wait();
+                SpinWait.SpinUntil(() => Volatile.Read(ref released.Value));
                 ColumnAttributeTypeMapper.Register<RegisterConcurrently>();
                 return SqlMapper.GetTypeMap(typeof(RegisterConcurrently));
             }))
             .ToArray();
 
-        start.Set();
+        Volatile.Write(ref released.Value, true);
         var mapsSeenOnReturn = await Task.WhenAll(callersReady);
 
         Assert.All
