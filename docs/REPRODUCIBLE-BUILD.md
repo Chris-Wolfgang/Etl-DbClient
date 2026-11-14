@@ -83,13 +83,15 @@ curl -sSL -o reproducible-build-manifest.json \
 
 ## Toolchain versions for verification
 
-The release build resolves the .NET SDK via `actions/setup-dotnet`'s
-floating `x.x.x` pins in `release.yaml` (the latest patch of each major
-line at build time — there's no `global.json` pinning an exact SDK
-build). For a rebuild to match, use the same major .NET SDK line the
-target TFM needs (e.g. the `10.0.x` SDK for `net10.0`) — check
-`release.yaml`'s `Setup .NET` step for the current list. Other tools
-used in the verification recipe below:
+`global.json` at the repository root pins the .NET SDK to the `10.0`
+line (`"version": "10.0.100"`, `"rollForward": "latestFeature"`), so
+`dotnet` picks the newest installed 10.0 SDK and refuses to build with an
+older or a newer major one. The release build installs the latest `10.0.x`
+patch through `actions/setup-dotnet` in `release.yaml` at build time, so
+for a rebuild to match, install a 10.0 SDK and confirm `dotnet --version`
+run from the cloned tag reports it (read `global.json` at the tag you
+verify: a later release may move the pin). Other tools used in the
+verification recipe below:
 
 - **GitHub CLI** ≥ 2.60 (for `gh attestation verify` support).
 - **`jq`** (for the manifest cross-check `sha256sum -c` pipeline).

@@ -51,6 +51,19 @@
     <PackageValidationBaselineVersion>0.12.0</PackageValidationBaselineVersion>
   </PropertyGroup>
 
+  <!-- Trim / AOT analyzers (repository baseline item 18). TRecord carries
+       [DynamicallyAccessedMembers(RecordMembers.Mapped)] on every public generic entry point, rows are
+       mapped and parameters bound without Reflection.Emit where the runtime cannot generate code
+       (ReflectionRowMapper, DbLoader's reflection parameter binder), and the AotSmoke example
+       publishes and runs under Native AOT. These flags turn on the trim, AOT and single-file
+       analyzers for the library and mark the assembly so a consumer's trimmer analyzes it instead
+       of treating it as opaque. They only apply to net8.0+ (the analyzers need a net6.0+ target;
+       net8.0 is where IsAotCompatible is supported). -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Unit" />
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Snapshots" />
