@@ -26,3 +26,15 @@ dotnet_diagnostic.RS0037.severity = warning
 # elsewhere still get an inline #pragma or [SuppressMessage] with a reason.
 # Matches Chris-Wolfgang/ETL-FixedWidth#478.
 dotnet_diagnostic.S1133.severity = none
+
+# Trim, AOT and single-file analyzers (#415). The root .editorconfig sets
+# `dotnet_analyzer_diagnostic.severity = suggestion`, which also demotes the ILLink analyzers'
+# IL2xxx / IL3xxx diagnostics to suggestions: they never print and never trip
+# TreatWarningsAsErrors, so IsAotCompatible / IsTrimmable in the csproj (net8.0+) on their own
+# would check nothing. Raising the three categories here makes a trim or AOT regression in the
+# library fail the Release build. Scoped to the library: examples and tests keep the root
+# setting. A probe with an unannotated Type.GetProperties() and an AssemblyBuilder call fails
+# with IL2070 / IL3050 under these lines and builds clean without them.
+dotnet_analyzer_diagnostic.category-Trimming.severity = warning
+dotnet_analyzer_diagnostic.category-AOT.severity = warning
+dotnet_analyzer_diagnostic.category-SingleFile.severity = warning
