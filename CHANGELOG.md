@@ -19,6 +19,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.13.0] - 2026-11-10
+
+### Added
+
+- `DbExtractor<TRecord>` now extracts rows in a Native AOT application (it used to abort on the first row with `PlatformNotSupportedException` from Dapper's Reflection.Emit row parser), and `TRecord` on `DbExtractor`, `DbLoader`, `DbSchemaValidator` and the pipeline extensions is annotated `[DynamicallyAccessedMembers(PublicConstructors | PublicProperties)]`, so generic callers that run the trim analyzer must annotate their own type parameter the same way. (#577)
+
+### Fixed
+
+- `DbLoader<T>` with `BatchCommitSize` set now stops reading the source once `MaximumItemCount` is reached, instead of enumerating the rest of the source and committing an empty transaction per chunk. (#545)
+- Package metadata: `PackageProjectUrl` and `RepositoryUrl` now point at `github.com/Chris-Wolfgang/Etl-DbClient` (the old `Wolfgang.Etl.DbClient` slug 404s). The redundant direct `System.Memory` dependency is dropped; .NET Framework and .NET Standard 2.0 consumers still receive System.Memory 4.6.3 transitively through Microsoft.Extensions.Logging.Abstractions. (#552)
+
+### Documentation
+
+- Docs brought in line with the repository: `.github/copilot-instructions.md` describes this library instead of the repo template, the docfx Introduction and Getting Started pages lose their template placeholders, and `docs/HOT-PATH-ALLOCATION.md`, `WORKFLOW_SECURITY.md`, `RELEASE-WORKFLOW-SETUP.md` (OIDC Trusted Publishing), `REPO-SETTINGS-AUDIT.md` and `DOCFX-VERSION-PICKER.md` match the current workflows and scripts. (#548)
+- README and CONTRIBUTING brought up to date: the package is on nuget.org (no more "coming soon"), the formatting-guide link points at `docs/README-FORMATTING.md`, the Features table covers the 0.5-0.12 surface, the builder and streaming descriptions match the code, the docs output folder is `docfx_project/_site`, and CONTRIBUTING lists all 8 analyzers. (#553)
+- XML doc comments brought in line with the code: `CommandTimeout` is no longer called "planned", the `Parameters` example and `[Obsolete]` message point at the dictionary constructor and `EtlParameter<T>`, paging docs describe `ServerLimit` as the switch and `PagingClauseTemplates.None` as the default, the source-generator attributes list every emitted constant, and Skip error handling is documented as needing both `BatchSize` and `InsertBatchSize` at 1. (#547)
+
+### Internal
+
+- `PackageValidationBaselineVersion` advances to 0.12.0 now that the package is on the NuGet CDN, so the next release validates its API surface against what actually shipped. (#472)
+- The test and tool projects no longer use implicit usings; every file declares the `using` directives it needs on every target framework, matching the `src/`, `examples/`, `benchmarks/` and `samples/` projects. (#605)
+- Formatting brought in line with the house style (three blank lines between members, Allman multi-line argument lists, obsolete property accessors on their own lines), the paging parameter-name array hoisted to a static field, and two `foreach (var _ in batch)` loops replaced with `for` loops. No behaviour change. (#550)
+- `DbLoader<T>` with `InsertBatchSize > 1` binds each cell through a compiled, cached property getter instead of `PropertyInfo.GetValue`, and builds the row-numbered parameter names once per load instead of once per cell per flush. The benchmarks gain a `Load1000RowsMultiRowInsert` case. (#551)
+- Examples, samples, benchmarks and the GC workload: orphaned "deprecated setters" comments and an unused `CS0618` pragma removed, the redundant inline `nosemgrep` dropped (Semgrep scans `src/` only and `.semgrepignore` already lists `benchmarks/`), two wrong comments fixed, and the GC workload now prints its summary when the duration timer ends a cycle mid-way. (#549)
+
 ## [0.12.0] - 2026-09-22
 
 ### Added
@@ -467,7 +492,8 @@ _Code-review pass + integration-test surface._
 
 See git history.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.9.1...v0.10.0
