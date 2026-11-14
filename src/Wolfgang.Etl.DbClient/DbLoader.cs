@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -1325,6 +1326,150 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
     /// <summary>
+    /// Test hook: binds command parameters through the reflection binder on the JIT too, so the
+    /// Native AOT binding path is exercised by the unit tests.
+    /// </summary>
+    internal bool ForceReflectionParameterBinder { get; set; }
+
+
+
+    /// <summary>
+    /// Whether this load binds parameters through <see cref="ReflectionParameterBinder"/> rather than
+    /// handing <typeparamref name="TRecord"/> to Dapper. Dapper builds its parameter binder for a
+    /// POCO with Reflection.Emit, which throws <see cref="PlatformNotSupportedException"/> under
+    /// Native AOT.
+    /// </summary>
+    /// <remarks>
+    /// <c>RuntimeFeature.IsDynamicCodeSupported</c> is a constant <see langword="false"/> to the
+    /// Native AOT compiler, so an AOT application always takes the reflection binder.
+    /// </remarks>
+    private bool UseReflectionParameterBinder
+    {
+        get
+        {
+#if NET5_0_OR_GREATER
+            return !RuntimeFeature.IsDynamicCodeSupported || ForceReflectionParameterBinder;
+#else
+            return ForceReflectionParameterBinder;
+#endif
+        }
+    }
+
+
+
+    /// <summary>
+    /// Builds the reflection binder for the current <see cref="CommandType"/> and command text,
+    /// selecting the same properties Dapper would: for <see cref="System.Data.CommandType.Text"/>
+    /// only the properties whose name appears in the SQL as <c>@name</c>, <c>:name</c> or
+    /// <c>?name</c> (case-insensitive), for any other command type every public readable property.
+    /// </summary>
+    internal ReflectionParameterBinder CreateReflectionParameterBinder()
+    {
+        var selected = new List<System.Reflection.PropertyInfo>();
+        foreach (var property in typeof(TRecord).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (property.GetGetMethod() == null || property.GetIndexParameters().Length != 0)
+            {
+                continue;
+            }
+
+            if (CommandType == CommandType.Text && !CommandTextReferences(_commandText, property.Name))
+            {
+                continue;
+            }
+
+            selected.Add(property);
+        }
+
+        var names = new string[selected.Count];
+        for (var i = 0; i < selected.Count; i++)
+        {
+            names[i] = selected[i].Name;
+        }
+
+        return new ReflectionParameterBinder(names, GetPropertyGetters(selected));
+    }
+
+
+
+    /// <summary>
+    /// <see langword="true"/> when <paramref name="commandText"/> holds <paramref name="name"/> as a
+    /// parameter token (<c>@</c>, <c>:</c> or <c>?</c> prefix, not followed by a word character),
+    /// matching Dapper's own filter for <see cref="System.Data.CommandType.Text"/> commands.
+    /// </summary>
+    internal static bool CommandTextReferences(string commandText, string name)
+    {
+        var index = 0;
+        while ((index = commandText.IndexOf(name, index, StringComparison.OrdinalIgnoreCase)) >= 0)
+        {
+            var end = index + name.Length;
+            var prefixed = index > 0 && commandText[index - 1] is '@' or ':' or '?';
+            var bounded = end == commandText.Length || !(char.IsLetterOrDigit(commandText[end]) || commandText[end] == '_');
+            if (prefixed && bounded)
+            {
+                return true;
+            }
+
+            index = end;
+        }
+
+        return false;
+    }
+
+
+
+    /// <summary>
+    /// Reads a record's bound properties into a <see cref="DynamicParameters"/> through the cached
+    /// property getters, so no code is generated at run time.
+    /// </summary>
+    internal sealed class ReflectionParameterBinder
+    {
+        private readonly string[] _names;
+        private readonly Func<TRecord, object?>[] _getters;
+
+
+
+        internal ReflectionParameterBinder(string[] names, Func<TRecord, object?>[] getters)
+        {
+            _names = names;
+            _getters = getters;
+        }
+
+
+
+        /// <summary>The parameter names this binder fills, in property declaration order.</summary>
+        internal IReadOnlyList<string> Names => _names;
+
+
+
+        internal DynamicParameters Bind(TRecord record)
+        {
+            var parameters = new DynamicParameters();
+            for (var i = 0; i < _names.Length; i++)
+            {
+                parameters.Add(_names[i], _getters[i](record));
+            }
+
+            return parameters;
+        }
+
+
+
+        internal List<DynamicParameters> Bind(List<TRecord> records)
+        {
+            var bound = new List<DynamicParameters>(records.Count);
+            foreach (var record in records)
+            {
+                bound.Add(Bind(record));
+            }
+
+            return bound;
+        }
+    }
+
+
+
+    /// <summary>
     /// Load path when the caller supplied the transaction. The loader executes
     /// against it but never commits, rolls back, or disposes — those are the
     /// caller's responsibilities.
@@ -1352,9 +1497,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             return ExecuteItemsMultiRowInsertAsync(items, transaction, token);
         }
 
+        var binder = UseReflectionParameterBinder ? CreateReflectionParameterBinder() : null;
+
         return _batchSize <= 1
-            ? ExecuteItemsPerRowAsync(items, transaction, token)
-            : ExecuteItemsBatchedAsync(items, transaction, token);
+            ? ExecuteItemsPerRowAsync(items, binder, transaction, token)
+            : ExecuteItemsBatchedAsync(items, binder, transaction, token);
     }
 
 
@@ -1362,6 +1509,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     private async Task ExecuteItemsPerRowAsync
     (
         IAsyncEnumerable<TRecord> items,
+        ReflectionParameterBinder? binder,
         DbTransaction? transaction,
         CancellationToken token
     )
@@ -1383,7 +1531,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
                 continue;
             }
 
-            if (!IsDryRun && !await TryExecuteItemAsync(item, transaction, token).ConfigureAwait(false))
+            if (!IsDryRun && !await TryExecuteItemAsync(item, binder, transaction, token).ConfigureAwait(false))
             {
                 continue;
             }
@@ -1406,7 +1554,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// <see cref="MaxErrorCount"/> was reached after this row's failure in
     /// <see cref="RowErrorHandling.Skip"/> mode.
     /// </exception>
-    private async Task<bool> TryExecuteItemAsync(TRecord item, DbTransaction? transaction, CancellationToken token)
+    private async Task<bool> TryExecuteItemAsync(TRecord item, ReflectionParameterBinder? binder, DbTransaction? transaction, CancellationToken token)
     {
         try
         {
@@ -1415,7 +1563,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
                 new CommandDefinition
                 (
                     _commandText,
-                    item,
+                    binder is null ? item : binder.Bind(item),
                     transaction,
                     CommandTimeoutSeconds,
                     CommandType,
@@ -1459,6 +1607,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     private async Task ExecuteItemsBatchedAsync
     (
         IAsyncEnumerable<TRecord> items,
+        ReflectionParameterBinder? binder,
         DbTransaction? transaction,
         CancellationToken token
     )
@@ -1489,13 +1638,13 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
             if (batch.Count >= _batchSize)
             {
-                await FlushBatchAsync(batch, transaction, token).ConfigureAwait(false);
+                await FlushBatchAsync(batch, binder, transaction, token).ConfigureAwait(false);
             }
         }
 
         if (batch.Count > 0)
         {
-            await FlushBatchAsync(batch, transaction, token).ConfigureAwait(false);
+            await FlushBatchAsync(batch, binder, transaction, token).ConfigureAwait(false);
         }
     }
 
@@ -1504,6 +1653,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     private async Task FlushBatchAsync
     (
         List<TRecord> batch,
+        ReflectionParameterBinder? binder,
         DbTransaction? transaction,
         CancellationToken token
     )
@@ -1515,7 +1665,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
                 new CommandDefinition
                 (
                     _commandText,
-                    batch,
+                    binder is null ? batch : binder.Bind(batch),
                     transaction,
                     CommandTimeoutSeconds,
                     CommandType,
