@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794143360803,
+  "lastUpdate": 1794750446609,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "Mutation score": [
@@ -134,6 +134,33 @@ window.BENCHMARK_DATA = {
           {
             "name": "Mutation score",
             "value": 77.92,
+            "unit": "%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang",
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "a41665e54930e9af400a36cf519372c6a6ffa3a0",
+          "message": "test(extractor): kill 4 surviving DbExtractor mutants (#474) (#648)\n\nA Stryker run on main 669aa23 over DbExtractor, DbCommandBuilder,\nColumnAttributeTypeMapper, EtlPipelineDbClientExtensions and\nDbSchemaValidator left 32 survivors. New tests pin CommandTimeout reaching\nthe command and CountAsync disposing a factory-created connection while\nonly closing a managed caller connection. Score 89.23% -> 90.57%.\n\nRefs #474\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-14T19:49:36Z",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/a41665e54930e9af400a36cf519372c6a6ffa3a0"
+        },
+        "date": 1794750439528,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Mutation score (tests/Wolfgang.Etl.DbClient.Tests.Unit)",
+            "value": 88.53,
             "unit": "%"
           }
         ]
