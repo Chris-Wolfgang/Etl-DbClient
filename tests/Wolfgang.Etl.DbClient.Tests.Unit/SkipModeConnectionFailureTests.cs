@@ -1,3 +1,6 @@
+// CS8765: the BCL DbConnection setters carry [AllowNull], which an override cannot mirror here.
+#pragma warning disable CS8765
+
 using System;
 using System.Collections.Generic;
 using System.Data;
