@@ -377,7 +377,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// </summary>
     /// <remarks>
     /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
-    /// of seconds). Fractional seconds are truncated. Applies to every batch,
+    /// of seconds). Fractional seconds are rounded up (any positive timeout is at least one second), values beyond <see cref="int.MaxValue"/> seconds are clamped, and <see cref="TimeSpan.Zero"/> is passed through as 0, which providers read as no timeout. Applies to every batch,
     /// not the whole load — so a batched insert of 10 batches each gets the
     /// full timeout independently.
     /// </remarks>
@@ -407,9 +407,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
     private TimeSpan? _commandTimeout;
 
-    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
-        ? (int)_commandTimeout.Value.TotalSeconds
-        : null;
+    private int? CommandTimeoutSeconds => CommandTimeoutConverter.ToSeconds(_commandTimeout);
 
 
 
@@ -830,7 +828,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         {
             if (ValidateSchemaOnStart)
             {
-                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
+                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, _callerTransaction, token).ConfigureAwait(false);
             }
 
             if (_ownsTransaction)
