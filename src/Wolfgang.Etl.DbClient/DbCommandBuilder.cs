@@ -323,7 +323,22 @@ internal static class DbCommandBuilder
             );
         }
 
-        return attr.Name;
+        return QualifyTableName(attr);
+    }
+
+
+
+    /// <summary>
+    /// The table name to emit for <paramref name="attribute"/>: <c>Schema.Name</c> when
+    /// <see cref="TableAttribute.Schema"/> is set, otherwise just <c>Name</c>.
+    /// </summary>
+    /// <param name="attribute">The table attribute.</param>
+    /// <returns>The (optionally schema-qualified) table name.</returns>
+    internal static string QualifyTableName(TableAttribute attribute)
+    {
+        return string.IsNullOrEmpty(attribute.Schema)
+            ? attribute.Name
+            : attribute.Schema + "." + attribute.Name;
     }
 
 
