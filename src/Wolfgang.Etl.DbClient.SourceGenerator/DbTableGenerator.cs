@@ -142,7 +142,7 @@ public sealed class DbTableGenerator : IIncrementalGenerator
             KindKeyword(type),
             NameWithTypeParameters(type),
             string.Join("|", containers),
-            HintName(type),
+            ComputeHintName(type),
             tableName!,
             columns.ToImmutableArray()
         );
@@ -190,7 +190,7 @@ public sealed class DbTableGenerator : IIncrementalGenerator
 
     // Unique per type: the containing types, namespace and arity are part of the name, so two
     // [DbTable] types with the same simple name no longer collide on AddSource's hint name.
-    private static string HintName(INamedTypeSymbol type)
+    private static string ComputeHintName(INamedTypeSymbol type)
     {
         var parts = new List<string>();
         for (ISymbol? current = type; current is not null; current = current.ContainingSymbol)
