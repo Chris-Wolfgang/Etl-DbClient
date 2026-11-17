@@ -65,8 +65,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     // _ownsConnection tracks whether LoadWorkerAsync is responsible for the
     // connection's OpenAsync + Dispose. True for the DbProviderFactory ctor
     // overloads; false when the caller passes a pre-opened DbConnection.
-    private readonly DbConnection _connection;
+    private DbConnection _connection;
     private readonly bool _ownsConnection;
+    private readonly DbProviderFactory? _factory;
+    private readonly string? _connectionString;
+    private bool _ownedConnectionUsed;
     private readonly string _commandText;
     private readonly DbTransaction? _callerTransaction;
     private readonly bool _ownsTransaction;
@@ -277,6 +280,8 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             options
         )
     {
+        _factory = factory;
+        _connectionString = connectionString;
         ApplyOptions(options);
     }
 
@@ -324,6 +329,29 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             );
         conn.ConnectionString = connectionString;
         return conn;
+    }
+
+
+
+    /// <summary>
+    /// On the owned-connection path every operation disposes its connection when it ends, and
+    /// most providers cannot reopen a disposed connection (SqlConnection clears its connection
+    /// string, Npgsql throws ObjectDisposedException). The first operation uses the connection
+    /// created in the constructor; each later one gets a fresh connection from the same factory.
+    /// </summary>
+    private void RenewOwnedConnectionIfUsed()
+    {
+        if (!_ownsConnection)
+        {
+            return;
+        }
+
+        if (_ownedConnectionUsed && _factory is not null && _connectionString is not null)
+        {
+            _connection = CreateOwnedConnection(_factory, _connectionString, _commandText);
+        }
+
+        _ownedConnectionUsed = true;
     }
 
 
@@ -811,6 +839,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         // still see the connection opened and (depending on timing) a write
         // attempted before the first internal cancellation check fires.
         token.ThrowIfCancellationRequested();
+        RenewOwnedConnectionIfUsed();
         _stopwatch.Restart();
         CurrentErrorCount = 0;
         LogLoadingStarted();
@@ -820,14 +849,17 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         // after. Wrapped in try/finally so the connection is released even when
         // LoadWith*Async throws (the caller's exception still propagates).
         var openedHere = false;
-        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
-        {
-            await _connection.OpenAsync(token).ConfigureAwait(false);
-            openedHere = true;
-        }
 
         try
         {
+            // Opened inside the try so a failed open (bad host, cancelled) still disposes the
+            // connection this loader created.
+            if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
+            {
+                await _connection.OpenAsync(token).ConfigureAwait(false);
+                openedHere = true;
+            }
+
             if (ValidateSchemaOnStart)
             {
                 await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
@@ -846,23 +878,32 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         }
         finally
         {
-            if (_ownsConnection)
-            {
+            await ReleaseConnectionAsync(openedHere).ConfigureAwait(false);
+        }
+    }
+
+
+
+    // Owned connection: dispose it. Caller's connection opened here (ManageConnection): close it,
+    // never dispose it. Otherwise leave it alone.
+    private async Task ReleaseConnectionAsync(bool openedHere)
+    {
+        if (_ownsConnection)
+        {
 #if NET5_0_OR_GREATER
-                await _connection.DisposeAsync().ConfigureAwait(false);
+            await _connection.DisposeAsync().ConfigureAwait(false);
 #else
-                _connection.Dispose();
+            _connection.Dispose();
 #endif
-            }
-            else if (openedHere)
-            {
+        }
+        else if (openedHere)
+        {
 #if NET5_0_OR_GREATER
-                await _connection.CloseAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 #else
-                _connection.Close();
-                await Task.CompletedTask.ConfigureAwait(false);
+            _connection.Close();
+            await Task.CompletedTask.ConfigureAwait(false);
 #endif
-            }
         }
     }
 

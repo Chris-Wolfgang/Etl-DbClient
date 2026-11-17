@@ -54,12 +54,16 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     // Fields
     // ------------------------------------------------------------------
 
-    // _connection is not `readonly` because the DbProviderFactory ctor overload
-    // creates the connection itself; the caller-supplied-DbConnection ctors set
-    // it once and never re-assign. _ownsConnection tracks whether ExtractWorkerAsync
-    // is responsible for OpenAsync + Dispose.
-    private readonly DbConnection _connection;
+    // _connection is the caller-supplied connection, or (DbProviderFactory overload) one the
+    // extractor creates itself. It is not readonly because the owned-connection path replaces it
+    // with a fresh connection for each operation after the first (see
+    // RenewOwnedConnectionIfUsed). _ownsConnection tracks whether ExtractWorkerAsync is
+    // responsible for OpenAsync + Dispose.
+    private DbConnection _connection;
     private readonly bool _ownsConnection;
+    private readonly DbProviderFactory? _factory;
+    private readonly string? _connectionString;
+    private bool _ownedConnectionUsed;
     private readonly string _commandText;
 
     // Defensive snapshot of the caller's parameter dictionary. Copying at
@@ -361,6 +365,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             options
         )
     {
+        _factory = factory;
+        _connectionString = connectionString;
         ApplyOptions(options);
     }
 
@@ -408,6 +414,29 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             );
         conn.ConnectionString = connectionString;
         return conn;
+    }
+
+
+
+    /// <summary>
+    /// On the owned-connection path every operation disposes its connection when it ends, and
+    /// most providers cannot reopen a disposed connection (SqlConnection clears its connection
+    /// string, Npgsql throws ObjectDisposedException). The first operation uses the connection
+    /// created in the constructor; each later one gets a fresh connection from the same factory.
+    /// </summary>
+    private void RenewOwnedConnectionIfUsed()
+    {
+        if (!_ownsConnection)
+        {
+            return;
+        }
+
+        if (_ownedConnectionUsed && _factory is not null && _connectionString is not null)
+        {
+            _connection = CreateOwnedConnection(_factory, _connectionString, _commandText);
+        }
+
+        _ownedConnectionUsed = true;
     }
 
 
@@ -748,8 +777,10 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// <para>
     /// Doesn't mutate any state on the extractor — does not touch
     /// <c>DbReport.TotalItemCount</c>, the stopwatch, or any of the
-    /// progress counters. Safe to call any number of times before, during
-    /// (different cancellation token), or after an <c>ExtractAsync</c>.
+    /// progress counters. Safe to call any number of times before or after an
+    /// <c>ExtractAsync</c>. Do not call it while an extract is still running on the same
+    /// connection: a caller-supplied connection has an open data reader then, which providers
+    /// without multiple active result sets reject.
     /// </para>
     /// <para>
     /// Opens the connection on the owned-connection ctor path before running
@@ -759,6 +790,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     public async Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         var query = TotalCountQuery ?? DefaultTotalCountQuery;
+        RenewOwnedConnectionIfUsed();
         var needsOpen = (_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open;
 
         if (!needsOpen)
@@ -766,10 +798,12 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             return await query(cancellationToken).ConfigureAwait(false);
         }
 
-        await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
         try
         {
+            // Opened inside the try so a failed open still disposes the connection this
+            // extractor created.
+            await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
             return await query(cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -823,6 +857,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     protected override async IAsyncEnumerable<TRecord> ExtractWorkerAsync([EnumeratorCancellation] CancellationToken token)
 #pragma warning restore MA0051
     {
+        RenewOwnedConnectionIfUsed();
         _stopwatch.Restart();
         _totalItemCount = null;
         LogExtractionStarted();
@@ -833,14 +868,17 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         // try/finally in an async iterator is OK in C# 8+; the iterator runtime
         // routes break/exception through the finally on Dispose.
         var openedHere = false;
-        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
-        {
-            await _connection.OpenAsync(token).ConfigureAwait(false);
-            openedHere = true;
-        }
 
         try
         {
+            // Opened inside the try so a failed open (bad host, cancelled) still disposes the
+            // connection this extractor created.
+            if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
+            {
+                await _connection.OpenAsync(token).ConfigureAwait(false);
+                openedHere = true;
+            }
+
             if (ValidateSchemaOnStart)
             {
                 await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
