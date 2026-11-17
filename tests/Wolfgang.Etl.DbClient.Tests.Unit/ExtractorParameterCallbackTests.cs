@@ -60,10 +60,10 @@ public class ExtractorParameterCallbackTests
             Parameters = spy,
         };
 
-        await foreach (var _ in sut.ExtractAsync())
-        {
-            break;
-        }
+        // Read one row, then dispose the enumerator: leaving early is the case under test.
+        var enumerator = sut.ExtractAsync().GetAsyncEnumerator();
+        await enumerator.MoveNextAsync();
+        await enumerator.DisposeAsync();
 
         Assert.Equal(1, spy.OnCompletedCount);
     }
