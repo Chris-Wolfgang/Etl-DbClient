@@ -619,10 +619,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
     /// <summary>
-    /// Maximum number of row-level failures the loader will tolerate before
-    /// aborting the load with an <see cref="InvalidOperationException"/>
-    /// whose <see cref="Exception.InnerException"/> is the last underlying
-    /// row failure. Defaults to <c>0</c>, meaning "unlimited" (every failure
+    /// Row-failure count at which the loader aborts the load with an
+    /// <see cref="InvalidOperationException"/> whose
+    /// <see cref="Exception.InnerException"/> is the last underlying row failure.
+    /// The load aborts as soon as this many rows have failed (counting the failure that
+    /// reaches it), so <c>1</c> tolerates no failures and <c>N</c> tolerates <c>N - 1</c>. Defaults to <c>0</c>, meaning "unlimited" (every failure
     /// is reported via <see cref="RowFailed"/> and processing continues).
     /// </summary>
     /// <remarks>
@@ -681,7 +682,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
     /// <summary>
-    /// Commit the auto-managed transaction every N successfully-loaded rows.
+    /// Commit the auto-managed transaction every N source items read - items consumed by
+    /// <c>SkipItemCount</c> and rows skipped by <see cref="RowErrorHandling.Skip"/> count
+    /// toward N, not only successfully-loaded rows.
     /// Defaults to <c>0</c>, meaning "commit only once at the end of the load"
     /// (the v0.4.0 behavior). Larger values let very long loads survive a
     /// mid-flight failure with most of the work persisted.

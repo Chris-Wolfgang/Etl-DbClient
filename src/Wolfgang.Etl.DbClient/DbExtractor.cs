@@ -54,10 +54,10 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     // Fields
     // ------------------------------------------------------------------
 
-    // _connection is not `readonly` because the DbProviderFactory ctor overload
-    // creates the connection itself; the caller-supplied-DbConnection ctors set
-    // it once and never re-assign. _ownsConnection tracks whether ExtractWorkerAsync
-    // is responsible for OpenAsync + Dispose.
+    // _connection is assigned once in the constructor: either the caller-supplied
+    // connection, or (DbProviderFactory overload) one the extractor creates itself.
+    // _ownsConnection tracks whether ExtractWorkerAsync is responsible for
+    // OpenAsync + Dispose.
     private readonly DbConnection _connection;
     private readonly bool _ownsConnection;
     private readonly string _commandText;
@@ -1230,7 +1230,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             {
                 _logger.LogDebug
                 (
-                    "Parameter @{Name} = {Value}",
+                    "Parameter {Name} = {Value}",
                     kvp.Key,
                     kvp.Value
                 );
