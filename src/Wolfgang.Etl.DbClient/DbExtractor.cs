@@ -456,7 +456,9 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// <remarks>
     /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
     /// of seconds). Fractional seconds in the supplied <see cref="TimeSpan"/>
-    /// are truncated. A negative <see cref="TimeSpan"/> is rejected.
+    /// are rounded up, so any positive timeout is at least one second (ADO.NET treats 0 as "wait
+    /// indefinitely"), and values beyond <see cref="int.MaxValue"/> seconds are clamped.
+    /// <see cref="TimeSpan.Zero"/> is passed through as 0, which providers read as no timeout. A negative <see cref="TimeSpan"/> is rejected.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// The assigned value is negative.
@@ -487,9 +489,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     // Dapper's commandTimeout parameter is `int?` seconds. Centralized here so
     // every call site uses the same conversion (and so future "0 = infinite"
     // semantics, if needed, only have to flip in one place).
-    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
-        ? (int)_commandTimeout.Value.TotalSeconds
-        : null;
+    private int? CommandTimeoutSeconds => CommandTimeoutConverter.ToSeconds(_commandTimeout);
 
 
 
@@ -833,6 +833,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         // try/finally in an async iterator is OK in C# 8+; the iterator runtime
         // routes break/exception through the finally on Dispose.
         var openedHere = false;
+        DbDataReader? dataReader = null;
+        SqlMapper.IDynamicParameters? commandParameters = null;
         if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
@@ -847,6 +849,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             }
 
             ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
+            commandParameters = param;
 
             if (TotalCountQuery != null)
             {
@@ -868,7 +871,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             // cursor alive across a caught mapping failure, so Skip actually
             // skips-and-continues.
             var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
-            using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            dataReader = reader;
             var parseRow = CreateRowParser(reader);
 
             while (await reader.ReadAsync(token).ConfigureAwait(false))
@@ -934,6 +938,20 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         }
         finally
         {
+            if (dataReader is not null)
+            {
+                // Providers populate Output / InputOutput parameters only once the reader is
+                // closed, and Dapper's ExecuteReaderAsync never raises OnCompleted itself (unlike
+                // ExecuteScalarAsync), so close the reader and then run the write-back here.
+                // Skipped when the command never ran: there is nothing to write back.
+#if NET5_0_OR_GREATER
+                await dataReader.DisposeAsync().ConfigureAwait(false);
+#else
+                dataReader.Dispose();
+#endif
+                (commandParameters as SqlMapper.IParameterCallbacks)?.OnCompleted();
+            }
+
             if (_ownsConnection)
             {
 #if NET5_0_OR_GREATER
@@ -1155,7 +1173,15 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
                 break;
 
             default:
-                var dynamic = param as DynamicParameters ?? new DynamicParameters();
+                // Never add to the caller's own DynamicParameters: they may reuse it for the
+                // next page, where the generated names would look like a collision. A copy
+                // shares the caller's parameter entries, so output values still reach them.
+                var dynamic = new DynamicParameters();
+                if (param is DynamicParameters callerParameters)
+                {
+                    dynamic.AddDynamicParams(callerParameters);
+                }
+
                 dynamic.Add("@PageOffset", serverOffset);
                 dynamic.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = dynamic;
