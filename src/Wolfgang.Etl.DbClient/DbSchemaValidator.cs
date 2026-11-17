@@ -120,10 +120,29 @@ public static class DbSchemaValidator
     /// <exception cref="OperationCanceledException">
     /// <paramref name="cancellationToken"/> was canceled.
     /// </exception>
-    public static async Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
+    public static Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
     (
         DbConnection connection,
         CancellationToken cancellationToken = default
+    )
+        where TRecord : notnull
+    {
+        return ValidateAsync<TRecord>(connection, transaction: null, cancellationToken);
+    }
+
+
+
+    /// <summary>
+    /// Validates like <see cref="ValidateAsync{TRecord}(DbConnection, CancellationToken)"/>, running
+    /// the probe query inside <paramref name="transaction"/> when one is supplied. SQL Server
+    /// rejects a command that is not enlisted in the connection's pending local transaction, so the
+    /// extractor and loader pass the transaction they were given.
+    /// </summary>
+    internal static async Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
+    (
+        DbConnection connection,
+        DbTransaction? transaction,
+        CancellationToken cancellationToken
     )
         where TRecord : notnull
     {
@@ -144,6 +163,7 @@ public static class DbSchemaValidator
             cmd.CommandText = $"SELECT * FROM {table} WHERE 1 = 0";
 #pragma warning restore S2077
             cmd.CommandType = CommandType.Text;
+            cmd.Transaction = transaction;
             DbDataReader reader;
             try
             {
