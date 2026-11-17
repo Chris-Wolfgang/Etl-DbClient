@@ -722,7 +722,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
 
     /// <summary>
     /// The default total count implementation. Wraps <see cref="CommandText"/> in
-    /// <c>SELECT COUNT(*) FROM (...) AS _count</c> and executes it using the same
+    /// <c>SELECT COUNT(*) FROM (...) _count</c> and executes it using the same
     /// connection, parameters, and transaction as the extraction query.
     /// Assign this to <see cref="TotalCountQuery"/> to enable the built-in behavior.
     /// </summary>
@@ -730,7 +730,23 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// Trailing semicolons are stripped automatically. If the command text contains
     /// an <c>ORDER BY</c> clause, some database providers (e.g. SQL Server) may reject
     /// it inside a derived table. Use a custom <see cref="TotalCountQuery"/> in that case.
+    /// <para>
+    /// The wrapper only works for a text command: with a <see cref="CommandType"/> other than
+    /// <see cref="System.Data.CommandType.Text"/> (a stored procedure, for example) it throws
+    /// <see cref="InvalidOperationException"/> when invoked, so supply a
+    /// <see cref="TotalCountQuery"/> instead.
+    /// </para>
+    /// <para>
+    /// It counts the whole result set, ignoring server-side paging (<see cref="ServerLimit"/> /
+    /// <see cref="ServerOffset"/>); use a custom <see cref="TotalCountQuery"/> to count a page. The
+    /// derived table is aliased without <c>AS</c> (<c>) _count</c>), which every supported dialect
+    /// accepts - Oracle rejects <c>AS</c> before a table alias.
+    /// </para>
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when invoked and <see cref="CommandType"/> is not <see cref="System.Data.CommandType.Text"/>,
+    /// or the command text is empty.
+    /// </exception>
     public Func<CancellationToken, Task<int>> DefaultTotalCountQuery => ExecuteDefaultTotalCountQueryAsync;
 
 
@@ -1001,8 +1017,17 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
 
     private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
     {
+        if (CommandType != CommandType.Text)
+        {
+            throw new InvalidOperationException
+            (
+                $"The default total-count query wraps the command text as a subquery, which cannot be done " +
+                $"for CommandType.{CommandType}. Assign TotalCountQuery to a query that returns the count."
+            );
+        }
+
         var sanitized = SanitizeCommandTextForCount(_commandText);
-        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
+        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) _count";
         var param = Parameters ?? _dynamicParameters;
         // S2077: the formatted part is the caller's own extractor command text, wrapped as a
         // subquery; the wrapper adds no value interpolation and the caller's parameters are
