@@ -138,6 +138,14 @@ public static class DbSchemaValidator
     /// rejects a command that is not enlisted in the connection's pending local transaction, so the
     /// extractor and loader pass the transaction they were given.
     /// </summary>
+    /// <typeparam name="TRecord">The mapped record type.</typeparam>
+    /// <param name="connection">An open or closed connection; opened if closed and restored on return.</param>
+    /// <param name="transaction">The transaction the probe runs in, or <see langword="null"/>.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="connection"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The type has no usable <c>[Table]</c> mapping, the table cannot be queried, or a mapped column is missing.
+    /// </exception>
     internal static async Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
     (
         DbConnection connection,
