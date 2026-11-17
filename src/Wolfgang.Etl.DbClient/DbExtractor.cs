@@ -952,6 +952,9 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
                 await Task.CompletedTask.ConfigureAwait(false);
 #endif
             }
+
+            // Freeze the clock so a report requested after the extract does not count idle time.
+            _stopwatch.Stop();
         }
     }
 

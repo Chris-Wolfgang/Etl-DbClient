@@ -800,6 +800,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// the repeated <c>if (_ownsTransaction &amp;&amp; transaction != null)</c> guard
     /// that the combined version needed.
     /// </remarks>
+#pragma warning disable MA0051
     protected override async Task LoadWorkerAsync
     (
         IAsyncEnumerable<TRecord> items,
@@ -846,6 +847,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         }
         finally
         {
+            // Freeze the clock so a later report does not count idle time.
+            _stopwatch.Stop();
+
             if (_ownsConnection)
             {
 #if NET5_0_OR_GREATER
@@ -865,6 +869,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             }
         }
     }
+#pragma warning restore MA0051
 
 
 
