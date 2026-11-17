@@ -238,7 +238,7 @@ public static class DbSchemaValidator
             );
         }
 
-        table = tableAttr.Name;
+        table = DbCommandBuilder.QualifyTableName(tableAttr);
         columns = mapped;
     }
 
