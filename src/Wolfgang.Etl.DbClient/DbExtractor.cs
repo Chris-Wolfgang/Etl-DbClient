@@ -833,6 +833,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         // try/finally in an async iterator is OK in C# 8+; the iterator runtime
         // routes break/exception through the finally on Dispose.
         var openedHere = false;
+        DbDataReader? dataReader = null;
+        SqlMapper.IDynamicParameters? commandParameters = null;
         if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
@@ -847,6 +849,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             }
 
             ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
+            commandParameters = param;
 
             if (TotalCountQuery != null)
             {
@@ -868,7 +871,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             // cursor alive across a caught mapping failure, so Skip actually
             // skips-and-continues.
             var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
-            using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            dataReader = reader;
             var parseRow = CreateRowParser(reader);
 
             while (await reader.ReadAsync(token).ConfigureAwait(false))
@@ -934,6 +938,20 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         }
         finally
         {
+            if (dataReader is not null)
+            {
+                // Providers populate Output / InputOutput parameters only once the reader is
+                // closed, and Dapper's ExecuteReaderAsync never raises OnCompleted itself (unlike
+                // ExecuteScalarAsync), so close the reader and then run the write-back here.
+                // Skipped when the command never ran: there is nothing to write back.
+#if NET5_0_OR_GREATER
+                await dataReader.DisposeAsync().ConfigureAwait(false);
+#else
+                dataReader.Dispose();
+#endif
+                (commandParameters as SqlMapper.IParameterCallbacks)?.OnCompleted();
+            }
+
             if (_ownsConnection)
             {
 #if NET5_0_OR_GREATER
