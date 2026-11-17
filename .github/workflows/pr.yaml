@@ -593,6 +593,10 @@ jobs:
               - '*.globalconfig'
               - '*.ruleset'
               - 'coverlet.runsettings'
+              # global.json pins the SDK every job builds with and the tool manifest pins the
+              # CI tools; a PR that changes either must run the real build and test stages.
+              - 'global.json'
+              - '.config/dotnet-tools.json'
               - 'nuget.config'
             workflows:
               - '.github/workflows/**'
