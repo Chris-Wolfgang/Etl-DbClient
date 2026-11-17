@@ -507,7 +507,10 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// <c>(@FirstName, @LastName, @Age)</c>. The loader extracts that
     /// template, replicates it once per row in the batch with suffixed
     /// parameter names (<c>@FirstName_0</c>, <c>@FirstName_1</c>, …), and
-    /// rebinds each row's properties to its slot via reflection.
+    /// rebinds each row's properties to its slot via reflection. Only <c>@name</c> parameter
+    /// markers are recognised (not <c>:name</c> or <c>?</c>); <c>VALUES</c> inside an identifier,
+    /// parameter name or quoted identifier is not mistaken for the keyword, and <c>@</c> inside a
+    /// string literal or in an <c>@@</c> system variable is not read as a parameter.
     /// </para>
     /// <para>
     /// Database parameter limits apply — SQL Server caps at 2,100 params per
@@ -1002,6 +1005,16 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         var prefix = ExtractInsertPrefix(_commandText, out var template);
         var templateParams = ExtractTemplateParamNames(template);
         var paramNames = templateParams.Names;
+        if (paramNames.Count == 0)
+        {
+            throw new InvalidOperationException
+            (
+                "InsertBatchSize > 1 found no '@name' parameters in the VALUES template. Only '@' " +
+                "parameter markers are supported for multi-row inserts (not ':name' or '?'). " +
+                $"Template: {template}"
+            );
+        }
+
         var paramSpans = templateParams.Spans;
         var getters = GetPropertyGetters(GetMappedProperties(paramNames));
         var parameterKeys = BuildRowParameterKeys(paramNames, _insertBatchSize);
@@ -1109,9 +1122,49 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
 
+    /// <summary>
+    /// Index of the last <c>VALUES</c> that is the keyword itself: a whole word, not the tail of an
+    /// identifier, a quoted identifier or a parameter name (<c>@AllowedValues</c>, <c>[Values]</c>,
+    /// <c>t.Values</c>). <c>-1</c> when there is none.
+    /// </summary>
+    private static int FindValuesKeyword(string commandText)
+    {
+        const string keyword = "VALUES";
+        var idx = commandText.Length;
+        while (idx > 0)
+        {
+            idx = commandText.LastIndexOf(keyword, idx - 1, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
+            {
+                return -1;
+            }
+
+            var end = idx + keyword.Length;
+            var before = idx == 0 ? ' ' : commandText[idx - 1];
+            var after = end >= commandText.Length ? ' ' : commandText[end];
+            if (!IsIdentifierPart(before) && !IsIdentifierPart(after))
+            {
+                return idx;
+            }
+        }
+
+        return -1;
+    }
+
+
+
+    // Characters that, next to VALUES, mean it is part of a longer name rather than the keyword:
+    // identifier characters, parameter prefixes, member access and identifier quotes.
+    private static bool IsIdentifierPart(char c)
+    {
+        return char.IsLetterOrDigit(c) || c is '_' or '@' or ':' or '?' or '$' or '#' or '.' or '"' or '[' or ']' or '`';
+    }
+
+
+
     private static string ExtractInsertPrefix(string commandText, out string template)
     {
-        var idx = commandText.LastIndexOf("VALUES", StringComparison.OrdinalIgnoreCase);
+        var idx = FindValuesKeyword(commandText);
         if (idx < 0)
         {
             throw new InvalidOperationException
@@ -1210,6 +1263,32 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
 
+    // Index just past the string literal starting at `start` ('' is an escaped quote); the end of the
+    // text when the literal is unterminated.
+    private static int SkipStringLiteral(string text, int start)
+    {
+        var i = start + 1;
+        while (i < text.Length)
+        {
+            if (text[i] == '\'')
+            {
+                if (i + 1 < text.Length && text[i + 1] == '\'')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                return i + 1;
+            }
+
+            i++;
+        }
+
+        return text.Length;
+    }
+
+
+
     private static TemplateParams ExtractTemplateParamNames(string template)
     {
         // `while` rather than `for` — the loop intentionally jumps the cursor past
@@ -1220,11 +1299,30 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         var i = 0;
         while (i < template.Length)
         {
+            if (template[i] == '\'')
+            {
+                i = SkipStringLiteral(template, i);
+                continue;
+            }
+
             if (template[i] != '@')
             {
                 i++;
                 continue;
             }
+
+            // @@name is a system variable (@@IDENTITY, @@ROWCOUNT), not a parameter.
+            if (i + 1 < template.Length && template[i + 1] == '@')
+            {
+                i += 2;
+                while (i < template.Length && (char.IsLetterOrDigit(template[i]) || template[i] == '_'))
+                {
+                    i++;
+                }
+
+                continue;
+            }
+
             var tokenStart = i;
             var start = i + 1;
             var end = start;
