@@ -54,10 +54,10 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     // Fields
     // ------------------------------------------------------------------
 
-    // _connection is not `readonly` because the DbProviderFactory ctor overload
-    // creates the connection itself; the caller-supplied-DbConnection ctors set
-    // it once and never re-assign. _ownsConnection tracks whether ExtractWorkerAsync
-    // is responsible for OpenAsync + Dispose.
+    // _connection is assigned once in the constructor: either the caller-supplied
+    // connection, or (DbProviderFactory overload) one the extractor creates itself.
+    // _ownsConnection tracks whether ExtractWorkerAsync is responsible for
+    // OpenAsync + Dispose.
     private readonly DbConnection _connection;
     private readonly bool _ownsConnection;
     private readonly string _commandText;
@@ -456,7 +456,9 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// <remarks>
     /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
     /// of seconds). Fractional seconds in the supplied <see cref="TimeSpan"/>
-    /// are truncated. A negative <see cref="TimeSpan"/> is rejected.
+    /// are rounded up, so any positive timeout is at least one second (ADO.NET treats 0 as "wait
+    /// indefinitely"), and values beyond <see cref="int.MaxValue"/> seconds are clamped.
+    /// <see cref="TimeSpan.Zero"/> is passed through as 0, which providers read as no timeout. A negative <see cref="TimeSpan"/> is rejected.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// The assigned value is negative.
@@ -487,9 +489,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     // Dapper's commandTimeout parameter is `int?` seconds. Centralized here so
     // every call site uses the same conversion (and so future "0 = infinite"
     // semantics, if needed, only have to flip in one place).
-    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
-        ? (int)_commandTimeout.Value.TotalSeconds
-        : null;
+    private int? CommandTimeoutSeconds => CommandTimeoutConverter.ToSeconds(_commandTimeout);
 
 
 
@@ -722,7 +722,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
 
     /// <summary>
     /// The default total count implementation. Wraps <see cref="CommandText"/> in
-    /// <c>SELECT COUNT(*) FROM (...) AS _count</c> and executes it using the same
+    /// <c>SELECT COUNT(*) FROM (...) _count</c> and executes it using the same
     /// connection, parameters, and transaction as the extraction query.
     /// Assign this to <see cref="TotalCountQuery"/> to enable the built-in behavior.
     /// </summary>
@@ -730,7 +730,23 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// Trailing semicolons are stripped automatically. If the command text contains
     /// an <c>ORDER BY</c> clause, some database providers (e.g. SQL Server) may reject
     /// it inside a derived table. Use a custom <see cref="TotalCountQuery"/> in that case.
+    /// <para>
+    /// The wrapper only works for a text command: with a <see cref="CommandType"/> other than
+    /// <see cref="System.Data.CommandType.Text"/> (a stored procedure, for example) it throws
+    /// <see cref="InvalidOperationException"/> when invoked, so supply a
+    /// <see cref="TotalCountQuery"/> instead.
+    /// </para>
+    /// <para>
+    /// It counts the whole result set, ignoring server-side paging (<see cref="ServerLimit"/> /
+    /// <see cref="ServerOffset"/>); use a custom <see cref="TotalCountQuery"/> to count a page. The
+    /// derived table is aliased without <c>AS</c> (<c>) _count</c>), which every supported dialect
+    /// accepts - Oracle rejects <c>AS</c> before a table alias.
+    /// </para>
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when invoked and <see cref="CommandType"/> is not <see cref="System.Data.CommandType.Text"/>,
+    /// or the command text is empty.
+    /// </exception>
     public Func<CancellationToken, Task<int>> DefaultTotalCountQuery => ExecuteDefaultTotalCountQueryAsync;
 
 
@@ -833,6 +849,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         // try/finally in an async iterator is OK in C# 8+; the iterator runtime
         // routes break/exception through the finally on Dispose.
         var openedHere = false;
+        DbDataReader? dataReader = null;
+        SqlMapper.IDynamicParameters? commandParameters = null;
         if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
         {
             await _connection.OpenAsync(token).ConfigureAwait(false);
@@ -843,10 +861,11 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         {
             if (ValidateSchemaOnStart)
             {
-                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
+                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, _transaction, token).ConfigureAwait(false);
             }
 
             ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);
+            commandParameters = param;
 
             if (TotalCountQuery != null)
             {
@@ -868,7 +887,8 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             // cursor alive across a caught mapping failure, so Skip actually
             // skips-and-continues.
             var command = new CommandDefinition(commandText, param, _transaction, CommandTimeoutSeconds, CommandType, cancellationToken: token);
-            using var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            var reader = await _connection.ExecuteReaderAsync(command).ConfigureAwait(false);
+            dataReader = reader;
             var parseRow = CreateRowParser(reader);
 
             while (await reader.ReadAsync(token).ConfigureAwait(false))
@@ -934,6 +954,20 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         }
         finally
         {
+            if (dataReader is not null)
+            {
+                // Providers populate Output / InputOutput parameters only once the reader is
+                // closed, and Dapper's ExecuteReaderAsync never raises OnCompleted itself (unlike
+                // ExecuteScalarAsync), so close the reader and then run the write-back here.
+                // Skipped when the command never ran: there is nothing to write back.
+#if NET5_0_OR_GREATER
+                await dataReader.DisposeAsync().ConfigureAwait(false);
+#else
+                dataReader.Dispose();
+#endif
+                (commandParameters as SqlMapper.IParameterCallbacks)?.OnCompleted();
+            }
+
             if (_ownsConnection)
             {
 #if NET5_0_OR_GREATER
@@ -1004,8 +1038,17 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
 
     private Task<int> ExecuteDefaultTotalCountQueryAsync(CancellationToken token)
     {
+        if (CommandType != CommandType.Text)
+        {
+            throw new InvalidOperationException
+            (
+                $"The default total-count query wraps the command text as a subquery, which cannot be done " +
+                $"for CommandType.{CommandType}. Assign TotalCountQuery to a query that returns the count."
+            );
+        }
+
         var sanitized = SanitizeCommandTextForCount(_commandText);
-        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) AS _count";
+        var countSql = $"SELECT COUNT(*) FROM ({sanitized}) _count";
         var param = Parameters ?? _dynamicParameters;
         // S2077: the formatted part is the caller's own extractor command text, wrapped as a
         // subquery; the wrapper adds no value interpolation and the caller's parameters are
@@ -1158,7 +1201,15 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
                 break;
 
             default:
-                var dynamic = param as DynamicParameters ?? new DynamicParameters();
+                // Never add to the caller's own DynamicParameters: they may reuse it for the
+                // next page, where the generated names would look like a collision. A copy
+                // shares the caller's parameter entries, so output values still reach them.
+                var dynamic = new DynamicParameters();
+                if (param is DynamicParameters callerParameters)
+                {
+                    dynamic.AddDynamicParams(callerParameters);
+                }
+
                 dynamic.Add("@PageOffset", serverOffset);
                 dynamic.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = dynamic;
@@ -1233,7 +1284,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
             {
                 _logger.LogDebug
                 (
-                    "Parameter @{Name} = {Value}",
+                    "Parameter {Name} = {Value}",
                     kvp.Key,
                     kvp.Value
                 );
