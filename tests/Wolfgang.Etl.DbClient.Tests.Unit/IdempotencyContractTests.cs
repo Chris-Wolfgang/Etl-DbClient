@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Wolfgang.Etl.TestKit.Xunit;
@@ -84,13 +83,5 @@ public sealed class DbLoaderIdempotencyContractTests
 
     // DbLoader<T> reports DbReport, not Report, so the default read does not apply.
     /// <inheritdoc/>
-    protected override int GetCurrentItemCount(DbLoader<ContractRecord> sut)
-    {
-        if (sut is null)
-        {
-            throw new ArgumentNullException(nameof(sut));
-        }
-
-        return sut.CurrentItemCount;
-    }
+    protected override int GetCurrentItemCount(DbLoader<ContractRecord> sut) => sut?.CurrentItemCount ?? 0;
 }
