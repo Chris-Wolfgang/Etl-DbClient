@@ -175,7 +175,7 @@ runnable project.
 | Progress Reporting | `DbReport` includes item count, skipped count, command text, and elapsed time |
 | Skip & Limit | `SkipItemCount` and `MaximumItemCount` for pagination |
 | Batched Loading | `BatchSize` (N executes per round trip), `InsertBatchSize` (one multi-row `INSERT … VALUES`), `BatchCommitSize` (commit every N rows) |
-| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default) |
+| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default). On PostgreSQL/CockroachDB a failed statement aborts the transaction, so also set `BatchCommitSize = 1` (one transaction per row) |
 | Dry Run | `IsDryRun` runs the pipeline without executing writes |
 | Schema Validation | `DbSchemaValidator` and `ValidateSchemaOnStart` check the mapped table and columns up front |
 | Source Generator | `[DbTable]` / `[DbColumn]` / `[DbKey]` emit `Insert`, `Select`, `Update`, `Delete` SQL and a reflection-free binder at compile time |

@@ -1621,6 +1621,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         (
             ErrorHandling == RowErrorHandling.Skip
             && ex is not OperationCanceledException
+            // A failure that took the connection down (dropped connection, fatal error) is not a
+            // row failure: carrying on would report every remaining row as failed. Let it abort.
+            && _connection.State == ConnectionState.Open
         )
         {
             CurrentErrorCount++;
