@@ -168,3 +168,112 @@ jobs:
           name: aot-smoke-publish-log
           path: publish.log
           retention-days: 30
+
+  # Second leg (fleet standard test-matrix item 4): the native binary is per-architecture, so the
+  # managed ARM64 stages in pr.yaml do not cover it. Same steps as the linux-x64 leg above, and
+  # informational in the same way. The arm64 runner is free on public repositories only, so a
+  # private repository skips this leg by condition.
+  aot-smoke-linux-arm64:
+    name: PublishAot + PublishTrimmed (linux-arm64)
+    runs-on: ubuntu-24.04-arm
+    if: ${{ !github.event.repository.private }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # pull_request already checks out the PR HEAD by default;
+          # persist-credentials stays false to keep the token off disk.
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore examples/Wolfgang.Etl.DbClient.Example.AotSmoke/Wolfgang.Etl.DbClient.Example.AotSmoke.csproj
+
+      # Non-blocking (see file header). Captures full trim/AOT
+      # warning output so we can trend and eventually gate.
+      # PublishAot / PublishTrimmed / TrimmerSingleWarn live in the AotSmoke csproj, not on this
+      # command line: a -p: property on the command line is global and flows into every
+      # referenced project, including the library's net462 target, where AOT is unsupported
+      # (NETSDK1207). That made this step fail every time, so the binary was never built or run.
+      - name: Publish (PublishAot + PublishTrimmed)
+        id: publish
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p publish
+          dotnet publish \
+            examples/Wolfgang.Etl.DbClient.Example.AotSmoke/Wolfgang.Etl.DbClient.Example.AotSmoke.csproj \
+            --configuration Release \
+            --runtime linux-arm64 \
+            --self-contained true \
+            --output publish \
+            2>&1 | tee publish.log
+
+      - name: Summarize trim / AOT warnings
+        if: always()
+        run: |
+          {
+            echo "## AOT + trim smoke (linux-arm64) — warning summary"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -f publish.log ]; then
+            echo "publish step produced no log — likely errored before running dotnet." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          il2_count=$(grep -c -E "(warning|error) IL2" publish.log || true)
+          il3_count=$(grep -c -E "(warning|error) IL3" publish.log || true)
+          aot_count=$(grep -c -E "(warning|error) AOT" publish.log || true)
+          {
+            echo "| Category | Count |"
+            echo "|---|---|"
+            echo "| Trim (IL2xxx) | $il2_count |"
+            echo "| Single-file (IL3xxx) | $il3_count |"
+            echo "| AOT (AOT0xxx) | $aot_count |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$il2_count" -gt 0 ] || [ "$il3_count" -gt 0 ] || [ "$aot_count" -gt 0 ]; then
+            {
+              echo "<details><summary>First 20 warnings</summary>"
+              echo ""
+              echo '```'
+              grep -E "(warning|error) (IL[23]|AOT)" publish.log | head -20
+              echo '```'
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            echo ""
+            echo "**Gate mode**: non-blocking (informational). See workflow header for the plan to move to blocking."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Only meaningful if publish actually succeeded — otherwise
+      # skip cleanly instead of failing.
+      - name: Run the AOT-published binary
+        if: steps.publish.outcome == 'success'
+        # Informational, like the publish step: report a crash without failing the job.
+        continue-on-error: true
+        run: |
+          bin=publish/Wolfgang.Etl.DbClient.Example.AotSmoke
+          if [ ! -x "$bin" ]; then
+            echo "::warning::AOT-published binary not found at $bin — publish output layout may have changed."
+            exit 0
+          fi
+          "$bin"
+
+      - name: Upload publish log
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: aot-smoke-publish-log-linux-arm64
+          path: publish.log
+          retention-days: 30

@@ -48,6 +48,7 @@ Ensure the following settings are enabled:
     - "Stage 1: Linux Tests (.NET 5.0-10.0) + Coverage Gate"
     - "Stage 2: Windows Tests (.NET 5.0-10.0, Framework 4.6.2-4.8.1)"
     - "Stage 3: macOS Tests (.NET 6.0-10.0)"
+    - "Stage 4: Linux ARM64 Tests" and "Stage 5: Windows ARM64 Tests" (public repositories; add them only after both have passed on `main`)
     - "Security Scan (DevSkim)"
     - "Security Scan (CodeQL)"
 - ✅ **Require branches to be up to date before merging**
