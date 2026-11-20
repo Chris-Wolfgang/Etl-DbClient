@@ -65,8 +65,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     // _ownsConnection tracks whether LoadWorkerAsync is responsible for the
     // connection's OpenAsync + Dispose. True for the DbProviderFactory ctor
     // overloads; false when the caller passes a pre-opened DbConnection.
-    private readonly DbConnection _connection;
+    private DbConnection _connection;
     private readonly bool _ownsConnection;
+    private readonly DbProviderFactory? _factory;
+    private readonly string? _connectionString;
+    private bool _ownedConnectionUsed;
     private readonly string _commandText;
     private readonly DbTransaction? _callerTransaction;
     private readonly bool _ownsTransaction;
@@ -282,6 +285,8 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             options
         )
     {
+        _factory = factory;
+        _connectionString = connectionString;
         ApplyOptions(options);
     }
 
@@ -329,6 +334,29 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             );
         conn.ConnectionString = connectionString;
         return conn;
+    }
+
+
+
+    /// <summary>
+    /// On the owned-connection path every operation disposes its connection when it ends, and
+    /// most providers cannot reopen a disposed connection (SqlConnection clears its connection
+    /// string, Npgsql throws ObjectDisposedException). The first operation uses the connection
+    /// created in the constructor; each later one gets a fresh connection from the same factory.
+    /// </summary>
+    private void RenewOwnedConnectionIfUsed()
+    {
+        if (!_ownsConnection)
+        {
+            return;
+        }
+
+        if (_ownedConnectionUsed && _factory is not null && _connectionString is not null)
+        {
+            _connection = CreateOwnedConnection(_factory, _connectionString, _commandText);
+        }
+
+        _ownedConnectionUsed = true;
     }
 
 
@@ -382,7 +410,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// </summary>
     /// <remarks>
     /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
-    /// of seconds). Fractional seconds are truncated. Applies to every batch,
+    /// of seconds). Fractional seconds are rounded up (any positive timeout is at least one second), values beyond <see cref="int.MaxValue"/> seconds are clamped, and <see cref="TimeSpan.Zero"/> is passed through as 0, which providers read as no timeout. Applies to every batch,
     /// not the whole load — so a batched insert of 10 batches each gets the
     /// full timeout independently.
     /// </remarks>
@@ -412,9 +440,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
     private TimeSpan? _commandTimeout;
 
-    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
-        ? (int)_commandTimeout.Value.TotalSeconds
-        : null;
+    private int? CommandTimeoutSeconds => CommandTimeoutConverter.ToSeconds(_commandTimeout);
 
 
 
@@ -512,7 +538,10 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// <c>(@FirstName, @LastName, @Age)</c>. The loader extracts that
     /// template, replicates it once per row in the batch with suffixed
     /// parameter names (<c>@FirstName_0</c>, <c>@FirstName_1</c>, …), and
-    /// rebinds each row's properties to its slot via reflection.
+    /// rebinds each row's properties to its slot via reflection. Only <c>@name</c> parameter
+    /// markers are recognised (not <c>:name</c> or <c>?</c>); <c>VALUES</c> inside an identifier,
+    /// parameter name or quoted identifier is not mistaken for the keyword, and <c>@</c> inside a
+    /// string literal or in an <c>@@</c> system variable is not read as a parameter.
     /// </para>
     /// <para>
     /// Database parameter limits apply — SQL Server caps at 2,100 params per
@@ -624,10 +653,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
     /// <summary>
-    /// Maximum number of row-level failures the loader will tolerate before
-    /// aborting the load with an <see cref="InvalidOperationException"/>
-    /// whose <see cref="Exception.InnerException"/> is the last underlying
-    /// row failure. Defaults to <c>0</c>, meaning "unlimited" (every failure
+    /// Row-failure count at which the loader aborts the load with an
+    /// <see cref="InvalidOperationException"/> whose
+    /// <see cref="Exception.InnerException"/> is the last underlying row failure.
+    /// The load aborts as soon as this many rows have failed (counting the failure that
+    /// reaches it), so <c>1</c> tolerates no failures and <c>N</c> tolerates <c>N - 1</c>. Defaults to <c>0</c>, meaning "unlimited" (every failure
     /// is reported via <see cref="RowFailed"/> and processing continues).
     /// </summary>
     /// <remarks>
@@ -686,7 +716,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
     /// <summary>
-    /// Commit the auto-managed transaction every N successfully-loaded rows.
+    /// Commit the auto-managed transaction every N source items read - items consumed by
+    /// <c>SkipItemCount</c> and rows skipped by <see cref="RowErrorHandling.Skip"/> count
+    /// toward N, not only successfully-loaded rows.
     /// Defaults to <c>0</c>, meaning "commit only once at the end of the load"
     /// (the v0.4.0 behavior). Larger values let very long loads survive a
     /// mid-flight failure with most of the work persisted.
@@ -816,6 +848,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         // still see the connection opened and (depending on timing) a write
         // attempted before the first internal cancellation check fires.
         token.ThrowIfCancellationRequested();
+        RenewOwnedConnectionIfUsed();
         _stopwatch.Restart();
         CurrentErrorCount = 0;
         _executionPlan = null;
@@ -826,17 +859,20 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         // after. Wrapped in try/finally so the connection is released even when
         // LoadWith*Async throws (the caller's exception still propagates).
         var openedHere = false;
-        if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
-        {
-            await _connection.OpenAsync(token).ConfigureAwait(false);
-            openedHere = true;
-        }
 
         try
         {
+            // Opened inside the try so a failed open (bad host, cancelled) still disposes the
+            // connection this loader created.
+            if ((_ownsConnection || ManageConnection) && _connection.State != ConnectionState.Open)
+            {
+                await _connection.OpenAsync(token).ConfigureAwait(false);
+                openedHere = true;
+            }
+
             if (ValidateSchemaOnStart)
             {
-                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
+                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, _callerTransaction, token).ConfigureAwait(false);
             }
 
             if (_ownsTransaction)
@@ -852,23 +888,35 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         }
         finally
         {
-            if (_ownsConnection)
-            {
+            // Freeze the clock so a later report does not count idle time.
+            _stopwatch.Stop();
+
+            await ReleaseConnectionAsync(openedHere).ConfigureAwait(false);
+        }
+    }
+
+
+
+    // Owned connection: dispose it. Caller's connection opened here (ManageConnection): close it,
+    // never dispose it. Otherwise leave it alone.
+    private async Task ReleaseConnectionAsync(bool openedHere)
+    {
+        if (_ownsConnection)
+        {
 #if NET5_0_OR_GREATER
-                await _connection.DisposeAsync().ConfigureAwait(false);
+            await _connection.DisposeAsync().ConfigureAwait(false);
 #else
-                _connection.Dispose();
+            _connection.Dispose();
 #endif
-            }
-            else if (openedHere)
-            {
+        }
+        else if (openedHere)
+        {
 #if NET5_0_OR_GREATER
-                await _connection.CloseAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 #else
-                _connection.Close();
-                await Task.CompletedTask.ConfigureAwait(false);
+            _connection.Close();
+            await Task.CompletedTask.ConfigureAwait(false);
 #endif
-            }
         }
     }
 
@@ -1111,9 +1159,49 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
 
+    /// <summary>
+    /// Index of the last <c>VALUES</c> that is the keyword itself: a whole word, not the tail of an
+    /// identifier, a quoted identifier or a parameter name (<c>@AllowedValues</c>, <c>[Values]</c>,
+    /// <c>t.Values</c>). <c>-1</c> when there is none.
+    /// </summary>
+    private static int FindValuesKeyword(string commandText)
+    {
+        const string keyword = "VALUES";
+        var idx = commandText.Length;
+        while (idx > 0)
+        {
+            idx = commandText.LastIndexOf(keyword, idx - 1, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
+            {
+                return -1;
+            }
+
+            var end = idx + keyword.Length;
+            var before = idx == 0 ? ' ' : commandText[idx - 1];
+            var after = end >= commandText.Length ? ' ' : commandText[end];
+            if (!IsIdentifierPart(before) && !IsIdentifierPart(after))
+            {
+                return idx;
+            }
+        }
+
+        return -1;
+    }
+
+
+
+    // Characters that, next to VALUES, mean it is part of a longer name rather than the keyword:
+    // identifier characters, parameter prefixes, member access and identifier quotes.
+    private static bool IsIdentifierPart(char c)
+    {
+        return char.IsLetterOrDigit(c) || c is '_' or '@' or ':' or '?' or '$' or '#' or '.' or '"' or '[' or ']' or '`';
+    }
+
+
+
     private static string ExtractInsertPrefix(string commandText, out string template)
     {
-        var idx = commandText.LastIndexOf("VALUES", StringComparison.OrdinalIgnoreCase);
+        var idx = FindValuesKeyword(commandText);
         if (idx < 0)
         {
             throw new InvalidOperationException
@@ -1212,6 +1300,32 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
 
 
+    // Index just past the string literal starting at `start` ('' is an escaped quote); the end of the
+    // text when the literal is unterminated.
+    private static int SkipStringLiteral(string text, int start)
+    {
+        var i = start + 1;
+        while (i < text.Length)
+        {
+            if (text[i] == '\'')
+            {
+                if (i + 1 < text.Length && text[i + 1] == '\'')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                return i + 1;
+            }
+
+            i++;
+        }
+
+        return text.Length;
+    }
+
+
+
     private static TemplateParams ExtractTemplateParamNames(string template)
     {
         // `while` rather than `for` — the loop intentionally jumps the cursor past
@@ -1222,11 +1336,30 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         var i = 0;
         while (i < template.Length)
         {
+            if (template[i] == '\'')
+            {
+                i = SkipStringLiteral(template, i);
+                continue;
+            }
+
             if (template[i] != '@')
             {
                 i++;
                 continue;
             }
+
+            // @@name is a system variable (@@IDENTITY, @@ROWCOUNT), not a parameter.
+            if (i + 1 < template.Length && template[i + 1] == '@')
+            {
+                i += 2;
+                while (i < template.Length && (char.IsLetterOrDigit(template[i]) || template[i] == '_'))
+                {
+                    i++;
+                }
+
+                continue;
+            }
+
             var tokenStart = i;
             var start = i + 1;
             var end = start;
@@ -1514,6 +1647,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     /// <c>InsertBatchSize</c> is above 1, otherwise the reflection parameter binder when that
     /// binder is in use. Built once per load, not once per commit chunk (#665).
     /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// <c>InsertBatchSize</c> is above 1 and the VALUES template has no <c>@name</c> parameters.
+    /// </exception>
     private ExecutionPlan CreateExecutionPlan()
     {
         if (_insertBatchSize > 1)
@@ -1521,6 +1657,16 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             var prefix = ExtractInsertPrefix(_commandText, out var template);
             var templateParams = ExtractTemplateParamNames(template);
             var paramNames = templateParams.Names;
+            if (paramNames.Count == 0)
+            {
+                throw new InvalidOperationException
+                (
+                    "InsertBatchSize > 1 found no '@name' parameters in the VALUES template. Only '@' " +
+                    "parameter markers are supported for multi-row inserts (not ':name' or '?'). " +
+                    $"Template: {template}"
+                );
+            }
+
             var multiRowInsert = new MultiRowInsertPlan
             (
                 prefix,
@@ -1677,6 +1823,9 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         (
             ErrorHandling == RowErrorHandling.Skip
             && ex is not OperationCanceledException
+            // A failure that took the connection down (dropped connection, fatal error) is not a
+            // row failure: carrying on would report every remaining row as failed. Let it abort.
+            && _connection.State == ConnectionState.Open
         )
         {
             CurrentErrorCount++;

@@ -169,13 +169,13 @@ runnable project.
 | Parameterized Queries | Pass named parameters via `Dictionary<string, object>` |
 | Output Parameters | `EtlParameter<T>` with `Direction = Output` / `InputOutput`; read `.Value` after the extract |
 | Server-side Paging | `ServerLimit` / `ServerOffset` with dialect presets in `PagingClauseTemplates` |
-| Total Count | `CountAsync` and `TotalCountQuery` populate `DbReport.TotalItemCount` |
+| Total Count | `TotalCountQuery` populates `DbReport.TotalItemCount` during an extract; `CountAsync` returns the count without touching the report |
 | Column Mapping | Dapper integration with `[Column]` attribute support via `ColumnAttributeTypeMapper` |
 | Transaction Support | Caller-managed or auto-managed (commit on success, rollback on failure) |
 | Progress Reporting | `DbReport` includes item count, skipped count, command text, and elapsed time |
 | Skip & Limit | `SkipItemCount` and `MaximumItemCount` for pagination |
 | Batched Loading | `BatchSize` (N executes per round trip), `InsertBatchSize` (one multi-row `INSERT … VALUES`), `BatchCommitSize` (commit every N rows) |
-| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default) |
+| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default). On PostgreSQL/CockroachDB a failed statement aborts the transaction, so also set `BatchCommitSize = 1` (one transaction per row) |
 | Dry Run | `IsDryRun` runs the pipeline without executing writes |
 | Schema Validation | `DbSchemaValidator` and `ValidateSchemaOnStart` check the mapped table and columns up front |
 | Source Generator | `[DbTable]` / `[DbColumn]` / `[DbKey]` emit `Insert`, `Select`, `Update`, `Delete` SQL and a reflection-free binder at compile time |
