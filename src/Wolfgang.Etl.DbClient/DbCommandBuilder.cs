@@ -133,10 +133,14 @@ internal static class DbCommandBuilder
         //   that also have [NotMapped]. BuildUpdate needs this to distinguish
         //   "no [Key] anywhere" from "[Key] exists but all are [NotMapped]".
         // - `autoIdentityKeyPropertyNames` — subset that is BOTH [Key] AND
-        //   [DatabaseGenerated(Identity)]; excluded from INSERT.
+        //   [DatabaseGenerated(Identity)].
+        // - `generatedPropertyNames` — every mapped property the database generates
+        //   ([DatabaseGenerated(Identity)] or (Computed)), key or not. These are never
+        //   written by INSERT, and are not in the UPDATE SET list; they stay in SELECT.
         var columns = new List<ColumnMapping>(capacity: props.Length);
         var anyKeyPropertyNames = new HashSet<string>(StringComparer.Ordinal);
         var autoIdentityKeyPropertyNames = new HashSet<string>(StringComparer.Ordinal);
+        var generatedPropertyNames = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var prop in props)
         {
@@ -156,13 +160,15 @@ internal static class DbCommandBuilder
             var columnName = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
             columns.Add(new ColumnMapping(columnName, prop.Name));
 
-            if (isKey)
+            var option = prop.GetCustomAttribute<DatabaseGeneratedAttribute>()?.DatabaseGeneratedOption;
+            if (option is DatabaseGeneratedOption.Identity or DatabaseGeneratedOption.Computed)
             {
-                var dbGenerated = prop.GetCustomAttribute<DatabaseGeneratedAttribute>();
-                if (dbGenerated?.DatabaseGeneratedOption == DatabaseGeneratedOption.Identity)
-                {
-                    autoIdentityKeyPropertyNames.Add(prop.Name);
-                }
+                generatedPropertyNames.Add(prop.Name);
+            }
+
+            if (isKey && option == DatabaseGeneratedOption.Identity)
+            {
+                autoIdentityKeyPropertyNames.Add(prop.Name);
             }
         }
 
@@ -172,8 +178,8 @@ internal static class DbCommandBuilder
             // BuildInsert / BuildUpdate validate column counts and may throw. Wrap in
             // Lazy so a type that only ever calls BuildSelect (e.g. one with all
             // [NotMapped] properties) doesn't surface the INSERT failure at cache time.
-            insertSql: new Lazy<string>(() => BuildInsertSql(type, table, columns, autoIdentityKeyPropertyNames)),
-            updateSql: new Lazy<string>(() => BuildUpdateSql(type, table, columns, anyKeyPropertyNames))
+            insertSql: new Lazy<string>(() => BuildInsertSql(type, table, columns, autoIdentityKeyPropertyNames, generatedPropertyNames)),
+            updateSql: new Lazy<string>(() => BuildUpdateSql(type, table, columns, anyKeyPropertyNames, generatedPropertyNames))
         );
     }
 #pragma warning restore S3398
@@ -205,17 +211,22 @@ internal static class DbCommandBuilder
         Type type,
         string table,
         List<ColumnMapping> columns,
-        HashSet<string> autoIdentityKeyPropertyNames
+        HashSet<string> autoIdentityKeyPropertyNames,
+        HashSet<string> generatedPropertyNames
     )
     {
-        // Exclude [Key] + [DatabaseGenerated(Identity)] columns from INSERT.
-        // Non-identity keys (e.g., composite keys) are included since they're
-        // user-assigned values.
-        List<ColumnMapping> insertColumns = autoIdentityKeyPropertyNames.Count > 0
-            ? columns.Where(c => !autoIdentityKeyPropertyNames.Contains(c.PropertyName)).ToList()
+        // Exclude database-generated columns ([DatabaseGenerated] Identity or Computed, key
+        // or not) from INSERT; the database supplies them and rejects an explicit value.
+        // Non-generated keys (e.g., composite keys) are included since they're user-assigned.
+        List<ColumnMapping> insertColumns = generatedPropertyNames.Count > 0
+            ? columns.Where(c => !generatedPropertyNames.Contains(c.PropertyName)).ToList()
             : columns;
 
-        if (insertColumns.Count == 0)
+        // When the only mapped columns are identity keys, keep the long-standing fallback of
+        // writing them rather than emitting an empty column list. A record whose only mapped
+        // columns are Computed (or non-key Identity) has nothing writable: that falls through
+        // to the "no mapped columns" error below.
+        if (insertColumns.Count == 0 && autoIdentityKeyPropertyNames.Count == columns.Count)
         {
             insertColumns = columns;
         }
@@ -242,7 +253,8 @@ internal static class DbCommandBuilder
         Type type,
         string table,
         List<ColumnMapping> columns,
-        HashSet<string> keyPropertyNames
+        HashSet<string> keyPropertyNames,
+        HashSet<string> generatedPropertyNames
     )
     {
         if (keyPropertyNames.Count == 0)
@@ -264,7 +276,9 @@ internal static class DbCommandBuilder
         }
 
         var whereColumns = columns.Where(c => keyPropertyNames.Contains(c.PropertyName)).ToList();
-        var setColumns = columns.Where(c => !keyPropertyNames.Contains(c.PropertyName)).ToList();
+        var setColumns = columns
+            .Where(c => !keyPropertyNames.Contains(c.PropertyName) && !generatedPropertyNames.Contains(c.PropertyName))
+            .ToList();
 
         if (whereColumns.Count == 0)
         {
