@@ -456,7 +456,9 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     /// <remarks>
     /// Maps onto Dapper's <c>commandTimeout</c> parameter (an <c>int?</c> count
     /// of seconds). Fractional seconds in the supplied <see cref="TimeSpan"/>
-    /// are truncated. A negative <see cref="TimeSpan"/> is rejected.
+    /// are rounded up, so any positive timeout is at least one second (ADO.NET treats 0 as "wait
+    /// indefinitely"), and values beyond <see cref="int.MaxValue"/> seconds are clamped.
+    /// <see cref="TimeSpan.Zero"/> is passed through as 0, which providers read as no timeout. A negative <see cref="TimeSpan"/> is rejected.
     /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// The assigned value is negative.
@@ -487,9 +489,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
     // Dapper's commandTimeout parameter is `int?` seconds. Centralized here so
     // every call site uses the same conversion (and so future "0 = infinite"
     // semantics, if needed, only have to flip in one place).
-    private int? CommandTimeoutSeconds => _commandTimeout.HasValue
-        ? (int)_commandTimeout.Value.TotalSeconds
-        : null;
+    private int? CommandTimeoutSeconds => CommandTimeoutConverter.ToSeconds(_commandTimeout);
 
 
 
