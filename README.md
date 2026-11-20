@@ -274,6 +274,10 @@ This library uses **`BannedSymbols.txt`** to prohibit synchronous APIs and enfor
   installs the .NET Core 3.1, 5.0, 6.0, 7.0, 8.0 and 9.0 **SDKs** via `actions/setup-dotnet`
   (each brings its own runtime); locally the matching runtimes are enough. Building alone
   needs neither.
+- CI test matrix: five legs. Stage 1 linux-x64 (.NET 5.0-10.0), Stage 2 windows-x64
+  (.NET 5.0-10.0 and .NET Framework 4.6.2-4.8.1), Stage 3 macos-arm64, Stage 4 linux-arm64
+  (`ubuntu-24.04-arm`) and Stage 5 windows-arm64 (`windows-11-arm`); the last three run
+  net6.0 and later. The Testcontainers integration suites run on Linux x64 only.
 - Optional: [PowerShell Core](https://github.com/PowerShell/PowerShell) for formatting scripts
 
 ### Build Steps
