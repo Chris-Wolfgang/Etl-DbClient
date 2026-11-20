@@ -44,12 +44,12 @@ public sealed class DbExtractorIdempotencyContractTests
 
 
 /// <summary>
-/// Adopts <see cref="IdempotentLoaderContractTests{TSut, TItem}"/> for
+/// Adopts <see cref="IdempotentLoaderContractTests{TSut, TItem, TProgress}"/> for
 /// <see cref="DbLoader{TRecord}"/>: loading twice through the same instance processes every
 /// item both times and resets <c>CurrentItemCount</c> between runs.
 /// </summary>
 public sealed class DbLoaderIdempotencyContractTests
-    : IdempotentLoaderContractTests<DbLoader<ContractRecord>, ContractRecord>
+    : IdempotentLoaderContractTests<DbLoader<ContractRecord>, ContractRecord, DbReport>
 {
     /// <inheritdoc/>
     protected override DbLoader<ContractRecord> CreateSut(int itemCount)
@@ -78,10 +78,4 @@ public sealed class DbLoaderIdempotencyContractTests
     // collected-items check does not apply.
     /// <inheritdoc/>
     protected override IReadOnlyList<ContractRecord>? TryGetLoadedItems(DbLoader<ContractRecord> sut) => null;
-
-
-
-    // DbLoader<T> reports DbReport, not Report, so the default read does not apply.
-    /// <inheritdoc/>
-    protected override int GetCurrentItemCount(DbLoader<ContractRecord> sut) => sut.CurrentItemCount;
 }
