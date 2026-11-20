@@ -845,7 +845,7 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
         {
             if (ValidateSchemaOnStart)
             {
-                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, token).ConfigureAwait(false);
+                await DbSchemaValidator.ValidateAsync<TRecord>(_connection, _transaction, token).ConfigureAwait(false);
             }
 
             ApplyServerPaging(_commandText, Parameters ?? _dynamicParameters, out var commandText, out var param);

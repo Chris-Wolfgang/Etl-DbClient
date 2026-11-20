@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
@@ -195,5 +196,58 @@ public class ValidateSchemaOnStartTests
             yield return item;
             await Task.Yield();
         }
+    }
+
+
+    // ------------------------------------------------------------------
+    // Caller-supplied transaction: the probe must run inside it
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task Extractor_ValidateSchemaOnStart_true_with_a_caller_transaction_runs_the_probe_inside_it()
+    {
+        using var conn = CreateSeededConnection();
+        using var transaction = conn.BeginTransaction();
+        var sut = new DbExtractor<Widget>
+        (
+            conn,
+            "SELECT id AS Id, name AS Name, price AS Price FROM widget",
+            new Dictionary<string, object>(),
+            options: null,
+            transaction
+        )
+        {
+            ValidateSchemaOnStart = true,
+        };
+
+        var rows = new List<Widget>();
+        await foreach (var row in sut.ExtractAsync())
+        {
+            rows.Add(row);
+        }
+
+        Assert.Equal(2, rows.Count);
+    }
+
+
+
+    [Fact]
+    public async Task Loader_ValidateSchemaOnStart_true_with_a_caller_transaction_runs_the_probe_inside_it()
+    {
+        using var conn = CreateSeededConnection();
+        using var transaction = conn.BeginTransaction();
+        var sut = new DbLoader<Widget>
+        (
+            conn,
+            "INSERT INTO widget (id, name, price) VALUES (@Id, @Name, @Price)",
+            transaction
+        )
+        {
+            ValidateSchemaOnStart = true,
+        };
+
+        await sut.LoadAsync(new[] { new Widget { Id = 3, Name = "c", Price = 3m } }.ToAsyncEnumerable());
+
+        Assert.Equal(1, sut.CurrentItemCount);
     }
 }
