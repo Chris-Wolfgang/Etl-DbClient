@@ -1173,7 +1173,15 @@ public class DbExtractor<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRec
                 break;
 
             default:
-                var dynamic = param as DynamicParameters ?? new DynamicParameters();
+                // Never add to the caller's own DynamicParameters: they may reuse it for the
+                // next page, where the generated names would look like a collision. A copy
+                // shares the caller's parameter entries, so output values still reach them.
+                var dynamic = new DynamicParameters();
+                if (param is DynamicParameters callerParameters)
+                {
+                    dynamic.AddDynamicParams(callerParameters);
+                }
+
                 dynamic.Add("@PageOffset", serverOffset);
                 dynamic.Add("@PageLimit", ServerLimit.Value);
                 pagedParam = dynamic;
