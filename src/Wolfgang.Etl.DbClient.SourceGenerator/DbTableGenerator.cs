@@ -138,7 +138,6 @@ public sealed class DbTableGenerator : IIncrementalGenerator
         return new TableModel
         (
             type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
-            type.Name,
             KindKeyword(type),
             NameWithTypeParameters(type),
             string.Join("|", containers),
@@ -347,7 +346,6 @@ public sealed class DbTableGenerator : IIncrementalGenerator
     private sealed record TableModel
     (
         string? Namespace,
-        string TypeName,
         string Kind,
         string TypeDeclaration,
         string Containers,
