@@ -72,6 +72,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     private readonly bool _ownsTransaction;
     private readonly ILogger _logger;
     private readonly Stopwatch _stopwatch = new();
+
+    // The parameter binder or multi-row INSERT plan for the load in progress. Built by the
+    // first ExecuteItemsAsync call of a load and reused by every later commit chunk of the
+    // same load; cleared when a load starts, so a later load sees the current settings.
+    private ExecutionPlan? _executionPlan;
     private int _batchSize = 1;
 
 
@@ -813,6 +818,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         token.ThrowIfCancellationRequested();
         _stopwatch.Restart();
         CurrentErrorCount = 0;
+        _executionPlan = null;
         LogLoadingStarted();
 
         // Owned-connection ctor path: open before the first execute, dispose at
@@ -995,17 +1001,11 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
     private async Task ExecuteItemsMultiRowInsertAsync
     (
         IAsyncEnumerable<TRecord> items,
+        MultiRowInsertPlan plan,
         DbTransaction? transaction,
         CancellationToken token
     )
     {
-        var prefix = ExtractInsertPrefix(_commandText, out var template);
-        var templateParams = ExtractTemplateParamNames(template);
-        var paramNames = templateParams.Names;
-        var paramSpans = templateParams.Spans;
-        var getters = GetPropertyGetters(GetMappedProperties(paramNames));
-        var parameterKeys = BuildRowParameterKeys(paramNames, _insertBatchSize);
-
         var buffer = new List<TRecord>(_insertBatchSize);
         await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
         {
@@ -1028,14 +1028,14 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
             if (buffer.Count >= _insertBatchSize)
             {
-                await FlushMultiRowInsertAsync(prefix, template, parameterKeys, paramSpans, getters, buffer, transaction, token).ConfigureAwait(false);
+                await FlushMultiRowInsertAsync(plan, buffer, transaction, token).ConfigureAwait(false);
                 buffer.Clear();
             }
         }
 
         if (buffer.Count > 0)
         {
-            await FlushMultiRowInsertAsync(prefix, template, parameterKeys, paramSpans, getters, buffer, transaction, token).ConfigureAwait(false);
+            await FlushMultiRowInsertAsync(plan, buffer, transaction, token).ConfigureAwait(false);
         }
     }
 
@@ -1043,11 +1043,7 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
     private async Task FlushMultiRowInsertAsync
     (
-        string prefix,
-        string template,
-        string[] parameterKeys,
-        IReadOnlyList<ParamSpan> paramSpans,
-        Func<TRecord, object?>[] getters,
+        MultiRowInsertPlan plan,
         List<TRecord> batch,
         DbTransaction? transaction,
         CancellationToken token
@@ -1062,6 +1058,12 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             }
             return;
         }
+
+        var prefix = plan.Prefix;
+        var template = plan.Template;
+        var paramSpans = plan.ParamSpans;
+        var parameterKeys = plan.ParameterKeys;
+        var getters = plan.Getters;
 
         var sb = new System.Text.StringBuilder(prefix.Length + batch.Count * (template.Length + 8));
         sb.Append(prefix);
@@ -1492,16 +1494,115 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
         CancellationToken token
     )
     {
-        if (_insertBatchSize > 1)
+        var plan = _executionPlan ??= CreateExecutionPlan();
+        if (plan.MultiRowInsert != null)
         {
-            return ExecuteItemsMultiRowInsertAsync(items, transaction, token);
+            return ExecuteItemsMultiRowInsertAsync(items, plan.MultiRowInsert, transaction, token);
         }
 
-        var binder = UseReflectionParameterBinder ? CreateReflectionParameterBinder() : null;
+        var binder = plan.Binder;
 
         return _batchSize <= 1
             ? ExecuteItemsPerRowAsync(items, binder, transaction, token)
             : ExecuteItemsBatchedAsync(items, binder, transaction, token);
+    }
+
+
+
+    /// <summary>
+    /// Builds what every execute of the current load shares: the multi-row INSERT plan when
+    /// <c>InsertBatchSize</c> is above 1, otherwise the reflection parameter binder when that
+    /// binder is in use. Built once per load, not once per commit chunk (#665).
+    /// </summary>
+    private ExecutionPlan CreateExecutionPlan()
+    {
+        if (_insertBatchSize > 1)
+        {
+            var prefix = ExtractInsertPrefix(_commandText, out var template);
+            var templateParams = ExtractTemplateParamNames(template);
+            var paramNames = templateParams.Names;
+            var multiRowInsert = new MultiRowInsertPlan
+            (
+                prefix,
+                template,
+                templateParams.Spans,
+                GetPropertyGetters(GetMappedProperties(paramNames)),
+                BuildRowParameterKeys(paramNames, _insertBatchSize)
+            );
+
+            return new ExecutionPlan(binder: null, multiRowInsert);
+        }
+
+        return new ExecutionPlan
+        (
+            UseReflectionParameterBinder ? CreateReflectionParameterBinder() : null,
+            multiRowInsert: null
+        );
+    }
+
+
+
+    /// <summary>The per-load state <see cref="CreateExecutionPlan"/> builds.</summary>
+    private sealed class ExecutionPlan
+    {
+        internal ExecutionPlan(ReflectionParameterBinder? binder, MultiRowInsertPlan? multiRowInsert)
+        {
+            Binder = binder;
+            MultiRowInsert = multiRowInsert;
+        }
+
+
+
+        internal ReflectionParameterBinder? Binder { get; }
+
+
+
+        internal MultiRowInsertPlan? MultiRowInsert { get; }
+    }
+
+
+
+    /// <summary>
+    /// The scanned INSERT template, property getters and row-numbered parameter names a
+    /// multi-row INSERT load reuses for every flush.
+    /// </summary>
+    private sealed class MultiRowInsertPlan
+    {
+        internal MultiRowInsertPlan
+        (
+            string prefix,
+            string template,
+            IReadOnlyList<ParamSpan> paramSpans,
+            Func<TRecord, object?>[] getters,
+            string[] parameterKeys
+        )
+        {
+            Prefix = prefix;
+            Template = template;
+            ParamSpans = paramSpans;
+            Getters = getters;
+            ParameterKeys = parameterKeys;
+        }
+
+
+
+        internal string Prefix { get; }
+
+
+
+        internal string Template { get; }
+
+
+
+        internal IReadOnlyList<ParamSpan> ParamSpans { get; }
+
+
+
+        internal Func<TRecord, object?>[] Getters { get; }
+
+
+
+        internal string[] ParameterKeys { get; }
     }
 
 
