@@ -83,5 +83,5 @@ public sealed class DbLoaderIdempotencyContractTests
 
     // DbLoader<T> reports DbReport, not Report, so the default read does not apply.
     /// <inheritdoc/>
-    protected override int GetCurrentItemCount(DbLoader<ContractRecord> sut) => sut?.CurrentItemCount ?? 0;
+    protected override int GetCurrentItemCount(DbLoader<ContractRecord> sut) => sut.CurrentItemCount;
 }
