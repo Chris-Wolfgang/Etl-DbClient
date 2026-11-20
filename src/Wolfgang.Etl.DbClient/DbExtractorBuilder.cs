@@ -16,7 +16,7 @@ namespace Wolfgang.Etl.DbClient;
 /// configured extractor and delegate to it.
 /// </summary>
 /// <remarks>
-/// The <see cref="EtlPipelineSourceExtensions.From{T, TProgress}"/> materialization
+/// The <see cref="EtlPipelineSourceExtensions.From{T, TProgress}(EtlPipeline, ExtractorBase{T, TProgress})"/> materialization
 /// wraps <c>extractor.ExtractAsync(token)</c> in a delegate read at enumeration
 /// time, so setters called on this builder still take effect even after a
 /// pipeline operator has consumed the builder — the extractor instance is the

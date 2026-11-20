@@ -57,6 +57,11 @@ internal sealed class EtlParameterSet : SqlMapper.IParameterCallbacks
             throw new ArgumentNullException(nameof(command));
         }
 
+        // The set is reused for every command it is bound to (the data query, then the count
+        // query), so start each binding clean or write-back pairs from an earlier command
+        // would be applied again with that command's stale parameter values.
+        _writeBack.Clear();
+
         foreach (var entry in Entries())
         {
             switch (entry.Value)

@@ -114,7 +114,7 @@ public sealed record DbLoaderOptions : LoaderOptions
 
 
     /// <summary>
-    /// Gets the number of row failures tolerated before the load aborts. Defaults to <c>0</c>.
+    /// Gets the row-failure count at which the load aborts (the load aborts once this many rows have failed, so <c>1</c> tolerates none). Defaults to <c>0</c>, meaning unlimited.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">
     /// The assigned value is negative.
@@ -141,7 +141,7 @@ public sealed record DbLoaderOptions : LoaderOptions
 
 
     /// <summary>
-    /// Gets how many rows are written between transaction commits. Defaults to <c>0</c>,
+    /// Gets how many source items are read between transaction commits (items consumed by <c>SkipItemCount</c> and rows skipped by <c>RowErrorHandling.Skip</c> count too). Defaults to <c>0</c>,
     /// meaning a single commit at the end.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">

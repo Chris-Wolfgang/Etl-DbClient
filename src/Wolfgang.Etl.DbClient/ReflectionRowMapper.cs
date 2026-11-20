@@ -74,7 +74,8 @@ internal static class ReflectionRowMapper<[DynamicallyAccessedMembers(RecordMemb
         }
 
         var constructor = FindColumnConstructor(type, columnNames, out var ordinals);
-        return r => Construct(r, constructor, ordinals);
+        var parameterTypes = Array.ConvertAll(constructor.GetParameters(), p => p.ParameterType);
+        return r => Construct(r, constructor, ordinals, parameterTypes);
     }
 
 
@@ -107,15 +108,14 @@ internal static class ReflectionRowMapper<[DynamicallyAccessedMembers(RecordMemb
 
 
 
-    private static TRecord Construct(DbDataReader reader, ConstructorInfo constructor, int[] ordinals)
+    private static TRecord Construct(DbDataReader reader, ConstructorInfo constructor, int[] ordinals, Type[] parameterTypes)
     {
-        var parameters = constructor.GetParameters();
-        var args = new object?[parameters.Length];
-        for (var p = 0; p < parameters.Length; p++)
+        var args = new object?[parameterTypes.Length];
+        for (var p = 0; p < parameterTypes.Length; p++)
         {
             var ordinal = ordinals[p];
             var value = reader.GetValue(ordinal);
-            var parameterType = parameters[p].ParameterType;
+            var parameterType = parameterTypes[p];
             args[p] = value is DBNull
                 ? DefaultOf(parameterType)
                 : ConvertColumn(reader, ordinal, value, parameterType);

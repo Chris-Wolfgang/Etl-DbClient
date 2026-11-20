@@ -1,6 +1,6 @@
 # Reproducible-build guarantee
 
-`Wolfgang.Etl.DbClient` targets **reproducible builds**: building the same tagged commit twice — same source, same SDK version, different runner OS — should produce byte-identical `.dll` / `.pdb` outputs, and CI fails when the Linux and Windows builds differ (see [Gate mode](#gate-mode-blocking) below and [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
+`Wolfgang.Etl.DbClient` targets **reproducible builds**: building the same tagged commit twice with the same SDK produces byte-identical `.dll` / `.pdb` outputs and package entries, and CI fails when two Ubuntu builds of a pull request differ. Linux-versus-Windows identity is reported on every pull request, not gated (see [Gate mode](#gate-mode) below and [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
 
 The guarantee covers the **assemblies and symbols**, not the package files: NuGet stamps the pack time into every zip entry, so two packs of the same commit, even on the same machine, give different `.nupkg` / `.snupkg` bytes while the `.dll` / `.pdb` inside them are identical.
 
@@ -31,16 +31,16 @@ Two more inputs differed per OS and are removed explicitly:
 
 ## Automated verification
 
-`.github/workflows/reproducible-build.yaml` runs on every PR that touches `src/**`, `Directory.Build.*`, or the workflow itself. It:
+`.github/workflows/reproducible-build.yaml` is the fleet's canonical copy (synced from repo-template; do not edit it here). It runs on every pull request to `main` and on `workflow_dispatch`:
 
-1. Builds `src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj` on **`ubuntu-latest`** and **`windows-latest`** in parallel — same source, same SDK version, different OS.
-2. Computes `sha256sum` over the **produced own-binary artifacts** (`Wolfgang.Etl.DbClient.dll` + `.pdb` per TFM; the packed `.nupkg` / `.snupkg` digests are listed too, for reference only). Transitive-dep DLLs from the runtime pack are deliberately excluded — those aren't part of this repo's reproducibility claim.
-3. Uploads each per-OS manifest as an artifact for 30 days.
-4. `diff -u`s the `.dll` / `.pdb` lines of the two manifests. The result is posted to the Step Summary tab.
+1. **`Reproducible build`** (`ubuntu-latest`, the SDK from `global.json`): discovers every packable project under `src/` through MSBuild's `IsPackable`, packs each one with `ContinuousIntegrationBuild=true` and `Deterministic=true`, runs `git clean -xffd`, and packs again from cold.
+2. It hashes every `.dll` / `.pdb` in each project's `bin/Release/<tfm>/` and every entry inside each `.nupkg` / `.snupkg`, and `diff -u`s the two manifests. The package files themselves are not compared, because NuGet stamps the pack time into each zip entry.
+3. It uploads the Ubuntu manifest (`repro-manifest-ubuntu`).
+4. **`Reproducible build (Windows report)`** (`windows-latest`) packs the same commit once and diffs its hashes against the Ubuntu manifest. The result goes to the job summary.
 
-### Gate mode: blocking
+### Gate mode
 
-Any difference in a `.dll` / `.pdb` digest between the two OSes fails the Compare step, as does a manifest with no assembly digests at all. `.nupkg` / `.snupkg` lines are left out of the comparison (see the top of this page). If the gate fails, diff the per-TFM PDB documents and referenced-assembly records first: a generated source with a different newline, or a different reference assembly, were the two causes [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255) removed.
+The Ubuntu double build is the gate: any difference between the two manifests fails `Reproducible build`. The Windows job reports cross-OS differences and never fails the workflow. If it reports a difference, diff the per-TFM PDB documents and referenced-assembly records first: a generated source with a different newline, or a different reference assembly, were the two causes [#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255) removed.
 
 ## Per-release manifest
 
