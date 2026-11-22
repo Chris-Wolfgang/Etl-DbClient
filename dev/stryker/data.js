@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794750446609,
+  "lastUpdate": 1795357580522,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "Mutation score": [
@@ -161,6 +161,33 @@ window.BENCHMARK_DATA = {
           {
             "name": "Mutation score (tests/Wolfgang.Etl.DbClient.Tests.Unit)",
             "value": 88.53,
+            "unit": "%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang",
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "f2a41dcd8200d3b2197aea746537c38aab0cf540",
+          "message": "refactor(sourcegen): drop the unused TypeName from the generator's TableModel (#696)\n\nTableModel.TypeName was set but never read (Emit uses TypeDeclaration and\nHintName, which already carry the type name), so InspectCode reported\nNotAccessedPositionalProperty.Local (code-scanning alert 323). Removing it\nleaves the generated source unchanged and keeps the incremental cache key\ndistinct per type through TypeDeclaration, Containers and HintName.\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-20T23:15:17Z",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/f2a41dcd8200d3b2197aea746537c38aab0cf540"
+        },
+        "date": 1795357574063,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Mutation score (tests/Wolfgang.Etl.DbClient.Tests.Unit)",
+            "value": 86.72,
             "unit": "%"
           }
         ]
