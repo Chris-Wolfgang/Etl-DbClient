@@ -44,9 +44,11 @@ Every release of `Wolfgang.Etl.DbClient` ships a signed [SLSA build-provenance a
 plus a `reproducible-build-manifest.json` recording the sha256 of every
 `.nupkg` / `.snupkg` in that release, so you can confirm a published
 package actually came from this repo's release pipeline at the tagged
-commit. The library's `.dll` / `.pdb` reproduce byte-for-byte from source
-on Linux and Windows, and CI fails if they stop doing so
-([#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255)).
+commit. The library's `.dll` / `.pdb` and package entries reproduce
+byte-for-byte when the same commit is built twice, and CI fails if they stop
+doing so; Linux-versus-Windows identity is reported on every pull request
+([#255](https://github.com/Chris-Wolfgang/Etl-DbClient/issues/255),
+[docs/REPRODUCIBLE-BUILD.md](docs/REPRODUCIBLE-BUILD.md)).
 
 Third-party consumers can independently verify a published package —
 full recipe (rebuild from source, cross-check manifest, publish an
@@ -169,13 +171,13 @@ runnable project.
 | Parameterized Queries | Pass named parameters via `Dictionary<string, object>` |
 | Output Parameters | `EtlParameter<T>` with `Direction = Output` / `InputOutput`; read `.Value` after the extract |
 | Server-side Paging | `ServerLimit` / `ServerOffset` with dialect presets in `PagingClauseTemplates` |
-| Total Count | `CountAsync` and `TotalCountQuery` populate `DbReport.TotalItemCount` |
+| Total Count | `TotalCountQuery` populates `DbReport.TotalItemCount` during an extract; `CountAsync` returns the count without touching the report |
 | Column Mapping | Dapper integration with `[Column]` attribute support via `ColumnAttributeTypeMapper` |
 | Transaction Support | Caller-managed or auto-managed (commit on success, rollback on failure) |
 | Progress Reporting | `DbReport` includes item count, skipped count, command text, and elapsed time |
 | Skip & Limit | `SkipItemCount` and `MaximumItemCount` for pagination |
 | Batched Loading | `BatchSize` (N executes per round trip), `InsertBatchSize` (one multi-row `INSERT … VALUES`), `BatchCommitSize` (commit every N rows) |
-| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default) |
+| Row Error Handling | `RowErrorHandling.Skip` with the `RowFailed` event and a `MaxErrorCount` threshold, or abort (default). On PostgreSQL/CockroachDB a failed statement aborts the transaction, so also set `BatchCommitSize = 1` (one transaction per row) |
 | Dry Run | `IsDryRun` runs the pipeline without executing writes |
 | Schema Validation | `DbSchemaValidator` and `ValidateSchemaOnStart` check the mapped table and columns up front |
 | Source Generator | `[DbTable]` / `[DbColumn]` / `[DbKey]` emit `Insert`, `Select`, `Update`, `Delete` SQL and a reflection-free binder at compile time |
@@ -272,6 +274,10 @@ This library uses **`BannedSymbols.txt`** to prohibit synchronous APIs and enfor
   installs the .NET Core 3.1, 5.0, 6.0, 7.0, 8.0 and 9.0 **SDKs** via `actions/setup-dotnet`
   (each brings its own runtime); locally the matching runtimes are enough. Building alone
   needs neither.
+- CI test matrix: five legs. Stage 1 linux-x64 (.NET 5.0-10.0), Stage 2 windows-x64
+  (.NET 5.0-10.0 and .NET Framework 4.6.2-4.8.1), Stage 3 macos-arm64, Stage 4 linux-arm64
+  (`ubuntu-24.04-arm`) and Stage 5 windows-arm64 (`windows-11-arm`); the last three run
+  net6.0 and later. The Testcontainers integration suites run on Linux x64 only.
 - Optional: [PowerShell Core](https://github.com/PowerShell/PowerShell) for formatting scripts
 
 ### Build Steps

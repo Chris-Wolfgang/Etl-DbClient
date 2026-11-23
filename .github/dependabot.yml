@@ -11,6 +11,36 @@ updates:
       dotnet-dependencies:
         patterns:
           - "*"
+    ignore:
+      # Deliberate pins. Dependabot spends minutes of per-dependency evaluation on each of
+      # these every run (17 projects x 40 TFM slots, see #614) and could never open a
+      # mergeable PR for them; the pin reasons live next to the PackageReference.
+      #   xunit.runner.visualstudio: per-TFM-slot policy - 2.4.5 / 2.8.2 capped on
+      #   net462-net7 (runner 3.x drops those TFMs), 3.x on net8+; 4.x not yet verified
+      #   against xunit v2. Patch updates only.
+      - dependency-name: "xunit.runner.visualstudio"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      #   The source generator pins the lowest Roslyn it supports so it loads on older SDKs.
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp"
+      - dependency-name: "Microsoft.CodeAnalysis.Analyzers"
+      #   The library's dependency floor stays on the 10.x line until the fleet adopts net11;
+      #   a major here forces every consumer up with it.
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Bcl.*"
+        update-types: ["version-update:semver-major"]
+      #   Microsoft.Data.Sqlite 11.x is net10.0-only; the Unit tests run it on net462..net10.
+      - dependency-name: "Microsoft.Data.Sqlite"
+        update-types: ["version-update:semver-major"]
+      #   Microsoft.NET.Test.Sdk 18.x has no group below net8.0; the Unit project's
+      #   netcoreapp3.1 / net5 / net6 / net7 / net4x slots stay on 17.13.0.
+      - dependency-name: "Microsoft.NET.Test.Sdk"
+        update-types: ["version-update:semver-major"]
+      #   Npgsql 10.x's connection bootstrap is cut off by the pinned CockroachDB v24.3.5 image
+      #   (every CockroachDb integration test fails with EndOfStreamException); PostgreSQL itself
+      #   is fine. Moves together with the image pin in CockroachDbFixture.
+      - dependency-name: "Npgsql"
+        update-types: ["version-update:semver-major"]
 
   # Keep third-party GitHub Actions pinned in workflows up to date.
   - package-ecosystem: "github-actions"
@@ -44,13 +74,15 @@ updates:
       # semgrep.txt is compiled by uv with `--override semgrep-overrides.txt`, which forces newer
       # mcp / opentelemetry releases than semgrep itself pins (semgrep requires mcp==1.29.0 and
       # opentelemetry ~=1.37). Dependabot's pip resolver has no notion of an override, so every
-      # attempt to bump these three ends in dependency_file_not_resolvable and a red
-      # "Dependabot Updates" run (run 42162259409, 2026-11-06). They move only by regenerating
-      # (from .github/requirements):
+      # attempt to bump semgrep or any package in the overridden OpenTelemetry family fails
+      # (dependency_file_not_resolvable on run 42162259409, 2026-11-06; unknown_error on
+      # opentelemetry-semantic-conventions on repo-template run 42889886810, 2026-11-10, after
+      # only three names were ignored) and leaves a red "Dependabot Updates" run. The whole family
+      # is pinned in lockstep by the override file, so ignore it by prefix. They move only by
+      # regenerating (from .github/requirements):
       #   uv pip compile --universal --generate-hashes --upgrade --override semgrep-overrides.txt semgrep.in -o semgrep.txt
       - dependency-name: "semgrep"
-      - dependency-name: "opentelemetry-instrumentation-requests"
-      - dependency-name: "opentelemetry-instrumentation-threading"
+      - dependency-name: "opentelemetry-*"
       # semgrep imports mcp.server.fastmcp, which mcp 2.x removed: with mcp 2.3.0 in
       # semgrep-overrides.txt (Dependabot bump) semgrep crashes at import and the scan
       # writes no SARIF. Keep the override on the 1.x line; semgrep itself pins mcp 1.x.

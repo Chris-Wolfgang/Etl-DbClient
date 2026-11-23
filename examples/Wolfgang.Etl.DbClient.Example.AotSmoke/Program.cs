@@ -80,13 +80,14 @@ internal static class Program
 
         Console.WriteLine("[aot-smoke] extractor: CurrentItemCount=" + extractor.CurrentItemCount + " CurrentSkippedItemCount=" + extractor.CurrentSkippedItemCount);
 
-        // Loader construction + dry-run through the options record: exercise the
-        // loader ctor without needing to actually mutate the DB.
+        // A real load, not a dry run: Dapper builds its parameter binder for a POCO with
+        // Reflection.Emit, so under Native AOT the loader must bind through its own
+        // reflection binder or the first ExecuteAsync throws PlatformNotSupportedException.
         var loader = new DbLoader<Widget>
         (
             conn,
             "INSERT INTO widget (id, name, price) VALUES (@Id, @Name, @Price)",
-            new DbLoaderOptions { IsDryRun = true }
+            new DbLoaderOptions()
         );
 
         var toLoad = new[]
@@ -97,6 +98,15 @@ internal static class Program
 
         await loader.LoadAsync(ToAsyncEnumerable(toLoad));
         Console.WriteLine("[aot-smoke] loader: CurrentItemCount=" + loader.CurrentItemCount + " IsDryRun=" + loader.IsDryRun);
+
+        long tableCount;
+        await using (var count = conn.CreateCommand())
+        {
+            count.CommandText = "SELECT COUNT(*) FROM widget";
+            tableCount = (long)(await count.ExecuteScalarAsync() ?? 0L);
+        }
+
+        Console.WriteLine("[aot-smoke] widget rows after load = " + tableCount);
 
         // Attribute discovery — a common trim / AOT problem area for
         // libraries that route on custom attributes.
@@ -111,6 +121,12 @@ internal static class Program
         if (rowCount != 3)
         {
             Console.WriteLine("[aot-smoke] FAIL: expected 3 rows, got " + rowCount);
+            return 1;
+        }
+
+        if (loader.CurrentItemCount != toLoad.Length || tableCount != 3 + toLoad.Length)
+        {
+            Console.WriteLine("[aot-smoke] FAIL: expected the loader to write " + toLoad.Length + " rows (table " + (3 + toLoad.Length) + "), got CurrentItemCount=" + loader.CurrentItemCount + ", table " + tableCount);
             return 1;
         }
 

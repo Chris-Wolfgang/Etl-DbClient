@@ -51,6 +51,19 @@
     <PackageValidationBaselineVersion>0.12.0</PackageValidationBaselineVersion>
   </PropertyGroup>
 
+  <!-- Trim / AOT analyzers (repository baseline item 18). TRecord carries
+       [DynamicallyAccessedMembers(RecordMembers.Mapped)] on every public generic entry point, rows are
+       mapped and parameters bound without Reflection.Emit where the runtime cannot generate code
+       (ReflectionRowMapper, DbLoader's reflection parameter binder), and the AotSmoke example
+       publishes and runs under Native AOT. These flags turn on the trim, AOT and single-file
+       analyzers for the library and mark the assembly so a consumer's trimmer analyzes it instead
+       of treating it as opaque. They only apply to net8.0+ (the analyzers need a net6.0+ target;
+       net8.0 is where IsAotCompatible is supported). -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Unit" />
     <InternalsVisibleTo Include="Wolfgang.Etl.DbClient.Tests.Snapshots" />
@@ -80,17 +93,23 @@
     prevent NuGet from resolving an older transitive version — no runtime assembly is copied.
   -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.15" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0' OR '$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.11" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.15" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <!-- TableAttribute / ColumnAttribute live in System.ComponentModel.Annotations on these TFMs.
+       Wolfgang.Etl.Abstractions stopped bringing it in transitively at 0.27.0. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.66" />
-    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
-    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.0" />
+    <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
+    <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.28.0" />
   </ItemGroup>
 
   <!-- Source generator: built alongside the runtime, packed into the same
@@ -114,5 +133,20 @@
 
   <!-- Analyzer PackageReferences are centralized in Directory.Build.props -->
 
+  <!-- PublicApiAnalyzers: the public surface diverges by TFM. DbExtractorOptions / DbLoaderOptions derive from
+       Abstractions records, and their compiler-synthesized <Clone>$ has a covariant return (the derived type) on
+       net5.0+ but returns the base type on net462 / netstandard2.0. The shared PublicAPI.Shipped.txt (wired in
+       Directory.Build.props) holds the TFM-invariant surface; these per-TFM files carry the divergent entries.
+       Same layout as ETL-SqlBulkCopy and ETL-FixedWidth. -->
+  <ItemGroup>
+    <AdditionalFiles Include="PublicApi\modern\PublicAPI.Shipped.txt"
+                     Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+    <AdditionalFiles Include="PublicApi\modern\PublicAPI.Unshipped.txt"
+                     Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+    <AdditionalFiles Include="PublicApi\legacy\PublicAPI.Shipped.txt"
+                     Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+    <AdditionalFiles Include="PublicApi\legacy\PublicAPI.Unshipped.txt"
+                     Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))" />
+  </ItemGroup>
 
 </Project>

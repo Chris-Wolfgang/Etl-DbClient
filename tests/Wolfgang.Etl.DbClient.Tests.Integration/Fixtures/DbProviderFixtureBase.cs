@@ -3,7 +3,7 @@ using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
-using Docker.DotNet;
+using DotNet.Testcontainers.Configurations;
 using Xunit;
 
 namespace Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
@@ -52,28 +52,25 @@ public abstract class DbProviderFixtureBase : IAsyncLifetime, IDbProviderFixture
 
 
     /// <summary>
-    /// Pings the Docker daemon. Returns null when it answers, or a skip reason
-    /// naming the probe failure (TLS, permission, daemon-down, socket-path, ...)
-    /// so a "skipped" test still gives the reader enough to diagnose it.
+    /// Asks Testcontainers whether it found a usable Docker endpoint. Returns null
+    /// when it did, or a skip reason so a "skipped" test still tells the reader
+    /// why. Testcontainers runs the same probe it uses before starting a container
+    /// (DOCKER_HOST / TLS settings, the Unix socket, the Windows named pipe, a
+    /// rootless socket), each with a ping, and <see cref="IOperatingSystem.DockerEndpointAuthConfig"/>
+    /// is null when none of them answered.
     /// </summary>
     /// <remarks>
     /// Excluded from coverage: an infrastructure check whose failure branch only
     /// runs on a machine without Docker, which is never the case on CI runners.
     /// </remarks>
     [ExcludeFromCodeCoverage]
-    private static async Task<string?> DockerUnavailableReasonAsync(string providerName)
+    private static Task<string?> DockerUnavailableReasonAsync(string providerName)
     {
-        try
-        {
-            using var cfg = new DockerClientConfiguration();
-            using var client = cfg.CreateClient();
-            await client.System.PingAsync().ConfigureAwait(false);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            return $"{providerName} unavailable: Docker probe failed — {ex.GetType().Name}: {ex.Message}";
-        }
+        var reason = TestcontainersSettings.OS.DockerEndpointAuthConfig is null
+            ? $"{providerName} unavailable: Testcontainers found no Docker endpoint (DOCKER_HOST, Unix socket or Windows named pipe)."
+            : null;
+
+        return Task.FromResult(reason);
     }
 
 

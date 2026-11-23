@@ -76,7 +76,12 @@ public static class DbSchemaValidator
         try
         {
             using var cmd = connection.CreateCommand();
+            // S2077: the only formatted part is the table name, an identifier read from the record
+            // type's [Table] attribute (compile-time constant, never request data); identifiers cannot
+            // be bound as parameters. The query returns no rows, it only exposes the result schema.
+#pragma warning disable S2077
             cmd.CommandText = $"SELECT * FROM {table} WHERE 1 = 0";
+#pragma warning restore S2077
             cmd.CommandType = CommandType.Text;
             using var reader = TryExecuteReader(cmd, table);
             AssertColumnsPresent(reader, mappedColumns, table);
@@ -115,10 +120,37 @@ public static class DbSchemaValidator
     /// <exception cref="OperationCanceledException">
     /// <paramref name="cancellationToken"/> was canceled.
     /// </exception>
-    public static async Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
+    public static Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
     (
         DbConnection connection,
         CancellationToken cancellationToken = default
+    )
+        where TRecord : notnull
+    {
+        return ValidateAsync<TRecord>(connection, transaction: null, cancellationToken);
+    }
+
+
+
+    /// <summary>
+    /// Validates like <see cref="ValidateAsync{TRecord}(DbConnection, CancellationToken)"/>, running
+    /// the probe query inside <paramref name="transaction"/> when one is supplied. SQL Server
+    /// rejects a command that is not enlisted in the connection's pending local transaction, so the
+    /// extractor and loader pass the transaction they were given.
+    /// </summary>
+    /// <typeparam name="TRecord">The mapped record type.</typeparam>
+    /// <param name="connection">An open or closed connection; opened if closed and restored on return.</param>
+    /// <param name="transaction">The transaction the probe runs in, or <see langword="null"/>.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="connection"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The type has no usable <c>[Table]</c> mapping, the table cannot be queried, or a mapped column is missing.
+    /// </exception>
+    internal static async Task ValidateAsync<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord>
+    (
+        DbConnection connection,
+        DbTransaction? transaction,
+        CancellationToken cancellationToken
     )
         where TRecord : notnull
     {
@@ -132,8 +164,14 @@ public static class DbSchemaValidator
         try
         {
             using var cmd = connection.CreateCommand();
+            // S2077: the only formatted part is the table name, an identifier read from the record
+            // type's [Table] attribute (compile-time constant, never request data); identifiers cannot
+            // be bound as parameters. The query returns no rows, it only exposes the result schema.
+#pragma warning disable S2077
             cmd.CommandText = $"SELECT * FROM {table} WHERE 1 = 0";
+#pragma warning restore S2077
             cmd.CommandType = CommandType.Text;
+            cmd.Transaction = transaction;
             DbDataReader reader;
             try
             {
@@ -200,7 +238,7 @@ public static class DbSchemaValidator
             );
         }
 
-        table = tableAttr.Name;
+        table = DbCommandBuilder.QualifyTableName(tableAttr);
         columns = mapped;
     }
 

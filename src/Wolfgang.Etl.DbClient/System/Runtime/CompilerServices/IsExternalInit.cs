@@ -5,9 +5,12 @@
 
 using System.ComponentModel;
 
-// ReSharper disable once CheckNamespace -- this type MUST live in
-// System.Runtime.CompilerServices for the C# compiler to recognize it as the
-// init-setter marker, regardless of the folder layout under the project root.
+// This type MUST live in System.Runtime.CompilerServices for the C# compiler
+// to recognize it as the init-setter marker, regardless of the folder layout
+// under the project root. The `disable once` comment must sit directly above
+// the namespace line, or InspectCode does not apply it.
+
+// ReSharper disable once CheckNamespace
 namespace System.Runtime.CompilerServices
 {
     [EditorBrowsable(EditorBrowsableState.Never)]

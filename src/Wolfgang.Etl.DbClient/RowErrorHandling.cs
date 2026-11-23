@@ -28,6 +28,19 @@ public enum RowErrorHandling
     /// single row without per-item retry, so the load aborts even in
     /// <see cref="Skip"/> mode. Leave both at <c>1</c> if row-level error
     /// handling is required.
+    /// <para>
+    /// A failure that leaves the connection no longer open (a dropped connection, a fatal
+    /// provider error) is not treated as a row failure: it aborts the load instead of being
+    /// skipped once per remaining row.
+    /// </para>
+    /// <para>
+    /// Skip mode carries on in the same transaction, so it only isolates a bad row where the
+    /// provider keeps the transaction usable after a failed statement. PostgreSQL (and, by its
+    /// documented behaviour, CockroachDB) abort the whole transaction on the first failed statement:
+    /// every later row then fails ("current transaction is aborted", SQLSTATE 25P02) and nothing is
+    /// committed. On those providers set <c>BatchCommitSize</c> to <c>1</c> so each row runs in its
+    /// own transaction (verified against PostgreSQL 16: only the bad row is skipped).
+    /// </para>
     /// </remarks>
     Skip,
 }

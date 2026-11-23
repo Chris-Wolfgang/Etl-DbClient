@@ -1,0 +1,4 @@
+#nullable enable
+override Wolfgang.Etl.DbClient.DbExtractorOptions.<Clone>$() -> Wolfgang.Etl.Abstractions.ExtractorOptions!
+override Wolfgang.Etl.DbClient.DbLoaderOptions.<Clone>$() -> Wolfgang.Etl.Abstractions.LoaderOptions!
+override Wolfgang.Etl.DbClient.DbReport.<Clone>$() -> Wolfgang.Etl.Abstractions.Report!
