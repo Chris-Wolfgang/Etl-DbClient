@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790130873971,
+  "lastUpdate": 1795480347928,
   "repoUrl": "https://github.com/Chris-Wolfgang/Etl-DbClient",
   "entries": {
     "ExtractorBenchmarks (sqlserver)": [
@@ -792,6 +792,48 @@ window.BENCHMARK_DATA = {
             "value": 5392260.306770833,
             "unit": "ns",
             "range": "± 79904.57811983633"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "210299580+Chris-Wolfgang@users.noreply.github.com",
+            "name": "Chris Wolfgang",
+            "username": "Chris-Wolfgang"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9c737df733f07290ebd464057e6fb0509c8b5ca9",
+          "message": "Release v0.13.0 — Native AOT, generator and loader fixes, Abstractions 0.28.0 (#612)\n\n* release: v0.13.0\n\nMINOR bump from 0.12.0: the AOT row-mapping change (#577) is new consumer-visible\nbehaviour and annotates TRecord on the public generic types, so it is a `feature`\nfragment; the chunked-commit stop (#545) and the package-metadata URLs (#552) are\nfixes; the rest is docs and internal. CHANGELOG assembled from the 11 fragments\nwith `scripts/changelog.ps1 assemble -Version 0.13.0`, fragments removed, entry\nreferences pointed at the PRs that added them. `compat-suppressions.txt` returns\nto its empty baseline: its entries recorded the 0.10.0 -> 0.11.0 record-inheritance\nbreak and are inert now that ApiCompat compares against 0.12.0. AssemblyVersion\nstays pinned at 1.0.0.0; PackageValidationBaselineVersion stays 0.12.0 until the\n0.13.0 package is on the NuGet CDN.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* release: v0.13.0 - merge main, re-assemble the CHANGELOG from all fragments, call out behaviour changes\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",
+          "timestamp": "2026-11-23T19:15:37-05:00",
+          "tree_id": "fa8cd0370c4bb612167dac14c5e6e8ddfe641a7d",
+          "url": "https://github.com/Chris-Wolfgang/Etl-DbClient/commit/9c737df733f07290ebd464057e6fb0509c8b5ca9"
+        },
+        "date": 1795480344778,
+        "tool": "benchmarkdotnet",
+        "benches": [
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 100)",
+            "value": 427804.6594279661,
+            "unit": "ns",
+            "range": "± 18956.48884858332"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 1000)",
+            "value": 913744.9847790948,
+            "unit": "ns",
+            "range": "± 26253.96956737064"
+          },
+          {
+            "name": "Wolfgang.Etl.DbClient.Benchmarks.ExtractorBenchmarks.ExtractAsync(RecordCount: 10000)",
+            "value": 5715464.772758152,
+            "unit": "ns",
+            "range": "± 142787.26623171667"
           }
         ]
       }
