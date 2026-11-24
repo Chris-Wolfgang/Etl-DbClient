@@ -19,6 +19,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.13.0] - 2026-11-23
+
+> **Behaviour changes to check when upgrading.** None of these changes a public signature (no ApiCompat suppression is needed), but each alters what existing code observes:
+>
+> - An extractor or loader built from a `DbProviderFactory` and connection string now opens a fresh connection for each operation (#653).
+> - `RowErrorHandling.Skip` now aborts when a failure leaves the connection closed, instead of skipping every remaining row (#655).
+> - Generated SQL and `DbSchemaValidator` now emit `Schema.Name` for `[Table(Schema = ...)]`; before, the schema was ignored (#657).
+> - Generated INSERT and UPDATE no longer write Computed or non-key Identity columns (#658).
+> - `CommandTimeout` rounds up to whole seconds, so a sub-second value is now 1 second, not 0 (#659).
+> - `TRecord` on `DbExtractor`, `DbLoader`, `DbSchemaValidator` and the pipeline extensions carries `[DynamicallyAccessedMembers]`; a caller that runs the trim analyzer on its own generic code must annotate its type parameter the same way (#415).
+
+### Added
+
+- The net8.0 and later assemblies are now marked `IsTrimmable` and `IsAotCompatible`: the library is built with the trim, AOT and single-file analyzers on, and a trimmed application treats it as trim-compatible (it is trimmed even under `TrimMode=partial`). (#415)
+- `DbExtractor<TRecord>` now extracts rows in a Native AOT application (it used to abort on the first row with `PlatformNotSupportedException` from Dapper's Reflection.Emit row parser), and `TRecord` on `DbExtractor`, `DbLoader`, `DbSchemaValidator` and the pipeline extensions is annotated `[DynamicallyAccessedMembers(PublicConstructors | PublicProperties)]`, so generic callers that run the trim analyzer must annotate their own type parameter the same way. (#415)
+
+### Fixed
+
+- `DbLoader<TRecord>` now writes rows in a Native AOT application: it used to throw `PlatformNotSupportedException` on the first `ExecuteAsync`, because Dapper builds its parameter binder for a record type with Reflection.Emit, and it now binds the record's properties itself when the runtime cannot generate code. (#415)
+- `DbLoader<T>` with `BatchCommitSize` set now stops reading the source once `MaximumItemCount` is reached, instead of enumerating the rest of the source and committing an empty transaction per chunk. (#536)
+- `CommandTimeout` now rounds up to whole seconds and clamps to the `int` range, so a sub-second timeout no longer becomes 0 (no timeout). (#659)
+- The default total-count query now throws a clear error for a non-text `CommandType` and aliases its derived table without `AS`. (#664)
+- `DbReport.ElapsedMilliseconds` no longer keeps growing after an extract or load has finished. (#663)
+- `DbExtractor` now writes `EtlParameter<T>` output and input-output values back after `ExtractAsync`; they were never set before. (#652)
+- The `[DbTable]` source generator now supports nested, generic, record-struct, same-named and derived types and escapes names in the generated code. (#660)
+- Multi-row INSERT (`InsertBatchSize > 1`) no longer misreads `VALUES` inside identifiers or `@` inside string literals, and rejects non-`@` parameter markers with a clear message. (#661)
+- The extractor and loader built from a `DbProviderFactory` and connection string now use a fresh connection for each operation, so `CountAsync` then `ExtractAsync` (or running twice) works on SQL Server and PostgreSQL; a failed open no longer leaks the connection. (#653)
+- Package metadata: `PackageProjectUrl` and `RepositoryUrl` now point at `github.com/Chris-Wolfgang/Etl-DbClient` (the old `Wolfgang.Etl.DbClient` slug 404s). The redundant direct `System.Memory` dependency is dropped; .NET Framework and .NET Standard 2.0 consumers still receive System.Memory 4.6.3 transitively through Microsoft.Extensions.Logging.Abstractions. (#535)
+- Server-side paging no longer adds `@PageOffset`/`@PageLimit` to the caller's `DynamicParameters`, so one instance can be reused for the next page. (#654)
+- Generated INSERT and UPDATE no longer write `[DatabaseGenerated]` Computed or non-key Identity columns. (#658)
+- `RowErrorHandling.Skip` now aborts when a failure leaves the connection closed instead of skipping every remaining row; the PostgreSQL/CockroachDB need for `BatchCommitSize = 1` is documented. (#655)
+- Generated SQL and `DbSchemaValidator` now honour `[Table(Schema = ...)]` and emit `Schema.Name`. (#657)
+- `ValidateSchemaOnStart` now runs its probe inside the transaction passed to the extractor or loader, so it works with a caller transaction on SQL Server. (#656)
+
+### Documentation
+
+- Docs brought in line with the repository: `.github/copilot-instructions.md` describes this library instead of the repo template, the docfx Introduction and Getting Started pages lose their template placeholders, and `docs/HOT-PATH-ALLOCATION.md`, `WORKFLOW_SECURITY.md`, `RELEASE-WORKFLOW-SETUP.md` (OIDC Trusted Publishing), `REPO-SETTINGS-AUDIT.md` and `DOCFX-VERSION-PICKER.md` match the current workflows and scripts. (#540)
+- Corrected the README and XML docs for `CountAsync`, `MaxErrorCount` and `BatchCommitSize`, and the parameter debug log no longer doubles the `@`. (#662)
+- README and CONTRIBUTING brought up to date: the package is on nuget.org (no more "coming soon"), the formatting-guide link points at `docs/README-FORMATTING.md`, the Features table covers the 0.5-0.12 surface, the builder and streaming descriptions match the code, the docs output folder is `docfx_project/_site`, and CONTRIBUTING lists all 8 analyzers. (#538)
+- XML doc comments brought in line with the code: `CommandTimeout` is no longer called "planned", the `Parameters` example and `[Obsolete]` message point at the dictionary constructor and `EtlParameter<T>`, paging docs describe `ServerLimit` as the switch and `PagingClauseTemplates.None` as the default, the source-generator attributes list every emitted constant, and Skip error handling is documented as needing both `BatchSize` and `InsertBatchSize` at 1. (#537)
+
+### Internal
+
+- `PackageValidationBaselineVersion` advances to 0.12.0 now that the package is on the NuGet CDN, so the next release validates its API surface against what actually shipped. (#472)
+- Dependency refresh: built against `Wolfgang.Etl.Abstractions` 0.28.0, `Dapper` 2.1.89, `Microsoft.Extensions.Logging.Abstractions` / `Microsoft.Bcl.AsyncInterfaces` 10.0.15 (still the 10.x line); no API or behaviour change. Clears the NuGet backlog that kept Dependabot's nuget job from finishing. (#614)
+- Adopt the Wolfgang.Etl.TestKit.Xunit 0.27 dispose-contract tests for `DbExtractor` and `DbLoader`. (#683)
+- Update Wolfgang.Etl.Abstractions, ErrorPolicies, TestKit and TestKit.Xunit to 0.27.0. Abstractions no longer brings System.ComponentModel.Annotations in transitively, so the library now references it directly on .NET Framework and netstandard2.0. (#681)
+- Update Wolfgang.Etl.Abstractions, ErrorPolicies, TestKit and TestKit.Xunit from 0.27.0 to 0.28.0 (adds a net11.0 target upstream; no API change for this library). (#685)
+- The test and tool projects no longer use implicit usings; every file declares the `using` directives it needs on every target framework, matching the `src/`, `examples/`, `benchmarks/` and `samples/` projects. (#605)
+- Formatting brought in line with the house style (three blank lines between members, Allman multi-line argument lists, obsolete property accessors on their own lines), the paging parameter-name array hoisted to a static field, and two `foreach (var _ in batch)` loops replaced with `for` loops. No behaviour change. (#543)
+- Adopt the Wolfgang.Etl.TestKit.Xunit 0.27 idempotency contract tests for `DbExtractor` and `DbLoader`, covering a second run on the same instance. (#682)
+- Place the InspectCode CheckNamespace suppression on the `IsExternalInit` polyfill directly above its namespace so the analyzer applies it. (#695)
+- `DbLoader<T>` with `InsertBatchSize > 1` binds each cell through a compiled, cached property getter instead of `PropertyInfo.GetValue`, and builds the row-numbered parameter names once per load instead of once per cell per flush. The benchmarks gain a `Load1000RowsMultiRowInsert` case. (#544)
+- `DbLoader<T>` builds its parameter binder or multi-row INSERT plan once per load instead of once per commit chunk, and constructor-mapped rows (positional records under Native AOT) no longer copy the constructor's parameter list for every row. (#665)
+- The three SQL sites that format a table identifier or wrap the caller's own command text carry a per-line, reasoned suppression of Sonar S2077 (identifiers cannot be bound as parameters); the EtlPipeline example seeds its rows with a parameterized `INSERT`. (#633)
+- Remove an unused field from the source generator's internal table model; generated code is unchanged. (#696)
+- Examples, samples, benchmarks and the GC workload: orphaned "deprecated setters" comments and an unused `CS0618` pragma removed, the redundant inline `nosemgrep` dropped (Semgrep scans `src/` only and `.semgrepignore` already lists `benchmarks/`), two wrong comments fixed, and the GC workload now prints its summary when the duration timer ends a cycle mid-way. (#541)
+- `ColumnAttributeTypeMapper` registers a record type's `[Column]` map through a once-only `Lazy` step instead of a lock, so the registration is both race-free and free of the synchronisation findings InspectCode reported on the previous fix. (#632)
+- `ColumnAttributeTypeMapper.Register` now completes the Dapper `[Column]` type-map registration before any concurrent caller returns; a caller that arrived while another thread was registering the same type could build a row parser on the default type map, which made the Dapper/reflection row-mapper conformance test fail intermittently. (#626)
+
 ## [0.12.0] - 2026-09-22
 
 ### Added
@@ -467,7 +527,8 @@ _Code-review pass + integration-test surface._
 
 See git history.
 
-[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Chris-Wolfgang/Etl-DbClient/compare/v0.9.1...v0.10.0
