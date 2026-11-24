@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/docfx_project/docs/introduction.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/docfx_project/docs/introduction.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,14 +75,36 @@
 
 <p>Welcome to Wolfgang.Etl.DbClient!</p>
 <h2 id="overview">Overview</h2>
-<p>Extractors and Loaders for working with SQL databases using ADO.NET</p>
-<!-- Add your project overview here -->
+<p>Extractors and Loaders for working with SQL databases using ADO.NET.</p>
+<p><code>Wolfgang.Etl.DbClient</code> implements the <code>Wolfgang.Etl.Abstractions</code> extractor and loader
+contracts over any ADO.NET provider (<code>DbConnection</code> / <code>DbCommand</code>). <code>DbExtractor&lt;TRecord&gt;</code>
+streams query results as an <code>IAsyncEnumerable&lt;TRecord&gt;</code>; <code>DbLoader&lt;TRecord&gt;</code> writes an
+<code>IAsyncEnumerable&lt;TRecord&gt;</code> back, with SQL you supply (any statement or a stored procedure)
+or an <code>INSERT</code> / <code>UPDATE</code> generated from the record type (<code>WriteMode</code>).
+Mapping is by convention or by <code>[Table]</code> / <code>[Column]</code> / <code>[Key]</code> attributes, with Dapper doing
+the row materialization and parameter binding.</p>
+<p>The integration suite runs against SQL Server, PostgreSQL, MySQL, MariaDB, CockroachDB and
+SQLite.</p>
 <h2 id="key-features">Key Features</h2>
-<!-- List the main features of your project. For example:
-- Feature 1: Description
-- Feature 2: Description
-- Feature 3: Description
--->
+<ul>
+<li><strong>Streaming extraction</strong> - rows are read one at a time from a <code>DbDataReader</code>, never buffered.</li>
+<li><strong>Parameters</strong> - named input parameters from a dictionary, plus output and input/output
+parameters through <code>EtlParameter&lt;T&gt;</code>.</li>
+<li><strong>Server-side paging</strong> - <code>ServerLimit</code> / <code>ServerOffset</code> with dialect presets in
+<code>PagingClauseTemplates</code> (SQL Server, PostgreSQL, MySQL, SQLite, Oracle, Db2).</li>
+<li><strong>Batched loading</strong> - <code>BatchSize</code> (N statements per round trip), <code>InsertBatchSize</code>
+(one multi-row <code>INSERT ... VALUES</code>) and <code>BatchCommitSize</code> (commit every N rows).</li>
+<li><strong>Error handling</strong> - <code>RowErrorHandling.Skip</code> with a <code>RowFailed</code> event and an error
+threshold, or abort on the first failure (the default).</li>
+<li><strong>Dry run</strong> - <code>IsDryRun</code> exercises the pipeline without writing.</li>
+<li><strong>Schema validation</strong> - <code>DbSchemaValidator</code> and <code>ValidateSchemaOnStart</code> check the mapped
+table and columns before any row moves.</li>
+<li><strong>Source generator</strong> - <code>[DbTable]</code> generates <code>Insert</code>, <code>Select</code>, <code>Update</code>, <code>Delete</code> SQL and a
+reflection-free parameter binder at compile time.</li>
+<li><strong>Progress reporting</strong> - <code>DbReport</code> with current, skipped and (optionally) total item counts.</li>
+<li><strong>Fluent pipeline</strong> - <code>EtlPipeline.Create().DbExtractor&lt;T&gt;(...)...DbLoader&lt;T&gt;(...)</code> builders;
+see <a href="etl-pipeline.html">Fluent EtlPipeline chain</a>.</li>
+</ul>
 <h2 id="getting-help">Getting Help</h2>
 <p>If you need help with Wolfgang.Etl.DbClient, please:</p>
 <ul>
@@ -95,7 +117,7 @@
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/docfx_project/docs/introduction.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/docfx_project/docs/introduction.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

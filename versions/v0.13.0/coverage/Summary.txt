@@ -1,0 +1,149 @@
+Summary
+  Generated on: 11/24/2026 - 12:39:06 AM
+  Coverage date: 11/24/2026 - 12:38:54 AM - 11/24/2026 - 12:39:04 AM
+  Parser: MultiReport (7x Cobertura)
+  Assemblies: 8
+  Classes: 113
+  Files: 98
+  Line coverage: 97.2%
+  Covered lines: 7030
+  Uncovered lines: 198
+  Coverable lines: 7228
+  Total lines: 20426
+  Branch coverage: 86% (1066 of 1239)
+  Covered branches: 1066
+  Total branches: 1239
+  Method coverage: 96.7% (966 of 998)
+  Full method coverage: 95.7% (956 of 998)
+  Covered methods: 966
+  Fully covered methods: 956
+  Total methods: 998
+
+Wolfgang.Etl.DbClient                                                               99.5%
+  Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper                                    100%
+  Wolfgang.Etl.DbClient.CommandTimeoutConverter                                      100%
+  Wolfgang.Etl.DbClient.DbClientOptions                                              100%
+  Wolfgang.Etl.DbClient.DbColumnAttribute                                            100%
+  Wolfgang.Etl.DbClient.DbCommandBuilder                                             100%
+  Wolfgang.Etl.DbClient.DbExtractor<T>                                               100%
+  Wolfgang.Etl.DbClient.DbExtractorBuilder<T>                                       96.6%
+  Wolfgang.Etl.DbClient.DbExtractorOptions                                           100%
+  Wolfgang.Etl.DbClient.DbLoader<T>                                                   99%
+  Wolfgang.Etl.DbClient.DbLoaderBuilder<T>                                           100%
+  Wolfgang.Etl.DbClient.DbLoaderOptions                                              100%
+  Wolfgang.Etl.DbClient.DbReport                                                     100%
+  Wolfgang.Etl.DbClient.DbSchemaValidator                                            100%
+  Wolfgang.Etl.DbClient.DbTableAttribute                                             100%
+  Wolfgang.Etl.DbClient.DefaultValueTypes                                            100%
+  Wolfgang.Etl.DbClient.EtlParameter                                                 100%
+  Wolfgang.Etl.DbClient.EtlParameter<T>                                              100%
+  Wolfgang.Etl.DbClient.EtlParameterSet                                              100%
+  Wolfgang.Etl.DbClient.EtlPipelineDbClientExtensions                                100%
+  Wolfgang.Etl.DbClient.PagingClauseTemplates                                        100%
+  Wolfgang.Etl.DbClient.ParameterName                                                100%
+  Wolfgang.Etl.DbClient.ReflectionRowMapper<T>                                       100%
+  Wolfgang.Etl.DbClient.RowFailedEventArgs<T>                                        100%
+
+Wolfgang.Etl.DbClient.Tests.Concurrency                                              100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.CancelProbe                                100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.DbCommandBuilderCacheConcurrencyTests      100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.ExtractorCancellationConcurrencyTests      100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.LoaderCancellationConcurrencyTests         100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.LoadProbe                                  100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.Outcome                                    100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.OwnedConnectionDisposalConcurrencyTests    100%
+  Wolfgang.Etl.DbClient.Tests.Concurrency.OwnedProbe                                 100%
+
+Wolfgang.Etl.DbClient.Tests.DocExamples                                              100%
+  Wolfgang.Etl.DbClient.Tests.DocExamples.DocExamplesTests                           100%
+  Wolfgang.Etl.DbClient.Tests.DocExamples.Harness                                    100%
+
+Wolfgang.Etl.DbClient.Tests.Fuzz                                                     100%
+  Wolfgang.Etl.DbClient.Tests.Fuzz.DbCommandBuilderFuzz                              100%
+
+Wolfgang.Etl.DbClient.Tests.Integration                                               59%
+  Wolfgang.Etl.DbClient.Tests.Integration.CockroachDbExtractorTests                  100%
+  Wolfgang.Etl.DbClient.Tests.Integration.CockroachDbLoaderTests                     100%
+  Wolfgang.Etl.DbClient.Tests.Integration.ContractItem                               100%
+  Wolfgang.Etl.DbClient.Tests.Integration.DbExtractorIntegrationTestsBase            100%
+  Wolfgang.Etl.DbClient.Tests.Integration.DbLoaderIntegrationTestsBase               100%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.CockroachDbFixture                7.6%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.DbProviderFixtureBase             100%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.FixturePlumbingTests              100%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.MariaDbFixture                   11.5%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.MySqlFixture                     11.5%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.PostgresFixture                  11.5%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.SqliteFixture                     100%
+  Wolfgang.Etl.DbClient.Tests.Integration.Fixtures.SqlServerFixture                 11.5%
+  Wolfgang.Etl.DbClient.Tests.Integration.MariaDbExtractorTests                      100%
+  Wolfgang.Etl.DbClient.Tests.Integration.MariaDbLoaderTests                         100%
+  Wolfgang.Etl.DbClient.Tests.Integration.MySqlExtractorTests                        100%
+  Wolfgang.Etl.DbClient.Tests.Integration.MySqlLoaderTests                           100%
+  Wolfgang.Etl.DbClient.Tests.Integration.PostgresExtractorTests                     100%
+  Wolfgang.Etl.DbClient.Tests.Integration.PostgresLoaderTests                        100%
+  Wolfgang.Etl.DbClient.Tests.Integration.PostgresSkipModeTests                      7.1%
+  Wolfgang.Etl.DbClient.Tests.Integration.SqliteExtractorTests                       100%
+  Wolfgang.Etl.DbClient.Tests.Integration.SqliteLoaderTests                          100%
+  Wolfgang.Etl.DbClient.Tests.Integration.SqlServerExtractorTests                    100%
+  Wolfgang.Etl.DbClient.Tests.Integration.SqlServerLoaderTests                       100%
+  Wolfgang.Etl.DbClient.Tests.Integration.SqlServerOutputParameterTests              7.6%
+
+Wolfgang.Etl.DbClient.Tests.Snapshots                                                100%
+  Wolfgang.Etl.DbClient.Tests.Snapshots.SqlSnapshotTests                             100%
+
+Wolfgang.Etl.DbClient.Tests.SourceLink                                               100%
+  Wolfgang.Etl.DbClient.Tests.SourceLink.SourceLinkPdbTests                          100%
+
+Wolfgang.Etl.DbClient.Tests.Unit                                                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.AllocationTests                                   100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ColumnAttributeTypeMapperTests                    100%
+  Wolfgang.Etl.DbClient.Tests.Unit.CommandTimeoutConverterTests                      100%
+  Wolfgang.Etl.DbClient.Tests.Unit.CoverageBackfillTests                             100%
+  Wolfgang.Etl.DbClient.Tests.Unit.CultureInvarianceTests                            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbCommandBuilderGeneratedColumnTests              100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbCommandBuilderTests                             100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorDisposableStageContractTests           100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorIdempotencyContractTests               100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorLogContractTests                       100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorLoggingTests                           100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorMessageContractTests                   100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorMutationSurvivorTests                  100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbExtractorTests                                  100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderBinderAndRollbackSurvivorTests            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderDisposableStageContractTests              100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderIdempotencyContractTests                  100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderLoggingTests                              100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderMutationContractTests                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderMutationSurvivorTests                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderSupportsDryRunContractTests               100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbLoaderTests                                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbOptionsDefaultsTests                            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbOptionsRecordTests                              100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbReportTests                                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbSchemaValidatorTests                            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbTableGeneratorShapeTests                        100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbTableGeneratorTests                             100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DbUpdateTests                                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DefaultTotalCountQueryCommandTypeTests            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.DryRunContractRecord                              100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ElapsedTimeFreezeTests                            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.EtlParameterBindingTests                          100%
+  Wolfgang.Etl.DbClient.Tests.Unit.EtlParameterEnumTests                             100%
+  Wolfgang.Etl.DbClient.Tests.Unit.EtlParameterOfObjectTests                         100%
+  Wolfgang.Etl.DbClient.Tests.Unit.EtlParameterSetDirectTests                        100%
+  Wolfgang.Etl.DbClient.Tests.Unit.EtlParameterTests                                 100%
+  Wolfgang.Etl.DbClient.Tests.Unit.EtlPipelineDbClientExtensionsTests                100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ExtractorPagingParametersReuseTests               100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ExtractorParameterCallbackTests                   100%
+  Wolfgang.Etl.DbClient.Tests.Unit.MessageContractTests                              100%
+  Wolfgang.Etl.DbClient.Tests.Unit.MultiRowInsertScanningTests                       100%
+  Wolfgang.Etl.DbClient.Tests.Unit.OwnedConnectionLifecycleTests                     100%
+  Wolfgang.Etl.DbClient.Tests.Unit.PagingClauseTemplatesTests                        100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ParameterNameTests                                100%
+  Wolfgang.Etl.DbClient.Tests.Unit.PreCancelledTokenTests                            100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ReflectionParameterBinderTests                    100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ReflectionRowMapperTests                          100%
+  Wolfgang.Etl.DbClient.Tests.Unit.SkipModeConnectionFailureTests                    100%
+  Wolfgang.Etl.DbClient.Tests.Unit.SqlBuilderAndGuardContractTests                   100%
+  Wolfgang.Etl.DbClient.Tests.Unit.TableAttributeSchemaTests                         100%
+  Wolfgang.Etl.DbClient.Tests.Unit.ValidateSchemaOnStartTests                        100%

@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.12.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_PagingClauseTemplates.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.PagingClauseTemplates%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.13.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_PagingClauseTemplates.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.PagingClauseTemplates%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,11 +75,11 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_PagingClauseTemplates" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates" class="text-break">
-Class PagingClauseTemplates  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L31"><i class="bi bi-code-slash"></i></a>
+Class PagingClauseTemplates  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L32"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
-    <dl><dt>Namespace</dt><dd><a class="xref" href="Wolfgang.html">Wolfgang</a>.<a class="xref" href="Wolfgang.Etl.html">Etl</a>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
+    <dl><dt>Namespace</dt><dd><span class="xref">Wolfgang</span>.<span class="xref">Etl</span>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
   <dl><dt>Assembly</dt><dd>Wolfgang.Etl.DbClient.dll</dd></dl>
   </div>
 
@@ -152,8 +152,9 @@ takes any string, so a dialect with no preset here is supplied directly.
 </p>
 <p>
 Every template must reference both <code>@PageOffset</code> and <code>@PageLimit</code>: those are the
-parameter names the extractor supplies when <a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerOffset">ServerOffset</a> and
-<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerLimit">ServerLimit</a> are set.
+parameter names the extractor supplies when server paging is active, that is when
+<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerLimit">ServerLimit</a> is set (an unset
+<a class="xref" href="Wolfgang.Etl.DbClient.DbExtractorOptions.html#Wolfgang_Etl_DbClient_DbExtractorOptions_ServerOffset">ServerOffset</a> binds as <code>0</code>).
 </p>
 </div>
 
@@ -166,7 +167,7 @@ parameter names the extractor supplies when <a class="xref" href="Wolfgang.Etl.D
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_Db2" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.Db2">
   Db2
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L73"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L85"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Db2 — SQL:2008 <code>OFFSET … FETCH NEXT …</code>.</p>
@@ -198,7 +199,7 @@ parameter names the extractor supplies when <a class="xref" href="Wolfgang.Etl.D
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_MySql" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.MySql">
   MySql
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L53"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L60"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>MySQL and MariaDB — <code>LIMIT … OFFSET …</code>.</p>
@@ -230,7 +231,7 @@ parameter names the extractor supplies when <a class="xref" href="Wolfgang.Etl.D
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_None" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.None">
   None
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L48"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L55"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>No dialect chosen. This is the default, and it is <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a>.</p>
@@ -269,7 +270,7 @@ library picked would be wrong on half the engines it supports.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_Oracle" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.Oracle">
   Oracle
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L69"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L80"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Oracle 12c and later — SQL:2008 <code>OFFSET … FETCH NEXT …</code>.</p>
@@ -301,7 +302,7 @@ library picked would be wrong on half the engines it supports.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_PostgreSql" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.PostgreSql">
   PostgreSql
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L57"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L65"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>PostgreSQL — <code>LIMIT … OFFSET …</code>.</p>
@@ -333,7 +334,7 @@ library picked would be wrong on half the engines it supports.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_SqlServer" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.SqlServer">
   SqlServer
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L65"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L75"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>SQL Server 2012 and later — SQL:2008 <code>OFFSET … FETCH NEXT …</code>.</p>
@@ -365,10 +366,10 @@ library picked would be wrong on half the engines it supports.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_PagingClauseTemplates_Sqlite" data-uid="Wolfgang.Etl.DbClient.PagingClauseTemplates.Sqlite">
   Sqlite
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L61"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L70"><i class="bi bi-code-slash"></i></a>
   </h3>
 
-  <div class="markdown level1 summary"><p>SQLite — <code>LIMIT … OFFSET …</code>. This is also the library default.</p>
+  <div class="markdown level1 summary"><p>SQLite — <code>LIMIT … OFFSET …</code>.</p>
 </div>
   <div class="markdown level1 conceptual"></div>
 
@@ -397,7 +398,7 @@ library picked would be wrong on half the engines it supports.</p>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L31" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/PagingClauseTemplates.cs/#L32" class="edit-link">Edit this page</a>
         </div>
 
 

@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class DbLoader&lt;TRecord&gt; | Wolfgang.Etl.DbClient Documentation </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class DbLoader&lt;TRecord&gt; | Wolfgang.Etl.DbClient Documentation ">
+      
+      <meta name="description" content="Loads records into a database via INSERT or UPDATE commands. Uses Dapper for parameter mapping from POCO properties.">
+      <link rel="icon" href="../favicon.svg">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="../toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.13.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbLoader_1.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbLoader%601%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="Wolfgang.Etl.DbClient">
+            Wolfgang.Etl.DbClient
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+
+      <div class="content">
+        <div class="actionbar">
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Wolfgang.Etl.DbClient.DbLoader`1">
+
+
+
+  <h1 id="Wolfgang_Etl_DbClient_DbLoader_1" data-uid="Wolfgang.Etl.DbClient.DbLoader`1" class="text-break">
+Class DbLoader&lt;TRecord&gt;  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L54"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><span class="xref">Wolfgang</span>.<span class="xref">Etl</span>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Wolfgang.Etl.DbClient.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Loads records into a database via INSERT or UPDATE commands.
+Uses Dapper for parameter mapping from POCO properties.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class DbLoader&lt;TRecord&gt; : LoaderBase&lt;TRecord, DbReport&gt;, ILoadWithProgressAndCancellationAsync&lt;TRecord, DbReport&gt;, ILoadWithProgressAsync&lt;TRecord, DbReport&gt;, ILoadWithCancellationAsync&lt;TRecord&gt;, ILoadAsync&lt;TRecord&gt;, IReportsItemErrors, IAsyncDisposable, IDisposable where TRecord : notnull</code></pre>
+  </div>
+
+
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>TRecord</code></dt>
+    <dd><p>The POCO type representing a single row. Properties are mapped to command
+parameters by name or <code>[Column(&quot;name&quot;)]</code> attribute.</p>
+</dd>
+  </dl>
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">LoaderBase</span>&lt;TRecord, <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a>&gt;</div>
+      <div><span class="xref">DbLoader&lt;TRecord&gt;</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><span class="xref">ILoadWithProgressAndCancellationAsync</span>&lt;TRecord, <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a>&gt;</div>
+      <div><span class="xref">ILoadWithProgressAsync</span>&lt;TRecord, <a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a>&gt;</div>
+      <div><span class="xref">ILoadWithCancellationAsync</span>&lt;TRecord&gt;</div>
+      <div><span class="xref">ILoadAsync</span>&lt;TRecord&gt;</div>
+      <div><span class="xref">IReportsItemErrors</span></div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iasyncdisposable">IAsyncDisposable</a></div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.idisposable">IDisposable</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, DbReport&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, DbReport&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, DbReport&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;, IProgress&lt;DbReport&gt;)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, DbReport&gt;.LoadAsync(IAsyncEnumerable&lt;TRecord&gt;, IProgress&lt;DbReport&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iprogress-1">LoaderBase&lt;TRecord, DbReport&gt;.CreateProgressTimer(IProgress&lt;DbReport&gt;)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">LoaderBase&lt;TRecord, DbReport&gt;.LoadWorkerAsync(IAsyncEnumerable&lt;TRecord&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">LoaderBase&lt;TRecord, DbReport&gt;.WrapWorkerExecution(Func&lt;CancellationToken, Task&gt;, CancellationToken)</a>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.CreateProgressReport()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.IncrementCurrentItemCount()</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">LoaderBase&lt;TRecord, DbReport&gt;.IncrementCurrentItemCount(int)</a>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.IncrementCurrentSkippedItemCount()</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">LoaderBase&lt;TRecord, DbReport&gt;.IncrementCurrentSkippedItemCount(int)</a>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.OnItemError(ItemErrorContext)</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.HandleItemError(ItemErrorContext)</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.DisposeAsync()</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.Dispose()</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">LoaderBase&lt;TRecord, DbReport&gt;.Dispose(bool)</a>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.StartedAt</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.Elapsed</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.ReportingInterval</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.CurrentItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.CurrentSkippedItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.CurrentErrorItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.MaximumItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.SkipItemCount</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.WorkerResilience</span>
+    </div>
+    <div>
+      <span class="xref">LoaderBase&lt;TRecord, DbReport&gt;.ErrorPolicy</span>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+  <h2 id="Wolfgang_Etl_DbClient_DbLoader_1_remarks">Remarks</h2>
+  <div class="markdown level0 remarks"><p>
+Two transaction modes are supported:
+</p>
+<ul><li><b>Caller-managed</b> — pass a <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a> to the constructor.
+  The loader uses it but never commits or rolls back. The caller is responsible for
+  transaction lifetime.</li><li><b>Auto-managed</b> — pass <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/keywords/null">null</a> for the transaction parameter.
+  The loader creates its own transaction, commits on success, and rolls back on
+  exception.</li></ul>
+<p>
+By default the caller owns the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a> lifetime — the loader does not
+open, close, or dispose it, and the connection must be open before calling
+<code>LoadAsync</code>. Set <code>ManageConnection</code> to have the loader open and close a
+caller-supplied connection, or use the <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbproviderfactory">DbProviderFactory</a> constructor to have
+it create, open and dispose its own.
+</p>
+<p>
+<b>Thread safety.</b> A <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> instance is not safe for
+concurrent <code>LoadAsync</code> calls. Internal state (stopwatch, progress counters)
+assumes a single load in flight. Build a separate instance per concurrent load.
+</p>
+<p>
+Command timeout defaults to the ADO.NET provider's default (typically 30 seconds);
+set <a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_CommandTimeout">CommandTimeout</a> to change it.
+</p>
+</div>
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_System_String_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,System.String,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})">
+  DbLoader(DbConnection, string, DbTransaction?, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L104"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> with a custom SQL command.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[Obsolete(&quot;Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.&quot;)]
+public DbLoader(DbConnection connection, string commandText, DbTransaction? transaction = null, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>connection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a></dt>
+    <dd><p>An open <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a>. The caller owns its lifetime.</p>
+</dd>
+    <dt><code>commandText</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The SQL INSERT or UPDATE command to execute per record.</p>
+</dd>
+    <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
+    <dd><p>An optional <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a>. If null, the loader creates and manages
+its own transaction (commit on success, rollback on failure).</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader</a>&lt;TRecord&gt;&gt;</dt>
+    <dd><p>An optional logger for diagnostic output.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p><code class="paramref">connection</code> or <code class="paramref">commandText</code> is null.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_System_String_Wolfgang_Etl_DbClient_DbLoaderOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,System.String,Wolfgang.Etl.DbClient.DbLoaderOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})">
+  DbLoader(DbConnection, string, DbLoaderOptions?, DbTransaction?, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L198"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> class configured from an
+options record.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public DbLoader(DbConnection connection, string commandText, DbLoaderOptions? options, DbTransaction? transaction = null, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>connection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a></dt>
+    <dd><p>The connection to write to.</p>
+</dd>
+    <dt><code>commandText</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The command to execute.</p>
+</dd>
+    <dt><code>options</code> <a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html">DbLoaderOptions</a></dt>
+    <dd><p>The configuration to apply. When <code>null</code>, the documented defaults apply.</p>
+</dd>
+    <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
+    <dd><p>An optional ambient transaction.</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader</a>&lt;TRecord&gt;&gt;</dt>
+    <dd><p>An optional logger instance for diagnostic output. When <code>null</code> — or omitted —
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.abstractions.nulllogger.instance">Instance</a> is used and logging is disabled.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_WriteMode_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})">
+  DbLoader(DbConnection, WriteMode, DbTransaction?, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L136"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> that auto-generates
+an INSERT statement from <code>[Table]</code> and <code>[Column]</code> attributes on
+<code class="typeparamref">TRecord</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[Obsolete(&quot;Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.&quot;)]
+public DbLoader(DbConnection connection, WriteMode writeMode, DbTransaction? transaction = null, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>connection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a></dt>
+    <dd><p>An open <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a>. The caller owns its lifetime.</p>
+</dd>
+    <dt><code>writeMode</code> <a class="xref" href="Wolfgang.Etl.DbClient.WriteMode.html">WriteMode</a></dt>
+    <dd><p>Determines whether to generate INSERT or UPDATE commands.</p>
+</dd>
+    <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
+    <dd><p>An optional <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a>. If null, the loader creates and manages
+its own transaction.</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader</a>&lt;TRecord&gt;&gt;</dt>
+    <dd><p>An optional logger for diagnostic output.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p><code class="paramref">connection</code> is null.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a></dt>
+    <dd><p><code class="typeparamref">TRecord</code> does not have a <code>[Table]</code> attribute, or
+<code class="paramref">writeMode</code> is <a class="xref" href="Wolfgang.Etl.DbClient.WriteMode.html#Wolfgang_Etl_DbClient_WriteMode_Update">Update</a> and no <code>[Key]</code>
+properties exist.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbConnection_Wolfgang_Etl_DbClient_WriteMode_Wolfgang_Etl_DbClient_DbLoaderOptions_System_Data_Common_DbTransaction_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbConnection,Wolfgang.Etl.DbClient.WriteMode,Wolfgang.Etl.DbClient.DbLoaderOptions,System.Data.Common.DbTransaction,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})">
+  DbLoader(DbConnection, WriteMode, DbLoaderOptions?, DbTransaction?, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L233"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> class configured from an
+options record.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public DbLoader(DbConnection connection, WriteMode writeMode, DbLoaderOptions? options, DbTransaction? transaction = null, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>connection</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbconnection">DbConnection</a></dt>
+    <dd><p>The connection to write to.</p>
+</dd>
+    <dt><code>writeMode</code> <a class="xref" href="Wolfgang.Etl.DbClient.WriteMode.html">WriteMode</a></dt>
+    <dd><p>Whether to generate an INSERT or an UPDATE.</p>
+</dd>
+    <dt><code>options</code> <a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html">DbLoaderOptions</a></dt>
+    <dd><p>The configuration to apply. When <code>null</code>, the documented defaults apply.</p>
+</dd>
+    <dt><code>transaction</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbtransaction">DbTransaction</a></dt>
+    <dd><p>An optional ambient transaction.</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader</a>&lt;TRecord&gt;&gt;</dt>
+    <dd><p>An optional logger instance for diagnostic output. When <code>null</code> — or omitted —
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.abstractions.nulllogger.instance">Instance</a> is used and logging is disabled.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbProviderFactory_System_String_System_String_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})">
+  DbLoader(DbProviderFactory, string, string, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L171"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> that owns the
+connection's lifetime. The connection is created from the supplied
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbproviderfactory">DbProviderFactory</a>, opened lazily before loading begins,
+and disposed when loading completes (or throws).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">[Obsolete(&quot;Use the constructor that takes DbLoaderOptions. This constructor will be removed in a future release.&quot;)]
+public DbLoader(DbProviderFactory factory, string connectionString, string commandText, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>factory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbproviderfactory">DbProviderFactory</a></dt>
+    <dd><p>The provider-specific factory (e.g. <code>Microsoft.Data.SqlClient
+.SqlClientFactory.Instance</code>, <code>Npgsql.NpgsqlFactory.Instance</code>).</p>
+</dd>
+    <dt><code>connectionString</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The provider-specific connection string.</p>
+</dd>
+    <dt><code>commandText</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The SQL INSERT or UPDATE command to execute per record.</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader</a>&lt;TRecord&gt;&gt;</dt>
+    <dd><p>An optional logger for diagnostic output.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception">ArgumentNullException</a></dt>
+    <dd><p><code class="paramref">factory</code>, <code class="paramref">connectionString</code>, or
+<code class="paramref">commandText</code> is null.</p>
+</dd>
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a></dt>
+    <dd><p><code class="paramref">factory</code> returned a null connection from
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbproviderfactory.createconnection">CreateConnection()</a>.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1__ctor_System_Data_Common_DbProviderFactory_System_String_System_String_Wolfgang_Etl_DbClient_DbLoaderOptions_Microsoft_Extensions_Logging_ILogger_Wolfgang_Etl_DbClient_DbLoader__0___" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.#ctor(System.Data.Common.DbProviderFactory,System.String,System.String,Wolfgang.Etl.DbClient.DbLoaderOptions,Microsoft.Extensions.Logging.ILogger{Wolfgang.Etl.DbClient.DbLoader{`0}})">
+  DbLoader(DbProviderFactory, string, string, DbLoaderOptions?, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;?)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L270"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Initializes a new instance of the <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader&lt;TRecord&gt;</a> class configured from an
+options record.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public DbLoader(DbProviderFactory factory, string connectionString, string commandText, DbLoaderOptions? options, ILogger&lt;DbLoader&lt;TRecord&gt;&gt;? logger = null)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>factory</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.common.dbproviderfactory">DbProviderFactory</a></dt>
+    <dd><p>The provider factory used to create the connection.</p>
+</dd>
+    <dt><code>connectionString</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The connection string.</p>
+</dd>
+    <dt><code>commandText</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd><p>The command to execute.</p>
+</dd>
+    <dt><code>options</code> <a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html">DbLoaderOptions</a></dt>
+    <dd><p>The configuration to apply. When <code>null</code>, the documented defaults apply.</p>
+</dd>
+    <dt><code>logger</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger-1">ILogger</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html">DbLoader</a>&lt;TRecord&gt;&gt;</dt>
+    <dd><p>An optional logger instance for diagnostic output. When <code>null</code> — or omitted —
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.abstractions.nulllogger.instance">Instance</a> is used and logging is disabled.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_BatchCommitSize_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.BatchCommitSize*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_BatchCommitSize" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.BatchCommitSize">
+  BatchCommitSize
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L745"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Commit the auto-managed transaction every N source items read - items consumed by
+<code>SkipItemCount</code> and rows skipped by <a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a> count
+toward N, not only successfully-loaded rows.
+Defaults to <code>0</code>, meaning &quot;commit only once at the end of the load&quot;
+(the v0.4.0 behavior). Larger values let very long loads survive a
+mid-flight failure with most of the work persisted.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int BatchCommitSize { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_BatchCommitSize_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+Only takes effect when the loader manages the transaction (i.e. the
+caller did NOT pass a <code>DbTransaction</code> to the constructor) AND
+<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize">BatchSize</a> is <code>1</code>. With a caller-supplied transaction
+the loader never commits, so this knob has no effect; with
+<code>BatchSize &gt; 1</code> the per-batch commit boundary is the
+<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize">BatchSize</a>'s own batch, which we currently don't subdivide.
+</p>
+<p>
+Trade-off: a partial-progress failure with <code>BatchCommitSize &gt; 0</code>
+leaves earlier committed batches in the destination. You lose all-or-
+nothing semantics in exchange for resumability and lower undo-log
+pressure on the database.
+</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>The assigned value is negative.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_BatchSize_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.BatchSize*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_BatchSize" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.BatchSize">
+  BatchSize
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L790"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Number of records sent per <code>ExecuteAsync</code> call. Defaults to <code>1</code>
+(one round-trip per record). Larger values pass an <code>IEnumerable&lt;TRecord&gt;</code>
+to Dapper, which amortizes per-call overhead (parameter parsing, command setup)
+and lets the ADO.NET provider reuse the prepared command across rows.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int BatchSize { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_BatchSize_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>On networked databases (SQL Server, PostgreSQL, MySQL) this is typically the
+largest single performance lever in the loader. Memory cost is one buffered
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.list-1">List&lt;T&gt;</a> of up to <code>BatchSize</code> records at a time.</p>
+<p>
+<code>SkipItemCount</code> and <code>MaximumItemCount</code> are still honored at the
+per-record granularity — skipped records never enter the batch buffer,
+and buffering stops accepting new items once the cumulative-plus-buffered
+count would exceed <code>MaximumItemCount</code>.
+</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>Thrown when the assigned value is less than 1.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_CommandText_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CommandText*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_CommandText" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CommandText">
+  CommandText
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L402"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The SQL command text being executed per record.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public string CommandText { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_CommandTimeout_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CommandTimeout*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_CommandTimeout" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CommandTimeout">
+  CommandTimeout
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L420"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How long each <code>ExecuteAsync</code> call may run before timing out.
+<code>null</code> (the default) means &quot;use the ADO.NET provider's default&quot;,
+typically 30 seconds.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public TimeSpan? CommandTimeout { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.timespan">TimeSpan</a>?</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_CommandTimeout_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Maps onto Dapper's <code>commandTimeout</code> parameter (an <code>int?</code> count
+of seconds). Fractional seconds are rounded up (any positive timeout is at least one second), values beyond <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32.maxvalue">MaxValue</a> seconds are clamped, and <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.timespan.zero">Zero</a> is passed through as 0, which providers read as no timeout. Applies to every batch,
+not the whole load — so a batched insert of 10 batches each gets the
+full timeout independently.</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>The assigned value is negative.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_CommandType_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CommandType*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_CommandType" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CommandType">
+  CommandType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L456"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CommandText">CommandText</a> is interpreted by the ADO.NET provider.
+Defaults to <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.commandtype#system-data-commandtype-text">Text</a> (a SQL INSERT / UPDATE).
+Set to <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.commandtype#system-data-commandtype-storedprocedure">StoredProcedure</a> to invoke a stored
+procedure by name per record (or per batch when <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize">BatchSize</a>
+is &gt; 1); <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CommandText">CommandText</a> then holds the procedure name.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public CommandType CommandType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.data.commandtype">CommandType</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_CurrentErrorCount_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CurrentErrorCount*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_CurrentErrorCount" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CurrentErrorCount">
+  CurrentErrorCount
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L700"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Number of rows that have failed to load so far (incremented for every
+<a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a>-handled exception). Resets to 0
+at the start of each <code>LoadAsync</code> call.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int CurrentErrorCount { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_ErrorHandling_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.ErrorHandling*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_ErrorHandling" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.ErrorHandling">
+  ErrorHandling
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L646"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How the loader reacts when a single row's <code>ExecuteAsync</code> throws.
+Defaults to <a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Abort">Abort</a>, which preserves the
+v0.4.0 behavior (first failure rolls back the transaction and
+propagates).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public RowErrorHandling ErrorHandling { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html">RowErrorHandling</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_ErrorHandling_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p><a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a> only takes effect on the
+per-record path — <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize">BatchSize</a> == 1 <b>and</b>
+<a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_InsertBatchSize">InsertBatchSize</a> == 1, both the default. A failed
+batch cannot be safely attributed to a single row without per-item
+retry, so the load still aborts even in Skip mode when either is
+greater than <code>1</code>. See <a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a>.</p>
+</div>
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_InsertBatchSize_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.InsertBatchSize*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_InsertBatchSize" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.InsertBatchSize">
+  InsertBatchSize
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L568"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>When greater than <code>1</code>, the loader replaces N per-row
+<code>INSERT</code>s with a single multi-row <code>INSERT … VALUES (…), (…), …</code>
+statement. The single biggest single-line perf win available
+without provider-specific bulk APIs.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int InsertBatchSize { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_InsertBatchSize_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+Contract on <code>CommandText</code>: it MUST end with the literal token
+<code>VALUES</code> followed by a parenthesized parameter template such as
+<code>(@FirstName, @LastName, @Age)</code>. The loader extracts that
+template, replicates it once per row in the batch with suffixed
+parameter names (<code>@FirstName_0</code>, <code>@FirstName_1</code>, …), and
+rebinds each row's properties to its slot via reflection. Only <code>@name</code> parameter
+markers are recognised (not <code>:name</code> or <code>?</code>); <code>VALUES</code> inside an identifier,
+parameter name or quoted identifier is not mistaken for the keyword, and <code>@</code> inside a
+string literal or in an <code>@@</code> system variable is not read as a parameter.
+</p>
+<p>
+Database parameter limits apply — SQL Server caps at 2,100 params per
+command, SQLite at 999, MySQL much higher. Choose
+<code>InsertBatchSize</code> so that <code>InsertBatchSize × columns</code> stays
+under your provider's limit.
+</p>
+<p>
+Default <code>1</code> preserves the v0.4.0 behavior (one statement per row,
+or N statements bundled via <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize">BatchSize</a>).
+</p>
+<p>
+Mutually exclusive with <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_BatchSize">BatchSize</a> &gt; <code>1</code> — when
+both are set, <code>InsertBatchSize</code> wins because it generates a
+single statement per chunk instead of N. Mutually exclusive with
+stored-procedure <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_CommandType">CommandType</a>. With <code>IsDryRun</code> =
+<a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a> the <code>VALUES</code> template is still parsed (and a
+command text without one still throws); only the execute is skipped.
+</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>The assigned value is less than <code>1</code>.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_IsDryRun_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.IsDryRun*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_IsDryRun" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.IsDryRun">
+  IsDryRun
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L621"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>When <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a>, the loader runs the full pipeline —
+enumerates the source, evaluates <code>SkipItemCount</code> /
+<code>MaximumItemCount</code>, increments progress counters, fires the
+progress-timer callback, and emits all the usual log messages — but
+<strong>skips the actual <code>ExecuteAsync</code> call</strong>. The database is not
+modified.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool IsDryRun { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_IsDryRun_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+Useful for validating an ETL pipeline (source feed, mapping, batching,
+throttling) against production without writing anything, or for
+estimating how long a write would take.
+</p>
+<p>
+The auto-managed-transaction path still <code>BeginTransaction</code> /
+<code>Commit</code>s — those are connection-level operations and are needed
+for the open/dispose lifecycle. They have no effect on the database
+because no writes happen inside the transaction.
+</p>
+<p>
+Default <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">false</a> preserves the prior behavior. Configure it through
+<a class="xref" href="Wolfgang.Etl.DbClient.DbLoaderOptions.html#Wolfgang_Etl_DbClient_DbLoaderOptions_IsDryRun">IsDryRun</a> on the record passed to the constructor; the setter is
+deprecated and will be removed in a later release.
+</p>
+</div>
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_ManageConnection_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.ManageConnection*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_ManageConnection" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.ManageConnection">
+  ManageConnection
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L489"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>When <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a>, the loader opens the connection before the
+first command runs and closes it after the load ends. The connection
+is NOT disposed — it's returned to the pool for reuse, which plays
+better with connection-pool lifetime in web apps and hosted services.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool ManageConnection { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_ManageConnection_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+Default <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">false</a> preserves the v0.4.0 behavior: the
+caller is responsible for opening the connection before calling
+<code>LoadAsync</code>.
+</p>
+<p>
+Ignored on the owned-connection ctor path (the
+<code>(DbProviderFactory, connectionString, …)</code> overload). That path
+always manages and disposes the connection because it created it.
+</p>
+<p>
+If the connection is already open when <code>LoadAsync</code> starts, it's
+left open — the loader only closes connections it itself opened.
+</p>
+</div>
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_MaxErrorCount_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.MaxErrorCount*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_MaxErrorCount" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.MaxErrorCount">
+  MaxErrorCount
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L670"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Row-failure count at which the loader aborts the load with an
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a> whose
+<a class="xref" href="https://learn.microsoft.com/dotnet/api/system.exception.innerexception">InnerException</a> is the last underlying row failure.
+The load aborts as soon as this many rows have failed (counting the failure that
+reaches it), so <code>1</code> tolerates no failures and <code>N</code> tolerates <code>N - 1</code>. Defaults to <code>0</code>, meaning &quot;unlimited&quot; (every failure
+is reported via <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_RowFailed">RowFailed</a> and processing continues).</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int MaxErrorCount { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_MaxErrorCount_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Only consulted when <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_ErrorHandling">ErrorHandling</a> is
+<a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a>.</p>
+</div>
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.argumentoutofrangeexception">ArgumentOutOfRangeException</a></dt>
+    <dd><p>The assigned value is negative.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_ValidateSchemaOnStart_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.ValidateSchemaOnStart*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_ValidateSchemaOnStart" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.ValidateSchemaOnStart">
+  ValidateSchemaOnStart
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L519"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>When <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a>, the loader calls
+<a class="xref" href="Wolfgang.Etl.DbClient.DbSchemaValidator.html#Wolfgang_Etl_DbClient_DbSchemaValidator_ValidateAsync__1_System_Data_Common_DbConnection_System_Threading_CancellationToken_">ValidateAsync&lt;TRecord&gt;(DbConnection, CancellationToken)</a>
+before the first row is written. If the mapped
+<code>[Table]</code>/<code>[Column]</code> names don't match the database,
+the loader throws <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a>
+before writing anything.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool ValidateSchemaOnStart { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_ValidateSchemaOnStart_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>
+Default: <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">false</a>. Opting in adds a single
+zero-row round-trip at the top of each <code>LoadAsync</code>
+call. Cheap for batch jobs, avoid on hot per-message
+pipelines.
+</p>
+<p>
+Refs <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/issues/20">#20</a>.
+</p>
+</div>
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_CreateProgressReport_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CreateProgressReport*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_CreateProgressReport" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.CreateProgressReport">
+  CreateProgressReport()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L813"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Creates a progress report of type TProgress. This gives the derived class the opportunity to
+implement a custom progress report that is specific to the loading process.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override DbReport CreateProgressReport()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Wolfgang.Etl.DbClient.DbReport.html">DbReport</a></dt>
+    <dd><p>Progress of type TProgress</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Wolfgang_Etl_DbClient_DbLoader_1_LoadWorkerAsync_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.LoadWorkerAsync*"></a>
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_LoadWorkerAsync_System_Collections_Generic_IAsyncEnumerable__0__System_Threading_CancellationToken_" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.LoadWorkerAsync(System.Collections.Generic.IAsyncEnumerable{`0},System.Threading.CancellationToken)">
+  LoadWorkerAsync(IAsyncEnumerable&lt;TRecord&gt;, CancellationToken)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L840"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>This method is the core implementation of the loading logic and should be
+overridden by derived classes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override Task LoadWorkerAsync(IAsyncEnumerable&lt;TRecord&gt; items, CancellationToken token)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>items</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iasyncenumerable-1">IAsyncEnumerable</a>&lt;TRecord&gt;</dt>
+    <dd><p>The items to be loaded to the destination.</p>
+</dd>
+    <dt><code>token</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd><p>A CancellationToken to observe while waiting for the task to complete.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.tasks.task">Task</a></dt>
+    <dd><p>A task representing the asynchronous operation.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_LoadWorkerAsync_System_Collections_Generic_IAsyncEnumerable__0__System_Threading_CancellationToken__remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Items may be an empty sequence if no data is available or if the loading fails.</p>
+</div>
+
+
+
+
+  <h2 class="section" id="events">Events
+</h2>
+
+
+
+  <h3 id="Wolfgang_Etl_DbClient_DbLoader_1_RowFailed" data-uid="Wolfgang.Etl.DbClient.DbLoader`1.RowFailed">
+  RowFailed
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L714"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Raised once per row that fails when <a class="xref" href="Wolfgang.Etl.DbClient.DbLoader-1.html#Wolfgang_Etl_DbClient_DbLoader_1_ErrorHandling">ErrorHandling</a> is
+<a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a>. The handler receives the failing
+record, the underlying exception, and the row's 1-based item index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public event EventHandler&lt;RowFailedEventArgs&lt;TRecord&gt;&gt;? RowFailed</code></pre>
+  </div>
+
+
+
+
+
+
+  <h4 class="section">Event Type</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.eventhandler-1">EventHandler</a>&lt;<a class="xref" href="Wolfgang.Etl.DbClient.RowFailedEventArgs-1.html">RowFailedEventArgs</a>&lt;TRecord&gt;&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+  <h4 class="section" id="Wolfgang_Etl_DbClient_DbLoader_1_RowFailed_remarks">Remarks</h4>
+  <div class="markdown level1 remarks"><p>Typical use: capture the failing record into a dead-letter store. The
+handler is invoked synchronously inside the load loop, so a slow
+handler will slow the entire load.</p>
+</div>
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbLoader.cs/#L54" class="edit-link">Edit this page</a>
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with DocFX <script>(function(){var r='/';if(window.location.hostname.endsWith('.github.io')){var s=window.location.pathname.split('/').filter(Boolean);if(s.length)r='/'+s[0]+'/';}var t=document.createElement('script');t.src=r+'public/version-picker.js';t.async=true;document.head.appendChild(t);})();</script>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/docfx_project/docs/getting-started.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/docfx_project/docs/getting-started.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,10 +75,11 @@
 
 <p>This guide will help you quickly get up and running with Wolfgang.Etl.DbClient.</p>
 <h2 id="prerequisites">Prerequisites</h2>
-<!-- List any prerequisites needed. For example:
-- .NET 8.0 or later
-- Visual Studio 2022 or Visual Studio Code
--->
+<ul>
+<li>A project targeting .NET Framework 4.6.2+, .NET Standard 2.0, or .NET 5.0+</li>
+<li>An ADO.NET provider for your database (for example <code>Microsoft.Data.SqlClient</code>, <code>Npgsql</code>,
+<code>MySqlConnector</code> or <code>Microsoft.Data.Sqlite</code>)</li>
+</ul>
 <h2 id="installation">Installation</h2>
 <h3 id="via-nuget-package-manager">Via NuGet Package Manager</h3>
 <pre><code class="lang-bash">dotnet add package Wolfgang.Etl.DbClient
@@ -87,13 +88,54 @@
 <pre><code class="lang-powershell">Install-Package Wolfgang.Etl.DbClient
 </code></pre>
 <h2 id="quick-start">Quick Start</h2>
-<!-- Add a quick start example. For example: -->
-<pre><code class="lang-csharp">// Add your quick start code example here
-// This should show the simplest way to use your library
-
+<pre><code class="lang-csharp">using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Data.Sqlite;
 using Wolfgang.Etl.DbClient;
 
-// Example usage
+// Open a connection (caller owns the lifetime)
+using var connection = new SqliteConnection(&quot;Data Source=mydb.db&quot;);
+await connection.OpenAsync();
+
+// EXTRACT: stream rows from a query
+var extractor = new DbExtractor&lt;EmployeeRecord&gt;
+(
+    connection,
+    &quot;SELECT id, first_name, last_name, salary FROM Employees WHERE salary &gt; @Min&quot;,
+    new Dictionary&lt;string, object&gt; { { &quot;Min&quot;, 50000 } },
+    new DbExtractorOptions { CommandTimeout = TimeSpan.FromSeconds(30) }
+);
+
+await foreach (var employee in extractor.ExtractAsync())
+{
+    Console.WriteLine($&quot;{employee.FirstName} {employee.LastName}: ${employee.Salary:N0}&quot;);
+}
+
+// LOAD: insert records from an async stream
+var loader = new DbLoader&lt;EmployeeRecord&gt;
+(
+    connection,
+    WriteMode.Insert,
+    new DbLoaderOptions { InsertBatchSize = 100 }
+);
+
+await loader.LoadAsync(GetNewHiresAsync());
+
+// Example async stream of records to load
+async IAsyncEnumerable&lt;EmployeeRecord&gt; GetNewHiresAsync()
+{
+    yield return new EmployeeRecord { FirstName = &quot;Jane&quot;, LastName = &quot;Doe&quot;, Salary = 75000 };
+    await Task.CompletedTask;
+}
+
+// Record type with attribute-based mapping
+[Table(&quot;Employees&quot;)]
+public class EmployeeRecord
+{
+    [Column(&quot;id&quot;)]   public int Id { get; set; }
+    [Column(&quot;first_name&quot;)] public string FirstName { get; set; } = &quot;&quot;;
+    [Column(&quot;last_name&quot;)]  public string LastName { get; set; } = &quot;&quot;;
+    [Column(&quot;salary&quot;)]     public double Salary { get; set; }
+}
 </code></pre>
 <h2 id="next-steps">Next Steps</h2>
 <ul>
@@ -102,7 +144,16 @@ using Wolfgang.Etl.DbClient;
 <li>Check out example projects in the <a href="https://github.com/Chris-Wolfgang/Etl-DbClient">GitHub repository</a></li>
 </ul>
 <h2 id="common-issues">Common Issues</h2>
-<!-- Add common issues and their solutions here -->
+<ul>
+<li><strong>The connection is closed.</strong> By default the caller owns the connection: open it before
+calling <code>ExtractAsync</code> / <code>LoadAsync</code>, or set <code>ManageConnection = true</code> in the options to have
+the extractor or loader open and close it.</li>
+<li><strong><code>Incorrect syntax near 'LIMIT'</code> (or a similar paging error).</strong> Paging syntax is
+dialect-specific. Set <code>PagingClauseTemplate</code> to the preset for your database, for example
+<code>PagingClauseTemplates.SqlServer</code>.</li>
+<li><strong><code>RowErrorHandling.Skip</code> still aborts the load.</strong> Skip only applies on the per-record path:
+leave both <code>BatchSize</code> and <code>InsertBatchSize</code> at <code>1</code>.</li>
+</ul>
 <h2 id="additional-resources">Additional Resources</h2>
 <ul>
 <li><a href="https://github.com/Chris-Wolfgang/Etl-DbClient">GitHub Repository</a></li>
@@ -113,7 +164,7 @@ using Wolfgang.Etl.DbClient;
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/docfx_project/docs/getting-started.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/docfx_project/docs/getting-started.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

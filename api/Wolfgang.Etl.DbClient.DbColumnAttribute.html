@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.12.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbColumnAttribute.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbColumnAttribute%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.13.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_DbColumnAttribute.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.DbColumnAttribute%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -75,11 +75,11 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_DbColumnAttribute" data-uid="Wolfgang.Etl.DbClient.DbColumnAttribute" class="text-break">
-Class DbColumnAttribute  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L17"><i class="bi bi-code-slash"></i></a>
+Class DbColumnAttribute  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L17"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
-    <dl><dt>Namespace</dt><dd><a class="xref" href="Wolfgang.html">Wolfgang</a>.<a class="xref" href="Wolfgang.Etl.html">Etl</a>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
+    <dl><dt>Namespace</dt><dd><span class="xref">Wolfgang</span>.<span class="xref">Etl</span>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
   <dl><dt>Assembly</dt><dd>Wolfgang.Etl.DbClient.dll</dd></dl>
   </div>
 
@@ -256,7 +256,7 @@ ReSharper has no visibility into those external/generated readers.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_DbColumnAttribute__ctor_System_String_" data-uid="Wolfgang.Etl.DbClient.DbColumnAttribute.#ctor(System.String)">
   DbColumnAttribute(string)
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L25"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L25"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>Initializes a new <a class="xref" href="Wolfgang.Etl.DbClient.DbColumnAttribute.html">DbColumnAttribute</a>.</p>
@@ -293,7 +293,7 @@ ReSharper has no visibility into those external/generated readers.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_DbColumnAttribute_Name" data-uid="Wolfgang.Etl.DbClient.DbColumnAttribute.Name">
   Name
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L31"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L33"><i class="bi bi-code-slash"></i></a>
   </h3>
 
   <div class="markdown level1 summary"><p>The column name supplied to the constructor.</p>
@@ -325,11 +325,12 @@ ReSharper has no visibility into those external/generated readers.</p>
 
   <h3 id="Wolfgang_Etl_DbClient_DbColumnAttribute_Skip" data-uid="Wolfgang.Etl.DbClient.DbColumnAttribute.Skip">
   Skip
-  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L38"><i class="bi bi-code-slash"></i></a>
+  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L43"><i class="bi bi-code-slash"></i></a>
   </h3>
 
-  <div class="markdown level1 summary"><p>When <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a>, the property is excluded from the
-generated <code>Insert</code> SQL and parameter binder. Useful for computed
+  <div class="markdown level1 summary"><p>When <a href="https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/bool">true</a>, the property is excluded from every
+generated SQL constant (<code>Insert</code>, <code>Select</code>, <code>Update</code>,
+<code>Delete</code>) and from the parameter binder. Useful for computed
 columns or columns the application doesn't write.</p>
 </div>
   <div class="markdown level1 conceptual"></div>
@@ -359,7 +360,7 @@ columns or columns the application doesn't write.</p>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L17" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/DbColumnAttribute.cs/#L17" class="edit-link">Edit this page</a>
         </div>
 
 

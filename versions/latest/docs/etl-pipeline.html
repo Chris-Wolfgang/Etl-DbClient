@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/docfx_project/docs/etl-pipeline.md/#L1">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/docfx_project/docs/etl-pipeline.md/#L1">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -80,7 +80,7 @@ read from a database, thread rows through operators from
 <code>Wolfgang.Etl.Transformers</code>, and write to any sink shipped by the ETL family
 — another database, JSON, CSV, <code>Console</code>, an arbitrary <code>LoaderBase&lt;T, TProgress&gt;</code>,
 or an <code>IAsyncEnumerable&lt;T&gt;</code> escape hatch.</p>
-<p>Added in <strong>v0.7.0</strong>. Requires <code>Wolfgang.Etl.Abstractions</code> ≥ 0.16.0.</p>
+<p>Added in <strong>v0.7.0</strong>. Requires <code>Wolfgang.Etl.Abstractions</code> ≥ 0.26.0.</p>
 <h2 id="the-pattern">The pattern</h2>
 <p>Every source and sink hangs off the same <code>EtlPipeline.Create()</code> seed, so every
 pipeline reads the same way regardless of the format at either end:</p>
@@ -101,7 +101,8 @@ just <code>IEtlPipeline&lt;T&gt;</code> / <code>IEtlPipelineSink</code> with ext
 first operator or terminator call they transition seamlessly into the plain
 pipeline interfaces.</p>
 <h2 id="extractor-knobs">Extractor knobs</h2>
-<p>Every configurable property on <code>DbExtractor&lt;T&gt;</code> has a matching builder setter:</p>
+<p>Most configurable properties on <code>DbExtractor&lt;T&gt;</code> have a matching builder setter
+(<code>CommandTimeout</code> and <code>ValidateSchemaOnStart</code> do not; set those on the extractor):</p>
 <table>
 <thead>
 <tr>
@@ -223,7 +224,9 @@ await EtlPipeline
     .RunAsync();
 </code></pre>
 <h2 id="server-side-paging">Server-side paging</h2>
-<pre><code class="lang-csharp">await EtlPipeline
+<pre><code class="lang-csharp">using Dapper;   // DynamicParameters
+
+await EtlPipeline
     .Create()
     .DbExtractor&lt;Invoice&gt;(conn, &quot;SELECT * FROM Invoices WHERE Status = @Status&quot;)
     .Parameters(new DynamicParameters(new { Status = &quot;paid&quot; }))
@@ -251,10 +254,15 @@ Use a preset, or supply your own clause referencing <code>@PageOffset</code> and
 </code></pre>
 <h2 id="error-handling">Error handling</h2>
 <p><code>RowErrorHandling.Skip</code> on the loader silently drops the failing row and
-continues (per-record path only, requires <code>InsertBatchSize = 1</code>). Useful for
+continues (per-record path only, requires both <code>BatchSize = 1</code> and <code>InsertBatchSize = 1</code>). Useful for
 imports where a per-row PK conflict or check-constraint violation shouldn't
 tear down the whole run:</p>
-<pre><code class="lang-csharp">var loader = new DbLoader&lt;Widget&gt;(destConn, insertSql) { InsertBatchSize = 1 };
+<pre><code class="lang-csharp">var loader = new DbLoader&lt;Widget&gt;
+(
+    destConn,
+    insertSql,
+    new DbLoaderOptions { InsertBatchSize = 1, BatchSize = 1 }  // both 1 (the defaults) keeps Skip available
+);
 
 await EtlPipeline
     .Create()
@@ -302,7 +310,7 @@ runnable project.</li>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/docfx_project/docs/etl-pipeline.md/#L1" class="edit-link">Edit this page</a>
         </div>
 
         <div class="next-article d-print-none border-top" id="nextArticle"></div>

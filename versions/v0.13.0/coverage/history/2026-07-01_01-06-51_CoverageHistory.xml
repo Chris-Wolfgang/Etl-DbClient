@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<coverage version="1.0" date="2026-07-01_01-06-51" tag="">
+  <assembly name="Wolfgang.Etl.DbClient">
+    <class name="Wolfgang.Etl.DbClient.ColumnAttributeTypeMapper" coveredlines="31" coverablelines="32" totallines="120" coveredbranches="17" totalbranches="18" coveredcodeelements="4" fullcoveredcodeelements="3" totalcodeelements="4" />
+    <class name="Wolfgang.Etl.DbClient.DbClientOptions" coveredlines="1" coverablelines="1" totallines="58" coveredbranches="0" totalbranches="0" coveredcodeelements="1" fullcoveredcodeelements="1" totalcodeelements="1" />
+    <class name="Wolfgang.Etl.DbClient.DbColumnAttribute" coveredlines="5" coverablelines="5" totallines="39" coveredbranches="2" totalbranches="2" coveredcodeelements="3" fullcoveredcodeelements="3" totalcodeelements="3" />
+    <class name="Wolfgang.Etl.DbClient.DbCommandBuilder" coveredlines="102" coverablelines="102" totallines="307" coveredbranches="33" totalbranches="36" coveredcodeelements="15" fullcoveredcodeelements="15" totalcodeelements="15" />
+    <class name="Wolfgang.Etl.DbClient.DbExtractor`1" coveredlines="234" coverablelines="235" totallines="825" coveredbranches="98" totalbranches="108" coveredcodeelements="31" fullcoveredcodeelements="30" totalcodeelements="31" />
+    <class name="Wolfgang.Etl.DbClient.DbLoader`1" coveredlines="426" coverablelines="440" totallines="1364" coveredbranches="167" totalbranches="176" coveredcodeelements="53" fullcoveredcodeelements="51" totalcodeelements="53" />
+    <class name="Wolfgang.Etl.DbClient.DbReport" coveredlines="11" coverablelines="11" totallines="89" coveredbranches="0" totalbranches="0" coveredcodeelements="5" fullcoveredcodeelements="5" totalcodeelements="5" />
+    <class name="Wolfgang.Etl.DbClient.DbTableAttribute" coveredlines="4" coverablelines="4" totallines="45" coveredbranches="2" totalbranches="2" coveredcodeelements="2" fullcoveredcodeelements="2" totalcodeelements="2" />
+    <class name="Wolfgang.Etl.DbClient.RowFailedEventArgs`1" coveredlines="8" coverablelines="8" totallines="46" coveredbranches="2" totalbranches="2" coveredcodeelements="4" fullcoveredcodeelements="4" totalcodeelements="4" />
+  </assembly>
+</coverage>

@@ -16,7 +16,7 @@
       <meta name="docfx:rel" content="../">
       
       
-      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.12.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_RowErrorHandling.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.RowErrorHandling%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="docfx:docurl" content="https://github.com/Chris-Wolfgang/Etl-DbClient/new/v0.13.0/apiSpec/new?filename=Wolfgang_Etl_DbClient_RowErrorHandling.md&amp;value=---%0Auid%3A%20Wolfgang.Etl.DbClient.RowErrorHandling%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
       <meta name="loc:inThisArticle" content="In this article">
       <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
       <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
@@ -76,11 +76,11 @@
 
 
   <h1 id="Wolfgang_Etl_DbClient_RowErrorHandling" data-uid="Wolfgang.Etl.DbClient.RowErrorHandling" class="text-break">
-Enum RowErrorHandling  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/RowErrorHandling.cs/#L7"><i class="bi bi-code-slash"></i></a>
+Enum RowErrorHandling  <a class="header-action link-secondary" title="View source" href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/RowErrorHandling.cs/#L7"><i class="bi bi-code-slash"></i></a>
   </h1>
 
   <div class="facts text-secondary">
-    <dl><dt>Namespace</dt><dd><a class="xref" href="Wolfgang.html">Wolfgang</a>.<a class="xref" href="Wolfgang.Etl.html">Etl</a>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
+    <dl><dt>Namespace</dt><dd><span class="xref">Wolfgang</span>.<span class="xref">Etl</span>.<a class="xref" href="Wolfgang.Etl.DbClient.html">DbClient</a></dd></dl>
   <dl><dt>Assembly</dt><dd>Wolfgang.Etl.DbClient.dll</dd></dl>
   </div>
 
@@ -117,11 +117,25 @@ matches the v0.4.0 behavior.</p>
 it, the load aborts with an <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception">InvalidOperationException</a>
 referencing the threshold and the last underlying exception is included
 as the inner exception.</p>
-<p>Skip mode only applies on the per-record path (<code>BatchSize == 1</code>,
-the default). When <code>BatchSize &gt; 1</code>, a failed batch can't be
-reliably attributed to a single row without per-item retry, so the
-load aborts even in <a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a> mode. Set <code>BatchSize = 1</code>
-if row-level error handling is required.</p>
+<p>Skip mode only applies on the per-record path (<code>BatchSize == 1</code>
+and <code>InsertBatchSize == 1</code>, both the default). When either is
+greater than <code>1</code>, a failed batch can't be reliably attributed to a
+single row without per-item retry, so the load aborts even in
+<a class="xref" href="Wolfgang.Etl.DbClient.RowErrorHandling.html#Wolfgang_Etl_DbClient_RowErrorHandling_Skip">Skip</a> mode. Leave both at <code>1</code> if row-level error
+handling is required.</p>
+<p>
+A failure that leaves the connection no longer open (a dropped connection, a fatal
+provider error) is not treated as a row failure: it aborts the load instead of being
+skipped once per remaining row.
+</p>
+<p>
+Skip mode carries on in the same transaction, so it only isolates a bad row where the
+provider keeps the transaction usable after a failed statement. PostgreSQL (and, by its
+documented behaviour, CockroachDB) abort the whole transaction on the first failed statement:
+every later row then fails ("current transaction is aborted", SQLSTATE 25P02) and nothing is
+committed. On those providers set <code>BatchCommitSize</code> to <code>1</code> so each row runs in its
+own transaction (verified against PostgreSQL 16: only the bad row is skipped).
+</p>
 </dd>
   
   </dl>
@@ -131,7 +145,7 @@ if row-level error handling is required.</p>
 </article>
 
         <div class="contribution d-print-none">
-          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.12.0/src/Wolfgang.Etl.DbClient/RowErrorHandling.cs/#L7" class="edit-link">Edit this page</a>
+          <a href="https://github.com/Chris-Wolfgang/Etl-DbClient/blob/v0.13.0/src/Wolfgang.Etl.DbClient/RowErrorHandling.cs/#L7" class="edit-link">Edit this page</a>
         </div>
 
 
