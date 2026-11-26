@@ -1828,6 +1828,20 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
             && _connection.State == ConnectionState.Open
         )
         {
+            if (IsAbortedTransaction(ex))
+            {
+                // The provider rejected this row only because an earlier failure aborted the
+                // transaction: every later row would fail the same way and nothing would commit.
+                throw new InvalidOperationException
+                (
+                    "DbLoader: the database aborted the transaction after an earlier row failed " +
+                    "(SQLSTATE 25P02), so RowErrorHandling.Skip cannot carry on in it and nothing in it " +
+                    "will be committed. On PostgreSQL and CockroachDB set DbLoaderOptions.BatchCommitSize " +
+                    "to 1 so each row runs in its own transaction; see the inner exception.",
+                    ex
+                );
+            }
+
             CurrentErrorCount++;
             var itemIndex = CurrentItemCount + CurrentSkippedItemCount + CurrentErrorCount;
             RowFailed?.Invoke(this, new RowFailedEventArgs<TRecord>(item, ex, itemIndex));
@@ -1845,6 +1859,24 @@ public class DbLoader<[DynamicallyAccessedMembers(RecordMembers.Mapped)] TRecord
 
             return false;
         }
+    }
+
+
+
+    /// <summary>
+    /// <see langword="true"/> when <paramref name="ex"/> reports SQLSTATE <c>25P02</c>
+    /// ("current transaction is aborted"), which PostgreSQL and CockroachDB return for every
+    /// statement after a failed one in the same transaction. <c>DbException.SqlState</c> exists
+    /// on net5.0 and later only, so on older targets this is always <see langword="false"/>.
+    /// </summary>
+    private static bool IsAbortedTransaction(Exception ex)
+    {
+#if NET5_0_OR_GREATER
+        return ex is DbException { SqlState: "25P02" };
+#else
+        _ = ex;
+        return false;
+#endif
     }
 
 
