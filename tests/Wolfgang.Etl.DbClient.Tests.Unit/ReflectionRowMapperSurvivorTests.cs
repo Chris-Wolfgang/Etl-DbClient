@@ -56,21 +56,6 @@ public class ReflectionRowMapperSurvivorTests
 
 
 
-    [ExcludeFromCodeCoverage]
-    public sealed record UnrelatedConstructorRecord(string Unrelated);
-
-
-
-    [ExcludeFromCodeCoverage]
-    public sealed record PositionalRecord(long Id, string Name);
-
-
-
-    [ExcludeFromCodeCoverage]
-    public sealed record KeyValuePairRecord(KeyValuePair<int, int> Pair);
-
-
-
     private static async Task<List<T>> ReadAsync<T>(string sql)
     {
         using var conn = TestDb.CreateConnection();
@@ -124,7 +109,7 @@ public class ReflectionRowMapperSurvivorTests
     {
         var ex = await Assert.ThrowsAsync<InvalidOperationException>
         (
-            () => ReadAsync<UnrelatedConstructorRecord>("SELECT 1 AS Other, 2 AS Second")
+            () => ReadAsync<ReflectionRowMapperTests.NoMatchingConstructorRecord>("SELECT 1 AS Other, 2 AS Second")
         );
 
         Assert.Contains
@@ -142,7 +127,7 @@ public class ReflectionRowMapperSurvivorTests
     {
         var ex = await Assert.ThrowsAsync<DataException>
         (
-            () => ReadAsync<PositionalRecord>("SELECT 'not a number' AS Id, 'n' AS Name")
+            () => ReadAsync<ReflectionRowMapperTests.PositionalRecord>("SELECT 'not a number' AS Id, 'n' AS Name, 1 AS Count")
         );
 
         Assert.Equal
@@ -159,7 +144,7 @@ public class ReflectionRowMapperSurvivorTests
     {
         var ex = await Assert.ThrowsAsync<NotSupportedException>
         (
-            () => ReadAsync<KeyValuePairRecord>("SELECT NULL AS Pair")
+            () => ReadAsync<ReflectionRowMapperTests.KeyValuePairRecord>("SELECT NULL AS Pair")
         );
 
         Assert.Equal
@@ -176,7 +161,7 @@ public class ReflectionRowMapperSurvivorTests
     {
         var ex = Assert.Throws<InvalidCastException>
         (
-            () => ReflectionRowMapper<PositionalRecord>.ConvertValue(5L, typeof(Guid))
+            () => ReflectionRowMapper<ReflectionRowMapperTests.PositionalRecord>.ConvertValue(5L, typeof(Guid))
         );
 
         Assert.Equal("Cannot convert System.Int64 to System.Guid.", ex.Message);
@@ -187,6 +172,6 @@ public class ReflectionRowMapperSurvivorTests
     [Fact]
     public void ConvertValue_when_a_one_character_string_targets_an_int_parses_the_number()
     {
-        Assert.Equal(5, ReflectionRowMapper<PositionalRecord>.ConvertValue("5", typeof(int)));
+        Assert.Equal(5, ReflectionRowMapper<ReflectionRowMapperTests.PositionalRecord>.ConvertValue("5", typeof(int)));
     }
 }
