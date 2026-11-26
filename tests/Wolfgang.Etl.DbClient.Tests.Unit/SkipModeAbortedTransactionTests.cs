@@ -21,22 +21,40 @@ namespace Wolfgang.Etl.DbClient.Tests.Unit;
 /// </summary>
 public class SkipModeAbortedTransactionTests
 {
-    /// <summary>A <see cref="DbException"/> that reports a SQLSTATE, as Npgsql's PostgresException does.</summary>
+    /// <summary>
+    /// A <see cref="DbException"/> whose message is a SQLSTATE and which, on net5.0 and later, reports
+    /// it through <c>SqlState</c>, as Npgsql's PostgresException does.
+    /// </summary>
     [ExcludeFromCodeCoverage]
-    private sealed class SqlStateException : DbException
+    public sealed class SqlStateException : DbException
     {
-        public SqlStateException(string sqlState)
-            : base("SQLSTATE " + sqlState)
+        public SqlStateException()
         {
-            State = sqlState;
         }
 
 
 
-        internal string State { get; }
+        public SqlStateException(string message)
+            : base(message)
+        {
+        }
+
+
+
+        public SqlStateException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+
+
+        public SqlStateException(string message, int errorCode)
+            : base(message, errorCode)
+        {
+        }
 
 #if NET5_0_OR_GREATER
-        public override string SqlState => State;
+        public override string SqlState => Message;
 #endif
     }
 
@@ -91,7 +109,13 @@ public class SkipModeAbortedTransactionTests
         protected override DbConnection? DbConnection
         {
             get => _owner;
-            set { }
+            set
+            {
+                if (!ReferenceEquals(value, _owner))
+                {
+                    throw new NotSupportedException("A FailingCommand only runs on the connection that created it.");
+                }
+            }
         }
 
         protected override DbParameterCollection DbParameterCollection => _inner.Parameters;
