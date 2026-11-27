@@ -1,30 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using Wolfgang.Etl.DbClient.Tests.Integration.Fixtures;
 using Xunit;
 
-#pragma warning disable CS0618
-
 namespace Wolfgang.Etl.DbClient.Tests.Integration;
 
 /// <summary>
-/// <c>RowErrorHandling.Skip</c> keeps loading inside the same transaction. PostgreSQL aborts the whole
-/// transaction on the first failed statement (SQLSTATE 25P02 for every later one), so Skip needs a
-/// per-row transaction there. These tests pin that documented limitation.
+/// <c>RowErrorHandling.Skip</c> on the PostgreSQL family. PostgreSQL and CockroachDB abort the whole
+/// transaction on the first failed statement and reject every later one with SQLSTATE 25P02, so Skip
+/// cannot continue in one transaction there: the loader fails fast and points at
+/// <c>BatchCommitSize = 1</c>, which runs each row in its own transaction.
 /// </summary>
-[Collection("Postgres")]
-[Trait("Category", "postgres")]
-public sealed class PostgresSkipModeTests
+public abstract class SkipModeAbortedTransactionTestsBase
 {
-    private readonly PostgresFixture _fixture;
-
-    public PostgresSkipModeTests(PostgresFixture fixture) => _fixture = fixture;
+    protected abstract IDbProviderFixture Fixture { get; }
 
 
 
-    private static async Task<int> CountRowsAsync(System.Data.Common.DbConnection conn)
+    private static async Task<int> CountRowsAsync(DbConnection conn)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM contract_items";
@@ -43,26 +39,49 @@ public sealed class PostgresSkipModeTests
 
 
 
-    [SkippableFact]
-    public async Task Skip_mode_in_one_transaction_fails_every_row_after_the_first_failure_and_commits_nothing()
-    {
-        Skip.IfNot(_fixture.Available, _fixture.UnavailableReason);
+    private static DbLoader<ContractItem> CreateLoader(DbConnection conn, int batchCommitSize) => new
+    (
+        conn,
+        "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)",
+        new DbLoaderOptions { ErrorHandling = RowErrorHandling.Skip, BatchCommitSize = batchCommitSize }
+    );
 
-        using var conn = await _fixture.OpenConnectionAsync();
-        await _fixture.ResetSchemaAsync(conn);
-        var loader = new DbLoader<ContractItem>
+
+
+    [SkippableFact]
+    public async Task Skip_mode_in_one_transaction_when_the_transaction_is_aborted_throws_InvalidOperationException()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        var loader = CreateLoader(conn, batchCommitSize: 0);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync(GoodBadGood()));
+
+        Assert.Equal
         (
-            conn,
-            "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)",
-            new DbLoaderOptions { ErrorHandling = RowErrorHandling.Skip }
+            "25P02",
+            Assert.IsAssignableFrom<DbException>(ex.InnerException).SqlState
         );
+    }
+
+
+
+    [SkippableFact]
+    public async Task Skip_mode_in_one_transaction_when_the_transaction_is_aborted_reports_only_the_bad_row_and_commits_nothing()
+    {
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
+
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        var loader = CreateLoader(conn, batchCommitSize: 0);
         var failures = new List<Exception>();
         loader.RowFailed += (_, e) => failures.Add(e.Exception);
 
-        await loader.LoadAsync(GoodBadGood());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => loader.LoadAsync(GoodBadGood()));
 
-        Assert.Equal(2, failures.Count);
-        Assert.Contains("25P02", failures[1].Message, StringComparison.Ordinal);
+        Assert.Single(failures);
         Assert.Equal(0, await CountRowsAsync(conn));
     }
 
@@ -71,16 +90,11 @@ public sealed class PostgresSkipModeTests
     [SkippableFact]
     public async Task Skip_mode_with_a_transaction_per_row_skips_only_the_bad_row()
     {
-        Skip.IfNot(_fixture.Available, _fixture.UnavailableReason);
+        Skip.IfNot(Fixture.Available, Fixture.UnavailableReason);
 
-        using var conn = await _fixture.OpenConnectionAsync();
-        await _fixture.ResetSchemaAsync(conn);
-        var loader = new DbLoader<ContractItem>
-        (
-            conn,
-            "INSERT INTO contract_items (name, value) VALUES (@Name, @Value)",
-            new DbLoaderOptions { ErrorHandling = RowErrorHandling.Skip, BatchCommitSize = 1 }
-        );
+        using var conn = await Fixture.OpenConnectionAsync();
+        await Fixture.ResetSchemaAsync(conn);
+        var loader = CreateLoader(conn, batchCommitSize: 1);
         var failures = new List<Exception>();
         loader.RowFailed += (_, e) => failures.Add(e.Exception);
 
@@ -89,4 +103,30 @@ public sealed class PostgresSkipModeTests
         Assert.Single(failures);
         Assert.Equal(2, await CountRowsAsync(conn));
     }
+}
+
+
+
+[Collection("Postgres")]
+[Trait("Category", "postgres")]
+public sealed class PostgresSkipModeTests : SkipModeAbortedTransactionTestsBase
+{
+    private readonly PostgresFixture _fixture;
+
+    public PostgresSkipModeTests(PostgresFixture fixture) => _fixture = fixture;
+
+    protected override IDbProviderFixture Fixture => _fixture;
+}
+
+
+
+[Collection("CockroachDb")]
+[Trait("Category", "cockroachdb")]
+public sealed class CockroachDbSkipModeTests : SkipModeAbortedTransactionTestsBase
+{
+    private readonly CockroachDbFixture _fixture;
+
+    public CockroachDbSkipModeTests(CockroachDbFixture fixture) => _fixture = fixture;
+
+    protected override IDbProviderFixture Fixture => _fixture;
 }
