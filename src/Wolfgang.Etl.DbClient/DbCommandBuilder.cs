@@ -40,7 +40,8 @@ internal static class DbCommandBuilder
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the type does not have a <see cref="TableAttribute"/> or has no
-    /// mapped columns for INSERT.
+    /// mapped columns for INSERT, including a type whose only mapped columns are
+    /// database-generated (for example an identity key alone).
     /// </exception>
     internal static string BuildInsert<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>() => TypeMetadataCache.For<T>().InsertSql;
 
@@ -132,14 +133,11 @@ internal static class DbCommandBuilder
         // - `anyKeyPropertyNames` — every property with [Key], including those
         //   that also have [NotMapped]. BuildUpdate needs this to distinguish
         //   "no [Key] anywhere" from "[Key] exists but all are [NotMapped]".
-        // - `autoIdentityKeyPropertyNames` — subset that is BOTH [Key] AND
-        //   [DatabaseGenerated(Identity)].
         // - `generatedPropertyNames` — every mapped property the database generates
         //   ([DatabaseGenerated(Identity)] or (Computed)), key or not. These are never
         //   written by INSERT, and are not in the UPDATE SET list; they stay in SELECT.
         var columns = new List<ColumnMapping>(capacity: props.Length);
         var anyKeyPropertyNames = new HashSet<string>(StringComparer.Ordinal);
-        var autoIdentityKeyPropertyNames = new HashSet<string>(StringComparer.Ordinal);
         var generatedPropertyNames = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var prop in props)
@@ -165,11 +163,6 @@ internal static class DbCommandBuilder
             {
                 generatedPropertyNames.Add(prop.Name);
             }
-
-            if (isKey && option == DatabaseGeneratedOption.Identity)
-            {
-                autoIdentityKeyPropertyNames.Add(prop.Name);
-            }
         }
 
         return new TypeMetadata
@@ -178,7 +171,7 @@ internal static class DbCommandBuilder
             // BuildInsert / BuildUpdate validate column counts and may throw. Wrap in
             // Lazy so a type that only ever calls BuildSelect (e.g. one with all
             // [NotMapped] properties) doesn't surface the INSERT failure at cache time.
-            insertSql: new Lazy<string>(() => BuildInsertSql(type, table, columns, autoIdentityKeyPropertyNames, generatedPropertyNames)),
+            insertSql: new Lazy<string>(() => BuildInsertSql(type, table, columns, generatedPropertyNames)),
             updateSql: new Lazy<string>(() => BuildUpdateSql(type, table, columns, anyKeyPropertyNames, generatedPropertyNames))
         );
     }
@@ -211,7 +204,6 @@ internal static class DbCommandBuilder
         Type type,
         string table,
         List<ColumnMapping> columns,
-        HashSet<string> autoIdentityKeyPropertyNames,
         HashSet<string> generatedPropertyNames
     )
     {
@@ -222,15 +214,9 @@ internal static class DbCommandBuilder
             ? columns.Where(c => !generatedPropertyNames.Contains(c.PropertyName)).ToList()
             : columns;
 
-        // When the only mapped columns are identity keys, keep the long-standing fallback of
-        // writing them rather than emitting an empty column list. A record whose only mapped
-        // columns are Computed (or non-key Identity) has nothing writable: that falls through
-        // to the "no mapped columns" error below.
-        if (insertColumns.Count == 0 && autoIdentityKeyPropertyNames.Count == columns.Count)
-        {
-            insertColumns = columns;
-        }
-
+        // A record whose only mapped columns are database-generated (an identity key alone,
+        // for example) has nothing writable. Writing the identity column instead would fail on
+        // most engines unless IDENTITY_INSERT is on, so it gets the "no mapped columns" error.
         if (insertColumns.Count == 0)
         {
             throw new InvalidOperationException
