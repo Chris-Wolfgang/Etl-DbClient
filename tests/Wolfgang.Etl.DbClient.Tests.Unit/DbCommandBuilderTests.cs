@@ -221,13 +221,19 @@ public class DbCommandBuilderTests
 
 
     [Fact]
-    public void BuildInsert_when_all_keys_are_identity_falls_back_to_all_columns()
+    public void BuildInsert_when_all_keys_are_identity_throws_InvalidOperationException()
     {
-        var sql = DbCommandBuilder.BuildInsert<AllIdentityKeysRecord>();
+        var ex = Assert.Throws<InvalidOperationException>
+        (
+            DbCommandBuilder.BuildInsert<AllIdentityKeysRecord>
+        );
 
-        // All columns are identity keys, so fallback includes them all
-        Assert.Contains("INSERT INTO AllIdentity", sql, StringComparison.Ordinal);
-        Assert.Contains("id", sql, StringComparison.Ordinal);
+        Assert.Contains
+        (
+            "has no mapped columns for INSERT",
+            ex.Message,
+            StringComparison.Ordinal
+        );
     }
 
 
