@@ -126,10 +126,13 @@ public class CultureInvarianceTests
 
         // Values that would misparse under de-DE (comma decimal) if the
         // extractor path used the ambient culture anywhere.
+        // Price is a SQLite REAL (a double), so compare as double: on net11.0 the double-to-decimal
+        // conversion yields the exact binary value of 0.1 (0.1000000000000000055511151231m), while
+        // earlier runtimes round it to 0.1m. A culture misparse (de-DE comma) still fails here.
         Assert.Equal(3, rows.Count);
-        Assert.Equal(1.25m,  rows[0].Price);
-        Assert.Equal(0.10m,  rows[1].Price);
-        Assert.Equal(42.50m, rows[2].Price);
+        Assert.Equal(1.25,  (double)rows[0].Price);
+        Assert.Equal(0.10,  (double)rows[1].Price);
+        Assert.Equal(42.50, (double)rows[2].Price);
         // DateTime round-trip — ar-SA / ja-JP calendars are the interesting
         // hostile cultures here. Value should equal the seed timestamp
         // regardless of the ambient CultureInfo.Calendar.
@@ -171,9 +174,11 @@ public class CultureInvarianceTests
         readBack.CommandText = "SELECT Price FROM Widget ORDER BY Id";
         using var reader = await readBack.ExecuteReaderAsync();
         Assert.True(await reader.ReadAsync());
-        Assert.Equal(1.25m, Convert.ToDecimal(reader.GetValue(0), CultureInfo.InvariantCulture));
+        // REAL column: read back as double (see the note in the extract test on net11.0's exact
+        // double-to-decimal conversion).
+        Assert.Equal(1.25, Convert.ToDouble(reader.GetValue(0), CultureInfo.InvariantCulture));
         Assert.True(await reader.ReadAsync());
-        Assert.Equal(0.10m, Convert.ToDecimal(reader.GetValue(0), CultureInfo.InvariantCulture));
+        Assert.Equal(0.10, Convert.ToDouble(reader.GetValue(0), CultureInfo.InvariantCulture));
     }
 
     // Note on case-insensitive property lookup: DbClient's internal

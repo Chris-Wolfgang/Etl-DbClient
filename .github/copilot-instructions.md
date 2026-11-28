@@ -9,7 +9,7 @@ the `Wolfgang.Etl.Abstractions` extractor and loader contracts over ADO.NET:
 A Roslyn source generator (`[DbTable]`) emits SQL constants and a reflection-free binder.
 
 - **Primary language**: C#
-- **Library TFMs**: net462, net472, net48, net481, netstandard2.0, net5.0-net10.0
+- **Library TFMs**: net462, net472, net48, net481, netstandard2.0, net5.0-net11.0
   (`src/Wolfgang.Etl.DbClient/Wolfgang.Etl.DbClient.csproj`)
 - **Code conventions**: see `CONTRIBUTING.md` (Allman braces, three blank lines between members, Allman-style multi-line argument lists,
   file-scoped namespaces, `MethodUnderTest_when_condition_expected_result` test names).

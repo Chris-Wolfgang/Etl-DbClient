@@ -268,10 +268,10 @@ This library uses **`BannedSymbols.txt`** to prohibit synchronous APIs and enfor
 ## 🛠️ Building from Source
 
 ### Prerequisites
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download) — required; the package targets
-  `net10.0`, so earlier SDKs cannot build it
+- [.NET 11.0 SDK](https://dotnet.microsoft.com/download) — required; the package targets
+  `net11.0` and `global.json` pins SDK 11.0.100, so earlier SDKs cannot build it
 - To run the full test matrix locally you also need to execute the down-level targets. CI
-  installs the .NET Core 3.1, 5.0, 6.0, 7.0, 8.0 and 9.0 **SDKs** via `actions/setup-dotnet`
+  installs the .NET Core 3.1, 5.0, 6.0, 7.0, 8.0, 9.0 and 10.0 **SDKs** via `actions/setup-dotnet`
   (each brings its own runtime); locally the matching runtimes are enough. Building alone
   needs neither.
 - CI test matrix: five legs. Stage 1 linux-x64 (.NET 5.0-10.0), Stage 2 windows-x64
