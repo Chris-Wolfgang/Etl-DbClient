@@ -38,8 +38,12 @@ public enum RowErrorHandling
     /// provider keeps the transaction usable after a failed statement. PostgreSQL (and, by its
     /// documented behaviour, CockroachDB) abort the whole transaction on the first failed statement:
     /// every later row then fails ("current transaction is aborted", SQLSTATE 25P02) and nothing is
-    /// committed. On those providers set <c>BatchCommitSize</c> to <c>1</c> so each row runs in its
-    /// own transaction (verified against PostgreSQL 16: only the bad row is skipped).
+    /// committed. On net5.0 and later the loader reads <c>DbException.SqlState</c>: the first
+    /// 25P02 stops the load with an <see cref="System.InvalidOperationException"/> (the provider
+    /// exception is the inner exception), after <c>DbLoader.RowFailed</c> has reported only the row
+    /// that really failed. On older targets <c>SqlState</c> does not exist, so every later row is
+    /// still reported as failed. On those providers set <c>BatchCommitSize</c> to <c>1</c> so each
+    /// row runs in its own transaction (verified against PostgreSQL 16: only the bad row is skipped).
     /// </para>
     /// </remarks>
     Skip,
